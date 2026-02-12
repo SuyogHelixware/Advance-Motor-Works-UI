@@ -1,0 +1,19 @@
+/* Apply only in dark mode */
+.dark-mode .country-list .country {
+  background-color: #262A45 !important;
+  color: #f0f0f0 !important;
+}
+
+.dark-mode .country-list .country:hover,
+.dark-mode .country-list .country:focus {
+  background-color: transparent !important;
+  border: 1px solid #ffffff !important;
+  color: #f0f0f0 !important;
+  box-sizing: border-box;
+}
+
+.dark-mode .country-list .country.highlight {
+  background-color: transparent !important;
+  border: 1px solid #ffffff !important;
+  color: #f0f0f0 !important;
+}

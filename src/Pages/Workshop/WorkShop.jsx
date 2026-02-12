@@ -1,0 +1,79 @@
+import { Grid, Paper, Typography } from '@mui/material';
+import React from 'react';
+import TileComponent from '../Components/TileComponent';
+export default function WorkShop() {
+   
+    const Cards_sales=[
+        {
+            id: "1",
+            Name: "Inward Vehicle",
+            Count:20,
+            ReDirect: "inward-vehicle",
+          },
+          {
+            id: "2",
+            Name: "Job Card",
+            Count: 20,
+            ReDirect: "job-card",
+          },
+          {
+            id: "3",
+            Name: "OutWard Vehicle",
+            Count: 20,
+            ReDirect: "outward-vehicle",
+          },
+          {
+            id: "4",
+            Name: "Appointment Screen",
+            Count: 20,
+            ReDirect: "appointment-screen",
+          },
+        
+        
+        ];
+          
+  return (
+    <>  
+     <Grid
+    container
+    md={12}
+    lg={12}
+    sx={{
+      width: "100%",
+
+      mt: 2,
+
+      mb: 2,
+    }}
+    elevation={4}
+  >
+    <Paper
+      sx={{
+        width: "100%",
+      }}
+    >
+      <Typography
+        width={"100%"}
+        textAlign="center"
+        textTransform="uppercase"
+        fontWeight="bold"
+        padding={1}
+        noWrap
+      >
+        WORKSHOP
+      </Typography>
+    </Paper>
+  </Grid>
+    
+    
+    <Grid container spacing={2} padding={2} columnGap={5} rowGap={4} >
+    {Cards_sales.map((data, index) => (
+      <Grid item key={index} xs={12} sm={4} md={3} lg={2}>
+                  <TileComponent cardName={data.Name} cardCount={data.Count} to={data.ReDirect} />
+
+      </Grid>
+    ))}
+  </Grid>
+  </>
+  )
+}
