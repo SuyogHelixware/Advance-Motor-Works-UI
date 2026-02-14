@@ -12,6 +12,7 @@ import PrecisionManufacturingIcon from "@mui/icons-material/PrecisionManufacturi
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import CloseIcon from "@mui/icons-material/Close";
 import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
+import WarehouseIcon from "@mui/icons-material/Warehouse";
 
 import {
   Email as EmailIcon,
@@ -429,14 +430,13 @@ export default function Dashboard({ logout }) {
   };
   const { LightMode, DarkMode } = useThemeMode();
 
-  
-// const lastFetchedAt = useSelector(
-//   (state) => state.counter.lastFetchedAt
-// );
+  // const lastFetchedAt = useSelector(
+  //   (state) => state.counter.lastFetchedAt
+  // );
 
-// if (!lastFetchedAt || Date.now() - lastFetchedAt > 120000) {
-//   dispatch(fetchCounter());
-// }
+  // if (!lastFetchedAt || Date.now() - lastFetchedAt > 120000) {
+  //   dispatch(fetchCounter());
+  // }
   // const { themeMode, LightMode, DarkMode } = useThemeMode();
   // console.log(themeMode);
   // const [companyName, setCompanyName] = React.useState('');
@@ -452,7 +452,7 @@ export default function Dashboard({ logout }) {
   const [unreadCount, setUnreadCount] = React.useState(0);
   const [searchTerm, setSearchTerm] = React.useState("");
   const [results, setResults] = React.useState([]);
-//  let dispatch=useDispatch()
+  //  let dispatch=useDispatch()
   const navigate = useNavigate();
   const handleNavigate = (path) => {
     navigate(path);
@@ -1420,39 +1420,39 @@ export default function Dashboard({ logout }) {
                 ""
               )}
               {/* ------------------------- */}
-              {/* <List>
-              <Link
-                to="ARsales"
-                style={{
-                  textDecoration: "none",
-                  color: theme.palette.text.primary,
-                }}
-              >
-                <ListItem disablePadding sx={{ display: "block" }}>
-                  <ListItemButton
-                    sx={{
-                      height: 30,
-                      justifyContent: open ? "initial" : "center",
-                      px: 0.5,
-                    }}
-                  >
-                    <ListItemIcon
+              <List>
+                <Link
+                  to="ARsales"
+                  style={{
+                    textDecoration: "none",
+                    color: theme.palette.text.primary,
+                  }}
+                >
+                  <ListItem disablePadding sx={{ display: "block" }}>
+                    <ListItemButton
                       sx={{
-                        minWidth: 0,
-                        mr: open ? 3 : "auto",
-                        justifyContent: "center",
+                        height: 30,
+                        justifyContent: open ? "initial" : "center",
+                        px: 0.5,
                       }}
                     >
-                      <MonetizationOnOutlinedIcon />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={"AR SALES"}
-                      sx={{ opacity: open ? 1 : 0 }}
-                    />
-                  </ListItemButton>
-                </ListItem>
-              </Link>
-            </List> */}
+                      <ListItemIcon
+                        sx={{
+                          minWidth: 0,
+                          mr: open ? 3 : "auto",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <ProductionQuantityLimitsIcon />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={"AR SALES"}
+                        sx={{ opacity: open ? 1 : 0 }}
+                      />
+                    </ListItemButton>
+                  </ListItem>
+                </Link>
+              </List>
 
               {/* <List>
               <Link
@@ -1488,7 +1488,7 @@ export default function Dashboard({ logout }) {
               </Link>
             </List> */}
 
-              {allowedParentIds.includes(10) ? (
+              {/* {allowedParentIds.includes(10) ? (
                 <List>
                   <Link
                     to="VMS"
@@ -1525,42 +1525,42 @@ export default function Dashboard({ logout }) {
                 </List>
               ) : (
                 ""
-              )}
+              )} */}
 
-              {/* <List>
-              <Link
-                to="warehouse"
-                style={{
-                  textDecoration: "none",
-                  color: theme.palette.text.primary,
-                  display: allowedParentIds.includes(13) ? "" : "none",
-                }}
-              >
-                <ListItem disablePadding sx={{ display: "block" }}>
-                  <ListItemButton
-                    sx={{
-                      height: 30,
-                      justifyContent: open ? "initial" : "center",
-                      px: 0.5,
-                    }}
-                  >
-                    <ListItemIcon
+              <List>
+                <Link
+                  to="warehouse"
+                  style={{
+                    textDecoration: "none",
+                    color: theme.palette.text.primary,
+                    display: allowedParentIds.includes(13) ? "" : "none",
+                  }}
+                >
+                  <ListItem disablePadding sx={{ display: "block" }}>
+                    <ListItemButton
                       sx={{
-                        minWidth: 0,
-                        mr: open ? 3 : "auto",
-                        justifyContent: "center",
+                        height: 30,
+                        justifyContent: open ? "initial" : "center",
+                        px: 0.5,
                       }}
                     >
-                      <WarehouseOutlinedIcon />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={"WAREHOUSE"}
-                      sx={{ opacity: open ? 1 : 0, color: "black" }}
-                    />
-                  </ListItemButton>
-                </ListItem>
-              </Link>
-            </List> */}
+                      <ListItemIcon
+                        sx={{
+                          minWidth: 0,
+                          mr: open ? 3 : "auto",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <WarehouseIcon />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={"WAREHOUSE"}
+                        sx={{ opacity: open ? 1 : 0, color: "black" }}
+                      />
+                    </ListItemButton>
+                  </ListItem>
+                </Link>
+              </List>
               {allowedParentIds.includes(12) ? (
                 <List>
                   <Link

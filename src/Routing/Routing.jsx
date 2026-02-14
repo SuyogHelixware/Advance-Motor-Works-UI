@@ -286,7 +286,7 @@ function Routing() {
             <Route path="role-creation" element={<RoleCreation />} />
             <Route path="user-creation" element={<UserCreation />} />
             <Route path="company-details" element={<CompanyDetails />} />
-                        <Route path="EmailSetup" element={<EmailSetup />} />
+            <Route path="EmailSetup" element={<EmailSetup />} />
 
             <Route path="inte-info-log" element={<IntegrationDetails />} />
             <Route path="inte-error-log" element={<IntergrationErrorLog />} />

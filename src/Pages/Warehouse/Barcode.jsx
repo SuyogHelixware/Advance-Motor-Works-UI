@@ -8,7 +8,7 @@
 // import { DataGrid } from "@mui/x-data-grid";
 // import { useTheme } from "@mui/material/styles";
 
-// export default function IssueMaterial() {
+// export default function Barcode() {
 //   //const [phone, setPhone] = useState("");
 //   const theme = useTheme();
 
@@ -98,9 +98,7 @@
 //               position: "absolute",
 //               left: "10px",
 //             }}
-//           >
-
-//           </IconButton>
+//           ></IconButton>
 
 //           <IconButton
 //             edge="start"
@@ -202,145 +200,198 @@
 //   );
 // }
 
-// src/App.js
+import React, { useState, useEffect, useRef } from "react";
+import axios from "axios";
+import PrintIcon from "@mui/icons-material/Print";
+import { Divider, Grid, IconButton } from "@mui/material";
+import { DataGrid, GridToolbarQuickFilter } from "@mui/x-data-grid";
+import ReactToPrint from "react-to-print";
 
-// import { Autocomplete, TextField } from "@mui/material";
-// import axios from "axios";
-// import React, { useEffect, useState } from "react";
-// import { BASE_URL } from "../Api/Constant";
+// Internal Components
+import {
+  AddClearIconButton,
+  PageSubTitle,
+  TableAmountField,
+} from "../component/FormInputs";
+import { BarcodeReportToPrint } from "../LayoutReports/BarcodePrintReport";
+import Loader from "../component/Loader";
 
-// const App = () => {
-//   const [data, setData] = useState([]);
-//   const [searchTerm, setSearchTerm] = useState("");
-//   const [loading, setLoading] = useState(true);
-//   const [WMSStaff, setWMSStaff] = useState([]);
+const BarcodePrint = () => {
+  // --- State Hooks ---
+  const [itemDetails, setItemDetails] = useState([]);
+  const [itemsLoadCount, setItemsLoadCount] = useState(0);
+  const [open, setOpen] = useState(false);
+  const [printBarcode, setPrintBarcode] = useState([]);
 
-//   useEffect(() => {
-//     getAllWMSStaffList();
-//     const fetchData = async () => {
-//       try {
-//         const response = await fetch(
-//           "https://jsonplaceholder.typicode.com/users"
-//         );
-//         const result = await response.json();
-//         setData(result);
-//       } catch (error) {
-//         console.error("Error fetching data:", error);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
+  // --- Refs ---
+  const componentRef = useRef();
 
-//     fetchData();
-//   }, []);
+  // --- Side Effects (componentDidMount) ---
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        const response = await axios.get(
+          `${process.env.REACT_APP_BASE_URL}/items/All`,
+          {
+            headers: { "Content-Type": "application/json" },
+          },
+        );
 
-//   const handleSearch = (e) => {
-//     setSearchTerm(e.target.value);
-//   };
+        const mappedData = response.data.values.map((item) => ({
+          ItemCode: item.ItemCode,
+          ItemName: item.ItemName,
+          DocEntry: item.DocEntry,
+          Quantity: "",
+        }));
 
-//   const filteredData = data.filter((item) => {
-//     const lowerCaseSearchTerm = searchTerm.toLowerCase();
-//     return (
-//       item.name.toLowerCase().includes(lowerCaseSearchTerm) ||
-//       item.phone.toLowerCase().includes(lowerCaseSearchTerm) || // Example: searching by phone
-//       item.username.toLowerCase().includes(lowerCaseSearchTerm) // Example: searching by username
-//     );
-//   });
+        setItemDetails(mappedData);
+      } catch (error) {
+        console.error("Error fetching initial data:", error);
+      }
+    };
 
-//   if (loading) {
-//     return <div>Loading...</div>;
-//   }
-//   const dataname = [
-//     { label: "Helixware"},
-//     { label: "hw"},
-//     { label: "orp"},
-//     { label: "kwt"},
-//     { label: "Ketan"},
-//     { label: "sagar"},
-//     { label: "Fiction"},
+    fetchInitialData();
+  }, []);
 
-//   ];
+  // --- Handlers ---
+  const handleOnQuantityChange = (event, id) => {
+    const newValue = event.target.value;
+    setItemDetails((prevItems) =>
+      prevItems.map((item) =>
+        item.DocEntry === id ? { ...item, Quantity: newValue } : item,
+      ),
+    );
+  };
 
-//   return (
-//     <>
-//       <div>
-//         <Autocomplete
-//           size="small"
-//           disablePortal
-//           renderInput={(params) => (
-//             <TextField
-//               {...params}
-//               label="GL ACCOUNT"
-//               style={{ width: "300px" }}
-//             />
-//           )}
-//           style={{ width: "300px" }}
-//         />
-//       </div>
-//       <div>
-//         <h1>Search Users</h1>
-//         <input
-//           type="text"
-//           placeholder="Search by name, phone, or username..."
-//           value={searchTerm}
-//           onChange={handleSearch}
-//         />
-//         <ul>
-//           {filteredData.map((item) => (
-//             <li key={item.id}>
-//               Name: {item.name}, Phone: {item.phone}, Username: {item.username}
-//             </li>
-//           ))}
-//         </ul>
-//       </div>
-//     </>
-//   );
-// };
+  const handlePrintAction = (rowData) => {
+    setOpen(true);
+    setPrintBarcode(rowData);
 
-// export default App;
+    // Mimicking your original delay for the print trigger
+    setTimeout(() => {
+      const printBtn = document.getElementById("hidden-print-trigger");
+      if (printBtn) printBtn.click();
+      setOpen(false);
+    }, 3500);
+  };
 
-// import React, { useEffect, useState } from "react";
-// import axios from "axios";
-// import { Autocomplete, TextField } from "@mui/material";
-// import { BASE_URL } from "../Api/Constant";
+  const clearFormData = () => {
+    // Logic for clearing form if needed
+    console.log("Clear form clicked");
+  };
 
-// const Gl = () => {
-//   const [wmsStaff, setWMSStaff] = useState([]);
+  // --- Column Definitions ---
+  const columns = [
+    { field: "DocEntry", headerName: "SN" },
+    { field: "ItemCode", headerName: "ITEM CODE", width: 170 },
+    { field: "ItemName", headerName: "ITEM DESCRIPTION", width: 500 },
+    {
+      field: "Quantity",
+      headerName: "QUANTITY",
+      renderCell: (params) => (
+        <TableAmountField
+          id={`qty-${params.id}`}
+          value={params.row.Quantity}
+          onChange={(event) => handleOnQuantityChange(event, params.id)}
+        />
+      ),
+    },
+    {
+      field: "Print",
+      headerName: "PRINT",
+      renderCell: (params) => (
+        <>
+          <IconButton
+            onClick={() => handlePrintAction(params.row)}
+            size="small"
+            color="info"
+          >
+            <PrintIcon />
+          </IconButton>
 
-//   const getAllWMSStaffList = () => {
-//     axios
-//       .get(`${BASE_URL}/Technician/All`, {
-//         headers: {
-//           "Content-Type": "application/json",
-//         },
-//       })
-//       .then((response) => {
-//         console.log("API Response:", response.data);
-//         setWMSStaff(response.data.values);
-//       })
-//       .catch((error) => {
-//         console.log("Error fetching WMS staff:", error);
-//       });
-//   };
+          <ReactToPrint
+            trigger={() => (
+              <IconButton
+                size="small"
+                color="info"
+                style={{ display: "none" }}
+                id="hidden-print-trigger"
+              >
+                <PrintIcon />
+              </IconButton>
+            )}
+            content={() => componentRef.current}
+          />
+        </>
+      ),
+    },
+  ];
 
-//   useEffect(() => {
-//     getAllWMSStaffList();
-//   }, []);
+  // --- Toolbar Component ---
+  const SearchItemTableRecord = () => (
+    <div className="col-3" style={{ padding: "10px" }}>
+      <GridToolbarQuickFilter
+        variant="outlined"
+        size="small"
+        quickFilterParser={(searchInput) =>
+          searchInput
+            .split(",")
+            .map((value) => value.trim())
+            .filter((value) => value !== "")
+        }
+      />
+    </div>
+  );
 
-//   console.log("WMS Staff:", wmsStaff);
+  return (
+    <>
+      <Loader open={open} />
 
-//   return (
-//     <Autocomplete
-//       size="small"
-//       disablePortal
-//       options={wmsStaff}
-//       getOptionLabel={(option) => option.name || "No Name"}
-//       renderInput={(params) => (
-//         <TextField {...params} label="GL ACCOUNT" style={{ width: "300px" }} />
-//       )}
-//       style={{ width: "300px" }}
-//     />
-//   );
-// };
+      <Grid
+        container
+        width="100%"
+        height="100vh"
+        sx={{ border: "1px silver solid" }}
+      >
+        {/* Header Section */}
+        <Grid
+          container
+          item
+          width="100%"
+          height="30px"
+          className="pageSubTitle-style"
+        >
+          <Grid item width="90%">
+            <PageSubTitle title="Barcode Print" />
+            <Divider color="gray" />
+          </Grid>
+          <Grid item width="10%">
+            <AddClearIconButton onClick={clearFormData} />
+            <Divider color="gray" />
+          </Grid>
+        </Grid>
 
-// export default Gl;
+        {/* DataGrid Section */}
+        <Grid container item width="100%" height="calc(100% - 35px)">
+          <DataGrid
+            className="datagrid-style"
+            rowHeight={40}
+            rows={itemDetails}
+            columns={columns}
+            getRowId={(row) => row.DocEntry}
+            slots={{
+              toolbar: SearchItemTableRecord,
+            }}
+          />
+        </Grid>
+
+        {/* Hidden Print Report */}
+        <div style={{ display: "none" }}>
+          <BarcodeReportToPrint data={printBarcode} ref={componentRef} />
+        </div>
+      </Grid>
+    </>
+  );
+};
+
+export default BarcodePrint;

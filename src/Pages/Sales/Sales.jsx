@@ -7,11 +7,10 @@ import TileComponent from "../Components/TileComponent";
 
 export default function Sales() {
   const { user } = useAuth();
-   const location = useLocation();
-    useCounterPolling("Sales",location.key)
+  const location = useLocation();
+  useCounterPolling("Sales", location.key);
   const counters = useSelector((state) => state.counter.Counterdata);
   // const loading = useSelector((state) => state.counter.loading);
-
 
   const Cards_Sales = [
     {
@@ -33,6 +32,12 @@ export default function Sales() {
       ReDirect: "Sales-order",
     },
 
+    {
+      id: "118",
+      Name: "Booking Appointment",
+      Count: counters?.Delivery ?? 0,
+      ReDirect: "booking-appointment",
+    },
     {
       id: "118",
       Name: "Sales Delivery",
