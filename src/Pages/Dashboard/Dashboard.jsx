@@ -21,12 +21,12 @@ import {
   Phone as PhoneIcon,
 } from "@mui/icons-material";
 import AssuredWorkloadIcon from "@mui/icons-material/AssuredWorkload";
+import HandymanOutlinedIcon from "@mui/icons-material/HandymanOutlined";
 import InventoryIcon from "@mui/icons-material/Inventory";
 import MoreIcon from "@mui/icons-material/MoreVert";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import PrintOutlinedIcon from "@mui/icons-material/PrintOutlined";
 import ProductionQuantityLimitsIcon from "@mui/icons-material/ProductionQuantityLimits";
-import RvHookupIcon from "@mui/icons-material/RvHookup";
 import SearchIcon from "@mui/icons-material/Search";
 import SettingsSuggestIcon from "@mui/icons-material/SettingsSuggest";
 import StorageOutlinedIcon from "@mui/icons-material/StorageOutlined";
@@ -1454,39 +1454,39 @@ export default function Dashboard({ logout }) {
                 </Link>
               </List>
 
-              {/* <List>
-              <Link
-                to="workshop"
-                style={{
-                  textDecoration: "none",
-                  color: theme.palette.text.primary,
-                }}
-              >
-                <ListItem disablePadding sx={{ display: "block" }}>
-                  <ListItemButton
-                    sx={{
-                      height: 30,
-                      justifyContent: open ? "initial" : "center",
-                      px: 0.5,
-                    }}
-                  >
-                    <ListItemIcon
+              <List>
+                <Link
+                  to="workshop"
+                  style={{
+                    textDecoration: "none",
+                    color: theme.palette.text.primary,
+                  }}
+                >
+                  <ListItem disablePadding sx={{ display: "block" }}>
+                    <ListItemButton
                       sx={{
-                        minWidth: 0,
-                        mr: open ? 3 : "auto",
-                        justifyContent: "center",
+                        height: 30,
+                        justifyContent: open ? "initial" : "center",
+                        px: 0.5,
                       }}
                     >
-                      <HandymanOutlinedIcon />
-                    </ListItemIcon>
-                    <ListItemText
-                      primary={"WORKSHOP"}
-                      sx={{ opacity: open ? 1 : 0  , color:"black" }}
-                    />
-                  </ListItemButton>
-                </ListItem>
-              </Link>
-            </List> */}
+                      <ListItemIcon
+                        sx={{
+                          minWidth: 0,
+                          mr: open ? 3 : "auto",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <HandymanOutlinedIcon />
+                      </ListItemIcon>
+                      <ListItemText
+                        primary={"WORKSHOP"}
+                        sx={{ opacity: open ? 1 : 0, color: "black" }}
+                      />
+                    </ListItemButton>
+                  </ListItem>
+                </Link>
+              </List>
 
               {/* {allowedParentIds.includes(10) ? (
                 <List>

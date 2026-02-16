@@ -1,5 +1,6 @@
 .App {
   text-align: center;
+  font-family: "Montserrat-Regular";
 }
 
 .App-logo {
@@ -294,3 +295,10 @@
 .custom-antd-timepicker.dark-mode .ant-picker-suffix {
   color: #ffffff !important;
 }
+  .Signaturefield {
+    border: 1px solid #0000001a;
+    border-radius: 8px;
+    width: 100%;
+    height: 150px;
+    background-color: #fff;
+  }

@@ -20,17 +20,17 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import { DatePicker, LocalizationProvider, TimePicker as MuiTimePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import TableViewIcon from "@mui/icons-material/TableView";
 import ViewListIcon from "@mui/icons-material/ViewList";
 import React, { forwardRef, useEffect, useMemo, useRef, useState } from "react";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import { TimePicker } from "antd";
 
 import SearchIcon from "@mui/icons-material/Search";
 import { Controller } from "react-hook-form";
 import dayjs from "dayjs";
-import { TimePicker } from "antd";
 import { formatForUI } from "./ValueFormatter";
 // import { wait } from "@testing-library/user-event/dist/utils";
 export function InputFields(props) {
@@ -171,11 +171,14 @@ export function InputTextAreaFields(props) {
         label={props.label}
         value={props.value}
         onChange={props.onChange}
+        error={props.error}
+        helperText={props.helperText}
         inputProps={props.inputProps}
-        size="small"
-        multiline
-        rows={props.rows || 2}
-        sx={{ m: 1, width: "100%", maxWidth: 220 }}
+        InputProps={{ readOnly: props.readOnly }}
+        // size="small"
+        // multiline
+        // rows={props.rows || 2}
+        sx={{ width: "100%", maxWidth: 220 }}
       />
     </>
   );
@@ -2051,3 +2054,24 @@ export const ModelInputTextField = forwardRef(
     );
   }
 );
+export function InputTimePicker(props) {
+  return (
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+    <MuiTimePicker
+      label={props.label}
+      value={props.value}
+      onChange={props.onChange}
+      disabled={props.disabled}
+      readOnly={props.readOnly}
+      slotProps={{
+        textField: {
+          size: "small",
+          error: props.error,
+          helperText: props.helperText,
+          sx: { width: "100%", maxWidth: 220 },
+        },
+      }}
+    />
+    </LocalizationProvider>
+  );
+}

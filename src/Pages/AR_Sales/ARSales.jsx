@@ -4,24 +4,24 @@ import TileComponent from '../Components/TileComponent';
 export default function ARSales() {
    
     const Cards_sales=[
-        {
-            id: "1",
-            Name: "Item Search",
-            Count:0,
-            ReDirect: "dynamic-search",
-          },
-          {
-            id: "2",
-            Name: "Quotation / SO",
-            Count: "0",
-            ReDirect: "quotation",
-          },
-          {
-            id: "3",
-            Name: "Additional Payment",
-            Count: 0,
-            ReDirect: "Additional-Payment",
-          },
+        // {
+        //     id: "1",
+        //     Name: "Item Search",
+        //     Count:0,
+        //     ReDirect: "dynamic-search",
+        //   },
+        //   {
+        //     id: "2",
+        //     Name: "Quotation / SO",
+        //     Count: "0",
+        //     ReDirect: "quotation",
+        //   },
+        //   {
+        //     id: "3",
+        //     Name: "Additional Payment",
+        //     Count: 0,
+        //     ReDirect: "Additional-Payment",
+        //   },
           {
             id: "4",
             Name: "Book Appointment",
@@ -35,24 +35,24 @@ export default function ARSales() {
             Count: 0,
             ReDirect: "material-request",
           },
-          {
-            id: "6",
-            Name: "Invoice",
-            Count:0,
-            ReDirect: "cash-invoice",
-          },
-          {
-            id: "8",
-            Name: "Order Cancellation",
-            Count: 0,
-            ReDirect: "order-cancellation",
-          },
-          {
-            id: "9",
-            Name: "Customer Sales History",
-            Count: 0,
-            ReDirect: "customer-sales-history",
-          },
+          // {
+          //   id: "6",
+          //   Name: "Invoice",
+          //   Count:0,
+          //   ReDirect: "cash-invoice",
+          // },
+          // {
+          //   id: "8",
+          //   Name: "Order Cancellation",
+          //   Count: 0,
+          //   ReDirect: "order-cancellation",
+          // },
+          // {
+          //   id: "9", 
+          //   Name: "Customer Sales History",
+          //   Count: 0,
+          //   ReDirect: "customer-sales-history",
+          // },
         ];
           
   return (<>

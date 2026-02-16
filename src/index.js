@@ -8,6 +8,7 @@ import { Provider } from "react-redux";
 import { SignalRProvider } from "./Routing/SignalRContext";
 import { AuthProvider } from "./Routing/AuthContext";
 import { ToastContainer } from "react-toastify";
+import "./fonts/Montserrat-Regular.ttf";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(

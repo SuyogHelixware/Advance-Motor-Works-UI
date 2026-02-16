@@ -144,7 +144,7 @@ import BarCode from "../Pages/Setup/BarCode.jsx";
 import IssueMaterial from "../Pages/Warehouse/IssueMaterial.jsx";
 import MaterialReturn from "../Pages/Warehouse/MaterialReturn.jsx";
 import WareHouse from "../Pages/Warehouse/WareHouse.jsx";
-import AppointmentScreen from "../Pages/Workshop/AppointmentScreen.jsx";
+// import AppointmentScreen from "../Pages/Workshop/AppointmentScreen.jsx";
 import InwardVehicle from "../Pages/Workshop/InwardVehicle.jsx";
 import JobCardEntry from "../Pages/Workshop/JobCardEntry.jsx";
 import OutwardVehicle from "../Pages/Workshop/OutwardVehicle.jsx";
@@ -181,6 +181,7 @@ import QueryGenerator from "../Pages/Reports/QueryGenerator.jsx";
 import PreviewReport from "../Pages/Reports/PreviewReport.jsx";
 import EmailSetup from "../Pages/Admin/EmailSetup.jsx";
 import EmailTemplate from "../Pages/Setup/EmailTemplate.jsx";
+import AppointmentScreen from "../Pages/Workshop/AppointmentScreen.jsx";
 const ProtectedRoute = ({ element }) => {
   const { user, companyData, companyLoading, companyNeedsSetup, companyError } =
     useAuth();
@@ -265,6 +266,7 @@ function Routing() {
           path="/PurchaseQuotationRFQ"
           element={<PurchaseQuotationRFQ />}
         />
+        <Route path="/daily-appointments" element={<AppointmentScreen />} />
 
         <Route
           path="/dashboard"
@@ -603,7 +605,6 @@ function Routing() {
             <Route path="inward-vehicle" element={<InwardVehicle />} />
             <Route path="job-card" element={<JobCardEntry />} />
             <Route path="outward-vehicle" element={<OutwardVehicle />} />
-            <Route path="appointment-screen" element={<AppointmentScreen />} />
           </Route>
           <Route
             path="warehouse"
