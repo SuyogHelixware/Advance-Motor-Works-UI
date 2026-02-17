@@ -1200,7 +1200,7 @@ function PurchaseOrder() {
 
           icon: "question",
           confirmButtonText: "YES",
-          showConfirmButton: true,
+          showConfirmButton:   true,
         });
       }
     } catch (error) {
