@@ -15,7 +15,6 @@ import {
   useTheme,
 } from "@mui/material";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-
 import MenuIcon from "@mui/icons-material/Menu";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import {
@@ -24,17 +23,13 @@ import {
 } from "../Components/formComponents";
 import SearchInputField from "../Components/SearchInputField";
 import DeleteIcon from "@mui/icons-material/Delete";
-
 import { Tab, Tabs } from "@mui/material";
-
-// import MenuOpenIcon from "@mui/icons-material/MenuOpen";
 import { TabContext, TabPanel } from "@mui/lab";
 import dayjs from "dayjs";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { BeatLoader } from "react-spinners";
 import Swal from "sweetalert2";
 import useAuth from "../../Routing/AuthContext";
-import CardComponentTwo from "../Components/CardComponentTwo";
 import apiClient from "../../services/apiClient";
 import { DataGrid } from "@mui/x-data-grid";
 
@@ -154,8 +149,6 @@ export default function BinLocationMaster() {
         LineNum: line.LineNum,
       })),
     });
-
-    console.log("object", data);
     SearchModelClose();
   };
 
@@ -175,7 +168,7 @@ export default function BinLocationMaster() {
 
     timeoutRef.current = setTimeout(() => {
       fetchGetListData(0, res);
-    }, 600); // Fetch with search query
+    }, 600);
   };
   useEffect(() => {
     if (searchmodelOpen === true) {
@@ -193,30 +186,6 @@ export default function BinLocationMaster() {
   const perms = usePermissions(64);
 
   const timeoutRef = useRef(null);
-  // const initial = {
-  //   UserId: user.UserId,
-  //   CreatedBy: user.UserName,
-  //   CreatedDate: dayjs(undefined).format("YYYY-MM-DD HH:mm:ss"),
-  //   ModifiedBy: user.UserName,
-  //   Status: "1",
-  //   WHSCode: "",
-  //   BinCode: "",
-  //   SL1Code: "",
-  //   SL2Code: "",
-  //   SL3Code: "",
-  //   SL4Code: "",
-  //   ReceiveBin: "",
-  //   NoAutoAllc: "",
-  //   FldAbs: "",
-  //   MinLevel: "",
-  //   MaxLevel: "",
-  //   MaxWeight1: "",
-  //   SysBin: "",
-  //   ItmRtrictT: "",
-  //   UoMRtrict: "",
-  //   RtrictType: "",
-  //   BinSeptor: "",
-  // };
   const initial = {
     OrderNo: "",
     OrderNo: "",
@@ -281,12 +250,11 @@ export default function BinLocationMaster() {
     }
   };
 
-  // Handle search input
   const handleOpenListSearch = (res) => {
     setOpenListQuery(res);
     setOpenListSearching(true);
     setOpenListPage(0);
-    setOpenListData([]); // Clear current data
+    setOpenListData([]);
 
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -295,27 +263,24 @@ export default function BinLocationMaster() {
     timeoutRef.current = setTimeout(() => {
       fetchOpenListData(0, res);
     }, 600);
-    // Fetch with search query
   };
 
   // Clear search
   const handleOpenListClear = () => {
-    setOpenListQuery(""); // Clear search input
-    setOpenListSearching(false); // Reset search state
-    setOpenListPage(0); // Reset page count
-    setOpenListData([]); // Clear data
-    fetchOpenListData(0); // Fetch first page without search
+    setOpenListQuery("");
+    setOpenListSearching(false);
+    setOpenListPage(0);
+    setOpenListData([]);
+    fetchOpenListData(0);
   };
 
-  // Infinite scroll fetch more data
   const fetchMoreOpenListData = () => {
     fetchOpenListData(openListPage + 1, openListSearching ? openListquery : "");
     setOpenListPage((prev) => prev + 1);
   };
 
-  // Initial fetch
   useEffect(() => {
-    fetchOpenListData(0); // Load first page on mount
+    fetchOpenListData(0);
   }, []);
 
   // ============================================Closed List Start ==================================================================
@@ -354,13 +319,12 @@ export default function BinLocationMaster() {
     }, 600);
   };
 
-  // Clear search
   const handleClosedListClear = () => {
-    setClosedListQuery(""); // Clear search input
-    setClosedListSearching(false); // Reset search state
-    setClosedListPage(0); // Reset page count
-    setClosedListData([]); // Clear data
-    fetchClosedListData(0); // Fetch first page without search
+    setClosedListQuery("");
+    setClosedListSearching(false);
+    setClosedListPage(0);
+    setClosedListData([]);
+    fetchClosedListData(0);
   };
 
   const fetchMoreClosedListData = () => {
@@ -471,6 +435,7 @@ export default function BinLocationMaster() {
       headerAlign: "center",
       renderCell: (params) => (
         <IconButton
+          type="button"
           color="error"
           size="small"
           onClick={() => {
@@ -932,22 +897,18 @@ export default function BinLocationMaster() {
     let autoTime;
 
     if (isToday) {
-      // Round to next 30 min
       const remainder = now.minute() % 30;
       autoTime = remainder === 0 ? now : now.add(30 - remainder, "minute");
 
-      // Before 8AM → 8:00
       if (autoTime.hour() < 8) {
         autoTime = autoTime.hour(8).minute(0);
       }
 
-      // After 8PM → no slot
       if (autoTime.hour() >= 20) {
         setValue("AppointTimeFrom", "");
         return;
       }
     } else {
-      // Future date → 8:00 AM
       autoTime = dayjs().hour(8).minute(0);
     }
 
@@ -1208,25 +1169,6 @@ export default function BinLocationMaster() {
                     />
                   </Grid>
 
-                  {/* <Grid item xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
-                    <Controller
-                      name="AppointType"
-                      control={control}
-                      rules={{ required: "Appointment Type is Required" }}
-                      render={({ field, fieldState: { error } }) => (
-                        <InputSelectFields
-                          readOnly
-                          label="APPOINTMENT TYPE"
-                          {...field}
-                          data={[
-                            { key: "WALK-IN", value: "WALK-IN" },
-                            { key: "REGULAR", value: "REGULAR" },
-                          ]}
-                          error={!!error}
-                          helperText={error?.message}
-                        />
-                      )}
-                    /> */}
                   <Grid item xs={12} sm={6} md={4} lg={4} textAlign="center">
                     <Controller
                       name="AppointType"
@@ -1248,7 +1190,6 @@ export default function BinLocationMaster() {
                     />
                   </Grid>
 
-                  {/* </Grid> */}
                   <Grid item xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
                     <Controller
                       name="OrderSubType"
@@ -1293,22 +1234,6 @@ export default function BinLocationMaster() {
                   </Grid>
 
                   <Grid item xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
-                    {/* <Controller
-                      name="Vehicle"
-                      control={control}
-                      rules={{ required: "Card Name is Required" }}
-                      render={({ field, fieldState: { error } }) => (
-                        <InputTextField
-                          label="SELECTED VEHICLE"
-                          type="text"
-                          value={`${getValues("Year")} - ${getValues("Make")} - ${getValues("Model")}`}
-                          readOnly={true}
-                          {...field}
-                          error={!!error}
-                          helperText={error ? error.message : null}
-                        />
-                      )}
-                    /> */}
                     <Controller
                       name="Vehicle"
                       control={control}
@@ -1331,40 +1256,6 @@ export default function BinLocationMaster() {
                     />
                   </Grid>
                   <Grid item xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
-                    {/* <Controller
-                      name="CardName"
-                      control={control}
-                      rules={{ required: "Card Name is Required" }}
-                      render={({ field, fieldState: { error } }) => (
-                        <InputTextField
-                          label="APPOINTMENT DATE"
-                          type="text"
-                          readOnly={true}
-                          {...field}
-                          error={!!error}
-                          helperText={error ? error.message : null}
-                        />
-                      )}
-                    /> */}
-                    {/* <Controller
-                      name="AppointDate"
-                      control={control}
-                      rules={{ required: "Date is Required" }}
-                      render={({ field, fieldState: { error } }) => (
-                        <SelectedDatePickerField
-                          label="APPOINTMENT DATE"
-                          name={field.name}
-                          value={field.value ? dayjs(field.value) : undefined}
-                          minDate={getValues("DocDate")}
-                          onChange={(date) =>
-                            setValue("AppointDate", date, {
-                              shouldDirty: true,
-                            })
-                          }
-                          //   disabled={!getValues("DocDate") || isFieldDisabled}
-                          error={!!error}
-                          helperText={error ? error.message : null}
-                        /> */}
                     <Controller
                       name="AppointDate"
                       control={control}
@@ -1386,102 +1277,8 @@ export default function BinLocationMaster() {
                       )}
                     />
                   </Grid>
-                  {/* <Grid item xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
-                    <Controller
-                      name="AppointTimeTo"
-                      control={control}
-                      rules={{ required: "Time is required" }}
-                      render={({ field, fieldState: { error } }) => (
-                        <InputTextField
-                          {...field}
-                          label="FROM"
-                          type="time"
-                          InputLabelProps={{ shrink: true }}
-                          error={!!error}
-                          helperText={error ? error.message : null}
-                        />
-                      )}
-                    />
-                  </Grid> */}
-                  <Grid item xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
-                    {/* <LocalizationProvider dateAdapter={AdapterDayjs}>
-                      <Controller
-                        name="AppointTimeTo"
-                        control={control}
-                        rules={{ required: "Time is required" }}
-                        render={({ field, fieldState: { error } }) => (
-                          <TimePicker
-                            label="FROM"
-                            ampm={true}
-                            timeSteps={{ minutes: 30 }}
-                            value={
-                              field.value ? dayjs(field.value, "HH:mm") : null
-                            }
-                            onChange={(newValue) => {
-                              field.onChange(
-                                newValue ? newValue.format("HH:mm") : "",
-                              );
-                            }}
-                            shouldDisableTime={(value, view) => {
-                              if (view === "hours") {
-                                const hour = value.hour();
-                                return hour < 8 || hour > 20;
-                              }
-                              return false;
-                            }}
-                            slotProps={{
-                              textField: {
-                                size: "small",
-                                fullWidth: true,
-                                error: !!error,
-                                helperText: error?.message,
-                              },
-                            }}
-                          />
-                        )}
-                      />
-                    </LocalizationProvider> */}
 
-                    {/* <LocalizationProvider dateAdapter={AdapterDayjs}>
-                      <Controller
-                        name="AppointTimeTo"
-                        control={control}
-                        rules={{ required: "Time is required" }}
-                        render={({ field, fieldState: { error } }) => (
-                          <TimePicker
-                            label="FROM"
-                            ampm
-                            timeSteps={{ minutes: 30 }}
-                            value={
-                              field.value ? dayjs(field.value, "HH:mm") : null
-                            }
-                            onChange={(newValue) =>
-                              field.onChange(
-                                newValue ? newValue.format("HH:mm") : "",
-                              )
-                            }
-                            shouldDisableTime={(value, view) => {
-                              if (view === "hours") {
-                                const hour = value.hour();
-                                return hour < 8 || hour > 20;
-                              }
-                              if (view === "minutes") {
-                                if (value.hour() === 20 && value.minute() > 0)
-                                  return true;
-                              }
-                              return false;
-                            }}
-                            slotProps={{
-                              textField: {
-                                size: "small",
-                                error: !!error,
-                                helperText: error?.message,
-                              },
-                            }}
-                          />
-                        )}
-                      />
-                    </LocalizationProvider> */}
+                  <Grid item xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                       <Controller
                         name="AppointTimeFrom"
@@ -1506,26 +1303,19 @@ export default function BinLocationMaster() {
                               const hour = value.hour();
                               const minute = value.minute();
 
-                              // 🔴 STRICT HOURS CONTROL
                               if (view === "hours") {
-                                // Allow only 8AM to 8PM
                                 if (hour < 8 || hour > 20) return true;
 
-                                // If today → block past hours
                                 if (isToday && hour < now.hour()) return true;
 
                                 return false;
                               }
 
-                              // 🔴 STRICT MINUTES CONTROL
                               if (view === "minutes") {
-                                // Only 0 & 30 allowed
                                 if (minute !== 0 && minute !== 30) return true;
 
-                                // Block anything after 8:00 PM
                                 if (hour === 20 && minute > 0) return true;
 
-                                // If today → block past minutes
                                 if (isToday) {
                                   if (hour < now.hour()) return true;
 

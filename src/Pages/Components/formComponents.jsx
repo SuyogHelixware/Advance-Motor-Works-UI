@@ -20,7 +20,11 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { DatePicker, LocalizationProvider, TimePicker as MuiTimePicker } from "@mui/x-date-pickers";
+import {
+  DatePicker,
+  LocalizationProvider,
+  TimePicker as MuiTimePicker,
+} from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import TableViewIcon from "@mui/icons-material/TableView";
 import ViewListIcon from "@mui/icons-material/ViewList";
@@ -68,7 +72,7 @@ export const SmallInputSelectTextField = forwardRef(
       disabled,
       ...props
     },
-    ref
+    ref,
   ) => {
     const menuProps = {
       PaperProps: {
@@ -121,7 +125,7 @@ export const SmallInputSelectTextField = forwardRef(
         {helperText && <FormHelperText>{helperText}</FormHelperText>}
       </FormControl>
     );
-  }
+  },
 );
 export const SmallInputFields = forwardRef((props, ref) => {
   return (
@@ -364,11 +368,13 @@ export function InputDatePickerFields(props) {
           onChange={props.onChange}
           format="DD-MM-YYYY"
           readOnly={props.disabled}
-          sx={{ width: "100%", maxWidth: 220 , 
-    //         borderRadius: 10,
-    // transition: "all 0.3s",
-    //  backgroundColor: theme.palette.background.paper, 
-    }}
+          sx={{
+            width: "100%",
+            maxWidth: 220,
+            //         borderRadius: 10,
+            // transition: "all 0.3s",
+            //  backgroundColor: theme.palette.background.paper,
+          }}
           minDate={props.minDate}
           slotProps={{
             textField: {
@@ -382,7 +388,6 @@ export function InputDatePickerFields(props) {
     </>
   );
 }
-
 
 export function InputDatePickermodelFields(props) {
   return (
@@ -612,7 +617,7 @@ export const InputTextSearchField = forwardRef(
         />
       </>
     );
-  }
+  },
 );
 export const InputTextFieldCell = React.memo(function InputTextFieldCell({
   field,
@@ -622,8 +627,6 @@ export const InputTextFieldCell = React.memo(function InputTextFieldCell({
   readOnly,
   disabled,
   ...props
-
-
 }) {
   return (
     <InputTextField
@@ -631,21 +634,20 @@ export const InputTextFieldCell = React.memo(function InputTextFieldCell({
       type="text"
       disabled={row.Status === "0"}
       onChange={(e) => {
-        field.onChange(e.target.value);      // instant UI update
-        onValueChange(e, row);               // debounced calculation
+        field.onChange(e.target.value); // instant UI update
+        onValueChange(e, row); // debounced calculation
       }}
       onBlur={(e) => {
-  const v = parseFloat(e.target.value || 0).toFixed(2);
-  field.onChange(v);
-}}
-          inputProps={{
-              step: "0.01",  
-          ...inputProps,
-          readOnly,
-          disabled,
-        }}
-       {...props}
-
+        const v = parseFloat(e.target.value || 0).toFixed(2);
+        field.onChange(v);
+      }}
+      inputProps={{
+        step: "0.01",
+        ...inputProps,
+        readOnly,
+        disabled,
+      }}
+      {...props}
     />
   );
 });
@@ -684,7 +686,6 @@ export const InputTextFieldCell = React.memo(function InputTextFieldCell({
 //     );
 //   }
 // );
-
 
 // export const InputTextFieldCell = React.memo(function InputTextFieldCell({
 //   value,
@@ -777,9 +778,8 @@ export const InputTextField = forwardRef(
       inputProps,
       ...props
     },
-    ref
+    ref,
   ) => {
-    
     return (
       <TextField
         label={label}
@@ -807,7 +807,7 @@ export const InputTextField = forwardRef(
         }}
       />
     );
-  }
+  },
 );
 export const InputTextFieldLarge = forwardRef(
   (
@@ -822,7 +822,7 @@ export const InputTextFieldLarge = forwardRef(
       sx = {}, // ✅ Accept sx from parent
       ...props
     },
-    ref
+    ref,
   ) => {
     return (
       <TextField
@@ -852,7 +852,7 @@ export const InputTextFieldLarge = forwardRef(
         }}
       />
     );
-  }
+  },
 );
 
 export const ModelInputText = forwardRef(
@@ -870,7 +870,7 @@ export const ModelInputText = forwardRef(
       inputProps,
       ...props
     },
-    ref
+    ref,
   ) => {
     return (
       <TextField
@@ -905,7 +905,7 @@ export const ModelInputText = forwardRef(
         }}
       />
     );
-  }
+  },
 );
 
 export const SmallInputTextField = forwardRef(
@@ -921,7 +921,7 @@ export const SmallInputTextField = forwardRef(
       InputProps = {},
       ...props
     },
-    ref
+    ref,
   ) => {
     return (
       <TextField
@@ -955,7 +955,7 @@ export const SmallInputTextField = forwardRef(
         }}
       />
     );
-  }
+  },
 );
 
 export const InputTextArea = forwardRef(
@@ -984,7 +984,7 @@ export const InputTextArea = forwardRef(
         />
       </>
     );
-  }
+  },
 );
 export const InputMultipleSelectTextField = forwardRef(
   (
@@ -999,7 +999,7 @@ export const InputMultipleSelectTextField = forwardRef(
       multiple = false,
       ...props
     },
-    ref
+    ref,
   ) => {
     return (
       <FormControl
@@ -1029,7 +1029,7 @@ export const InputMultipleSelectTextField = forwardRef(
         {helperText && <FormHelperText>{helperText}</FormHelperText>}
       </FormControl>
     );
-  }
+  },
 );
 
 const RHFIdAutocomplete = ({
@@ -1084,7 +1084,7 @@ export const InputSelectTextField = forwardRef(
       usedLevels = [],
       ...props
     },
-    ref
+    ref,
   ) => {
     const menuProps = {
       PaperProps: {
@@ -1137,7 +1137,7 @@ export const InputSelectTextField = forwardRef(
         {helperText && <FormHelperText>{helperText}</FormHelperText>}
       </FormControl>
     );
-  }
+  },
 );
 
 export const InputSearchSelectTextField = forwardRef(
@@ -1155,15 +1155,12 @@ export const InputSearchSelectTextField = forwardRef(
       usedLevels = [],
       ...props
     },
-    ref
+    ref,
   ) => {
     // 🔹 resolve selected option (NO null allowed)
-   const selectedOption = useMemo(() => {
-  return data.find(
-    (item) => String(item.key) === String(value)
-  ) ?? null;
-}, [data, value]);
-
+    const selectedOption = useMemo(() => {
+      return data.find((item) => String(item.key) === String(value)) ?? null;
+    }, [data, value]);
 
     return (
       <Autocomplete
@@ -1232,7 +1229,7 @@ export const InputSearchSelectTextField = forwardRef(
         {...props}
       />
     );
-  }
+  },
 );
 export const InputSearchableSelect = forwardRef(
   (
@@ -1247,14 +1244,10 @@ export const InputSearchableSelect = forwardRef(
       disabled,
       ...props
     },
-    ref
+    ref,
   ) => {
     const selectedOption = useMemo(() => {
-      return (
-        data.find(
-          (item) => String(item.key) === String(value)
-        ) ?? null
-      );
+      return data.find((item) => String(item.key) === String(value)) ?? null;
     }, [data, value]);
 
     return (
@@ -1265,16 +1258,12 @@ export const InputSearchableSelect = forwardRef(
           value={selectedOption}
           disabled={disabled}
           disableClearable
-
           /* 🔍 SEARCH LOGIC (EXPLICIT) */
           filterOptions={(options, { inputValue }) =>
             options.filter((option) =>
-              option.value
-                ?.toLowerCase()
-                .includes(inputValue.toLowerCase())
+              option.value?.toLowerCase().includes(inputValue.toLowerCase()),
             )
           }
-
           isOptionEqualToValue={(opt, val) =>
             String(opt.key) === String(val.key)
           }
@@ -1286,12 +1275,7 @@ export const InputSearchableSelect = forwardRef(
             });
           }}
           renderInput={(params) => (
-            <TextField
-              {...params}
-              label={label}
-              size="small"
-              error={!!error}
-            />
+            <TextField {...params} label={label} size="small" error={!!error} />
           )}
           slotProps={{
             popper: {
@@ -1306,12 +1290,10 @@ export const InputSearchableSelect = forwardRef(
           {...props}
         />
 
-        {error && (
-          <FormHelperText>{helperText}</FormHelperText>
-        )}
+        {error && <FormHelperText>{helperText}</FormHelperText>}
       </FormControl>
     );
-  }
+  },
 );
 export const MultiSelectTextField = forwardRef(
   ({ label, error, data, value = [], onChange, helperText, disabled }, ref) => {
@@ -1374,7 +1356,7 @@ export const MultiSelectTextField = forwardRef(
         {helperText && <FormHelperText>{helperText}</FormHelperText>}
       </FormControl>
     );
-  }
+  },
 );
 export const InputSelectTextField1 = forwardRef(
   (
@@ -1392,7 +1374,7 @@ export const InputSelectTextField1 = forwardRef(
       sx = {},
       ...props
     },
-    ref
+    ref,
   ) => {
     const [anchorEl, setAnchorEl] = useState(null);
     const [search, setSearch] = useState("");
@@ -1403,8 +1385,8 @@ export const InputSelectTextField1 = forwardRef(
         data.filter((item) =>
           (item.label || item.value || "")
             .toLowerCase()
-            .includes(search.toLowerCase())
-        )
+            .includes(search.toLowerCase()),
+        ),
       );
     }, [search, data]);
 
@@ -1491,7 +1473,7 @@ export const InputSelectTextField1 = forwardRef(
         </Menu>
       </Box>
     );
-  }
+  },
 );
 export const InputSelectTextFieldLarge = forwardRef(
   (
@@ -1509,7 +1491,7 @@ export const InputSelectTextFieldLarge = forwardRef(
       sx = {},
       ...props
     },
-    ref
+    ref,
   ) => {
     const menuProps = {
       PaperProps: {
@@ -1559,7 +1541,7 @@ export const InputSelectTextFieldLarge = forwardRef(
         {helperText && <FormHelperText>{helperText}</FormHelperText>}
       </FormControl>
     );
-  }
+  },
 );
 export const InputDatePickerField = forwardRef(
   (
@@ -1574,7 +1556,7 @@ export const InputDatePickerField = forwardRef(
       readOnly,
       ...props
     },
-    ref
+    ref,
   ) => {
     return (
       <FormControl size="small" error={error} {...props}>
@@ -1599,18 +1581,21 @@ export const InputDatePickerField = forwardRef(
                 readOnly: disabled || readOnly,
                 inputRef: ref,
               },
+              InputProps: {
+                readOnly: readOnly || disabled,
+              },
             }}
           />
         </LocalizationProvider>
         {helperText && <FormHelperText>{helperText}</FormHelperText>}
       </FormControl>
     );
-  }
+  },
 );
 export const InputTimePickerField = forwardRef(
   (
     { label, error, helperText, onChange, value, disabled, readOnly, ...props },
-    ref
+    ref,
   ) => {
     const theme = useTheme();
     const isDark = theme.palette.mode === "dark";
@@ -1640,7 +1625,7 @@ export const InputTimePickerField = forwardRef(
         )}
       </FormControl>
     );
-  }
+  },
 );
 
 export const SelectedDatePickerField = forwardRef(
@@ -1658,7 +1643,7 @@ export const SelectedDatePickerField = forwardRef(
       shouldDisableDate,
       ...props
     },
-    ref
+    ref,
   ) => {
     // Ensure `value` is a valid `dayjs` object or `null`
     const parsedValue = value ? dayjs(value) : null;
@@ -1702,7 +1687,7 @@ export const SelectedDatePickerField = forwardRef(
         {helperText && <FormHelperText>{helperText}</FormHelperText>}
       </FormControl>
     );
-  }
+  },
 );
 export const ModelSelectedDatePickerField = forwardRef(
   (
@@ -1718,7 +1703,7 @@ export const ModelSelectedDatePickerField = forwardRef(
       shouldDisableDate,
       ...props
     },
-    ref
+    ref,
   ) => {
     // Ensure `value` is a valid `dayjs` object or `null`
     const parsedValue = value ? dayjs(value) : null;
@@ -1756,7 +1741,7 @@ export const ModelSelectedDatePickerField = forwardRef(
         {helperText && <FormHelperText>{helperText}</FormHelperText>}
       </FormControl>
     );
-  }
+  },
 );
 export const SelectedYearPickerField = forwardRef(
   (
@@ -1771,7 +1756,7 @@ export const SelectedYearPickerField = forwardRef(
       readOnly,
       ...props
     },
-    ref
+    ref,
   ) => {
     // Ensure the value is treated as a valid year; if the year is invalid (e.g., 0), return null
     const parsedValue =
@@ -1808,7 +1793,7 @@ export const SelectedYearPickerField = forwardRef(
         {helperText && <FormHelperText>{helperText}</FormHelperText>}
       </FormControl>
     );
-  }
+  },
 );
 
 export const RadioButtonsField = forwardRef(
@@ -1840,7 +1825,7 @@ export const RadioButtonsField = forwardRef(
         />
       </FormControl>
     );
-  }
+  },
 );
 
 export const AutomCompleteField = forwardRef(
@@ -1856,7 +1841,7 @@ export const AutomCompleteField = forwardRef(
       onScrollBottom,
       onInputChange,
     },
-    ref
+    ref,
   ) => {
     // Find the selected option based on the value (DocEntry)
     const selectedOption =
@@ -1931,7 +1916,7 @@ export const AutomCompleteField = forwardRef(
         // )}
       />
     );
-  }
+  },
 );
 
 export const InputLargeTextField = forwardRef(
@@ -1960,7 +1945,7 @@ export const InputLargeTextField = forwardRef(
         />
       </>
     );
-  }
+  },
 );
 export const ModelInputSelectTextField = forwardRef(
   ({ label, error, data, helperText, value, name, ...props }, ref) => {
@@ -2005,7 +1990,7 @@ export const ModelInputSelectTextField = forwardRef(
         {helperText && <FormHelperText>{helperText}</FormHelperText>}
       </FormControl>
     );
-  }
+  },
 );
 export const ModelInputTextField = forwardRef(
   (
@@ -2021,7 +2006,7 @@ export const ModelInputTextField = forwardRef(
       inputProps,
       ...props
     },
-    ref
+    ref,
   ) => {
     return (
       <TextField
@@ -2052,26 +2037,26 @@ export const ModelInputTextField = forwardRef(
         }}
       />
     );
-  }
+  },
 );
 export function InputTimePicker(props) {
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
-    <MuiTimePicker
-      label={props.label}
-      value={props.value}
-      onChange={props.onChange}
-      disabled={props.disabled}
-      readOnly={props.readOnly}
-      slotProps={{
-        textField: {
-          size: "small",
-          error: props.error,
-          helperText: props.helperText,
-          sx: { width: "100%", maxWidth: 220 },
-        },
-      }}
-    />
+      <MuiTimePicker
+        label={props.label}
+        value={props.value}
+        onChange={props.onChange}
+        disabled={props.disabled}
+        readOnly={props.readOnly}
+        slotProps={{
+          textField: {
+            size: "small",
+            error: props.error,
+            helperText: props.helperText,
+            sx: { width: "100%", maxWidth: 220 },
+          },
+        }}
+      />
     </LocalizationProvider>
   );
 }

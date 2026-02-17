@@ -32,12 +32,13 @@ import {
   InputTextAreaFields,
   InputTextSearchButton,
 } from "../Components/formComponents";
-import { SearchBPModel } from "../Components/SearchModel";
+import SearchModel from "../Components/SearchModel";
 import usePermissions from "../Components/usePermissions";
+import apiClient from "../../services/apiClient";
 
 export default function MaterialRequest() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [tab, settab] = useState("1");
+  const [tab, settab] = useState("0");
   const [getListData, setGetListData] = useState([]);
   const [getListPage, setGetListPage] = useState(0);
   const [hasMoreGetList, setHasMoreGetList] = useState(true);
@@ -45,22 +46,18 @@ export default function MaterialRequest() {
   const [getListSearching, setGetListSearching] = useState(false);
   const [searchmodelOpen, setSearchmodelOpen] = useState(false);
   const timeoutRef = useRef(null);
-  const [DocEntry, setDocEntry] = useState("");
-  const [PrintData, setPrintData] = useState([]);
 
-  const [oldOpenData, setSelectData] = useState(null);
   const [apiloading, setapiloading] = useState(false);
-  let [ok, setok] = useState("OK");
+
   const [SaveUpdateName, setSaveUpdateName] = useState("SAVE");
   const perms = usePermissions(133);
-  const [clearCache, setClearCache] = useState(false);
-
+  //=========================================open List State End================================================================
   const [openListData, setOpenListData] = useState([]);
   const [openListPage, setOpenListPage] = useState(0);
   const [hasMoreOpen, setHasMoreOpen] = useState(true);
   const [openListquery, setOpenListQuery] = useState("");
   const [openListSearching, setOpenListSearching] = useState(false);
-  //=========================================open List State End================================================================
+
   //=====================================closed List State====================================================================
   const [closedListData, setClosedListData] = useState([]);
   const [closedListPage, setClosedListPage] = useState(0);
@@ -94,13 +91,10 @@ export default function MaterialRequest() {
     getValues,
     setValue,
     watch,
-    clearErrors,
-    setError,
     formState: { errors },
   } = useForm({
     defaultValues: initial,
   });
-  const { isDirty } = useFormState({ control });
 
   const allFormData = getValues();
 
@@ -115,107 +109,78 @@ export default function MaterialRequest() {
     setSidebarOpen(!sidebarOpen);
   };
 
-  useEffect(() => {
-    // const fetchPrintData = async () => {
-    //   try {
-    //     const { data: dataPrint } = await apiClient.get(
-    //       `/ReportLayout/GetByTransId/22`,
-    //     );
-    //     if (dataPrint.success) {
-    //       const OlinesDataPrint = dataPrint.values.oLines;
-    //       setPrintData(OlinesDataPrint);
-    //     } else {
-    //       Swal.fire({
-    //         text: dataPrint.message,
-    //         icon: "question",
-    //         confirmButtonText: "YES",
-    //       });
-    //     }
-    //   } catch (err) {
-    //     console.log(err);
-    //   }
-    // };
-
-    // fetchPrintData(); // runs once
-  }, []);
-
   const oLines = useWatch({ control, name: "oLines" });
 
   const onSelectBusinessPartner = (DocEntry) => {
     const selectedBP = getListData.find((item) => item.DocEntry === DocEntry);
     if (!selectedBP) return;
 
-    setValue("RequestDate", dayjs());
-    setValue("VehInwardNo", selectedBP.DocNum || "");
-    setValue("JobWorkAt", selectedBP.JobWorkAt || "");
-    setValue("RegistrationNo", selectedBP.RegistrationNo || "");
-    setValue("OrderNo", selectedBP.OrderNo || "");
-    setValue("JobRemarks", selectedBP.JobWorkDetails || "");
-    setValue("RequestNo", selectedBP.RequestNo || "");
-    setValue("OrderDocEntry", selectedBP.OrderDocEntry || "");
-    setValue("VehInwardDocEntry", selectedBP.DocEntry || "");
-    setValue("TotalItems", selectedBP?.oLines?.length);
-
-    setValue(
-      "oLines",
-      (selectedBP.oLines || []).map((item, index) => ({
+    // setValue("RequestDate", dayjs());
+    // setValue("VehInwardNo", selectedBP.DocNum || "");
+    // setValue("JobWorkAt", selectedBP.JobWorkAt || "");
+    // setValue("RegistrationNo", selectedBP.RegistrationNo || "");
+    // setValue("OrderNo", selectedBP.OrderNo || "");
+    // setValue("JobRemarks", selectedBP.JobWorkDetails || "");
+    // setValue("RequestNo", selectedBP.RequestNo || "");
+    // setValue("OrderDocEntry", selectedBP.OrderDocEntry || "");
+    // setValue("VehInwardDocEntry", selectedBP.DocEntry || "");
+    // setValue("TotalItems", selectedBP?.oLines?.length);
+    reset({
+      ...selectedBP,
+      RequestDate: dayjs(),
+      VehInwardNo: selectedBP.DocNum,
+      JobRemarks: selectedBP.JobWorkDetails,
+      VehInwardDocEntry: selectedBP.DocEntry,
+      TotalItems: selectedBP?.oLines?.length || 0,
+      oLines: (selectedBP.oLines || []).map((item, index) => ({
         ItemCode: item.ItemCode,
-        ItemName: item.ItemName,
-        WHSCode: item.WHSCode,
-        AvailQty: item.AvailQty,
         IssueQuantity: "0",
         AppointmentQty: item.Quantity,
         ReqQuantity: item.Quantity,
       })),
-    );
+    });
 
     SearchModelClose();
   };
 
   const fetchAndSetData = async (DocEntry) => {
     try {
-      const url = `${BASE_URL}/MatReq/${DocEntry}`;
-      const response = await fetch(url);
-      const data = await response.json();
+      const res = await apiClient.get("/MatReq", {
+        params: { DocEntry },
+      });
 
-      if (data.success && data.values && data.values.length > 0) {
-        const item = data.values[0];
+      const item = res.data?.values;
 
-        const transformed = {
-          JobCardNo: item.JobCardNo,
-          RegistrationNo: item.RegistrationNo,
-          VehInwardNo: item.VehInwardNo,
-          VehInwardDocEntry: item.VehInwardDocEntry,
-          RequestNo: item.DocNum,
-          RequestDate: item.RequestDate ? dayjs(item.RequestDate) : dayjs(),
-          OrderNo: item.OrderNo,
-          OrderDocEntry: item.OrderDocEntry,
-          JobWorkAt: item.JobWorkAt,
-          // JobWorkDetails: item.ReqRemarks,
-          TotalItems: item.oLines?.length || 0,
-          RequestedBy: item.RequestBy,
-          oLines: (item.oLines || []).map((line) => ({
-            ItemCode: line.ItemCode,
-            ItemName: line.ItemName,
-            WHSCode: line.WHSCode,
-            AvailQty: line.AvailQty,
-            ReqQuantity: line.ReqQuantity,
-            AppointmentQty: line.AppointmentQty,
-            IssueQuantity: line.IssueQuantity,
-          })),
-        };
+      const transformed = {
+        JobCardNo: item.JobCardNo,
+        RegistrationNo: item.RegistrationNo,
+        VehInwardNo: item.VehInwardNo,
+        VehInwardDocEntry: item.VehInwardDocEntry,
+        RequestNo: item.DocNum,
+        RequestDate: item.RequestDate ? dayjs(item.RequestDate) : dayjs(),
+        OrderNo: item.OrderNo,
+        OrderDocEntry: item.OrderDocEntry,
+        JobWorkAt: item.JobWorkAt,
+        TotalItems: item.oLines?.length || 0,
+        RequestedBy: item.RequestBy,
+        oLines: (item.oLines || []).map((line) => ({
+          ItemCode: line.ItemCode,
+          ItemName: line.ItemName,
+          WHSCode: line.WHSCode,
+          AvailQty: line.AvailQty,
+          ReqQuantity: line.ReqQuantity,
+          AppointmentQty: line.AppointmentQty,
+          IssueQuantity: line.IssueQuantity,
+        })),
+      };
 
-        reset(transformed);
-        setSelectData(DocEntry);
-        setDocEntry(DocEntry);
-        setSaveUpdateName("UPDATE");
-      } else {
-        console.warn("No values returned from API");
-      }
+      reset(transformed);
+      setSaveUpdateName("UPDATE");
     } catch (error) {
       console.error("Error fetching data:", error);
+
       Swal.fire({
-        text: "Failed to fetch data.",
+        text: error?.response?.data?.message || "Failed to fetch data.",
         icon: "error",
         confirmButtonText: "OK",
       });
@@ -295,40 +260,25 @@ export default function MaterialRequest() {
 
   const fetchOpenListData = async (pageNum, searchTerm = "") => {
     try {
-      let url = searchTerm
-        ? `${BASE_URL}/MatReq/search/${searchTerm}/1/${pageNum}`
-        : `${BASE_URL}/MatReq/pages/${pageNum}/1`;
-
-      const response = await fetch(url);
-      const data = await response.json(); // ✅ important
-
-      if (data.success) {
-        const newData = data.values || []; // fallback to empty array
-        setOpenListData((prev) =>
-          pageNum === 0 ? newData : [...prev, ...newData],
-        );
-
-        // Stop loader if less than page size returned
-        const pageSize = 20; // set your API page size here
-        setHasMoreOpen(newData.length === pageSize);
-
-        setOpenListPage(pageNum); // update current page
-      } else {
-        setHasMoreOpen(false); // stop loader if API fails
-        Swal.fire({
-          text: data.message,
-          icon: "question",
-          confirmButtonText: "YES",
-        });
-      }
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      setHasMoreOpen(false); // stop loader on error
-      Swal.fire({
-        text: error.message || error,
-        icon: "question",
-        confirmButtonText: "YES",
+      const res = await apiClient.get("/MatReq", {
+        params: {
+          Status: "1",
+          Page: pageNum,
+          SearchText: searchTerm || undefined,
+        },
       });
+
+      const newData = res.data.values || [];
+
+      setOpenListData((prev) =>
+        pageNum === 0 ? newData : [...prev, ...newData],
+      );
+
+      setHasMoreOpen(newData.length === 20);
+      setOpenListPage(pageNum);
+    } catch (err) {
+      setHasMoreOpen(false);
+      console.log(err);
     }
   };
 
@@ -336,7 +286,7 @@ export default function MaterialRequest() {
     setOpenListQuery(res);
     setOpenListSearching(true);
     setOpenListPage(0);
-    setOpenListData([]); // Clear current data
+    setOpenListData([]);
 
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -344,16 +294,14 @@ export default function MaterialRequest() {
     timeoutRef.current = setTimeout(() => {
       fetchOpenListData(0, res);
     }, 600);
-    // Fetch with search query
   };
 
-  // Clear search
   const handleOpenListClear = () => {
-    setOpenListQuery(""); // Clear searFullAddressch input
-    setOpenListSearching(false); // Reset search state
-    setOpenListPage(0); // Reset page count
-    setOpenListData([]); // Clear data
-    fetchOpenListData(0); // Fetch first page without search
+    setOpenListQuery("");
+    setOpenListSearching(false);
+    setOpenListPage(0);
+    setOpenListData([]);
+    fetchOpenListData(0);
   };
 
   const fetchMoreOpenListData = () => {
@@ -361,39 +309,33 @@ export default function MaterialRequest() {
     setOpenListPage((prev) => prev + 1);
   };
 
-  // Initial fetch
   useEffect(() => {
     fetchOpenListData(0);
   }, []);
 
   const fetchClosedListData = async (pageNum, searchTerm = "") => {
     try {
-      let url = searchTerm
-        ? `${BASE_URL}/MatReq/search/${searchTerm}/0/${pageNum}`
-        : `${BASE_URL}/MatReq/pages/${pageNum}/0`;
+      const res = await apiClient.get("/MatReq", {
+        params: {
+          Status: "0",
+          Page: pageNum,
+          SearchText: searchTerm || undefined,
+        },
+      });
 
-      const response = await fetch(url);
-      const data = await response.json();
+      const newData = res.data.values || [];
 
-      if (data.success) {
-        const newData = data.values;
-        setHasMoreClosed(newData.length === 20);
-        setClosedListData((prev) =>
-          pageNum === 0 ? newData : [...prev, ...newData],
-        );
-      } else {
-        setHasMoreClosed(false);
-        Swal.fire({
-          text: data.message,
-          icon: "question",
-          confirmButtonText: "YES",
-        });
-      }
+      setClosedListData((prev) =>
+        pageNum === 0 ? newData : [...prev, ...newData],
+      );
+
+      setHasMoreClosed(newData.length === 20);
     } catch (error) {
       console.error("Error fetching data:", error);
       setHasMoreClosed(false);
+
       Swal.fire({
-        text: error.message || error,
+        text: error?.response?.data?.message || error.message,
         icon: "question",
         confirmButtonText: "YES",
       });
@@ -404,7 +346,7 @@ export default function MaterialRequest() {
     setClosedListQuery(res);
     setClosedListSearching(true);
     setClosedListPage(0);
-    setClosedListData([]); // Clear current data
+    setClosedListData([]);
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
@@ -414,13 +356,12 @@ export default function MaterialRequest() {
     }, 600);
   };
 
-  // Clear search
   const handleClosedListClear = () => {
-    setClosedListQuery(""); // Clear search input
-    setClosedListSearching(false); // Reset search state
-    setClosedListPage(0); // Reset page count
-    setClosedListData([]); // Clear data
-    fetchClosedListData(0); // Fetch first page without search
+    setClosedListQuery("");
+    setClosedListSearching(false);
+    setClosedListPage(0);
+    setClosedListData([]);
+    fetchClosedListData(0);
   };
 
   const fetchMoreClosedListData = () => {
@@ -431,7 +372,6 @@ export default function MaterialRequest() {
     setClosedListPage((prev) => prev + 1);
   };
 
-  // Initial fetch
   useEffect(() => {
     fetchClosedListData(0);
   }, []);
@@ -439,7 +379,7 @@ export default function MaterialRequest() {
   const tabData = [
     {
       value: "0",
-      label: "Open",
+      label: "ACTIVE",
       data: openListData,
       query: openListquery,
       hasMore: hasMoreOpen,
@@ -449,7 +389,7 @@ export default function MaterialRequest() {
     },
     {
       value: "1",
-      label: "Closed",
+      label: "INACTIVE",
       data: closedListData,
       query: closedListquery,
       hasMore: hasMoreClosed,
@@ -602,7 +542,7 @@ export default function MaterialRequest() {
                           subtitle={item.DocNum}
                           description={item.PhoneNumber1}
                           searchResult={query}
-                          isSelected={oldOpenData === item.DocEntry}
+                          isSelected={watch("DocEntry") === item.DocEntry}
                           onClick={() =>
                             setOldOpenData(
                               item.DocEntry,
@@ -627,29 +567,23 @@ export default function MaterialRequest() {
 
   const fetchGetListData = async (pageNum, searchTerm = "") => {
     try {
-      let url = searchTerm
-        ? `${BASE_URL}/MatReq/GetListForCreate/Search/${searchTerm}/${pageNum}`
-        : `${BASE_URL}/MatReq/GetListForCreate/${pageNum}`;
+      const res = await apiClient.get("/MatReq/CopyFrom", {
+        params: {
+          Page: pageNum,
+          SearchText: searchTerm || undefined,
+        },
+      });
 
-      const response = await fetch(url);
-      const data = await response.json(); // <-- important
+      const newData = res.data.values || [];
 
-      if (data.success) {
-        const newData = data.values;
-        setHasMoreGetList(newData.length === 20); // update loader
-        setGetListData((prev) =>
-          pageNum === 0 ? newData : [...prev, ...newData],
-        );
-      } else {
-        Swal.fire({
-          text: data.message,
-          icon: "question",
-          confirmButtonText: "YES",
-        });
-      }
+      setGetListData((prev) =>
+        pageNum === 0 ? newData : [...prev, ...newData],
+      );
+
+      setHasMoreGetList(newData.length === 20);
     } catch (error) {
       Swal.fire({
-        text: error.message || error,
+        text: error?.response?.data?.message || error.message,
         icon: "question",
         confirmButtonText: "YES",
       });
@@ -691,18 +625,16 @@ export default function MaterialRequest() {
   const handleGetListClear = () => {
     setGetListQuery("");
     setGetListSearching(true);
-    setGetListPage(0); // Reset page to 0
-    setGetListData([]); // Clear current data
-    fetchGetListData(0); // Fetch first page without search
+    setGetListPage(0);
+    setGetListData([]);
+    fetchGetListData(0);
   };
 
   const ClearForm = () => {
     reset(initial);
     setSaveUpdateName("SAVE");
-    setDocEntry("");
     reset();
-    setSelectData([]);
-    setok("");
+
     setValue("VehInwardNo", "");
     setValue("JobRemarks", "");
   };
@@ -715,6 +647,7 @@ export default function MaterialRequest() {
       UserId,
       CreatedBy,
       JobCardNo: "",
+      DocDate: dayjs().format("YYYY-MM-DD"),
       OrderNo: data.OrderNo,
       RequestDate: dayjs(data.RequestDate).format("YYYY-MM-DD"),
       RequestBy: CreatedBy,
@@ -750,22 +683,13 @@ export default function MaterialRequest() {
     setapiloading(true);
 
     try {
-      const response = await fetch(`${BASE_URL}/MatReq`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(obj),
-      });
+      const res = await apiClient.post("/MatReq", obj);
 
-      const res = await response.json();
-
-      if (res.success) {
+      if (res.data?.success) {
         setOpenListData([]);
         fetchOpenListData(0);
         handleGetListClear();
         ClearForm();
-        // setClearCache(true);
 
         Swal.fire({
           text: "Material Request Accepted",
@@ -777,7 +701,7 @@ export default function MaterialRequest() {
       } else {
         Swal.fire({
           title: "Error!",
-          text: res.message,
+          text: res.data?.message || "Something went wrong",
           icon: "warning",
           confirmButtonText: "Ok",
         });
@@ -790,7 +714,7 @@ export default function MaterialRequest() {
         confirmButtonText: "Ok",
       });
     } finally {
-      setapiloading(false); // ✅ always stop loader
+      setapiloading(false);
     }
   };
 
@@ -804,8 +728,6 @@ export default function MaterialRequest() {
         component={"form"}
         onSubmit={handleSubmit(handleSubmitForm)}
       >
-        {/* Sidebar for larger screens */}
-
         <Grid
           container
           item
@@ -826,8 +748,6 @@ export default function MaterialRequest() {
           {sidebarContent}
         </Grid>
 
-        {/* User Creation Form Grid */}
-
         <Grid
           container
           item
@@ -836,11 +756,8 @@ export default function MaterialRequest() {
           sm={12}
           md={12}
           lg={9}
-          // component="form"
           position="relative"
         >
-          {/* Hamburger Menu for smaller screens */}
-
           <IconButton
             edge="start"
             color="inherit"
@@ -849,11 +766,9 @@ export default function MaterialRequest() {
             sx={{
               display: {
                 lg: "none",
-              }, // Show only on smaller screens
+              },
 
               position: "absolute",
-
-              // top: "10px",
 
               left: "10px",
             }}
@@ -937,7 +852,7 @@ export default function MaterialRequest() {
                           <InputTextSearchButton
                             label="INWARD NO"
                             readOnly={true}
-                            disabled={!!DocEntry}
+                            disabled={watch("DocEntry")}
                             onClick={() => {
                               OpenDailog();
                             }}
@@ -949,7 +864,7 @@ export default function MaterialRequest() {
                           />
                         )}
                       />
-                      <SearchBPModel
+                      <SearchModel
                         open={searchmodelOpen}
                         onClose={SearchModelClose}
                         onCancel={SearchModelClose}
@@ -960,6 +875,10 @@ export default function MaterialRequest() {
                         cardData={
                           <>
                             <InfiniteScroll
+                              style={{
+                                textAlign: "center",
+                                justifyContent: "center",
+                              }}
                               dataLength={getListData.length}
                               next={fetchMoreGetListData}
                               hasMore={hasMoreGetList}
@@ -1254,15 +1173,14 @@ export default function MaterialRequest() {
                   (SaveUpdateName !== "SAVE" && !perms.IsEdit) ||
                   allFormData.Status === "Closed"
                 }
-                colo
               >
                 {SaveUpdateName}
               </Button>
 
               <Button
                 disabled={SaveUpdateName === "SAVE"}
-                DocEntry={DocEntry}
-                PrintData={PrintData}
+                DocEntry={watch("DocEntry")}
+                PrintData={""}
                 variant="contained"
                 color="primary"
               >

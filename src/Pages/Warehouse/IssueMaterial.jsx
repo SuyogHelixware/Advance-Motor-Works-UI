@@ -1317,6 +1317,7 @@ export default function IssueMaterial() {
                       }}
                       render={({ field, fieldState: { error } }) => (
                         <InputDatePickerField
+                          redonly
                           label="REQUEST DATE"
                           name={field.name}
                           value={field.value ? dayjs(field.value) : undefined}
@@ -1339,6 +1340,7 @@ export default function IssueMaterial() {
                       }}
                       render={({ field, fieldState: { error } }) => (
                         <InputDatePickerField
+                          readOnly
                           label="Issue Date"
                           name={field.name}
                           value={field.value ? dayjs(field.value) : undefined}
