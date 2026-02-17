@@ -1230,13 +1230,47 @@ export default function Dashboard({ logout }) {
                 ""
               )}
               {allowedParentIds.includes(8) ? (
+                // <List>
+                //   <Link
+                //     to="Sales"
+                //     style={{
+                //       textDecoration: "none",
+                //       color: theme.palette.text.primary,
+                //       display: allowedParentIds.includes(8) ? "" : "none",
+                //     }}
+                //   >
+                //     <ListItem disablePadding sx={{ display: "block" }}>
+                //       <ListItemButton
+                //         sx={{
+                //           height: 30,
+                //           justifyContent: open ? "initial" : "center",
+                //           px: 0.5,
+                //         }}
+                //       >
+                //         <ListItemIcon
+                //           sx={{
+                //             minWidth: 0,
+                //             mr: open ? 3 : "auto",
+                //             justifyContent: "center",
+                //           }}
+                //         >
+                //           <ProductionQuantityLimitsIcon />
+                //         </ListItemIcon>
+                //         <ListItemText
+                //           primary={"SALES"}
+                //           sx={{ opacity: open ? 1 : 0, color: "black" }}
+                //         />
+                //       </ListItemButton>
+                //     </ListItem>
+                //   </Link>
+                // </List>
+
                 <List>
                   <Link
-                    to="Sales"
+                    to="ARsales"
                     style={{
                       textDecoration: "none",
                       color: theme.palette.text.primary,
-                      display: allowedParentIds.includes(8) ? "" : "none",
                     }}
                   >
                     <ListItem disablePadding sx={{ display: "block" }}>
@@ -1267,7 +1301,7 @@ export default function Dashboard({ logout }) {
               ) : (
                 ""
               )}
-              {allowedParentIds.includes(5) ? (
+              {/* {allowedParentIds.includes(5) ? (
                 <List>
                   <Link
                     to="banking"
@@ -1304,7 +1338,7 @@ export default function Dashboard({ logout }) {
                 </List>
               ) : (
                 ""
-              )}
+              )} */}
               {allowedParentIds.includes(6) ? (
                 <List>
                   <Link
@@ -1343,7 +1377,8 @@ export default function Dashboard({ logout }) {
               ) : (
                 ""
               )}
-              {allowedParentIds.includes(7) ? (
+
+              {/* {allowedParentIds.includes(7) ? (
                 <List>
                   <Link
                     to="Production"
@@ -1380,9 +1415,9 @@ export default function Dashboard({ logout }) {
                 </List>
               ) : (
                 ""
-              )}
+              )} */}
 
-              {allowedParentIds.includes(11) ? (
+              {/* {allowedParentIds.includes(11) ? (
                 <List>
                   <Link
                     to="Finance"
@@ -1418,41 +1453,8 @@ export default function Dashboard({ logout }) {
                 </List>
               ) : (
                 ""
-              )}
+              )} */}
               {/* ------------------------- */}
-              <List>
-                <Link
-                  to="ARsales"
-                  style={{
-                    textDecoration: "none",
-                    color: theme.palette.text.primary,
-                  }}
-                >
-                  <ListItem disablePadding sx={{ display: "block" }}>
-                    <ListItemButton
-                      sx={{
-                        height: 30,
-                        justifyContent: open ? "initial" : "center",
-                        px: 0.5,
-                      }}
-                    >
-                      <ListItemIcon
-                        sx={{
-                          minWidth: 0,
-                          mr: open ? 3 : "auto",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <ProductionQuantityLimitsIcon />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={"AR SALES"}
-                        sx={{ opacity: open ? 1 : 0 }}
-                      />
-                    </ListItemButton>
-                  </ListItem>
-                </Link>
-              </List>
 
               {/* <List>
               <Link

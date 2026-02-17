@@ -14,12 +14,13 @@ export default function WareHouse() {
       Count: 20,
       ReDirect: "material-return",
     },
-    {
-      id: "3",
-      Name: "BarCode Print",
-      Count: 20,
-      ReDirect: "BarCode",
-    },
+
+    // {
+    //   id: "3",
+    //   Name: "BarCode Print",
+    //   Count: 20,
+    //   ReDirect: "BarCode",
+    // },
   ];
 
   return (

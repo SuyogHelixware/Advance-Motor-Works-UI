@@ -95,7 +95,10 @@ import {
 import LogisticAddress from "../Components/LogisticAddress";
 import SerialOuttake from "../Components/OpenSerialGetCase";
 import PrintMenu from "../Components/PrintMenu";
-import SearchModel, { CopyFromSearchModel, SearchBPModel } from "../Components/SearchModel";
+import SearchModel, {
+  CopyFromSearchModel,
+  SearchBPModel,
+} from "../Components/SearchModel";
 import { getStatus } from "../Components/status";
 import TaxCategoryModel from "../Components/TaxCategoryModel";
 import TaxDatagridCellModel from "../Components/TaxDatagridCellModel";
@@ -442,7 +445,10 @@ export default function SalesInvoice() {
   const [DownPaymentRows, setDownPaymentRows] = useState([]);
   const [DownPaymentRecord, setDownPaymentRecord] = useState([]);
   const [loadingDownPayment, setLoadingDownpayment] = useState(false);
-  const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 20 });
+  const [paginationModel, setPaginationModel] = useState({
+    page: 0,
+    pageSize: 20,
+  });
   const [rowCount, setRowCount] = useState(0);
   const [searchText, setSearchText] = useState("");
   const downPaymentAbortRef = useRef(null);
@@ -743,7 +749,7 @@ export default function SalesInvoice() {
   const curSource = watch("CurSource");
   const DocRate = watch("DocRate");
   const currency = watch("Currency");
-   const CardCode=watch("CardCode");
+  const CardCode = watch("CardCode");
   const SysRate = watch("SysRate");
   const GroupNum = watch("GroupNum");
   const rawDate = watch("DocDate");
@@ -1091,7 +1097,9 @@ export default function SalesInvoice() {
       selectedAddress.State,
       selectedAddress.Zipcode,
       selectedAddress.Country,
-    ].filter(v => v?.trim()).join(", ");
+    ]
+      .filter((v) => v?.trim())
+      .join(", ");
     setValue("DfltAddress", DfltAddress || "");
     setValue("BlockS", selectedAddress.Address1);
     setValue("StreetS", selectedAddress.Address2);
@@ -1126,7 +1134,9 @@ export default function SalesInvoice() {
       selectedAddress.State,
       selectedAddress.Zipcode,
       selectedAddress.Country,
-    ].filter(v => v?.trim()).join(", ");
+    ]
+      .filter((v) => v?.trim())
+      .join(", ");
     setValue("Address", Address || "");
     setValue("BlockB", selectedAddress.Address1 || "");
     setValue("StreetB", selectedAddress.Address2 || "");
@@ -1154,7 +1164,9 @@ export default function SalesInvoice() {
       data.StateB,
       data.ZipCodeB,
       data.CountryB,
-    ].filter(v => v?.trim()).join(", ");
+    ]
+      .filter((v) => v?.trim())
+      .join(", ");
     setValue("Address", Address || "");
     setValue("BlockB", data.BlockB);
     setValue("StreetB", data.StreetB);
@@ -1195,7 +1207,9 @@ export default function SalesInvoice() {
         data.StateB,
         data.ZipCodeB,
         data.CountryB,
-      ].filter(v => v?.trim()).join(", ");
+      ]
+        .filter((v) => v?.trim())
+        .join(", ");
       setValue("DfltAddress", ShipToAddress || ""); // Set formatted address only
       setValue("BlockS", data.BlockB);
       setValue("StreetS", data.StreetB);
@@ -1386,53 +1400,54 @@ export default function SalesInvoice() {
   //   }
   // };
 
-   const fetchDownPaymentRows = useCallback(
-   async (page, pageSize, search = "") => {
-     // Abort previous request
-     if (downPaymentAbortRef.current) downPaymentAbortRef.current.abort();
-     const controller = new AbortController();
-     downPaymentAbortRef.current = controller;
- 
-     setLoadingDownpayment(true);
- 
-     try {
-       const res = await apiClient.get(
-         `/ARSalesDownPayment/FromUnsettledDoc/${CardCode}/${page}/${pageSize}`,
-         {
-          params: {
-         Currency: currency, // ✅ MUST be query param
-       ...(search && search.trim()
-         ? { SearchText: search.trim() }
-         : {}),
-     },
-           signal: controller.signal,
-         }
-       );
- 
-       const response = res.data;
-       if (response.success) {
-         // setDownPaymentRows(response.values || []);
+  const fetchDownPaymentRows = useCallback(
+    async (page, pageSize, search = "") => {
+      // Abort previous request
+      if (downPaymentAbortRef.current) downPaymentAbortRef.current.abort();
+      const controller = new AbortController();
+      downPaymentAbortRef.current = controller;
+
+      setLoadingDownpayment(true);
+
+      try {
+        const res = await apiClient.get(
+          `/ARSalesDownPayment/FromUnsettledDoc/${CardCode}/${page}/${pageSize}`,
+          {
+            params: {
+              Currency: currency, // ✅ MUST be query param
+              ...(search && search.trim() ? { SearchText: search.trim() } : {}),
+            },
+            signal: controller.signal,
+          },
+        );
+
+        const response = res.data;
+        if (response.success) {
+          // setDownPaymentRows(response.values || []);
           setDownPaymentRecord(response.values || []);
-         setRowCount(response.totalCount || 0); // Make sure your API returns total count
-       } else {
-         Swal.fire("Error!", response.message, "warning");
-       }
-     } catch (err) {
-       if (err.name !== "CanceledError" && err.name !== "AbortError") {
-         Swal.fire("Error!", err.message, "error");
-       }
-     } finally {
-       setLoadingDownpayment(false);
-     }
-   },
-   [CardCode, currency]
- );
- useEffect(() => {
-   if(!!CardCode){
-   fetchDownPaymentRows(paginationModel.page, paginationModel.pageSize, searchText);
- 
-   }
- }, [CardCode,paginationModel, searchText, fetchDownPaymentRows]); 
+          setRowCount(response.totalCount || 0); // Make sure your API returns total count
+        } else {
+          Swal.fire("Error!", response.message, "warning");
+        }
+      } catch (err) {
+        if (err.name !== "CanceledError" && err.name !== "AbortError") {
+          Swal.fire("Error!", err.message, "error");
+        }
+      } finally {
+        setLoadingDownpayment(false);
+      }
+    },
+    [CardCode, currency],
+  );
+  useEffect(() => {
+    if (!!CardCode) {
+      fetchDownPaymentRows(
+        paginationModel.page,
+        paginationModel.pageSize,
+        searchText,
+      );
+    }
+  }, [CardCode, paginationModel, searchText, fetchDownPaymentRows]);
   useEffect(() => {
     const rows = DownPaymentRecord.flatMap((item) => [
       {
@@ -1610,7 +1625,7 @@ export default function SalesInvoice() {
     if (isParent) {
       const headerNetAmt = parseFloat(newRow.NetAmtToDraw || 0);
       if (headerNetAmt > parseFloat(newRow.OpenNetAmt)) {
-        return oldRow; 
+        return oldRow;
       }
       updatedRows = updatedRows.map((r) => {
         if (r.id === newRow.id) {
@@ -4449,9 +4464,9 @@ export default function SalesInvoice() {
 
   // Initial fetch
   useEffect(() => {
-        if(searchmodelOpen===true){
-    fetchGetListData(0); 
-     }
+    if (searchmodelOpen === true) {
+      fetchGetListData(0);
+    }
   }, [searchmodelOpen]);
 
   const onSelectBusinessPartner = async (DocEntry) => {
@@ -4472,7 +4487,9 @@ export default function SalesInvoice() {
       selectedAddress.State,
       selectedAddress.Zipcode,
       selectedAddress.Country,
-    ].filter(v => v?.trim()).join(", ");
+    ]
+      .filter((v) => v?.trim())
+      .join(", ");
     setValue("DfltAddress", DfltAddress || "");
     setValue("BlockS", selectedAddress.Address1);
     setValue("StreetS", selectedAddress.Address2);
@@ -4493,7 +4510,9 @@ export default function SalesInvoice() {
       selectedBillToAddress.State,
       selectedBillToAddress.Zipcode,
       selectedBillToAddress.Country,
-    ].filter(v => v?.trim()).join(", ");;
+    ]
+      .filter((v) => v?.trim())
+      .join(", ");
 
     setValue("Address", DfltBillToAddress || "");
     setValue("BlockB", selectedBillToAddress.Address1);
@@ -4548,7 +4567,6 @@ export default function SalesInvoice() {
     setValue("oDPLines", []);
     // setDownPostingData([]);
     setSelectionDownpaymentModel([]);
-
 
     let cur =
       values.Currency === "AC" ? companyData.MainCurncy : values.Currency;
@@ -4674,7 +4692,6 @@ export default function SalesInvoice() {
   // }, []);
 
   // ---------------------------------------------------------------------------------------------
- 
 
   const baseType = watch("baseType");
 
@@ -4686,13 +4703,13 @@ export default function SalesInvoice() {
     onClear: handleGetListClearCopyFrom,
     fetchMore: fetchMoreGetListCopyFrom,
   } = useCopyFromList({
-    BasePoint:"/ARInvoiceV2",
+    BasePoint: "/ARInvoiceV2",
     open: openDialog,
     CardCode,
     baseType,
     type,
   });
- 
+
   const { DocSeries } = useDocumentSeries(
     "13",
     docDate,
@@ -9170,7 +9187,7 @@ export default function SalesInvoice() {
                     },
                   })}
                 /> */}
- <DataGridPremium
+                <DataGridPremium
                   rows={DownPaymentRows}
                   columns={DownPaymentColumn}
                   treeData
@@ -9199,24 +9216,25 @@ export default function SalesInvoice() {
                     }
                     return className;
                   }}
-                 
-     pagination
-  paginationMode="server"
-  rowCount={rowCount}
-  pageSizeOptions={[20, 50, 100]}
-  paginationModel={paginationModel}
-  onPaginationModelChange={setPaginationModel} 
-      slots={{ toolbar: GridToolbar }}
-  slotProps={{
-    toolbar: {
-      showQuickFilter: true,
-      quickFilterProps: { debounceMs: 500 },
-    },
-  }}
-  onFilterModelChange={(model) => {
-    const quickFilterValue = (model.quickFilterValues || []).join(" ");
-    setSearchText(quickFilterValue);
-  }}
+                  pagination
+                  paginationMode="server"
+                  rowCount={rowCount}
+                  pageSizeOptions={[20, 50, 100]}
+                  paginationModel={paginationModel}
+                  onPaginationModelChange={setPaginationModel}
+                  slots={{ toolbar: GridToolbar }}
+                  slotProps={{
+                    toolbar: {
+                      showQuickFilter: true,
+                      quickFilterProps: { debounceMs: 500 },
+                    },
+                  }}
+                  onFilterModelChange={(model) => {
+                    const quickFilterValue = (
+                      model.quickFilterValues || []
+                    ).join(" ");
+                    setSearchText(quickFilterValue);
+                  }}
                   sx={(theme) => ({
                     // "& .child-selected": {
                     //   backgroundColor:
@@ -9229,8 +9247,6 @@ export default function SalesInvoice() {
                       visibility: "hidden",
                     },
                   })}
-
-
                 />
                 {/* <DataGridPremium
                   rows={DownPaymentRows}
@@ -9890,7 +9906,7 @@ export default function SalesInvoice() {
                       open={searchmodelOpen}
                       onClose={SearchModelClose}
                       onCancel={SearchModelClose}
-                         title="Select CUSTOMER/Supplier"
+                      title="Select CUSTOMER/Supplier"
                       onChange={(e) => handleGetListSearch(e.target.value)}
                       value={getListquery}
                       onClickClear={handleGetListClear}
@@ -11016,7 +11032,14 @@ export default function SalesInvoice() {
                   {/* ------------------------------------------------------------------------------------------------------- */}
 
                   <Grid container>
-                    <Grid item md={4} lg={3} sm={6}  xs={12} textAlign={"center"}>
+                    <Grid
+                      item
+                      md={4}
+                      lg={3}
+                      sm={6}
+                      xs={12}
+                      textAlign={"center"}
+                    >
                       <Controller
                         name="SlpCode"
                         rules={{ required: "this field is required" }}
@@ -11153,7 +11176,14 @@ export default function SalesInvoice() {
                         )}
                       />
                     </Grid>
-                    <Grid item lg={3} md={4} sm={6}   xs={12} textAlign={"center"}>
+                    <Grid
+                      item
+                      lg={3}
+                      md={4}
+                      sm={6}
+                      xs={12}
+                      textAlign={"center"}
+                    >
                       <SmallInputTextField
                         label="TOTAL DP"
                         type="number"
@@ -11273,7 +11303,14 @@ export default function SalesInvoice() {
                         readOnly={true}
                       />
                     </Grid>
-                    <Grid item lg={3} md={4} sm={6}   xs={12} textAlign={"center"}>
+                    <Grid
+                      item
+                      lg={3}
+                      md={4}
+                      sm={6}
+                      xs={12}
+                      textAlign={"center"}
+                    >
                       <Controller
                         name="RoundDif"
                         // rules={{ required: "this field is required" }}
@@ -11323,7 +11360,14 @@ export default function SalesInvoice() {
                         )}
                       />
                     </Grid>
-                    <Grid item lg={3} md={4} sm={6}    xs={12} textAlign={"center"}>
+                    <Grid
+                      item
+                      lg={3}
+                      md={4}
+                      sm={6}
+                      xs={12}
+                      textAlign={"center"}
+                    >
                       <Controller
                         name="PaidToDate"
                         // rules={{ required: "This field is required" }}
@@ -11347,7 +11391,14 @@ export default function SalesInvoice() {
                         )}
                       />
                     </Grid>
-                    <Grid item lg={3} md={4} sm={6}   xs={12}  textAlign={"center"}>
+                    <Grid
+                      item
+                      lg={3}
+                      md={4}
+                      sm={6}
+                      xs={12}
+                      textAlign={"center"}
+                    >
                       {/* <Controller
                                        name="DueAmnt"
                                        // rules={{ required: "This field is required" }}
@@ -11374,7 +11425,7 @@ export default function SalesInvoice() {
                                      /> */}
                     </Grid>
 
-                    <Grid item xs={6} md={4} lg={3}  textAlign={"center"}>
+                    <Grid item xs={6} md={4} lg={3} textAlign={"center"}>
                       <Controller
                         name="Comments"
                         // rules={{ required: "This field is required" }}

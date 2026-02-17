@@ -12,18 +12,19 @@ import {
   InputAdornment,
   Tab,
   Tabs,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import TextField from "@mui/material/TextField";
 import { DataGrid } from "@mui/x-data-grid";
-import axios from "axios";
 import React, { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { BeatLoader } from "react-spinners";
 
 import CardComponent from "../Components/CardComponent";
+import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import {
   InputDatePickerField,
   InputSelectTextField,
@@ -38,6 +39,9 @@ import SearchModel from "../Components/SearchModel";
 import useAuth from "../../Routing/AuthContext";
 import Swal from "sweetalert2";
 import dayjs from "dayjs";
+import apiClient from "../../services/apiClient";
+import { useMemo } from "react";
+import { dataGridSx } from "../../Styles/dataGridStyles";
 
 export default function IssueMaterial() {
   const initialFormData = {
@@ -45,7 +49,6 @@ export default function IssueMaterial() {
     CardName: "",
     PhoneNumber1: "",
     DocNum: "",
-
     OrderDocEntry: "",
     DocEntry: "",
     DocDate: dayjs(undefined),
@@ -67,16 +70,16 @@ export default function IssueMaterial() {
     Status: "",
     RequestedBy: "",
   };
-  const { control, register, getValues, handleSubmit, reset } = useForm({
+  const { control, register, getValues, handleSubmit, reset, watch } = useForm({
     defaultValues: initialFormData,
   });
   const theme = useTheme();
   const { user } = useAuth();
-  const [openPosts, setOpenPosts] = useState([]); // State for Open posts
-  const [openSearchPosts, setOpenSearchPosts] = useState([]); // State for Open posts
-  const [closeSearchPosts, setCloseSearchPosts] = useState([]); // State for Open posts
+  const [openPosts, setOpenPosts] = useState([]);
+  const [openSearchPosts, setOpenSearchPosts] = useState([]);
+  const [closeSearchPosts, setCloseSearchPosts] = useState([]);
   const [closedPosts, setClosedPosts] = useState([]);
-  const [openPage, setOpenPage] = useState(0); // Pagination for Open posts
+  const [openPage, setOpenPage] = useState(0);
   const [closePage, setClosePage] = useState(0);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [tab, settab] = useState("0");
@@ -87,7 +90,7 @@ export default function IssueMaterial() {
   const [searchTextGetListForCreate, setsearchTextGetListForCreate] =
     useState("");
   const [getListData, setGetListData] = useState([]);
-  const [getListSearchData, setGetListSearchData] = useState([]); // State for Open posts
+  const [getListSearchData, setGetListSearchData] = useState([]);
   const [hasMoreGetListForCreate, setHasMoreGetListForCreate] = useState(true);
   const [getListPage, setGetListPage] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -95,7 +98,6 @@ export default function IssueMaterial() {
   const [barcodeItem, setBarcodeItem] = useState("");
   const [WMSStaff, setWMSStaff] = useState([]);
   const [oLines, setoLines] = useState([]);
-  // const watchShowAge = watch("JobWorkAt", "");
   const watchShowAge = getValues("JobWorkAt");
 
   useEffect(() => {
@@ -103,27 +105,16 @@ export default function IssueMaterial() {
     getAllCloseList();
     getListForCreate();
     getAllWMSStaffList();
-    console.log("=================test===================");
-    console.log(user);
-    console.log("====================================");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  //Toggle sidebar
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
-  // for Open Request
+  const gridSx = useMemo(() => dataGridSx(theme), [theme]);
+
   const getAllOpenList = () => {
-    axios
-      .request({
-        method: "get",
-        url: `${process.env.BASE_URL}/MatIssue/pages/0/1`,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
+    apiClient
+      .get("/MatIssue?Page=0&Status=1")
       .then((response) => {
         setOpenPosts(response.data.values);
 
@@ -136,97 +127,79 @@ export default function IssueMaterial() {
       });
   };
 
-  const getAllCloseList = () => {
-    axios
-      .request({
-        method: "get",
-        url: `${process.env.BASE_URL}/MatIssue/pages/0/0`,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-      .then((response) => {
-        setClosedPosts(response.data.values);
-        if (response.data.values.length < 0) {
-          setHasMoreClose(false);
-        }
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  };
+  const getAllCloseList = async () => {
+    try {
+      const response = await apiClient.get("/MatIssue?Page=0&Status=0");
 
-  const fetchMoreOpenListData = () => {
-    if (searchTextOpen === "") {
-      const page = openPage + 1;
-      axios
-        .request({
-          method: "get",
-          url: `${process.env.BASE_URL}/MatIssue/pages/${page}/1`,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        })
-        .then((response) => {
-          setOpenPosts((prevPosts) => [...prevPosts, ...response.data.values]);
-          setOpenPage(page);
-          if (response.data.values.length === 0) {
-            setHasMoreOpen(false);
-          }
-        })
-        .catch((error) => {
-          console.log(error);
-        });
-    } else {
-      const page = openPage + 1;
-      axios
-        .request({
-          method: "get",
-          url: `${process.env.BASE_URL}/matissue/search/${searchTextOpen}/0/${page}`,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        })
-        .then((response) => {
-          setOpenSearchPosts((prevPosts) => [
-            ...prevPosts,
-            ...response.data.values,
-          ]);
-          setOpenPage(page);
-          if (response.data.values.length === 0) {
-            setHasMoreOpen(false);
-          }
-        })
-        .catch((error) => {
-          console.log(error);
-        });
+      setClosedPosts(response.data.values);
+
+      if (response.data.values.length === 0) {
+        setHasMoreClose(false);
+      }
+    } catch (error) {
+      console.log(error);
     }
   };
 
-  const onHandleSearchOpen = (event) => {
-    const searchText = event.target.value;
-    setOpenSearchPosts([]);
-    setSearchTextOpen(searchText);
-    setOpenPage(0);
-    if (searchText !== "") {
-      axios
-        .request({
-          method: "get",
-          url: `${process.env.BASE_URL}/MatIssue/search/${searchText}/1/0`,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        })
-        .then((response) => {
-          setOpenSearchPosts(response.data.values);
+  const fetchMoreOpenListData = async () => {
+    try {
+      const page = openPage + 1;
+      const trimmedSearch = searchTextOpen?.trim() || "";
+      const cleanSearch = trimmedSearch
+        .replace(/[^a-zA-Z0-9 ]/g, "")
+        .replace(/\s+/g, " ");
 
-          if (response.data.values.length === 20) {
-            setHasMoreOpen(false);
-          }
-        })
-        .catch((error) => {
-          console.log(error);
-        });
+      let response;
+
+      if (cleanSearch === "") {
+        response = await apiClient.get(`/MatIssue?Page=${page}&Status=1`);
+
+        setOpenPosts((prev) => [...prev, ...response.data.values]);
+      } else {
+        response = await apiClient.get(
+          `/MatIssue?SearchText=${cleanSearch}&Status=1&Page=${page}`,
+        );
+
+        setOpenSearchPosts((prev) => [...prev, ...response.data.values]);
+      }
+
+      setOpenPage(page);
+
+      if (response.data.values.length === 0) {
+        setHasMoreOpen(false);
+      }
+    } catch (error) {
+      console.error("Fetch Open List Error:", error);
+    }
+  };
+
+  const onHandleSearchOpen = async (event) => {
+    try {
+      const rawValue = event.target.value || "";
+      const cleanSearch = rawValue
+        .trim()
+        .replace(/[^a-zA-Z0-9 ]/g, "")
+        .replace(/\s+/g, " ");
+
+      setOpenSearchPosts([]);
+      setSearchTextOpen(cleanSearch);
+      setOpenPage(0);
+
+      if (!cleanSearch) return;
+
+      const response = await apiClient.get(
+        `/MatIssue?SearchText=${cleanSearch}&Status=1&Page=0`,
+      );
+
+      setOpenSearchPosts(response.data.values);
+
+      if (response.data.values.length < 20) {
+        setHasMoreOpen(false);
+      } else {
+        setHasMoreOpen(true);
+      }
+    } catch (error) {
+      console.error("Search Open Error:", error);
     }
   };
 
@@ -241,11 +214,8 @@ export default function IssueMaterial() {
         timerProgressBar: true,
       });
     } else {
-      // Create a new array excluding the item at the specified index
       const updatedOLines = [...oLines];
       updatedOLines.splice(index, 1);
-
-      // Update the state with the new array
       setoLines(updatedOLines);
     }
   };
@@ -268,52 +238,50 @@ export default function IssueMaterial() {
     }, 10);
   };
 
-  // for close Request
+  const getCloseSearchList = async (event) => {
+    try {
+      const rawValue = event.target.value || "";
+      const cleanSearch = rawValue
+        .trim()
+        .replace(/[^a-zA-Z0-9 ]/g, "")
+        .replace(/\s+/g, " ");
 
-  const getCloseSearchList = (event) => {
-    const searchText = event.target.value;
-    setCloseSearchPosts([]);
-    setSearchTextClose(searchText);
-    setClosePage(0);
-    if (searchText !== "") {
-      axios
-        .request({
-          method: "get",
-          url: `${process.env.BASE_URL}/MatIssue/search/${searchText}/0/0`,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        })
-        .then((response) => {
-          setCloseSearchPosts(response.data.values);
+      setCloseSearchPosts([]);
+      setSearchTextClose(cleanSearch);
+      setClosePage(0);
 
-          if (response.data.values.length < 20) {
-            setHasMoreClose(false);
-          }
-        })
-        .catch((error) => {
-          console.log(error);
-        });
+      if (!cleanSearch) return;
+
+      const response = await apiClient.get(
+        `/MatIssue?SearchText=${cleanSearch}&Status=0&Page=0`,
+      );
+
+      setCloseSearchPosts(response.data.values);
+
+      if (response.data.values.length < 20) {
+        setHasMoreClose(false);
+      } else {
+        setHasMoreClose(true);
+      }
+    } catch (error) {
+      console.error("Close Search Error:", error);
     }
   };
 
   const fetchMoreCloseListData = () => {
+    const page = closePage + 1;
+
     if (searchTextClose === "") {
-      const page = closePage + 1;
-      axios
-        .request({
-          method: "get",
-          url: `${process.env.BASE_URL}/MatIssue/pages/${page}/0`,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        })
+      apiClient
+        .get(`/MatIssue?Page=${page}&Status=0`)
         .then((response) => {
           setClosedPosts((prevPosts) => [
             ...prevPosts,
             ...response.data.values,
           ]);
+
           setClosePage(page);
+
           if (response.data.values.length === 0) {
             setHasMoreClose(false);
           }
@@ -322,21 +290,16 @@ export default function IssueMaterial() {
           console.log(error);
         });
     } else {
-      const page = closePage + 1;
-      axios
-        .request({
-          method: "get",
-          url: `${process.env.BASE_URL}/MatIssue/search/${searchTextClose}/0/${page}`,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        })
+      apiClient
+        .get(`/MatIssue?SearchText=${searchTextClose}&Status=0&Page=${page}`)
         .then((response) => {
           setCloseSearchPosts((prevPosts) => [
             ...prevPosts,
             ...response.data.values,
           ]);
+
           setClosePage(page);
+
           if (response.data.values.length === 0) {
             setHasMoreClose(false);
           }
@@ -364,10 +327,8 @@ export default function IssueMaterial() {
       onClickClearCloseSearch();
     }, 10);
   };
-
-  // for getListFor Search
   const fetchDataGetListForCreate = (url, setData, append = false) => {
-    axios
+    apiClient
       .get(url, { headers: { "Content-Type": "application/json" } })
       .then((response) => {
         const values = response.data.values;
@@ -379,22 +340,21 @@ export default function IssueMaterial() {
   };
 
   const getListForCreate = () => {
-    fetchDataGetListForCreate(
-      `${process.env.BASE_URL}/MatIssue/GetListForCreate/0`,
-      setGetListData,
-    );
+    fetchDataGetListForCreate(`/MatIssue/CopyFrom?Page=0`, setGetListData);
   };
-
   const fetchMoreGetListForCreate = () => {
     const page = getListPage + 1;
+
     const url = searchTextGetListForCreate
-      ? `${process.env.BASE_URL}/MatIssue/GetListForCreate/search/${searchTextGetListForCreate}/${page}`
-      : `${process.env.BASE_URL}/MatIssue/GetListForCreate/${page}`;
+      ? `/MatIssue/CopyFrom?SearchText=${searchTextGetListForCreate}&Page=${page}`
+      : `/MatIssue/CopyFrom?Page=${page}`;
+
     fetchDataGetListForCreate(
       url,
       searchTextGetListForCreate ? setGetListSearchData : setGetListData,
       true,
     );
+
     setGetListPage(page);
   };
 
@@ -405,7 +365,7 @@ export default function IssueMaterial() {
     setGetListPage(0);
     if (searchText) {
       fetchDataGetListForCreate(
-        `${process.env.BASE_URL}/MatIssue/GetListForCreate/search/${searchText}/0`,
+        `/MatIssue/CopyFrom?SearchText=${searchText}&Page=0`,
         setGetListSearchData,
       );
     }
@@ -422,7 +382,7 @@ export default function IssueMaterial() {
     onClickClearGetListCreateSearch();
     setTimeout(() => {
       onClickClearGetListCreateSearch();
-    }, 10); // You can adjust the delay time in milliseconds
+    }, 10);
   };
 
   const openDialog = () => {
@@ -433,7 +393,6 @@ export default function IssueMaterial() {
     setIsDialogOpen(false);
   };
 
-  //save button diseble
   const handleCardClick = () => {
     setDisabled(true);
   };
@@ -442,7 +401,6 @@ export default function IssueMaterial() {
     setDisabled(false);
   };
 
-  // chnage Tab function open and closed orders
   const handleTabChangeRight = (e, newvalue1) => {
     settab(newvalue1);
   };
@@ -451,11 +409,11 @@ export default function IssueMaterial() {
     if (!DocEntry) {
       return;
     }
-    axios
-      .get(`${process.env.BASE_URL}/MatIssue/${DocEntry}`)
+    apiClient
+      .get(`/MatIssue?DocEntry=${DocEntry}`)
       .then((response) => {
         toggleSidebar();
-        const data = response.data.values[0];
+        const data = response.data.values;
 
         reset({
           ...data,
@@ -496,83 +454,63 @@ export default function IssueMaterial() {
     console.log("Row index:", index);
     console.log("Selected value:", value);
 
-    // Update the state based on the row index and the new value
     setoLines((prevLines) => {
-      const updatedLines = [...prevLines]; // Make a copy of the previous state
+      const updatedLines = [...prevLines];
       updatedLines[index] = {
-        ...updatedLines[index], // Keep other properties unchanged
-        [name]: value, // Update the BinList field with the new value
+        ...updatedLines[index],
+        [name]: value,
       };
       return updatedLines;
     });
   };
 
   const handleBarcodeChange = (event) => {
-    setBarcodeItem(event.target.value);
-    let itemFound = false; // Track if item is found
+    const value = event.target.value?.trim();
+    setBarcodeItem(value);
+    if (!value) return;
+
+    let itemFound = false;
 
     const updatedItems = oLines.map((item) => {
-      // Check if the ItemCode matches the target ItemCode
-      if (
-        String(item.ItemCode).toUpperCase() ===
-        String(event.target.value).toUpperCase()
-      ) {
-        itemFound = true; // Mark item as found
-        if (
-          parseFloat(item.IssueQuantity) + 1 >
-          parseFloat(item.OpenQuantity)
-        ) {
-          // Show a toast for IssueQuantity exceeding OpenQuantity
+      const itemCode = String(item.ItemCode || "").toUpperCase();
+      const enteredCode = String(value).toUpperCase();
+
+      if (itemCode === enteredCode) {
+        itemFound = true;
+
+        const issueQty = parseFloat(item.IssueQuantity) || 0;
+        const openQty = parseFloat(item.OpenQuantity) || 0;
+
+        if (issueQty + 1 > openQty) {
           Swal.fire({
+            text: "You Can't add More than Open Quantity",
             icon: "warning",
-            text: `Issue Quantity cannot exceed Open Quantity for item ${item.ItemCode}`,
             toast: true,
-            position: "bottom-end",
             showConfirmButton: false,
-            timer: 3000,
+            timer: 2000,
             timerProgressBar: true,
           });
-
-          return item; // Return item unchanged if exceeds
+          return item;
         }
-        // Increment the IssueQuantity by 1
+
         return {
           ...item,
-          IssueQuantity: (parseFloat(item.IssueQuantity) + 1).toFixed(3), // Increment and format to 3 decimal places
+          IssueQuantity: (issueQty + 1).toFixed(3),
         };
       }
-      return item; // No change for non-matching items
+
+      return item;
     });
 
-    // If no item was found after the iteration, show "Item not found" toast
-    if (!itemFound) {
-      Swal.fire({
-        icon: "warning",
-        text: `Item not found in your request`,
-        toast: true,
-        position: "bottom-right",
-        showConfirmButton: false,
-        timer: 3000,
-        timerProgressBar: true,
-      });
-    }
-
-    // Update the state with the modified items
     setoLines(updatedItems);
     setTimeout(() => {
       setBarcodeItem("");
-    }, 200);
+    }, 300);
   };
 
   const getAllWMSStaffList = () => {
-    axios
-      .request({
-        method: "get",
-        url: `${process.env.BASE_URL}/Technician/All`,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
+    apiClient
+      .get(`/Technician`)
       .then((response) => {
         setWMSStaff(response.data.values);
       })
@@ -581,14 +519,55 @@ export default function IssueMaterial() {
       });
   };
 
-  // data grid Table
   const columns = [
+    // {
+    //   field: "ItemCode",
+    //   headerName: "Item Code",
+    //   width: 130,
+    //   editable: false,
+    //   sortable: false,
+    // },
     {
       field: "ItemCode",
       headerName: "Item Code",
-      width: 130,
-      editable: false,
+      width: 160,
       sortable: false,
+      renderCell: (params) => {
+        const copyText = (e) => {
+          e.stopPropagation();
+
+          navigator.clipboard.writeText(params.value).then(() => {
+            Swal.fire({
+              toast: true,
+              position: "top-end",
+              icon: "success",
+              title: "Item Code Copied",
+              showConfirmButton: false,
+              timer: 1200,
+            });
+          });
+        };
+
+        return (
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              cursor: "pointer",
+            }}
+            onClick={copyText}
+          >
+            <Typography variant="body2">{params.value}</Typography>
+
+            <Tooltip title="Copy Item Code">
+              <IconButton size="small" onClick={copyText}>
+                <ContentCopyIcon fontSize="inherit" />
+              </IconButton>
+            </Tooltip>
+          </Box>
+        );
+      },
     },
     {
       field: "ItemName",
@@ -651,7 +630,7 @@ export default function IssueMaterial() {
     },
     {
       field: "ReqQuantity",
-      headerName: "Req Qty	",
+      headerName: "Req Qty",
       width: 100,
       editable: false,
       sortable: false,
@@ -671,22 +650,26 @@ export default function IssueMaterial() {
     },
     {
       field: "IssueQuantity",
-      headerName: "Iss Qty	",
-      width: 100,
-      editable: false,
+      headerName: "Iss Qty",
+      width: 120,
       sortable: false,
-      renderCell: (params) => (
-        <InputTableTextField
-          value={Number(params.value).toFixed(0) || ""}
-          endAdornment={
-            <InputAdornment position="end" sx={{ p: 0, m: 0 }}>
-              <IconButton size="small" sx={{ fontSize: "15px" }}>
-                <ClearIcon fontSize="inherit" sx={{ p: 0, m: 0 }} />
-              </IconButton>
-            </InputAdornment>
-          }
-        />
-      ),
+      renderCell: (params) => {
+        return (
+          <InputTableTextField
+            value={Number(params.value || 0).toFixed(0)}
+            endAdornment={
+              <InputAdornment position="end">
+                <IconButton
+                  size="small"
+                  onClick={(e) => clareissueqty(e, params.row.ItemCode)}
+                >
+                  <ClearIcon fontSize="small" />
+                </IconButton>
+              </InputAdornment>
+            }
+          />
+        );
+      },
     },
     {
       field: "Action",
@@ -705,9 +688,28 @@ export default function IssueMaterial() {
       ),
     },
   ];
+  const clareissueqty = (event, itemCode) => {
+    event.stopPropagation(); // Prevents row click events from firing
 
-  const handleSubmitForm = (data) => {
-    const obj = {
+    Swal.fire({
+      text: "Do you want to clear Issue Quantity?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes",
+      cancelButtonText: "No",
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setoLines((prevLines) =>
+          prevLines.map((line) =>
+            line.ItemCode === itemCode ? { ...line, IssueQuantity: 0 } : line,
+          ),
+        );
+      }
+    });
+  };
+
+  const handleSubmitForm = async (data) => {
+    const payload = {
       UserId: user.UserId,
       CreatedBy: user.UserName,
       ModifiedBy: user.UserName,
@@ -715,7 +717,6 @@ export default function IssueMaterial() {
       IssueDate: "",
       RequestNo: data.RequestNo || "",
       OrderType: data.OrderType,
-      // SONO:data.OrderType,
       RegistrationNo: data.RegistrationNo,
       InvTransferNo: data.InvTransferNo,
       InwardNo: data.VehInwardNo,
@@ -725,84 +726,153 @@ export default function IssueMaterial() {
       CardCode: data.CardCode,
       CardName: data.CardName,
       PhoneNumber1: data.PhoneNumber1,
-
-      // RegistrationNo: data.RegistrationNo,
-
-      // UserId: user.UserId,
       DocNum: data.DocNum,
       DocDate: dayjs(data.DocDate).format("YYYY-MM-DD"),
-      // CreatedBy: user.UserName,
-      // IssueDate: dayjs(data.DocDate).format("YYYY-MMM-DD"),
-      // RequestDate: data.RequestDate,
       OrderNo: data.OrderNo,
       JobCardNo: "",
       IssueRemark: data.ReqRemarks,
-      // JobWorkAt: data.JobWorkAt,
-      // OrderType: data.OrderType,
-      // InwardNo: data.VehInwardNo,
-      // RequestedBy: data.RequestBy,
-      // InvTransferNo: data.InvTransferNo,
       IssuedBy: data.IssuedBy,
-      RequestDocEntry: data.DocEntry,
+      RequestDocEntry: data.DocEntry || "",
       SAPDocNum: "",
       SAPDocEntry: "",
       HW_WMSStaff: String(data.HW_WMSStaff),
-      oLines: oLines.map((element) => ({
+
+      oLines: oLines.map((row) => ({
         UserId: user.UserId,
         CreatedBy: user.UserName,
         ModifiedBy: user.UserName,
         RequestNo: data.RequestNo,
-        ItemCode: element.ItemCode,
-        ItemName: element.ItemName,
-        WHSCode: element.WHSCode,
-        FromBin: String(element.BinLocation),
+        ItemCode: row.ItemCode,
+        ItemName: row.ItemName,
+        WHSCode: row.WHSCode,
+        FromBin: String(row.BinLocation) ?? "0",
         ToWHS: data.JobWorkAt === "CNC" ? "99" : "98",
-        ReqQuantity: element.ReqQuantity,
-        OpenQuantity: String(element.OpenQuantity - element.IssueQuantity),
-        IssueQuantity: String(element.IssueQuantity),
+        ReqQuantity: row.ReqQuantity,
+        OpenQuantity: String(row.OpenQuantity - row.IssueQuantity),
+        IssueQuantity: String(row.IssueQuantity),
         ReqLineRemarks: "",
         IssueLineRemarks: "",
       })),
     };
+    const watchOlines = watch("oLines");
 
-    console.log(obj);
+    if (!watchOlines || watchOlines.length === 0) {
+      Swal.fire({
+        text: "At least One Item Required",
+        icon: "warning",
+        toast: true,
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return;
+    }
 
-    axios
-      .post(`${process.env.BASE_URL}/MatIssue`, obj)
-      .then((response) => {
-        if (response.data.success) {
-          getAllOpenList();
-          getAllCloseList();
-          ClearForm();
-          Swal.fire({
-            title: "Success!",
-            text: "Material Issued Successfully",
-            icon: "success",
-            confirmButtonText: "Ok",
-            timer: 1000,
-          });
-        } else {
-          Swal.fire({
-            title: "Error!",
-            text: response.data.message,
-            icon: "warning",
-            confirmButtonText: "Ok",
-          });
-        }
-      })
-      .catch((error) => {
+    const MaterialData = getValues();
+
+    if (MaterialData.OrderNo === "" || MaterialData.OrderNo === undefined) {
+      Swal.fire({
+        text: "Please select order...",
+        icon: "warning",
+        toast: true,
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return;
+    }
+    var issueQty = MaterialData.oLines.filter(
+      (line) => line.IssueQuantity === 0,
+    ).length;
+    const bin = MaterialData.oLines.filter(
+      (line) =>
+        line.FromBin === undefined ||
+        line.FromBin === null ||
+        line.FromBin === "",
+    ).length;
+    const CNC = MaterialData.oLines.filter(
+      (line) => Number(line.OpenQuantity) !== Number(line.IssueQuantity),
+    ).length;
+    if (issueQty > 0) {
+      Swal.fire({
+        // title: "Warning!",
+        text: "issue Quantity can not be zero",
+        icon: "warning",
+        toast: true,
+        timer: 2000,
+        showConfirmButton: false,
+      });
+      return;
+    }
+    //  else if (bin > 0) {
+    //   Swal.fire({
+    //     // title: "Warning!",
+    //     text: "Please select bin locations for all items..",
+    //     icon: "warning",
+    //     toast: true,
+    //     timer: 1000,
+    //     showConfirmButton: false,
+    //   });
+    //   return;
+    // }
+    else if (!MaterialData.HW_WMSStaff) {
+      Swal.fire({
+        title: "Warning !",
+        text: "Please select Parts Delivered by...",
+        icon: "warning",
+        toast: true,
+        timer: 1000,
+        showConfirmButton: false,
+      });
+      return;
+    } else if (CNC > 0 && MaterialData.JobWorkAt === "CNC") {
+      Swal.fire({
+        title: "Warning !",
+        text: "Issue qunatity should be same as open qunatity in CNC Order..",
+        icon: "warning",
+        toast: true,
+        timer: 1000,
+        showConfirmButton: false,
+      });
+      return;
+    }
+
+    try {
+      const response = await apiClient.post(`/MatIssue`, payload);
+
+      if (response.data.success) {
+        Swal.fire({
+          title: "Success!",
+          text: "Material Issued Successfully",
+          icon: "success",
+          timer: 1000,
+        });
+
+        getAllOpenList();
+        getAllCloseList();
+        ClearForm();
+      } else {
         Swal.fire({
           title: "Error!",
-          text: error,
+          text: response.data.message,
           icon: "warning",
-          confirmButtonText: "Ok",
         });
+      }
+    } catch (error) {
+      Swal.fire({
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          error.message ||
+          "Something went wrong",
+        icon: "warning",
       });
+    }
   };
 
   const onSelectRequest = (item) => {
     console.log(item);
-    reset({ ...item, IssuedBy: user.UserName });
+    reset({ ...item, IssuedBy: user.UserName, RequestNo: item.DocNum });
     setoLines(item.oLines);
     setIsDialogOpen(false);
   };
@@ -817,7 +887,6 @@ export default function IssueMaterial() {
         border={"1px solid silver"}
         borderBottom={"none"}
         position={"relative"}
-        // sx={{ backgroundColor: { lg: "initial", xs: "#F5F6FA" } }}
         sx={{
           backgroundColor:
             theme.palette.mode === "light" ? "#F5F6FA" : "#080D2B",
@@ -1196,7 +1265,7 @@ export default function IssueMaterial() {
                     style={{ textAlign: "center" }}
                   >
                     <Controller
-                      name="OrderNo"
+                      name="RequestNo"
                       control={control}
                       render={({ field, fieldState: { error } }) => (
                         <InputTextSearchField
@@ -1207,8 +1276,8 @@ export default function IssueMaterial() {
                             ClearForm();
                           }}
                           {...field}
-                          error={!!error} // Pass error state to the FormComponent if needed
-                          helperText={error ? error.message : null} // Show the validation message
+                          error={!!error}
+                          helperText={error ? error.message : null}
                         />
                       )}
                     />
@@ -1218,15 +1287,15 @@ export default function IssueMaterial() {
                       name="OrderNo"
                       control={control}
                       rules={{
-                        required: "so No is required", // Field is required
+                        required: "so No is required",
                       }}
                       render={({ field, fieldState: { error } }) => (
                         <InputTextField
                           label="SO NO"
                           type="text"
                           {...field}
-                          error={!!error} // Pass error state to the FormComponent if needed
-                          helperText={error ? error.message : null} // Show the validation message
+                          error={!!error}
+                          helperText={error ? error.message : null}
                         />
                       )}
                     />
@@ -1244,7 +1313,7 @@ export default function IssueMaterial() {
                       name="RequestDate"
                       control={control}
                       rules={{
-                        required: "REQUEST DATE is required", // Field is required
+                        required: "REQUEST DATE is required",
                       }}
                       render={({ field, fieldState: { error } }) => (
                         <InputDatePickerField
@@ -1266,7 +1335,7 @@ export default function IssueMaterial() {
                       name="IssueDate"
                       control={control}
                       rules={{
-                        required: "issue date is required", // Field is required
+                        required: "issue date is required",
                       }}
                       render={({ field, fieldState: { error } }) => (
                         <InputDatePickerField
@@ -1287,7 +1356,7 @@ export default function IssueMaterial() {
                     <Controller
                       name="OrderType"
                       rules={{
-                        required: "Order Type is required", // Field is required
+                        required: "Order Type is required",
                       }}
                       control={control}
                       render={({ field, fieldState: { error } }) => (
@@ -1295,8 +1364,8 @@ export default function IssueMaterial() {
                           label="Order Type"
                           type="text"
                           {...field}
-                          error={!!error} // Pass error state to the FormComponent if needed
-                          helperText={error ? error.message : null} // Show the validation message
+                          error={!!error}
+                          helperText={error ? error.message : null}
                         />
                       )}
                     />
@@ -1306,15 +1375,15 @@ export default function IssueMaterial() {
                       name="1"
                       control={control}
                       // rules={{
-                      //   required: "issue no is required", // Field is required
+                      //   required: "issue no is required",
                       // }}
                       render={({ field, fieldState: { error } }) => (
                         <InputTextField
                           label="Issue No "
                           type="text"
                           {...field}
-                          error={!!error} // Pass error state to the FormComponent if needed
-                          helperText={error ? error.message : null} // Show the validation message
+                          error={!!error}
+                          helperText={error ? error.message : null}
                         />
                       )}
                     />
@@ -1324,15 +1393,15 @@ export default function IssueMaterial() {
                       name="RegistrationNo"
                       control={control}
                       // rules={{
-                      //   required: "Registration No is required", // Field is required
+                      //   required: "Registration No is required",
                       // }}
                       render={({ field, fieldState: { error } }) => (
                         <InputTextField
                           label="Registration No"
                           type="text"
                           {...field}
-                          error={!!error} // Pass error state to the FormComponent if needed
-                          helperText={error ? error.message : null} // Show the validation message
+                          error={!!error}
+                          helperText={error ? error.message : null}
                         />
                       )}
                     />
@@ -1342,15 +1411,15 @@ export default function IssueMaterial() {
                       name="InwardNo"
                       control={control}
                       // rules={{
-                      //   required: "Inward No is required", // Field is required
+                      //   required: "Inward No is required",
                       // }}
                       render={({ field, fieldState: { error } }) => (
                         <InputTextField
                           label="Inward No"
                           type="text"
                           {...field}
-                          error={!!error} // Pass error state to the FormComponent if needed
-                          helperText={error ? error.message : null} // Show the validation message
+                          error={!!error}
+                          helperText={error ? error.message : null}
                         />
                       )}
                     />
@@ -1360,7 +1429,7 @@ export default function IssueMaterial() {
                       name="JobWorkAt"
                       control={control}
                       // rules={{
-                      //   required: "Job Work At is required", // Field is required
+                      //   required: "Job Work At is required",
                       // }}
                       render={({ field, fieldState: { error } }) => (
                         <InputTextField
@@ -1368,8 +1437,8 @@ export default function IssueMaterial() {
                           type="text"
                           {...register("JobWorkAt")}
                           {...field}
-                          error={!!error} // Pass error state to the FormComponent if needed
-                          helperText={error ? error.message : null} // Show the validation message
+                          error={!!error}
+                          helperText={error ? error.message : null}
                         />
                       )}
                     />
@@ -1394,8 +1463,8 @@ export default function IssueMaterial() {
                           label="Job Work Details"
                           type="text"
                           {...field}
-                          error={!!error} // Pass error state to the FormComponent if needed
-                          helperText={error ? error.message : null} // Show the validation message
+                          error={!!error}
+                          helperText={error ? error.message : null}
                         />
                       )}
                     />
@@ -1432,16 +1501,18 @@ export default function IssueMaterial() {
                     rowHeight={45}
                     hideFooter
                     disableRowSelectionOnClick
-                    sx={{
-                      backgroundColor:
-                        theme.palette.mode === "light" ? "#F5F6FA" : "#080D2B",
-                      "& .MuiDataGrid-cell": {
-                        border: "none",
-                      },
-                      "& .MuiDataGrid-cell:focus": {
-                        outline: "none",
-                      },
-                    }}
+                    autoHeight="false"
+                    sx={gridSx}
+                    // sx={{
+                    //   backgroundColor:
+                    //     theme.palette.mode === "light" ? "#F5F6FA" : "#080D2B",
+                    //   "& .MuiDataGrid-cell": {
+                    //     border: "none",
+                    //   },
+                    //   "& .MuiDataGrid-cell:focus": {
+                    //     outline: "none",
+                    //   },
+                    // }}
                   />
                 </Grid>
 
@@ -1459,15 +1530,15 @@ export default function IssueMaterial() {
                       name="RequestBy"
                       control={control}
                       rules={{
-                        required: "Requested By is required", // Field is required
+                        required: "Requested By is required",
                       }}
                       render={({ field, fieldState: { error } }) => (
                         <InputTextField
                           label="Requested By"
                           type="text"
                           {...field}
-                          error={!!error} // Pass error state to the FormComponent if needed
-                          helperText={error ? error.message : null} // Show the validation message
+                          error={!!error}
+                          helperText={error ? error.message : null}
                         />
                       )}
                     />
@@ -1489,8 +1560,8 @@ export default function IssueMaterial() {
                           label="Inventory Transfer Number"
                           type="text"
                           {...field}
-                          error={!!error} // Pass error state to the FormComponent if needed
-                          helperText={error ? error.message : null} // Show the validation message
+                          error={!!error}
+                          helperText={error ? error.message : null}
                         />
                       )}
                     />
@@ -1508,19 +1579,20 @@ export default function IssueMaterial() {
                       name="IssuedBy"
                       control={control}
                       rules={{
-                        required: "issue by is required", // Field is required
+                        required: "issue by is required",
                       }}
                       render={({ field, fieldState: { error } }) => (
                         <InputTextField
                           label="Issue By"
                           type="text"
                           {...field}
-                          error={!!error} // Pass error state to the FormComponent if needed
-                          helperText={error ? error.message : null} // Show the validation message
+                          error={!!error}
+                          helperText={error ? error.message : null}
                         />
                       )}
                     />
                   </Grid>
+
                   <Grid
                     item
                     sm={6}
@@ -1532,20 +1604,20 @@ export default function IssueMaterial() {
                   >
                     <Controller
                       name="HW_WMSStaff"
-                      rules={{
-                        required: "Parts Deliverd By is required", // Field is required
-                      }}
                       control={control}
+                      rules={{
+                        required: "Parts Delivered By is required",
+                      }}
                       render={({ field, fieldState: { error } }) => (
                         <InputSelectTextField
                           label="Parts Delivered By"
-                          data={WMSStaff.map((data) => ({
-                            key: data.DocEntry,
-                            value: data.TechnicianName,
+                          data={(WMSStaff || []).map((item) => ({
+                            key: item.DocEntry,
+                            value: item.TechnicianName,
                           }))}
                           {...field}
-                          error={!!error} // Pass error state to the FormComponent if needed
-                          helperText={error ? error.message : null} // Show the validation message
+                          error={!!error}
+                          helperText={error?.message}
                         />
                       )}
                     />

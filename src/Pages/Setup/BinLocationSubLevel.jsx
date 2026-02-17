@@ -46,7 +46,7 @@ export default function BinLocationSubLevel() {
   };
   const theme = useTheme();
   const { user } = useAuth();
- const perms = usePermissions(121);
+  const perms = usePermissions(121);
   const InitialFld = {
     UserId: user.UserId,
     CreatedBy: user.UserName,
@@ -119,9 +119,7 @@ export default function BinLocationSubLevel() {
   };
 
   const SublevelActive = async () => {
-    const { data } = await apiClient.get(
-      `/BinLocationFieldActivation/All`
-    );
+    const { data } = await apiClient.get(`/BinLocationFieldActivation/All`);
     var { values } = data;
     const sorting = values.sort((a, b) => a.level - b.level);
     console.log("sprting", sorting);
@@ -140,14 +138,13 @@ export default function BinLocationSubLevel() {
     setValue2("FldAbs", updated);
     setValue2("SLCode", "");
     setValue2("Descr", "");
-       
   };
 
   // useEffect(() => {
   const BinLocationActivation = async () => {
     try {
       const { data } = await apiClient.get(
-        `/BinLocationFieldActivation/Pages/1`
+        `/BinLocationFieldActivation/Pages/1`,
       );
       const values = data?.values || [];
       console.log(values);
@@ -210,20 +207,14 @@ export default function BinLocationSubLevel() {
   const handleUpdateRow = async (DocEntry) => {
     setSaveUpdateName("UPDATE");
 
-
-    const { data } = await apiClient.get(
-      `/BinLocationSubLevel/${DocEntry}`
-    );
+    const { data } = await apiClient.get(`/BinLocationSubLevel/${DocEntry}`);
     const { values } = data;
     console.log(values);
     reset2(values);
   };
 
   const handleDeleteRow = async (DocEntry) => {
-
-    const { data } = await apiClient.get(
-      `/BinLocationSubLevel/${DocEntry}`
-    );
+    const { data } = await apiClient.get(`/BinLocationSubLevel/${DocEntry}`);
     const { values } = data;
     Swal.fire({
       text: `Do You Want Delete"${values.SLCode} "`,
@@ -424,7 +415,7 @@ export default function BinLocationSubLevel() {
     console.log(obj);
     if (SaveUpdateName === "SAVE") {
       let uniCodeExists = filterSublevel.some(
-        (uni) => uni.SLCode === data.SLCode
+        (uni) => uni.SLCode === data.SLCode,
       );
       if (uniCodeExists) {
         Swal.fire({
@@ -626,7 +617,7 @@ export default function BinLocationSubLevel() {
             disabled={!perms.IsDelete}
             onClick={() => handleDeleteRow(params.row.DocEntry)}
           >
-            <DeleteIcon  disabled={!perms.IsDelete} />
+            <DeleteIcon disabled={!perms.IsDelete} />
           </IconButton>
         );
       },
@@ -902,7 +893,7 @@ export default function BinLocationSubLevel() {
                             }}
                             data={sublevel.map((item) => ({
                               key: item.level,
-                              value: item.Name.toUpperCase()
+                              value: item.Name.toUpperCase(),
                             }))}
                           />
                         )}
@@ -996,10 +987,10 @@ export default function BinLocationSubLevel() {
                   >
                     <Button
                       variant="contained"
-                       disabled={
-                  (SaveUpdateName === "SAVE" && !perms.IsAdd) ||
-                  (SaveUpdateName !== "SAVE" && !perms.IsEdit)
-                }
+                      disabled={
+                        (SaveUpdateName === "SAVE" && !perms.IsAdd) ||
+                        (SaveUpdateName !== "SAVE" && !perms.IsEdit)
+                      }
                       style={{
                         backgroundColor:
                           SaveUpdateName === "DELETE" ? "red" : "green",

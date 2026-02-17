@@ -1,183 +1,730 @@
 import CloseIcon from "@mui/icons-material/Close";
-import MenuIcon from "@mui/icons-material/Menu";
+import AddIcon from "@mui/icons-material/Add";
 
-import RefreshIcon from "@mui/icons-material/Refresh";
-import { TabPanel } from "@mui/lab";
-
-import { TabContext } from "@mui/lab";
 import {
   Box,
   Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
   Grid,
   IconButton,
-  Paper,
-  Tab,
-  Tabs,
   Typography,
   useTheme,
 } from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
-import React, { useEffect, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+
+import MenuIcon from "@mui/icons-material/Menu";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import {
-  InputDatePickerField,
-  InputSelectTextField,
   InputTextField,
-  InputTextSearchField,
+  SelectedDatePickerField,
 } from "../Components/formComponents";
 import SearchInputField from "../Components/SearchInputField";
-import SearchModel from "../Components/SearchModel";
-import axios from "axios";
+import DeleteIcon from "@mui/icons-material/Delete";
 
+import { Tab, Tabs } from "@mui/material";
+
+// import MenuOpenIcon from "@mui/icons-material/MenuOpen";
+import { TabContext, TabPanel } from "@mui/lab";
+import dayjs from "dayjs";
+import InfiniteScroll from "react-infinite-scroll-component";
+import { BeatLoader } from "react-spinners";
+import Swal from "sweetalert2";
+import useAuth from "../../Routing/AuthContext";
+import CardComponentTwo from "../Components/CardComponentTwo";
+import apiClient from "../../services/apiClient";
+import { DataGrid } from "@mui/x-data-grid";
+
+import {
+  InputSelectFields,
+  InputTextSearchButton,
+} from "../Components/FormComponentMaster";
 import CardComponent from "../Components/CardComponent";
+import usePermissions from "../Components/usePermissions";
+import { dataGridSx } from "../../Styles/dataGridStyles";
+import { LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import SearchModel from "../Components/SearchModel";
 
-export default function BookingAppointment() {
+export default function BinLocationMaster() {
+  const theme = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tab, settab] = useState("1");
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [search, setsearch] = useState("");
-  const [searchdata, setsearchdata] = useState([]);
-  const [getListData, setgetListdata] = useState([]);
-  const [hasmore, sethasmore] = useState(0);
+  const [SaveUpdateName, setSaveUpdateName] = useState("SAVE");
+  const [open, setOpen] = React.useState(false);
 
-  const handleChange = (e) => {
-    setsearch(e.target.value);
+  //=====================================open List State====================================================================
+  const [openListData, setOpenListData] = useState([]);
+  const [openListPage, setOpenListPage] = useState(0);
+  const [hasMoreOpen, setHasMoreOpen] = useState(true);
+  const [openListquery, setOpenListQuery] = useState("");
+  const [openListSearching, setOpenListSearching] = useState(false);
+
+  //=====================================closed List State====================================================================
+  const [closedListData, setClosedListData] = useState([]);
+  const [closedListPage, setClosedListPage] = useState(0);
+  const [hasMoreClosed, setHasMoreClosed] = useState(true);
+  const [closedListquery, setClosedListQuery] = useState("");
+  const [closedListSearching, setClosedListSearching] = useState(false);
+
+  //=====================================closed List State====================================================================
+
+  const [searchmodelOpen, setSearchmodelOpen] = useState(false);
+  const [getListData, setGetListData] = useState([]);
+  const [getListPage, setGetListPage] = useState(0);
+  const [hasMoreGetList, setHasMoreGetList] = useState(true);
+  const [getListquery, setGetListQuery] = useState("");
+  const [getListSearching, setGetListSearching] = useState(false);
+
+  const handleClose = () => {
+    setOpen(false);
+  };
+  const handleOpen = () => {
+    setOpen(true);
   };
 
-  const handleClear = () => {
-    setsearch("");
-    setsearchdata([]);
+  const OpenDailog = () => {
+    setSearchmodelOpen(true);
   };
 
-  const getListForCreate = () => {
-    axios
-      .get(`${process.env.BASE_URL}/Appointment/GetListForCreate/0`)
-      .then((res) => {
-        console.log("Get Data for list", res.data.values);
-        setgetListdata(res.data.values);
-      });
+  const SearchModelClose = () => {
+    setSearchmodelOpen(false);
   };
+  const handleGetListClear = () => {
+    setGetListQuery("");
+    setGetListSearching(true);
+    setGetListPage(0);
+    setGetListData([]);
+    fetchGetListData(0);
+  };
+  const fetchGetListData = async (pageNum = 0, searchTerm = "") => {
+    try {
+      const url = searchTerm
+        ? `/Appointment/CopyFrom?SearchText=${searchTerm}&page=${pageNum}&limit=20`
+        : `/Appointment/CopyFrom?page=${pageNum}&limit=20`;
 
-  useEffect(() => {
-    getListForCreate();
-  }, []);
+      const response = await apiClient.get(url);
 
-  useEffect(() => {
-    if (search !== "") {
-      const fetchData = async () => {
-        try {
-          const response = await axios.get(
-            `${process.env.BASE_URL}/DownPayment/GetListForCreate/Search/${search}`,
-          );
-          console.log(response.data.values);
-          setsearchdata(response.data.values);
-        } catch (error) {
-          console.error("Error fetching data: ", error);
-        }
-      };
+      if (response.data.success) {
+        const newData = response.data.values;
 
-      const delayFetch = setTimeout(() => {
-        fetchData();
-      }, 1000);
+        setHasMoreGetList(newData.length === 20);
 
-      return () => clearTimeout(delayFetch);
-    } else {
-      setsearchdata([]);
+        setGetListData((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+      } else if (response.data.success === false) {
+        Swal.fire({
+          text: response.data.message,
+          icon: "question",
+          confirmButtonText: "YES",
+          showConfirmButton: true,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
     }
-  }, [search]);
-
-  const displayedData = search !== "" ? searchdata : getListData;
-
-  const theme = useTheme();
-
-  const { control, handleSubmit } = useForm({
-    mode: "onChange",
-  });
-
-  const handleTabChangeRight = (e, newvalue1) => {
-    settab(newvalue1);
   };
+  const onSelectBusinessPartner = async (OrderNo) => {
+    const res = await apiClient.get(`/Appointment/CopyFrom?OrderNo=${OrderNo}`);
+    const data = res.data.values[0];
+
+    reset({
+      ...data,
+      OrderNo: data.OrderNo,
+      CustomerName: data.CardName,
+      ContactNo: data.PhoneNumber1,
+      AppointmentNo: data.DocNum,
+      OrderSubType: data.OrderType,
+      AppointType: data.OrderSubType,
+      OrderDocEntry: data.DocEntry,
+      oLines: data.oLines.map((line) => ({
+        ItemName: line.ItemName,
+        ItemCode: line.ItemCode,
+        WHSCode: line.WHSCode,
+        Quantity: Number(line.Quantity).toFixed(3),
+        IssueQty: Number(line.Quantity).toFixed(3),
+        AppointmentStatus: line.AppointmentStatus,
+        BookedQuantity: line.BookedQuantity,
+        FTSQty: line.FTSQty,
+        LineFittingTime: line.LineFittingTime,
+        LineNum: line.LineNum,
+      })),
+    });
+
+    console.log("object", data);
+    SearchModelClose();
+  };
+
+  const fetchMoreGetListData = () => {
+    fetchGetListData(getListPage + 1, getListSearching ? getListquery : "");
+    setGetListPage((prev) => prev + 1);
+  };
+  const handleGetListSearch = (res) => {
+    setGetListQuery(res);
+    setGetListSearching(true);
+    setGetListPage(0);
+    setGetListData([]);
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      fetchGetListData(0, res);
+    }, 600); // Fetch with search query
+  };
+  useEffect(() => {
+    if (searchmodelOpen === true) {
+      fetchGetListData(0);
+    }
+  }, [searchmodelOpen]);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
+  const handleTabChangeRight = (e, newvalue1) => {
+    settab(newvalue1);
+  };
+  const { user } = useAuth();
+  const perms = usePermissions(64);
 
-  const openDialog = () => {
-    setIsDialogOpen(true);
+  const timeoutRef = useRef(null);
+  // const initial = {
+  //   UserId: user.UserId,
+  //   CreatedBy: user.UserName,
+  //   CreatedDate: dayjs(undefined).format("YYYY-MM-DD HH:mm:ss"),
+  //   ModifiedBy: user.UserName,
+  //   Status: "1",
+  //   WHSCode: "",
+  //   BinCode: "",
+  //   SL1Code: "",
+  //   SL2Code: "",
+  //   SL3Code: "",
+  //   SL4Code: "",
+  //   ReceiveBin: "",
+  //   NoAutoAllc: "",
+  //   FldAbs: "",
+  //   MinLevel: "",
+  //   MaxLevel: "",
+  //   MaxWeight1: "",
+  //   SysBin: "",
+  //   ItmRtrictT: "",
+  //   UoMRtrict: "",
+  //   RtrictType: "",
+  //   BinSeptor: "",
+  // };
+  const initial = {
+    OrderNo: "",
+    OrderNo: "",
+    AppointmentNo: "",
+    ContactNo: "",
+    CustomerName: "",
+    DocEntry: "",
+    CardCode: "",
+    CardName: "",
+    PhoneNumber1: "",
+    JobRemarks: "",
+    WalkIn: "",
+    AppointType: "",
+    VehicleDocEntry: "",
+    Year: "",
+    Make: "",
+    Model: "",
+    Jack: "",
+    AppointDate: dayjs(),
+    AppointTimeTo: dayjs("HH:mm:A"),
+    AppointTimeFrom: dayjs("HH:mm:A"),
+    OrderType: "",
+    OrderSubType: "",
+    oLines: [],
+  };
+  const InitialFld = {
+    CancelRemarks: "",
+  };
+  const { control, handleSubmit, reset, getValues, setValue, watch } = useForm({
+    defaultValues: initial,
+  });
+  const {
+    control: control1,
+    handleSubmit: handleSubmit1,
+    reset: reset1,
+    getValues: getValues1,
+    setValue: setValue1,
+    watch: watch1,
+  } = useForm({
+    defaultValues: InitialFld,
+  });
+  const AllData = getValues();
+
+  const oLines = useWatch({ control, name: "oLines" });
+
+  const fetchOpenListData = async (pageNum, searchTerm = "") => {
+    try {
+      const url = searchTerm
+        ? `/Appointment?Status=1&SearchText=${searchTerm}&Page=${pageNum}&Limit=20`
+        : `/Appointment?Status=1&Page=${pageNum}&Limit=20`;
+
+      const response = await apiClient.get(url);
+      if (response.data.success) {
+        const newData = response.data.values;
+        setHasMoreOpen(newData.length === 20);
+        setOpenListData((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
   };
 
-  const handleCloseDialog = () => {
-    setIsDialogOpen(false);
+  // Handle search input
+  const handleOpenListSearch = (res) => {
+    setOpenListQuery(res);
+    setOpenListSearching(true);
+    setOpenListPage(0);
+    setOpenListData([]); // Clear current data
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      fetchOpenListData(0, res);
+    }, 600);
+    // Fetch with search query
   };
 
-  const onSubmit = (data) => {
-    console.log(data);
+  // Clear search
+  const handleOpenListClear = () => {
+    setOpenListQuery(""); // Clear search input
+    setOpenListSearching(false); // Reset search state
+    setOpenListPage(0); // Reset page count
+    setOpenListData([]); // Clear data
+    fetchOpenListData(0); // Fetch first page without search
   };
+
+  // Infinite scroll fetch more data
+  const fetchMoreOpenListData = () => {
+    fetchOpenListData(openListPage + 1, openListSearching ? openListquery : "");
+    setOpenListPage((prev) => prev + 1);
+  };
+
+  // Initial fetch
+  useEffect(() => {
+    fetchOpenListData(0); // Load first page on mount
+  }, []);
+
+  // ============================================Closed List Start ==================================================================
+  const fetchClosedListData = async (pageNum, searchTerm = "") => {
+    try {
+      const url = searchTerm
+        ? `/Appointment?Status=0&SearchText=${searchTerm}&Page=${pageNum}&Limit=20`
+        : `/Appointment?Status=0&Page=${pageNum}&Limit=20`;
+
+      const response = await apiClient.get(url);
+
+      if (response.data.success) {
+        const newData = response.data.values;
+        setHasMoreClosed(false);
+        setClosedListData((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+    }
+  };
+
+  // Handle search input
+  const handleClosedListSearch = (res) => {
+    setClosedListQuery(res);
+    setClosedListSearching(true);
+    setClosedListPage(0);
+    setClosedListData([]); // Clear current data
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      fetchClosedListData(0, res);
+    }, 600);
+  };
+
+  // Clear search
+  const handleClosedListClear = () => {
+    setClosedListQuery(""); // Clear search input
+    setClosedListSearching(false); // Reset search state
+    setClosedListPage(0); // Reset page count
+    setClosedListData([]); // Clear data
+    fetchClosedListData(0); // Fetch first page without search
+  };
+
+  const fetchMoreClosedListData = () => {
+    fetchClosedListData(
+      closedListPage + 1,
+      closedListSearching ? closedListquery : "",
+    );
+    setClosedListPage((prev) => prev + 1);
+  };
+
+  useEffect(() => {
+    fetchClosedListData(0);
+  }, []);
+
+  const setOldDataOPen = async (DocEntry) => {
+    console.log(DocEntry);
+
+    toggleSidebar();
+    setSaveUpdateName("UPDATE");
+    try {
+      const { data } = await apiClient.get(`/Appointment/${DocEntry}`);
+      console.log(data);
+      if (data.success === true) {
+        let { values } = data;
+        console.log(values);
+        reset({
+          ...values,
+          OrderNo: values.OrderNo,
+          CustomerName: values.CardName,
+          ContactNo: values.PhoneNumber1,
+          AppointmentNo: values.DocNum,
+          OrderSubType: values.OrderType,
+          AppointType: values.AppointType,
+          Vehicle: values.Vehicle,
+          IsInward: values.IsInward,
+          oLines: values.oLines,
+          Status: values.Status === "1" ? true : false,
+          NoAutoAllc: true ? "Y" : "N",
+          ReceiveBin: true ? "Y" : "N",
+        });
+      } else if (data.success === false) {
+        Swal.fire({
+          title: "Error!",
+          text: data.message,
+          icon: "warning",
+          confirmButtonText: "Ok",
+        });
+      }
+    } catch (error) {
+      console.error("Error", error);
+    }
+  };
+
+  const ClearFormData = () => {
+    setSaveUpdateName("SAVE");
+    reset(initial);
+  };
+  const gridSx = useMemo(() => dataGridSx(theme), [theme]);
 
   const columns = [
     {
-      field: "Item_Code",
-      headerName: "Item Code",
-      width: 120,
-      editable: true,
-    },
-    {
-      field: "Item_Description",
-      headerName: "Item Description",
+      field: "ItemCode",
+      headerName: "ITEM CODE",
       width: 150,
+    },
+    {
+      field: "ItemName",
+      headerName: "ITEM DESCRIPTION",
+      width: 150,
+    },
+    {
+      field: "OrderQuantity",
+      headerName: "ORDER QTY",
+      width: 150,
+    },
+    {
+      field: "FTSQty",
+      headerName: "FTS",
+      width: 150,
+    },
+    {
+      field: "Quantity",
+      headerName: "QTY",
+      width: 120,
+      type: "number",
       editable: true,
     },
     {
-      field: "Qty",
-      headerName: "Qty",
+      field: "Status",
+      headerName: "STATUS",
+      width: 120,
+      type: "number",
+      editable: true,
+    },
+    {
+      field: "BookedQuantity",
+      headerName: "BOOKED QTY",
+      width: 120,
+      type: "number",
+      editable: true,
+    },
+    {
+      field: "ACTION",
+      headerName: "ACTION",
       width: 100,
-      editable: true,
-    },
-    {
-      field: "Price",
-      headerName: "Price",
-      width: 100,
-      editable: true,
-    },
-    {
-      field: "Amount",
-      headerName: "Amount",
-      width: 100,
-      editable: true,
-    },
-    {
-      field: "Fitting",
-      headerName: "Fitting",
-      width: 100,
-      editable: true,
-    },
-    {
-      field: "Tax",
-      headerName: "Tax",
-      width: 110,
-      editable: true,
-    },
-    {
-      field: "Tax_Amt",
-      headerName: "Tax Amt	",
-      width: 110,
-      editable: true,
-    },
-  ];
+      sortable: false,
+      align: "center",
+      headerAlign: "center",
+      renderCell: (params) => (
+        <IconButton
+          color="error"
+          size="small"
+          onClick={() => {
+            const currentLines = getValues("oLines");
 
-  const rows = [
-    {
-      id: 1,
-      Item_Code: "TJMSEATCOVER",
-      Item_Description: "TJM SEAT COVERS PR",
-      Qty: "1",
-      Price: "35.000",
-      Amount: "35.000",
-      Fitting: "0",
-      Tax: "5% vat",
-      Tax_Amt: 1.75,
+            const rowIndex = params.api.getRowIndexRelativeToVisibleRows(
+              params.id,
+            );
+
+            const updatedLines = currentLines.filter(
+              (_, index) => index !== rowIndex,
+            );
+
+            setValue("oLines", updatedLines, { shouldDirty: true });
+          }}
+        >
+          <DeleteIcon fontSize="small" />
+        </IconButton>
+      ),
     },
   ];
+  const onSubmit1 = async (data) => {
+    if (!data.CancelRemarks || data.CancelRemarks.trim() === "") {
+      Swal.fire({
+        icon: "warning",
+        text: "You cannot cancel this appointment without remarks.",
+        toast: true,
+        timer: 2000,
+        showConfirmButton: false,
+        timerProgressBar: true,
+      });
+      return;
+    }
+    const UserId = localStorage.getItem("UserId");
+    const CreatedBy = localStorage.getItem("UserName");
+
+    const obj = {
+      UserId: UserId,
+      CreatedBy: CreatedBy || "",
+      CancelBy: CreatedBy || "",
+      CancelRemarks: data.CancelRemarks,
+    };
+
+    try {
+      const res = await apiClient.put(
+        `/Appointment/Cancel/${getValues("DocEntry")}`,
+        obj,
+      );
+
+      if (res.data.success) {
+        handleClose();
+        Swal.fire({
+          title: "Success!",
+          text: "Appointment Cancel successfully!",
+          icon: "success",
+          confirmButtonText: "Ok",
+          timer: 1000,
+        });
+      } else {
+        Swal.fire({
+          title: "Error!",
+          text: res.data.message,
+          icon: "error",
+          confirmButtonText: "Ok",
+          timer: 1000,
+        });
+      }
+    } catch (error) {
+      console.error("Error cancelling appointment", error);
+      Swal.fire({
+        title: "Error!",
+        text: "Something went wrong",
+        icon: "warning",
+        confirmButtonText: "Ok",
+      });
+    }
+  };
+
+  const handleSumbit = (data) => {
+    const UserId = localStorage.getItem("UserId");
+    const UserName = localStorage.getItem("UserName");
+
+    if (!data.OrderNo) {
+      Swal.fire({
+        text: "Please select order",
+        icon: "warning",
+        toast: true,
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return;
+    }
+
+    if (dayjs(data.AppointDate).day() === 5) {
+      Swal.fire({
+        text: "You can not book appointment on friday",
+        icon: "warning",
+        toast: true,
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return;
+    }
+    if (!data.AppointTimeFrom) {
+      Swal.fire({
+        text: "Please Select Working Appointment Time",
+        icon: "warning",
+        toast: true,
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return;
+    }
+    const obj = {
+      UserId: UserId,
+      CreatedBy: UserName,
+      ModifiedBy: UserName,
+      DocDate: dayjs(),
+      AppointDate: data.AppointDate,
+      AppointTimeFrom: data.AppointTimeFrom,
+      AppointTimeTo: dayjs(data.AppointTimeTo).format("HH:mm a"),
+      OrderDocEntry: data.OrderDocEntry,
+      JobRemarks: data.JobRemarks,
+      Jack: data.Jack ?? "0",
+      AppointType: data.AppointType,
+      CardCode: data.CardCode,
+      CardName: data.CardName,
+      PhoneNumber1: data.PhoneNumber1,
+      OrderNo: data.OrderNo,
+      TotalReqTime: data.TotalReqTime,
+      VehicleDocEntry: data.VehicleDocEntry,
+      IsInward: data.IsInward,
+      AppointStatus: data.AppointStatus,
+      Year: data.Year,
+      Make: data.Make,
+      Model: data.Model,
+      Series: "-1",
+      AppointTimeTo: data.AppointTimeTo,
+      oLines: data.oLines.map((item) => ({
+        UserId: UserId,
+        CreatedBy: UserName,
+        ModifiedBy: UserName,
+        // Status: String(item.Status),
+        ItemCode: item.ItemCode,
+        WHSCode: item.WHSCode,
+        UnitOfMeasurement: item.UnitOfMeasurement,
+        SOQuantity: item.SOQuantity,
+        OpenQuantity: item.OpenQuantity,
+        Quantity: item.Quantity,
+        ParentItemCode: item.ParentItemCode,
+        Jack: item.Jack,
+        RequiredTime: item.RequiredTime,
+        LineNum: item.LineNum,
+        ItemName: item.ItemName,
+        AppointmentStatus: item.FTSQty >= item.IssueQty ? "1" : "0",
+        BookedQuantity: item.BookedQuantity,
+        FTSQty: item.FTSQty,
+      })),
+    };
+
+    console.log("object ", obj);
+    if (SaveUpdateName === "SAVE") {
+      apiClient
+        .post(`/Appointment`, obj)
+        .then((res) => {
+          if (res.data.success) {
+            ClearFormData();
+            setOpenListData([]);
+            fetchOpenListData(0);
+            fetchClosedListData(0);
+            Swal.fire({
+              title: "Success!",
+              text: "Bin Location saved Successfully",
+              icon: "success",
+              confirmButtonText: "Ok",
+              timer: 1000,
+            });
+          } else {
+            Swal.fire({
+              title: "Error!",
+              text: res.data.message,
+              icon: "error",
+              confirmButtonText: "Ok",
+              timer: 1000,
+            });
+          }
+        })
+        .catch((error) => {
+          console.error("Error Post time", error);
+          Swal.fire({
+            title: "Error!",
+            text: "something went wrong" + error,
+            icon: "warning",
+            confirmButtonText: "Ok",
+          });
+        });
+    } else {
+      Swal.fire({
+        text: `Do You Want Update "${obj.WHSCode}"`,
+        icon: "question",
+        confirmButtonText: "YES",
+        cancelButtonText: "No",
+        showConfirmButton: true,
+        showDenyButton: true,
+      }).then((result) => {
+        if (result.isConfirmed) {
+          apiClient
+            .put(`/Appointment/${data.DocEntry}`, obj)
+            .then((response) => {
+              if (response.data.success) {
+                ClearFormData();
+                setOpenListData([]);
+                fetchOpenListData(0);
+                fetchClosedListData(0);
+
+                Swal.fire({
+                  title: "Success!",
+                  text: "Bin Location Updated",
+                  icon: "success",
+                  confirmButtonText: "Ok",
+                  timer: 1000,
+                });
+              } else {
+                Swal.fire({
+                  title: "Error!",
+                  text: response.data.message,
+                  icon: "warning",
+                  confirmButtonText: "Ok",
+                });
+              }
+            })
+            .catch(() => {
+              Swal.fire({
+                title: "Error!",
+                text: "something went wrong",
+                icon: "warning",
+                confirmButtonText: "Ok",
+              });
+            });
+        } else {
+          Swal.fire({
+            text: "Bin Location Not Updated",
+            icon: "info",
+            toast: true,
+            showConfirmButton: false,
+            timer: 1500,
+          });
+        }
+      });
+    }
+  };
 
   const sidebarContent = (
     <>
@@ -219,8 +766,6 @@ export default function BookingAppointment() {
 
       <Grid
         container
-        // bgcolor={'red'}
-        // mt={10}
         item
         width={"100%"}
         height={"100%"}
@@ -258,8 +803,8 @@ export default function BookingAppointment() {
                 indicatorColor="primary"
                 textColor="inherit"
               >
-                <Tab value="1" label="Open" />
-                <Tab value="0" label="Closed" />
+                <Tab value="1" label="Active" />
+                <Tab value="0" label="Inactive" />
               </Tabs>
               <TabPanel
                 value={"1"}
@@ -283,28 +828,36 @@ export default function BookingAppointment() {
                     backgroundColor: "#F5F6FA",
                   }}
                 >
-                  <SearchInputField />
+                  <SearchInputField
+                    onChange={(e) => handleOpenListSearch(e.target.value)}
+                    value={openListquery}
+                    onClickClear={handleOpenListClear}
+                  />
                 </Grid>
-                {/* <InfiniteScroll
-                  style={{ textAlign: "center" }}
-                  dataLength={DownPayment}
+                <InfiniteScroll
+                  style={{ textAlign: "center", justifyContent: "center" }}
+                  dataLength={openListData.length}
+                  hasMore={hasMoreOpen}
                   next={fetchMoreOpenListData}
-                  hasMore={HasMoreOpen}
-                  loader={<BeatLoader 
-                    color={theme.palette.mode === "light" ? "black" : "white"}
-                    />}
+                  loader={
+                    <BeatLoader
+                      color={theme.palette.mode === "light" ? "black" : "white"}
+                    />
+                  }
                   scrollableTarget="ListScroll"
                   endMessage={<Typography>No More Records</Typography>}
                 >
-                   {DownPayment.map((item) => ( 
+                  {openListData.map((item, i) => (
                     <CardComponent
-                      // key={item.DocNum}
-                      // title={item.OrderNo}
-                      // subtitle={item.CardName}
-                      // onClick={() => oldData(item.DocEntry)}
+                      key={i}
+                      title={item.DocNum}
+                      subtitle={item.CardName}
+                      description={item.PhoneNumber1}
+                      searchResult={openListquery}
+                      onClick={() => setOldDataOPen(item.DocEntry)}
                     />
-                   ))} 
-                </InfiniteScroll> */}
+                  ))}
+                </InfiniteScroll>
               </TabPanel>
               <TabPanel
                 value={"0"}
@@ -328,27 +881,36 @@ export default function BookingAppointment() {
                     backgroundColor: "#F5F6FA",
                   }}
                 >
-                  <SearchInputField />
+                  <SearchInputField
+                    onChange={(e) => handleClosedListSearch(e.target.value)}
+                    value={closedListquery}
+                    onClickClear={handleClosedListClear}
+                  />
                 </Grid>
-                {/* <InfiniteScroll
-                  style={{ textAlign: "center" }}
-                  dataLength={CloseDownPayment.length}
-                  next={fetchMoreCloseListData}
-                  hasMore={HasMoreClose}
-                  loader={<BeatLoader 
-                    color={theme.palette.mode === "light" ? "black" : "white"}
-                  />}
+                <InfiniteScroll
+                  style={{ textAlign: "center", justifyContent: "center" }}
+                  dataLength={closedListData.length}
+                  hasMore={hasMoreClosed}
+                  next={fetchMoreClosedListData}
+                  loader={
+                    <BeatLoader
+                      color={theme.palette.mode === "light" ? "black" : "white"}
+                    />
+                  }
                   scrollableTarget="ListScrollClosed"
                   endMessage={<Typography>No More Records</Typography>}
                 >
-                  {CloseDownPayment.map((itemclose) => (
+                  {closedListData.map((item, i) => (
                     <CardComponent
-                      key={itemclose.DocNum}
-                      title={itemclose.OrderNo}
-                      subtitle={itemclose.CardName}
+                      key={i}
+                      title={item.DocNum}
+                      subtitle={item.CardName}
+                      description={item.PhoneNumber1}
+                      searchResult={openListquery}
+                      onClick={() => setOldDataOPen(item.DocEntry)}
                     />
                   ))}
-                </InfiniteScroll> */}
+                </InfiniteScroll>
               </TabPanel>
             </TabContext>
           </Box>
@@ -356,6 +918,44 @@ export default function BookingAppointment() {
       </Grid>
     </>
   );
+  const watchedDate = watch("AppointDate");
+
+  const isToday = watchedDate && dayjs(watchedDate).isSame(dayjs(), "day");
+
+  useEffect(() => {
+    if (!watchedDate) return;
+
+    const now = dayjs();
+    const selectedDate = dayjs(watchedDate);
+    const isToday = selectedDate.isSame(now, "day");
+
+    let autoTime;
+
+    if (isToday) {
+      // Round to next 30 min
+      const remainder = now.minute() % 30;
+      autoTime = remainder === 0 ? now : now.add(30 - remainder, "minute");
+
+      // Before 8AM → 8:00
+      if (autoTime.hour() < 8) {
+        autoTime = autoTime.hour(8).minute(0);
+      }
+
+      // After 8PM → no slot
+      if (autoTime.hour() >= 20) {
+        setValue("AppointTimeFrom", "");
+        return;
+      }
+    } else {
+      // Future date → 8:00 AM
+      autoTime = dayjs().hour(8).minute(0);
+    }
+
+    setValue("AppointTimeFrom", autoTime.format("HH:mm"), {
+      shouldValidate: true,
+    });
+  }, [watchedDate, setValue]);
+
   return (
     <>
       <Grid
@@ -364,10 +964,8 @@ export default function BookingAppointment() {
         height="calc(100vh - 110px)"
         position="relative"
         component={"form"}
-        onSubmit={handleSubmit(onSubmit)}
+        onSubmit={handleSubmit(handleSumbit)}
       >
-        {/* Sidebar for larger screens */}
-
         <Grid
           container
           item
@@ -427,7 +1025,7 @@ export default function BookingAppointment() {
             edge="start"
             color="inherit"
             aria-label="menu"
-            // onClick={ClearFormData}
+            onClick={ClearFormData}
             sx={{
               display: {}, // Show only on smaller screens
 
@@ -438,7 +1036,7 @@ export default function BookingAppointment() {
               right: "10px",
             }}
           >
-            <RefreshIcon />
+            <AddIcon />
           </IconButton>
 
           <Grid
@@ -475,277 +1073,604 @@ export default function BookingAppointment() {
               overflow={"scroll"}
               sx={{ overflowX: "hidden" }}
               position={"relative"}
+              width={"100%"}
             >
               <Box
                 // component="form"
                 sx={{
                   "& .MuiTextField-root": { m: 1 },
-                  width: "100%",
                 }}
                 noValidate
                 autoComplete="off"
+                width={"100%"}
               >
                 <Grid container>
-                  <Grid container item>
-                    <Grid
-                      item
-                      xs={12}
-                      sm={6}
-                      md={6}
-                      lg={4}
-                      textAlign={"center"}
-                    >
-                      <Controller
-                        name="OrderNo"
-                        control={control}
-                        render={({ field, fieldState: { error } }) => (
-                          <InputTextSearchField
-                            label="Request NO"
-                            type="text"
-                            onClick={() => {
-                              openDialog();
-                              // ClearForm();
-                            }}
-                            {...field}
-                            error={!!error}
-                            helperText={error ? error.message : null}
-                          />
-                        )}
-                      />
-
-                      <SearchModel
-                        open={isDialogOpen}
-                        onClose={handleCloseDialog}
-                        // onCancel={handleCloseDialog}
-                        title="SELECT VENDOR"
-                        onChange={handleChange}
-                        value={search}
-                        onClickClear={handleClear}
-                        cardData={
-                          <>
-                            {displayedData.map((item, index) => (
+                  <Grid item xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
+                    <Controller
+                      name="OrderNo"
+                      control={control}
+                      rules={{ required: "Card Code is Required" }}
+                      render={({ field, fieldState: { error } }) => (
+                        <InputTextSearchButton
+                          label="SO NO"
+                          type="text"
+                          readOnly={true}
+                          onClick={() => {
+                            OpenDailog();
+                          }}
+                          onChange={OpenDailog}
+                          {...field}
+                          error={!!error}
+                          helperText={error ? error.message : null}
+                        />
+                      )}
+                    />
+                    <SearchModel
+                      open={searchmodelOpen}
+                      onClose={SearchModelClose}
+                      onCancel={SearchModelClose}
+                      title="Select Sales Order"
+                      onChange={(e) => handleGetListSearch(e.target.value)}
+                      value={getListquery}
+                      onClickClear={handleGetListClear}
+                      cardData={
+                        <>
+                          <InfiniteScroll
+                            style={{ textAlign: "center" }}
+                            dataLength={getListData.length}
+                            next={fetchMoreGetListData}
+                            hasMore={hasMoreGetList}
+                            loader={
+                              <BeatLoader
+                                color={
+                                  theme.palette.mode === "light"
+                                    ? "black"
+                                    : "white"
+                                }
+                              />
+                            }
+                            scrollableTarget="getListForCreateScroll"
+                            endMessage={
+                              <Typography textAlign={"center"}>
+                                No More Records
+                              </Typography>
+                            }
+                          >
+                            {getListData.map((item, index) => (
                               <CardComponent
                                 key={index}
-                                title={item.CardName}
+                                title={item.CardCode}
+                                subtitle={item.CardName}
+                                description={item.Cellular}
+                                searchResult={getListquery}
+                                isSelected={AllData.CardCode === item.CardCode}
+                                onClick={() => {
+                                  onSelectBusinessPartner(item.OrderNo);
+                                }}
                               />
                             ))}
-                          </>
-                        }
-                      />
-                    </Grid>
-                    <Grid
-                      item
-                      xs={12}
-                      md={6}
-                      sm={6}
-                      lg={4}
-                      textAlign={"center"}
-                    >
-                      <Controller
-                        name="customer name*"
-                        rules={{ required: "this field is requered" }}
-                        control={control}
-                        render={({ field, fieldState: { error } }) => (
-                          <InputTextField
-                            label="customer name"
-                            {...field}
-                            error={!!error}
-                            helperText={error ? error.message : null}
-                            rows={1}
-                          />
-                        )}
-                      />
-                    </Grid>
-                    <Grid
-                      item
-                      xs={12}
-                      md={6}
-                      sm={6}
-                      lg={4}
-                      textAlign={"center"}
-                    >
-                      <Controller
-                        name="phone number"
-                        rules={{ required: "this field is requered" }}
-                        control={control}
-                        render={({ field, fieldState: { error } }) => (
-                          <InputTextField
-                            label="phone number"
-                            {...field}
-                            error={!!error}
-                            helperText={error ? error.message : null}
-                            rows={1}
-                          />
-                        )}
-                      />
-                    </Grid>
-                    <Grid
-                      item
-                      xs={12}
-                      md={6}
-                      sm={6}
-                      lg={4}
-                      textAlign={"center"}
-                    >
-                      <Controller
-                        name="appoitment no"
-                        rules={{ required: "this field is requered" }}
-                        control={control}
-                        render={({ field, fieldState: { error } }) => (
-                          <InputTextField
-                            label="appoitment no"
-                            {...field}
-                            error={!!error}
-                            helperText={error ? error.message : null}
-                            rows={1}
-                          />
-                        )}
-                      />
-                    </Grid>
-                    {/* <Grid item md={6} lg={4} xs={12} textAlign={"center"}>
-                      <FormComponent
-                        label="APPOINTMENT TYPE"
-                        type="select"
-                        data={[
-                          {
-                            key: 1,
-                            value: "xyz",
-                          },
-                        ]}
-                      />
-                    </Grid> */}
+                          </InfiniteScroll>
+                        </>
+                      }
+                    />
                   </Grid>
 
-                  <Grid
-                    container
-                    item
-                    sx={{
-                      px: 2,
-                      overflow: "auto",
-                      width: "100%",
-                      // backgroundColor: "#f2f2f2",
-                      // height: "100%",
-                    }}
-                  >
-                    <Paper sx={{ width: "100%" }}>
+                  <Grid item xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
+                    <Controller
+                      name="CustomerName"
+                      control={control}
+                      rules={{ required: "Customer Name is Required" }}
+                      render={({ field, fieldState: { error } }) => (
+                        <InputTextField
+                          label="CUSTOMER NAME"
+                          type="text"
+                          readOnly={true}
+                          {...field}
+                          error={!!error}
+                          helperText={error ? error.message : null}
+                        />
+                      )}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
+                    <Controller
+                      name="ContactNo"
+                      control={control}
+                      rules={{ required: "Card Name is Required" }}
+                      render={({ field, fieldState: { error } }) => (
+                        <InputTextField
+                          label="CONTACT NO"
+                          type="text"
+                          readOnly={true}
+                          {...field}
+                          error={!!error}
+                          helperText={error ? error.message : null}
+                        />
+                      )}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
+                    <Controller
+                      name="AppointmentNo"
+                      control={control}
+                      rules={{ required: "Appointment No is Required" }}
+                      render={({ field, fieldState: { error } }) => (
+                        <InputTextField
+                          label="APPOINTMENT NO"
+                          type="text"
+                          readOnly={true}
+                          {...field}
+                          error={!!error}
+                          helperText={error ? error.message : null}
+                        />
+                      )}
+                    />
+                  </Grid>
+
+                  {/* <Grid item xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
+                    <Controller
+                      name="AppointType"
+                      control={control}
+                      rules={{ required: "Appointment Type is Required" }}
+                      render={({ field, fieldState: { error } }) => (
+                        <InputSelectFields
+                          readOnly
+                          label="APPOINTMENT TYPE"
+                          {...field}
+                          data={[
+                            { key: "WALK-IN", value: "WALK-IN" },
+                            { key: "REGULAR", value: "REGULAR" },
+                          ]}
+                          error={!!error}
+                          helperText={error?.message}
+                        />
+                      )}
+                    /> */}
+                  <Grid item xs={12} sm={6} md={4} lg={4} textAlign="center">
+                    <Controller
+                      name="AppointType"
+                      control={control}
+                      rules={{ required: "Appointment Type is Required" }}
+                      render={({ field, fieldState: { error } }) => (
+                        <InputSelectFields
+                          disabled
+                          label="APPOINTMENT TYPE"
+                          {...field}
+                          data={[
+                            { key: "WALK-IN", value: "WALK-IN" },
+                            { key: "REGULAR", value: "REGULAR" },
+                          ]}
+                          error={!!error}
+                          helperText={error?.message}
+                        />
+                      )}
+                    />
+                  </Grid>
+
+                  {/* </Grid> */}
+                  <Grid item xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
+                    <Controller
+                      name="OrderSubType"
+                      control={control}
+                      rules={{ required: " Order Type is Required" }}
+                      render={({ field, fieldState: { error } }) => (
+                        <InputTextField
+                          label="ORDER TYPE"
+                          type="text"
+                          readOnly={true}
+                          {...field}
+                          error={!!error}
+                          helperText={error ? error.message : null}
+                        />
+                      )}
+                    />
+                  </Grid>
+
+                  <Grid item xs={12} p={5}>
+                    <Grid
+                      container
+                      item
+                      sx={{
+                        overflow: "auto",
+                        width: "100%",
+                        height: "300px",
+                        mt: "5px",
+                      }}
+                    >
                       <DataGrid
-                        columnHeaderHeight={35}
-                        rowHeight={45}
                         className="datagrid-style"
-                        sx={{
-                          backgroundColor:
-                            theme.palette.mode === "light" ? "#fff" : "#373842",
-                          "& .MuiDataGrid-cell": {
-                            border: "none",
-                          },
-                          "& .MuiDataGrid-cell:focus": {
-                            outline: "none",
-                          },
-                        }}
-                        rows={rows}
+                        rows={oLines}
                         columns={columns}
-                        initialState={{
-                          pagination: {
-                            paginationModel: {
-                              pageSize: 3,
-                            },
-                          },
-                        }}
+                        getRowId={(row) => row.LineNum}
+                        columnHeaderHeight={35}
+                        rowHeight={40}
                         hideFooter
-                        disableRowSelectionOnClick
-                        pageSizeOptions={[3]}
+                        autoHeight="false"
+                        sx={gridSx}
                       />
-                    </Paper>
+                    </Grid>
                   </Grid>
 
-                  <Grid container item mt={1}>
-                    <Grid
-                      item
-                      xs={12}
-                      md={6}
-                      sm={6}
-                      lg={4}
-                      textAlign={"center"}
-                    >
+                  <Grid item xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
+                    {/* <Controller
+                      name="Vehicle"
+                      control={control}
+                      rules={{ required: "Card Name is Required" }}
+                      render={({ field, fieldState: { error } }) => (
+                        <InputTextField
+                          label="SELECTED VEHICLE"
+                          type="text"
+                          value={`${getValues("Year")} - ${getValues("Make")} - ${getValues("Model")}`}
+                          readOnly={true}
+                          {...field}
+                          error={!!error}
+                          helperText={error ? error.message : null}
+                        />
+                      )}
+                    /> */}
+                    <Controller
+                      name="Vehicle"
+                      control={control}
+                      rules={{ required: "Selected Vehicle Is Required" }}
+                      render={({
+                        field: { ref, ...fieldList },
+                        fieldState: { error },
+                      }) => (
+                        <InputTextField
+                          {...fieldList}
+                          inputRef={ref}
+                          label="SELECTED VEHICLE"
+                          type="text"
+                          value={`${getValues("Year") || ""} - ${getValues("Make") || ""} - ${getValues("Model") || ""}`}
+                          readOnly={true}
+                          error={!!error}
+                          helperText={error ? error.message : null}
+                        />
+                      )}
+                    />
+                  </Grid>
+                  <Grid item xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
+                    {/* <Controller
+                      name="CardName"
+                      control={control}
+                      rules={{ required: "Card Name is Required" }}
+                      render={({ field, fieldState: { error } }) => (
+                        <InputTextField
+                          label="APPOINTMENT DATE"
+                          type="text"
+                          readOnly={true}
+                          {...field}
+                          error={!!error}
+                          helperText={error ? error.message : null}
+                        />
+                      )}
+                    /> */}
+                    {/* <Controller
+                      name="AppointDate"
+                      control={control}
+                      rules={{ required: "Date is Required" }}
+                      render={({ field, fieldState: { error } }) => (
+                        <SelectedDatePickerField
+                          label="APPOINTMENT DATE"
+                          name={field.name}
+                          value={field.value ? dayjs(field.value) : undefined}
+                          minDate={getValues("DocDate")}
+                          onChange={(date) =>
+                            setValue("AppointDate", date, {
+                              shouldDirty: true,
+                            })
+                          }
+                          //   disabled={!getValues("DocDate") || isFieldDisabled}
+                          error={!!error}
+                          helperText={error ? error.message : null}
+                        /> */}
+                    <Controller
+                      name="AppointDate"
+                      control={control}
+                      rules={{ required: "Date is Required" }}
+                      render={({ field, fieldState: { error } }) => (
+                        <SelectedDatePickerField
+                          label="APPOINTMENT DATE"
+                          value={field.value ? dayjs(field.value) : null}
+                          minDate={dayjs()}
+                          onChange={(date) =>
+                            setValue("AppointDate", date, {
+                              shouldDirty: true,
+                              shouldValidate: true,
+                            })
+                          }
+                          error={!!error}
+                          helperText={error?.message}
+                        />
+                      )}
+                    />
+                  </Grid>
+                  {/* <Grid item xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
+                    <Controller
+                      name="AppointTimeTo"
+                      control={control}
+                      rules={{ required: "Time is required" }}
+                      render={({ field, fieldState: { error } }) => (
+                        <InputTextField
+                          {...field}
+                          label="FROM"
+                          type="time"
+                          InputLabelProps={{ shrink: true }}
+                          error={!!error}
+                          helperText={error ? error.message : null}
+                        />
+                      )}
+                    />
+                  </Grid> */}
+                  <Grid item xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
+                    {/* <LocalizationProvider dateAdapter={AdapterDayjs}>
                       <Controller
-                        name="Account code"
-                        rules={{
-                          required: "please select Vehicle Type", // Field is required
-                        }}
+                        name="AppointTimeTo"
                         control={control}
+                        rules={{ required: "Time is required" }}
                         render={({ field, fieldState: { error } }) => (
-                          <InputSelectTextField
-                            label="vahicle type"
-                            data={[
-                              { key: "1", value: "453454" },
-                              { key: "2", value: "4543654" },
-                            ]}
-                            {...field}
-                            error={!!error} // Pass error state to the FormComponent if needed
-                            helperText={error ? error.message : null} // Show the validation message
-                          />
-                        )}
-                      />
-                    </Grid>
-
-                    <Grid
-                      item
-                      xs={12}
-                      md={6}
-                      sm={6}
-                      lg={4}
-                      textAlign={"center"}
-                    >
-                      <Controller
-                        name="TargetDate"
-                        control={control}
-                        rules={{
-                          required: "Target Date is required",
-                        }}
-                        render={({ field, fieldState: { error } }) => (
-                          <InputDatePickerField
-                            label="TARGET DATE"
-                            name={field.name}
-                            value={field.value} // Value managed by react-hook-form
-                            onChange={(date) => field.onChange(date)} // Handle the change event
-                            error={!!error} // Pass error state
-                            helperText={error ? error.message : null} // Show validation message
-                          />
-                        )}
-                      />
-                    </Grid>
-                    <Grid
-                      item
-                      xs={12}
-                      md={6}
-                      sm={6}
-                      lg={4}
-                      textAlign={"center"}
-                    >
-                      <Controller
-                        name="FROM"
-                        rules={{ required: "this field is requered" }}
-                        control={control}
-                        render={({ field, fieldState: { error } }) => (
-                          <InputTextField
+                          <TimePicker
                             label="FROM"
-                            {...field}
-                            error={!!error}
-                            helperText={error ? error.message : null}
-                            rows={1}
+                            ampm={true}
+                            timeSteps={{ minutes: 30 }}
+                            value={
+                              field.value ? dayjs(field.value, "HH:mm") : null
+                            }
+                            onChange={(newValue) => {
+                              field.onChange(
+                                newValue ? newValue.format("HH:mm") : "",
+                              );
+                            }}
+                            shouldDisableTime={(value, view) => {
+                              if (view === "hours") {
+                                const hour = value.hour();
+                                return hour < 8 || hour > 20;
+                              }
+                              return false;
+                            }}
+                            slotProps={{
+                              textField: {
+                                size: "small",
+                                fullWidth: true,
+                                error: !!error,
+                                helperText: error?.message,
+                              },
+                            }}
                           />
                         )}
                       />
-                    </Grid>
+                    </LocalizationProvider> */}
+
+                    {/* <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <Controller
+                        name="AppointTimeTo"
+                        control={control}
+                        rules={{ required: "Time is required" }}
+                        render={({ field, fieldState: { error } }) => (
+                          <TimePicker
+                            label="FROM"
+                            ampm
+                            timeSteps={{ minutes: 30 }}
+                            value={
+                              field.value ? dayjs(field.value, "HH:mm") : null
+                            }
+                            onChange={(newValue) =>
+                              field.onChange(
+                                newValue ? newValue.format("HH:mm") : "",
+                              )
+                            }
+                            shouldDisableTime={(value, view) => {
+                              if (view === "hours") {
+                                const hour = value.hour();
+                                return hour < 8 || hour > 20;
+                              }
+                              if (view === "minutes") {
+                                if (value.hour() === 20 && value.minute() > 0)
+                                  return true;
+                              }
+                              return false;
+                            }}
+                            slotProps={{
+                              textField: {
+                                size: "small",
+                                error: !!error,
+                                helperText: error?.message,
+                              },
+                            }}
+                          />
+                        )}
+                      />
+                    </LocalizationProvider> */}
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <Controller
+                        name="AppointTimeFrom"
+                        control={control}
+                        rules={{ required: "Time is required" }}
+                        render={({ field, fieldState: { error } }) => (
+                          <TimePicker
+                            label="FROM"
+                            ampm
+                            timeSteps={{ minutes: 30 }}
+                            value={
+                              field.value ? dayjs(field.value, "HH:mm") : null
+                            }
+                            onChange={(newValue) =>
+                              field.onChange(
+                                newValue ? newValue.format("HH:mm") : "",
+                              )
+                            }
+                            shouldDisableTime={(value, view) => {
+                              const now = dayjs();
+
+                              const hour = value.hour();
+                              const minute = value.minute();
+
+                              // 🔴 STRICT HOURS CONTROL
+                              if (view === "hours") {
+                                // Allow only 8AM to 8PM
+                                if (hour < 8 || hour > 20) return true;
+
+                                // If today → block past hours
+                                if (isToday && hour < now.hour()) return true;
+
+                                return false;
+                              }
+
+                              // 🔴 STRICT MINUTES CONTROL
+                              if (view === "minutes") {
+                                // Only 0 & 30 allowed
+                                if (minute !== 0 && minute !== 30) return true;
+
+                                // Block anything after 8:00 PM
+                                if (hour === 20 && minute > 0) return true;
+
+                                // If today → block past minutes
+                                if (isToday) {
+                                  if (hour < now.hour()) return true;
+
+                                  if (
+                                    hour === now.hour() &&
+                                    minute <= now.minute()
+                                  ) {
+                                    return true;
+                                  }
+                                }
+
+                                return false;
+                              }
+
+                              return false;
+                            }}
+                            slotProps={{
+                              textField: {
+                                size: "small",
+                                error: !!error,
+                                helperText: error?.message,
+                              },
+                            }}
+                          />
+                        )}
+                      />
+                    </LocalizationProvider>
                   </Grid>
                 </Grid>
               </Box>
             </Grid>
 
+            <Dialog
+              open={open}
+              onClose={handleClose}
+              fullWidth
+              maxWidth="xs"
+              scroll="paper"
+            >
+              <form onSubmit={handleSubmit1(onSubmit1)}>
+                {/* ===== Title ===== */}
+                <DialogTitle>
+                  <Grid container justifyContent="center" alignItems="center">
+                    <Typography fontWeight="bold">
+                      Appointment Cancel
+                    </Typography>
+
+                    <IconButton
+                      onClick={handleClose}
+                      sx={{ position: "absolute", right: 8, top: 8 }}
+                    >
+                      <AddIcon />
+                    </IconButton>
+                  </Grid>
+                </DialogTitle>
+
+                <Divider />
+
+                {/* ===== Content ===== */}
+                <DialogContent>
+                  <Grid container spacing={2}>
+                    {/* Appointment Number */}
+                    <Grid
+                      item
+                      xs={12}
+                      md={12}
+                      lg={12}
+                      sm={6}
+                      textAlign={"center"}
+                    >
+                      <Controller
+                        name="AppointmentNo"
+                        control={control1}
+                        // rules={{ required: "Appointment No is required" }}
+                        render={({ field, fieldState: { error } }) => (
+                          <InputTextField
+                            {...field}
+                            label="APPOINTMENT NO"
+                            type="text"
+                            readOnly
+                            value={getValues("AppointmentNo")}
+                            inputProps={{ maxLength: 19 }}
+                            error={!!error}
+                            helperText={error?.message}
+                            fullWidth
+                          />
+                        )}
+                      />
+                    </Grid>
+
+                    {/* Cancel Reason */}
+                    <Grid
+                      item
+                      xs={12}
+                      md={12}
+                      lg={12}
+                      sm={6}
+                      textAlign={"center"}
+                    >
+                      <Controller
+                        name="CancelRemarks"
+                        control={control1}
+                        rules={{ required: "Cancel reason is required" }}
+                        render={({ field, fieldState: { error } }) => (
+                          <InputTextField
+                            {...field}
+                            label="CANCELLATION REMARK"
+                            multiline
+                            rows={4}
+                            error={!!error}
+                            helperText={error?.message}
+                            fullWidth
+                          />
+                        )}
+                      />
+                    </Grid>
+                  </Grid>
+                </DialogContent>
+
+                <Divider />
+
+                <DialogActions>
+                  <Grid container px={2} py={1} justifyContent="space-between">
+                    <Button
+                      type={onSubmit1}
+                      variant="contained"
+                      color="success"
+                    >
+                      Save
+                    </Button>
+
+                    <Button
+                      variant="contained"
+                      color="error"
+                      onClick={handleClose}
+                    >
+                      Close
+                    </Button>
+                  </Grid>
+                </DialogActions>
+              </form>
+            </Dialog>
             <Grid
               item
               px={1}
-              // md={12}
               xs={12}
               style={{
                 display: "flex",
@@ -760,21 +1685,40 @@ export default function BookingAppointment() {
                 sx={{ color: "white" }}
                 color="success"
                 type="submit"
+                disabled={
+                  (SaveUpdateName === "SAVE" && !perms.IsAdd) ||
+                  (SaveUpdateName !== "SAVE" && !perms.IsEdit)
+                }
+                // disabled={tab !== "1"}
               >
-                Save
+                {SaveUpdateName}
               </Button>
-              {/* <Button variant="contained" color="error" disabled>
-                CANCEL APPIONTMENT
-              </Button> */}
-              <Button variant="contained" color="primary">
+
+              <Button
+                variant="contained"
+                sx={{ color: "white" }}
+                color="error"
+                type="button"
+                disabled={SaveUpdateName === "SAVE" || watch("IsInward") !== ""}
+                onClick={() => {
+                  handleOpen();
+                }}
+              >
+                CANCEL APPOINTMENT
+              </Button>
+
+              <Button
+                variant="contained"
+                color="primary"
+                disabled={!perms.IsDelete}
+                // onClick={handleDelete}
+              >
                 PRINT
               </Button>
             </Grid>
           </Grid>
         </Grid>
       </Grid>
-
-      {/* Drawer for smaller screens */}
     </>
   );
 }
