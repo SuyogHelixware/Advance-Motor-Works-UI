@@ -28,12 +28,12 @@ export default function ARSales() {
       ReDirect: "booking-appointment",
     },
 
-    // {
-    //   id: "5",
-    //   Name: "Material Request",
-    //   Count: 0,
-    //   ReDirect: "material-request",
-    // },
+    {
+      id: "5",
+      Name: "Material Request",
+      Count: 0,
+      ReDirect: "material-request",
+    },
     // {
     //   id: "6",
     //   Name: "Invoice",
