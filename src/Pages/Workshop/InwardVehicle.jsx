@@ -101,8 +101,8 @@ export default function InwardVehicle() {
     AppointmentNo: "",
     OrderType: "",
     VehInwardNo: "",
-    InspectionRemarks: "",
-    // Vehicle: "",
+    InspectionRemark: "",
+    Vehicle: "",
   };
 
   const {
@@ -233,7 +233,7 @@ export default function InwardVehicle() {
           AppointmentNo: item.AppointmentNo,
           AppointDate: item.DocDate ? dayjs(item.DocDate) : null,
           VehInwardDate: item.DocDate ? dayjs(item.DocDate) : dayjs(),
-          VehInwardTime: item.VehInwardTime,
+          VehInwardTime: item.VehInwardTime ? dayjs(item.VehInwardTime, "HH:mm") : dayjs(),
           Mileage: item.Mileage,
           ChassisNo: item.ChassisNo,
           RegistrationNo: item.RegistrationNo,
@@ -676,7 +676,6 @@ export default function InwardVehicle() {
     reset(initial);
     setSaveUpdateName("SAVE");
     setDocEntry("");
-    reset(initial);
     setSelectData([]);
     setok("");
   };
@@ -1309,6 +1308,7 @@ export default function InwardVehicle() {
                                 <InputTimePicker
                                   {...field}
                                   label="INWARD TIME"
+                                  readOnly={true}
                                   error={!!error}
                                   helperText={error?.message}
                                 />
