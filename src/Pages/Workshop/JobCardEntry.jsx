@@ -37,23 +37,22 @@ import dayjs from "dayjs";
 
 export default function IssueMaterial() {
   const theme = useTheme();
-  const [openPosts, ] = useState([]); // State for Open posts
-  const [openSearchPosts, ] = useState([]); // State for Open posts
-  const [closeSearchPosts, ] = useState([]); // State for Open posts
-  const [closedPosts, ] = useState([]);
-  const [searchTextClose,]=useState([])
-  // const [openPage, setOpenPage] = useState(0); // Pagination for Open posts
-  // const [closePage, setClosePage] = useState(0);
+  const [openPosts] = useState([]); // State for Open posts
+  const [openSearchPosts] = useState([]); // State for Open posts
+  const [closeSearchPosts] = useState([]); // State for Open posts
+  const [closedPosts] = useState([]);
+  const [searchTextClose] = useState([]);
+  const [openCreateCurrencyDialog, setopenCreateCurrencyDialog] =
+    useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [tab, settab] = useState("0");
-  const [hasMoreOpen, ] = useState(true);
+  const [hasMoreOpen] = useState(true);
   // const [hasMoreClose, setHasMoreClose] = useState(true);
-  const [searchTextOpen, ] = useState("");
-  const [searchTextGetListForCreate, ] =
-    useState("");
-  const [getListData, ] = useState([]);
-  const [getListSearchData, ] = useState([]); // State for Open posts
-  const [hasMoreGetListForCreate, ] = useState(true);
+  const [searchTextOpen] = useState("");
+  const [searchTextGetListForCreate] = useState("");
+  const [getListData] = useState([]);
+  const [getListSearchData] = useState([]); // State for Open posts
+  const [hasMoreGetListForCreate] = useState(true);
   // const [getListPage, setGetListPage] = useState(0);
 
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -151,7 +150,7 @@ export default function IssueMaterial() {
     setIsDialogOpen(false);
   };
 
-  const { control, } = useForm({
+  const { control } = useForm({
     //defaultValues: initialFormData,
   });
   const toggleSidebar = () => {
@@ -203,11 +202,11 @@ export default function IssueMaterial() {
         width={"100%"}
         height={"100%"}
         border={"1px silver solid"}
-       // sx={{ backgroundColor: { lg: "initial", xs: "#F5F6FA" } }}
-       sx={{
-        backgroundColor:
-          theme.palette.mode === "light" ? "#F5F6FA" : "#080D2B",
-      }}
+        // sx={{ backgroundColor: { lg: "initial", xs: "#F5F6FA" } }}
+        sx={{
+          backgroundColor:
+            theme.palette.mode === "light" ? "#F5F6FA" : "#080D2B",
+        }}
       >
         <Grid
           item
@@ -277,9 +276,11 @@ export default function IssueMaterial() {
                   }
                   //  next={fetchMoreOpenListData}
                   hasMore={hasMoreOpen}
-                  loader={<BeatLoader 
-                    color={theme.palette.mode === "light" ? "black" : "white"}
-                  />}
+                  loader={
+                    <BeatLoader
+                      color={theme.palette.mode === "light" ? "black" : "white"}
+                    />
+                  }
                   scrollableTarget="ListScroll"
                   endMessage={<Typography>No More Records</Typography>}
                 >
@@ -322,9 +323,9 @@ export default function IssueMaterial() {
                   }}
                 >
                   <SearchInputField
-                    //  onChange={getCloseSearchList}
-                    // value={searchTextClose}
-                    // onClickClear={triggeronClickClearCloseSearchTwice}
+                  //  onChange={getCloseSearchList}
+                  // value={searchTextClose}
+                  // onClickClear={triggeronClickClearCloseSearchTwice}
                   />
                 </Grid>
                 <InfiniteScroll
@@ -336,9 +337,11 @@ export default function IssueMaterial() {
                   }
                   //next={fetchMoreCloseListData}
                   //hasMore={hasMoreClose}
-                  loader={<BeatLoader 
-                    color={theme.palette.mode === "light" ? "black" : "white"}
-                  />}
+                  loader={
+                    <BeatLoader
+                      color={theme.palette.mode === "light" ? "black" : "white"}
+                    />
+                  }
                   scrollableTarget="ListScrollClosed"
                   endMessage={<Typography>No More Records</Typography>}
                 >
@@ -518,7 +521,7 @@ export default function IssueMaterial() {
               overflow={"scroll"}
               sx={{ overflowX: "hidden" }}
               position={"relative"}
-              textTransform={'uppercase'}
+              textTransform={"uppercase"}
             >
               <Box
                 component="form"
@@ -548,9 +551,12 @@ export default function IssueMaterial() {
                   </Grid>
 
                   <Grid item sm={6} md={6} lg={4} xs={12} textAlign={"center"}>
-                    <InputDatePickerFields label="REQ Date" name="Date" value={dayjs(undefined)} />
+                    <InputDatePickerFields
+                      label="REQ Date"
+                      name="Date"
+                      value={dayjs(undefined)}
+                    />
                   </Grid>
-                  
 
                   <Grid item sm={6} md={6} lg={4} xs={12} textAlign={"center"}>
                     <InputTextField
@@ -567,7 +573,11 @@ export default function IssueMaterial() {
                     />
                   </Grid>
                   <Grid item sm={6} md={6} lg={4} xs={12} textAlign={"center"}>
-                    <InputTextField label="Inward No" name="Inward No" value="" />
+                    <InputTextField
+                      label="Inward No"
+                      name="Inward No"
+                      value=""
+                    />
                   </Grid>
                   <Grid item sm={6} md={6} lg={4} xs={12} textAlign={"center"}>
                     <InputTextField
@@ -592,14 +602,22 @@ export default function IssueMaterial() {
                  </Grid> */}
 
                   <Grid item sm={6} md={6} lg={4} xs={12} textAlign={"center"}>
-                    <InputTextField label="Before LH" name="Before LH" value="" />
+                    <InputTextField
+                      label="Before LH"
+                      name="Before LH"
+                      value=""
+                    />
                   </Grid>
                   <Grid item sm={6} md={6} lg={4} xs={12} textAlign={"center"}>
                     <InputTextField label="After LH" name="After LH" value="" />
                   </Grid>
 
                   <Grid item sm={6} md={6} lg={4} xs={12} textAlign={"center"}>
-                    <InputTextField label="Before RH" name="Before RH" value="" />
+                    <InputTextField
+                      label="Before RH"
+                      name="Before RH"
+                      value=""
+                    />
                   </Grid>
                   <Grid item sm={6} md={6} lg={4} xs={12} textAlign={"center"}>
                     <InputTextField label="After RH" name="After RH" value="" />
@@ -662,7 +680,7 @@ export default function IssueMaterial() {
                     disableRowSelectionOnClick
                     sx={{
                       backgroundColor:
-                      theme.palette.mode === "light" ? "#F5F6FA" : "#080D2B",
+                        theme.palette.mode === "light" ? "#F5F6FA" : "#080D2B",
                       "& .MuiDataGrid-cell": {
                         border: "none",
                         borderBlock: "none",
@@ -684,9 +702,13 @@ export default function IssueMaterial() {
                   </Grid>
 
                   <Grid item sm={6} md={6} lg={6} xs={12} textAlign={"center"}>
-                    <InputDatePickerFields label=" Date" name="Date" value={dayjs(undefined)} />
+                    <InputDatePickerFields
+                      label=" Date"
+                      name="Date"
+                      value={dayjs(undefined)}
+                    />
                   </Grid>
-                  <Grid item sm={6} md={6} lg={6} xs={12} textAlign={"center"} >
+                  <Grid item sm={6} md={6} lg={6} xs={12} textAlign={"center"}>
                     <InputDatePickerFields
                       label="JOB-WORK DONE ON"
                       name="Date"
@@ -695,11 +717,7 @@ export default function IssueMaterial() {
                   </Grid>
 
                   <Grid item sm={6} md={6} lg={6} xs={12} textAlign={"center"}>
-                    <InputTextField
-                      label=" Time "
-                      name=" Time "
-                      value=""
-                    />
+                    <InputTextField label=" Time " name=" Time " value="" />
                   </Grid>
                 </Grid>
               </Box>
