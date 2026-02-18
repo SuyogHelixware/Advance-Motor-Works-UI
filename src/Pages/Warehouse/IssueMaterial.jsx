@@ -988,10 +988,15 @@ export default function IssueMaterial() {
                 </Grid>
                 <InfiniteScroll
                   style={{ textAlign: "center", justifyContent: "center" }}
+                  // dataLength={
+                  //   searchTextOpen === ""
+                  //     ? openPosts || [].length
+                  //     : openSearchPosts || [].length
+                  // }
                   dataLength={
                     searchTextOpen === ""
-                      ? openPosts.length
-                      : openSearchPosts.length
+                      ? openPosts?.length || 0
+                      : openSearchPosts?.length || 0
                   }
                   next={fetchMoreOpenListData}
                   hasMore={hasMoreOpen}
@@ -1008,9 +1013,24 @@ export default function IssueMaterial() {
                   scrollableTarget="ListScroll"
                   endMessage={<Typography>No More Records</Typography>}
                 >
-                  {(openSearchPosts.length === 0
+                  {/* {(openSearchPosts || [].length === 0
                     ? openPosts
                     : openSearchPosts
+                  ).map((item) => (
+                    <CardComponent
+                      key={item.DocNum}
+                      title={item.CardName}
+                      subtitle={item.RequestNo}
+                      description={item.PhoneNumber1}
+                      onClick={() => {
+                        setOldOpenListData(item.DocEntry);
+                        handleCardClick(true);
+                      }}
+                    />
+                  ))} */}
+                  {(openSearchPosts && openSearchPosts.length > 0
+                    ? openSearchPosts
+                    : openPosts || []
                   ).map((item) => (
                     <CardComponent
                       key={item.DocNum}
@@ -1056,10 +1076,15 @@ export default function IssueMaterial() {
                 </Grid>
                 <InfiniteScroll
                   style={{ textAlign: "center" }}
+                  // dataLength={
+                  //   searchTextClose === ""
+                  //     ? closedPosts.length
+                  //     : closeSearchPosts.length
+                  // }
                   dataLength={
                     searchTextClose === ""
-                      ? closedPosts.length
-                      : closeSearchPosts.length
+                      ? closedPosts?.length || 0
+                      : closeSearchPosts?.length || 0
                   }
                   next={fetchMoreCloseListData}
                   hasMore={hasMoreClose}
@@ -1071,9 +1096,24 @@ export default function IssueMaterial() {
                   scrollableTarget="ListScrollClosed"
                   endMessage={<Typography>No More Records</Typography>}
                 >
-                  {(closeSearchPosts.length === 0
+                  {/* {(closeSearchPosts.length === 0
                     ? closedPosts
                     : closeSearchPosts
+                  ).map((item) => (
+                    <CardComponent
+                      key={item.DocNum}
+                      title={item.CardName}
+                      subtitle={item.PhoneNumber1}
+                      description={item.RequestNo}
+                      onClick={() => {
+                        handleCardClick();
+                        setOldOpenListData(item.DocEntry);
+                      }}
+                    />
+                  ))} */}
+                  {(closeSearchPosts && closeSearchPosts.length > 0
+                    ? closeSearchPosts
+                    : closedPosts || []
                   ).map((item) => (
                     <CardComponent
                       key={item.DocNum}
@@ -1113,10 +1153,15 @@ export default function IssueMaterial() {
           <>
             <InfiniteScroll
               style={{ textAlign: "center" }}
+              // dataLength={
+              //   getListData.length === 0
+              //     ? getListSearchData.length
+              //     : getListData.length
+              // }
               dataLength={
-                getListData.length === 0
-                  ? getListSearchData.length
-                  : getListData.length
+                searchTextGetListForCreate === ""
+                  ? getListData?.length || 0
+                  : getListSearchData?.length || 0
               }
               next={fetchMoreGetListForCreate}
               hasMore={hasMoreGetListForCreate}
@@ -1130,9 +1175,23 @@ export default function IssueMaterial() {
                 <Typography textAlign={"center"}>No More Records</Typography>
               }
             >
-              {(getListSearchData.length === 0
+              {/* {(getListSearchData.length === 0
                 ? getListData
                 : getListSearchData
+              ).map((item) => (
+                <CardComponent
+                  key={item.DocNum}
+                  title={item.DocNum}
+                  subtitle={item.CardName}
+                  description={item.PhoneNumber1}
+                  onClick={() => {
+                    onSelectRequest(item);
+                  }}
+                />
+              ))} */}
+              {(getListSearchData && getListSearchData.length > 0
+                ? getListSearchData
+                : getListData || []
               ).map((item) => (
                 <CardComponent
                   key={item.DocNum}
