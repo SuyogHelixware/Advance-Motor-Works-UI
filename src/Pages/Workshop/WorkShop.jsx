@@ -15,12 +15,12 @@ export default function WorkShop() {
       Count: 20,
       ReDirect: "job-card",
     },
-    //   {
-    //     id: "3",
-    //     Name: "OutWard Vehicle",
-    //     Count: 20,
-    //     ReDirect: "outward-vehicle",
-    //   },
+    {
+      id: "3",
+      Name: "OutWard Vehicle",
+      Count: 20,
+      ReDirect: "outward-vehicle",
+    },
     {
       id: "4",
       Name: "Appointment Screen",

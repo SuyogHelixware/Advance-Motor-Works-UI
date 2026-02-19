@@ -510,7 +510,7 @@ export default function IssueMaterial() {
 
   const getAllWMSStaffList = () => {
     apiClient
-      .get(`/Technician`)
+      .get(`/Technician?HW_WMSStaff=Y`)
       .then((response) => {
         setWMSStaff(response.data.values);
       })

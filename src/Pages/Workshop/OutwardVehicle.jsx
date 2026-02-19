@@ -1,89 +1,425 @@
-import React, { useRef, useState } from "react";
-import SignatureCanvas from "react-signature-canvas";
+import AddIcon from "@mui/icons-material/Add";
+import CloseIcon from "@mui/icons-material/Close";
+import { TabContext, TabPanel } from "@mui/lab";
 import {
   Box,
   Button,
-  FormControl,
   Grid,
   IconButton,
   Tab,
   Tabs,
+  Tooltip,
   Typography,
+  useTheme,
 } from "@mui/material";
-import RefreshIcon from "@mui/icons-material/Refresh";
+import { useEffect, useRef, useState } from "react";
+import SignatureCanvas from "react-signature-canvas";
+import SearchInputField from "../Components/SearchInputField";
+import MenuIcon from "@mui/icons-material/Menu";
+import dayjs from "dayjs";
+import { Controller, useForm } from "react-hook-form";
+import InfiniteScroll from "react-infinite-scroll-component";
+import { BeatLoader } from "react-spinners";
+import Swal from "sweetalert2";
 import CardComponent from "../Components/CardComponent";
 import {
   InputDatePickerFields,
+  InputFields,
   InputTextAreaFields,
-  InputTextField,
-  InputTextSearchField,
+  InputTextSearchButton,
+  InputTimePicker,
 } from "../Components/formComponents";
-import SearchInputField from "../Components/SearchInputField";
-import { BeatLoader } from "react-spinners";
-
 import SearchModel from "../Components/SearchModel";
-import { useTheme } from "@mui/material/styles";
-import { TabContext, TabPanel } from "@mui/lab";
-import CloseIcon from "@mui/icons-material/Close";
-import InfiniteScroll from "react-infinite-scroll-component";
-import MenuIcon from "@mui/icons-material/Menu";
-import { Controller, useForm } from "react-hook-form";
-import dayjs from "dayjs";
+import usePermissions from "../Components/usePermissions";
+import apiClient from "../../services/apiClient";
 
-export default function IssueMaterial() {
-  // modal
-  const theme = useTheme();
-  const [openPosts] = useState([]); // State for Open posts
-  const [openSearchPosts] = useState([]); // State for Open posts
-  const [closeSearchPosts] = useState([]); // State for Open posts
-  const [closedPosts] = useState([]);
-  //const [openPage, setOpenPage] = useState(0); // Pagination for Open posts
-  // const [closePage, setClosePage] = useState(0);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  // const [hasMoreOpen, setHasMoreOpen] = useState(true);
-  // const [hasMoreClose, setHasMoreClose] = useState(true);
-  const [searchTextOpen] = useState("");
-  const [searchTextClose] = useState("");
-  const [searchTextGetListForCreate] = useState("");
-  const [getListData] = useState([]);
-  const [getListSearchData] = useState([]); // State for Open posts
-  const [hasMoreGetListForCreate] = useState(true);
-  //const [getListPage, setGetListPage] = useState(0);
-
+export default function InwardVehicle() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const handleCloseDialog = () => {
-    setIsDialogOpen(false);
+  const [tab, settab] = useState("0");
+  const [getListData, setGetListData] = useState([]);
+  const [getListPage, setGetListPage] = useState(0);
+  const [hasMoreGetList, setHasMoreGetList] = useState(true);
+  const [getListquery, setGetListQuery] = useState("");
+  const [getListSearching, setGetListSearching] = useState(false);
+  const [searchmodelOpen, setSearchmodelOpen] = useState(false);
+  const timeoutRef = useRef(null);
+  const [DocEntry, setDocEntry] = useState("");
+  const [PrintData, setPrintData] = useState([]);
+
+  const [oldOpenData, setSelectData] = useState(null);
+  const [apiloading, setapiloading] = useState(false);
+  let [ok, setok] = useState("OK");
+  const [SaveUpdateName, setSaveUpdateName] = useState("SAVE");
+  const perms = usePermissions(133);
+
+  const [openListData, setOpenListData] = useState([]);
+  const [openListPage, setOpenListPage] = useState(0);
+  const [hasMoreOpen, setHasMoreOpen] = useState(true);
+  const [openListquery, setOpenListQuery] = useState("");
+  const [openListSearching, setOpenListSearching] = useState(false);
+  //=========================================open List State End================================================================
+  //=====================================closed List State====================================================================
+  const [closedListData, setClosedListData] = useState([]);
+  const [closedListPage, setClosedListPage] = useState(0);
+  const [hasMoreClosed, setHasMoreClosed] = useState(true);
+  const [closedListquery, setClosedListQuery] = useState("");
+  const [closedListSearching, setClosedListSearching] = useState(false);
+
+  const sigCanvas = useRef(null);
+  const [isSigned, setIsSigned] = useState(false);
+  const signatureEditable = SaveUpdateName === "SAVE";
+
+  const handleEnd = () => {
+    if (!sigCanvas.current.isEmpty()) {
+      setIsSigned(true);
+    }
   };
-  const { control } = useForm({
-    //defaultValues: initialFormData,
+
+  const clearSignature = () => {
+    sigCanvas.current.clear();
+    setIsSigned(false);
+  };
+
+  const initial = {
+    OrderNo: "",
+    CardName: "",
+    PhoneNumber1: "",
+    Mileage: "",
+    ChassisNo: "",
+    RegistrationNo: "",
+    JobWorkAt: "",
+    JobWorkDetails: "",
+    InwardNo: "",
+    VehInwardDate: dayjs(new Date()),
+    VehInwardTime: dayjs(),
+    JobCardNo: "",
+    OutwardNo: "",
+    OrderDocEntry: "",
+    SignPath: "",
+    InvoiceNo: "",
+    Year: "",
+    Make: "",
+    Model: "",
+    AppointmentNo: "",
+    OrderType: "",
+    VehInwardNo: "",
+    InspectionRemarks: "",
+    // Vehicle: "",
+  };
+
+  const {
+    control,
+    handleSubmit,
+    reset,
+    getValues,
+    setValue,
+    watch,
+    clearErrors,
+    setError,
+    formState: { errors },
+  } = useForm({
+    defaultValues: initial,
   });
 
-  const [tab, settab] = useState("0");
+  useEffect(() => {
+    const signPathByteArray = watch("SignPathByteArray");
+    if (signPathByteArray && sigCanvas.current) {
+      const timer = setTimeout(() => {
+        sigCanvas.current.fromDataURL(
+          `data:image/png;base64,${signPathByteArray}`,
+        );
+        setIsSigned(true);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [watch("SignPathByteArray")]);
+
+  const allFormData = getValues();
+
+  const theme = useTheme();
 
   const handleTabChangeRight = (e, newvalue1) => {
     settab(newvalue1);
   };
 
-  // const [drawerOpen, setDrawerOpen] = useState(false);
-  const signatureRef = useRef(null);
-
-  // const toggleDrawer = () => {
-  //   //setDrawerOpen(!drawerOpen);
-  // };
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
-  const openDialog = () => {
-    setIsDialogOpen(true);
+
+  useEffect(() => {
+    const signPathByteArray = watch("SignPathByteArray");
+
+    if (sigCanvas.current) {
+      // Always clear the canvas first
+      sigCanvas.current.clear();
+      setIsSigned(false);
+
+      // Then load new signature if exists
+      if (signPathByteArray) {
+        const timer = setTimeout(() => {
+          sigCanvas.current.fromDataURL(
+            `data:image/png;base64,${signPathByteArray}`,
+          );
+          setIsSigned(true);
+        }, 100);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [watch("SignPathByteArray")]);
+
+  useEffect(() => {
+    if (SaveUpdateName === "SAVE" && sigCanvas.current) {
+      sigCanvas.current.clear();
+      setIsSigned(false);
+    }
+  }, [SaveUpdateName]);
+
+  const onSelectBusinessPartner = (DocEntry) => {
+    clearSignature();
+    const selectedItem = getListData.find((item) => item.DocEntry === DocEntry);
+    if (!selectedItem) return;
+
+    const fieldsToSet = {
+      OrderNo: selectedItem.OrderNo,
+      CardName: selectedItem.CardName,
+      CardCode: selectedItem.CardCode,
+      InvoiceNo: selectedItem.DocNum,
+      AppointDate: selectedItem.AppointDate
+        ? dayjs(selectedItem.AppointDate)
+        : null,
+      AppointmentNo: selectedItem.DocEntry,
+      Vehicle: `${selectedItem.Year} - ${selectedItem.Make} - ${selectedItem.Model}`,
+      PhoneNumber1: selectedItem.PhoneNumber1,
+      OrderDocEntry: selectedItem.OrderDocEntry,
+      //   VehMileage: selectedItem.Mileage,
+      //   VehchassisNo: selectedItem.ChassisNo,
+      //   RegistrationNo: selectedItem.RegistrationNo,
+      //   InspectionRemarks: selectedItem.InspectionRemark,
+      JobWorkAt: selectedItem.JobWorkAt,
+      JobWorkDetails: selectedItem.JobRemarks,
+      VehInwardNo: selectedItem.VehInwardNo,
+      JobCardNo: selectedItem.JobCardNo,
+      SignPath: selectedItem.SignPath,
+      OrderType: selectedItem.OrderType,
+      Year: selectedItem.Year,
+      Make: selectedItem.Make,
+      Model: selectedItem.Model,
+    };
+
+    Object.entries(fieldsToSet).forEach(([key, value]) => {
+      setValue(key, value, { shouldValidate: true });
+    });
+
+    SearchModelClose();
+  };
+  const fetchAndSetData = async (DocEntry) => {
+    try {
+      if (!DocEntry) return;
+
+      const response = await apiClient.get(`/VehOutward?DocEntry=${DocEntry}`);
+      const data = response?.data;
+
+      // Fixed: The API returns 'values' as an object, not an array
+      if (data && data.success && data.values) {
+        const item = data.values;
+
+        // Use reset to map the API object to the form controllers
+        reset({
+          ...item,
+          // Ensure date is parsed correctly for the DatePicker
+          VehInwardDate: item.VehInwardDate
+            ? dayjs(item.VehInwardDate)
+            : dayjs(),
+
+          // Map the correct time field from the API to your form field
+          // If the API provides VehOutwardTime, use it; otherwise fallback
+          VehInwardTime: item.VehInwardTime
+            ? dayjs(item.VehInwardTime)
+            : dayjs(),
+
+          // Ensure the combined display field 'Vehicle' is populated
+          Vehicle:
+            item.Vehicle ||
+            `${item.Year || ""} - ${item.Make || ""} - ${item.Model || ""}`,
+        });
+
+        setDocEntry(DocEntry);
+        setSaveUpdateName("Update");
+      }
+    } catch (error) {
+      console.error("Fetch Error Detail:", error);
+      Swal.fire({
+        text: "Failed to fetch vehicle details.",
+        icon: "error",
+        confirmButtonText: "OK",
+      });
+    }
+  };
+  const fetchOpenListData = async (pageNum, searchTerm = "") => {
+    try {
+      const url = searchTerm
+        ? `/VehOutward?SearchText=${searchTerm}&Status=1&Page=${pageNum}`
+        : `/VehOutward?Status=1&Page=${pageNum}`;
+
+      const { data } = await apiClient.get(url);
+
+      if (data?.success) {
+        const newData = data.values ?? [];
+
+        setOpenListData((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+
+        const pageSize = 20;
+        setHasMoreOpen(newData.length === pageSize);
+        setOpenListPage(pageNum);
+      } else {
+        setHasMoreOpen(false);
+        Swal.fire({
+          text: data?.message || "Something went wrong",
+          icon: "question",
+          confirmButtonText: "YES",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      setHasMoreOpen(false);
+
+      Swal.fire({
+        text: error?.response?.data?.message || error.message || "Server error",
+        icon: "question",
+        confirmButtonText: "YES",
+      });
+    }
   };
 
-  // const onHandleSearch = () => {
-  //   alert();
-  // };
+  const handleOpenListSearch = (res) => {
+    setOpenListQuery(res);
+    setOpenListSearching(true);
+    setOpenListPage(0);
+    setOpenListData([]); // Clear current data
 
-  const clearSignature = () => {
-    signatureRef.current.clear();
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = setTimeout(() => {
+      fetchOpenListData(0, res);
+    }, 600);
+    // Fetch with search query
   };
+
+  // Clear search
+  const handleOpenListClear = () => {
+    setOpenListQuery(""); // Clear searFullAddressch input
+    setOpenListSearching(false); // Reset search state
+    setOpenListPage(0); // Reset page count
+    setOpenListData([]); // Clear data
+    fetchOpenListData(0); // Fetch first page without search
+  };
+
+  const fetchMoreOpenListData = () => {
+    fetchOpenListData(openListPage + 1, openListSearching ? openListquery : "");
+    setOpenListPage((prev) => prev + 1);
+  };
+
+  // Initial fetch
+  useEffect(() => {
+    fetchOpenListData(0);
+  }, []);
+
+  const fetchClosedListData = async (pageNum, searchTerm = "") => {
+    try {
+      const url = searchTerm
+        ? `/VehOutward?SearchText=${searchTerm}&Status=0&Page=${pageNum}`
+        : `/VehOutward?Status=0&Page=${pageNum}`;
+
+      const { data } = await apiClient.get(url);
+
+      if (data?.success) {
+        const newData = data.values ?? [];
+
+        setHasMoreClosed(newData.length === 20);
+
+        setClosedListData((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+      } else {
+        setHasMoreClosed(false);
+        Swal.fire({
+          text: data?.message || "Something went wrong",
+          icon: "question",
+          confirmButtonText: "YES",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      setHasMoreClosed(false);
+
+      Swal.fire({
+        text: error?.response?.data?.message || error.message || "Server error",
+        icon: "question",
+        confirmButtonText: "YES",
+      });
+    }
+  };
+  const handleClosedListSearch = (res) => {
+    setClosedListQuery(res);
+    setClosedListSearching(true);
+    setClosedListPage(0);
+    setClosedListData([]); // Clear current data
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      fetchClosedListData(0, res);
+    }, 600);
+  };
+
+  // Clear search
+  const handleClosedListClear = () => {
+    setClosedListQuery(""); // Clear search input
+    setClosedListSearching(false); // Reset search state
+    setClosedListPage(0); // Reset page count
+    setClosedListData([]); // Clear data
+    fetchClosedListData(0); // Fetch first page without search
+  };
+
+  const fetchMoreClosedListData = () => {
+    fetchClosedListData(
+      closedListPage + 1,
+      closedListSearching ? closedListquery : "",
+    );
+    setClosedListPage((prev) => prev + 1);
+  };
+
+  // Initial fetch
+  useEffect(() => {
+    fetchClosedListData(0);
+  }, []);
+
+  const tabData = [
+    {
+      value: "0",
+      label: "Open",
+      data: openListData,
+      query: openListquery,
+      hasMore: hasMoreOpen,
+      fetchMore: fetchMoreOpenListData,
+      handleSearch: handleOpenListSearch,
+      handleClear: handleOpenListClear,
+    },
+    {
+      value: "1",
+      label: "Closed",
+      data: closedListData,
+      query: closedListquery,
+      hasMore: hasMoreClosed,
+      fetchMore: fetchMoreClosedListData,
+      handleSearch: handleClosedListSearch,
+      handleClear: handleClosedListClear,
+    },
+  ];
 
   const sidebarContent = (
     <>
@@ -95,7 +431,6 @@ export default function IssueMaterial() {
         border={"1px solid silver"}
         borderBottom={"none"}
         position={"relative"}
-        // sx={{ backgroundColor: { lg: "initial", xs: "#F5F6FA" } }}
         sx={{
           backgroundColor:
             theme.palette.mode === "light" ? "#F5F6FA" : "#080D2B",
@@ -106,7 +441,7 @@ export default function IssueMaterial() {
           alignContent={"center"}
           height={"100%"}
         >
-          Outward Vehicle List
+          Outward List
         </Typography>
         <IconButton
           edge="end"
@@ -130,7 +465,6 @@ export default function IssueMaterial() {
         width={"100%"}
         height={"100%"}
         border={"1px silver solid"}
-        // sx={{ backgroundColor: { lg: "initial", xs: "#F5F6FA" } }}
         sx={{
           backgroundColor:
             theme.palette.mode === "light" ? "#F5F6FA" : "#080D2B",
@@ -164,196 +498,325 @@ export default function IssueMaterial() {
                 indicatorColor="primary"
                 textColor="inherit"
               >
-                <Tab value="0" label="Open" />
-                <Tab value="1" label="Closed" />
+                {tabData.map(({ value, label }) => (
+                  <Tab key={value} value={value} label={label} />
+                ))}
               </Tabs>
-              <TabPanel
-                value={"0"}
-                style={{
-                  overflow: "auto",
-                  maxHeight: `calc(100% - ${15}px)`,
-                  paddingLeft: 5,
-                  paddingRight: 5,
-                }}
-                id="ListScroll"
-              >
-                <Grid
-                  item
-                  padding={1}
-                  md={12}
-                  sm={12}
-                  width={"100%"}
-                  sx={{
-                    position: "sticky",
-                    top: "0",
-                    backgroundColor: "#F5F6FA",
-                  }}
-                >
-                  <SearchInputField
-                    // onChange={onHandleSearchOpen}
-                    value={searchTextOpen}
-                    //onClickClear={triggeronClickClearOpenSearchTwice}
-                  />
-                </Grid>
-                <InfiniteScroll
-                  style={{ textAlign: "center" }}
-                  dataLength={
-                    searchTextOpen === ""
-                      ? openPosts.length
-                      : openSearchPosts.length
-                  }
-                  // next={fetchMoreOpenListData}
-                  //  hasMore={hasMoreOpen}
-                  loader={
-                    <BeatLoader
-                      color={theme.palette.mode === "light" ? "black" : "white"}
-                    />
-                  }
-                  scrollableTarget="ListScroll"
-                  endMessage={<Typography>No More Records</Typography>}
-                >
-                  {(openSearchPosts.length === 0
-                    ? openPosts
-                    : openSearchPosts
-                  ).map((item) => (
-                    <CardComponent
-                      key={item.DocNum}
-                      title={item.CardName}
-                      subtitle={item.RequestNo}
-                      description={item.PhoneNumber1}
-                      onClick={() => {
-                        //setOldOpenListData(item.DocEntry);
-                      }}
-                    />
-                  ))}
-                </InfiniteScroll>
-              </TabPanel>
-              <TabPanel
-                value={"1"}
-                style={{
-                  overflow: "auto",
-                  maxHeight: `calc(100% - ${15}px)`,
-                  paddingLeft: 5,
-                  paddingRight: 5,
-                }}
-                id="ListScrollClosed"
-              >
-                <Grid
-                  item
-                  padding={1}
-                  md={12}
-                  sm={12}
-                  width={"100%"}
-                  sx={{
-                    position: "sticky",
-                    top: "0",
-                    backgroundColor: "#F5F6FA",
-                  }}
-                >
-                  <SearchInputField
-                    // onChange={getCloseSearchList}
-                    value={searchTextClose}
-                    // onClickClear={triggeronClickClearCloseSearchTwice}
-                  />
-                </Grid>
-                <InfiniteScroll
-                  style={{ textAlign: "center" }}
-                  dataLength={
-                    searchTextClose === ""
-                      ? closedPosts.length
-                      : closeSearchPosts.length
-                  }
-                  //  next={fetchMoreCloseListData}
-                  // hasMore={hasMoreClose}
-                  loader={
-                    <BeatLoader
+
+              {tabData.map(
+                ({
+                  value,
+                  data,
+                  query,
+                  hasMore,
+                  fetchMore,
+                  handleSearch,
+                  handleClear,
+                }) => (
+                  <TabPanel
+                    key={value}
+                    value={value}
+                    style={{
+                      overflow: "auto",
+                      maxHeight: `calc(100% - 15px)`,
+                      paddingLeft: 5,
+                      paddingRight: 5,
+                    }}
+                    id={`ListScroll${value}`}
+                  >
+                    <Grid
+                      item
+                      padding={1}
+                      md={12}
+                      sm={12}
+                      width={"100%"}
                       sx={{
-                        backgroundColor:
-                          theme.palette.mode === "light"
-                            ? "#F5F6FA"
-                            : "#080D2B",
+                        position: "sticky",
+                        top: "0",
+                        backgroundColor: "#F5F6FA",
                       }}
-                    />
-                  }
-                  scrollableTarget="ListScrollClosed"
-                  endMessage={<Typography>No More Records</Typography>}
-                >
-                  {(closeSearchPosts.length === 0
-                    ? closedPosts
-                    : closeSearchPosts
-                  ).map((item) => (
-                    <CardComponent
-                      key={item.DocNum}
-                      title={item.CardName}
-                      subtitle={item.RequestNo}
-                      description={item.PhoneNumber1}
-                      onClick={() => {}}
-                    />
-                  ))}
-                </InfiniteScroll>
-              </TabPanel>
+                    >
+                      <SearchInputField
+                        onChange={(e) => handleSearch(e.target.value)}
+                        value={query}
+                        onClickClear={handleClear}
+                      />
+                    </Grid>
+                    <InfiniteScroll
+                      style={{ textAlign: "center", justifyContent: "center" }}
+                      dataLength={data.length}
+                      hasMore={hasMore}
+                      next={fetchMore}
+                      loader={
+                        <BeatLoader
+                          color={
+                            theme.palette.mode === "light" ? "black" : "white"
+                          }
+                        />
+                      }
+                      scrollableTarget={`ListScroll${value}`}
+                      endMessage={<Typography>No More Records</Typography>}
+                    >
+                      {data.map((item, i) => (
+                        <CardComponent
+                          key={i}
+                          title={item.DocNum}
+                          subtitle={item.PhoneNumber1}
+                          description={item.CardName}
+                          searchResult={query}
+                          // isSelected={watch("DocEntry") === item.DocEntry}
+                          onClick={() => fetchAndSetData(item.DocEntry)}
+                        />
+                      ))}
+                    </InfiniteScroll>
+                  </TabPanel>
+                ),
+              )}
             </TabContext>
           </Box>
         </Grid>
       </Grid>
     </>
   );
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
+  const abortControllerRef = useRef(null);
+
+  const fetchGetListData = async (pageNum = 0, searchTerm = "") => {
+    try {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
+      const encodedSearch = encodeURIComponent(searchTerm.trim());
+
+      const url = encodedSearch
+        ? `/VehOutward/CopyFrom?SearchText=${encodedSearch}&Page=${pageNum}`
+        : `/VehOutward/CopyFrom?Page=${pageNum}`;
+
+      const { data } = await apiClient.get(url, {
+        signal: controller.signal,
+      });
+
+      if (data?.success) {
+        const newData = data?.values || [];
+
+        setHasMoreGetList(newData.length === 20);
+
+        setGetListData((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+      } else {
+        Swal.fire({
+          text: data?.message || "No data found",
+          icon: "info",
+          confirmButtonText: "OK",
+        });
+      }
+    } catch (error) {
+      if (error.name === "CanceledError" || error.code === "ERR_CANCELED") {
+        return;
+      }
+
+      console.error("API Error:", error);
+
+      Swal.fire({
+        text: error?.response?.data?.message || error.message,
+        icon: "error",
+        confirmButtonText: "OK",
+      });
+    }
+  };
+
+  const fetchMoreGetListData = () => {
+    fetchGetListData(getListPage + 1, getListSearching ? getListquery : "");
+    setGetListPage((prev) => prev + 1);
+  };
+  useEffect(() => {
+    if (searchmodelOpen === true) {
+      fetchGetListData(0);
+    }
+  }, [searchmodelOpen]);
+
+  const OpenDailog = () => {
+    setSearchmodelOpen(true);
+  };
+  const SearchModelClose = () => {
+    setSearchmodelOpen(false);
+  };
+
+  const handleGetListSearch = (res) => {
+    setGetListQuery(res);
+    setGetListSearching(true);
+    setGetListPage(0);
+    setGetListData([]);
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      fetchGetListData(0, res);
+    }, 600);
+  };
+
+  const handleGetListClear = () => {
+    setGetListQuery("");
+    setGetListSearching(true);
+    setGetListPage(0);
+    setGetListData([]);
+    fetchGetListData(0);
+  };
+
+  const ClearForm = () => {
+    reset(initial);
+    setSaveUpdateName("SAVE");
+    setDocEntry("");
+    setSelectData([]);
+    setok("");
+  };
+
+  const handleSubmitForm = async (data) => {
+    try {
+      if (!sigCanvas.current || sigCanvas.current.isEmpty()) {
+        Swal.fire({
+          text: "Please add Signature...",
+          icon: "warning",
+          toast: true,
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
+        });
+        return;
+      }
+
+      setapiloading(true);
+
+      const UserId = localStorage.getItem("UserId");
+      const CreatedBy = localStorage.getItem("UserName");
+      const signatureDataURL = sigCanvas.current.toDataURL().split(",")[1];
+
+      const obj = {
+        DocEntry: DocEntry || "",
+        UserId: UserId,
+        CreatedBy: CreatedBy,
+        AppointmentNo: data.AppointmentNo,
+        VehInwardNo: data.VehInwardNo,
+        OrderNo: data.OrderNo,
+        VehInwardDate: dayjs(data.VehInwardDate).format("YYYY-MM-DD HH:mm:ss"),
+        RegistrationNo: String(data.RegistrationNo || ""),
+        InspectionRemark: data.InspectionRemark,
+        VehicleDocEntry: "0",
+        Mileage: String(data.Mileage || ""),
+        ChassisNo: String(data.ChassisNo || ""),
+        VehInwardTime: data.VehInwardTime
+          ? dayjs(data.VehInwardTime).format("HH:mm")
+          : "",
+        PhoneNumber1: data.PhoneNumber1,
+        CardName: data.CardName,
+        CardCode: data.CardCode,
+        JobWorkAt: data.JobWorkAt,
+        Year: data.Year,
+        Make: data.Make,
+        Model: data.Model,
+        JobWorkDetails: data.JobWorkDetails,
+        OrderType: data.OrderType,
+        OrderDocEntry: String(data.OrderDocEntry || ""),
+        SignPathByteArray: signatureDataURL,
+      };
+
+      if (SaveUpdateName === "SAVE") {
+        const { data: res } = await apiClient.post(`/VehOutward`, obj);
+
+        if (res.success) {
+          setOpenListData([]);
+          fetchOpenListData(0);
+          handleGetListClear();
+          ClearForm();
+
+          Swal.fire({
+            title: "Success!",
+            text: "Outward Vehicle Added Successfully",
+            icon: "success",
+            timer: 1500,
+            showConfirmButton: false,
+          });
+        } else {
+          throw new Error(res.message || "Failed to add vehicle.");
+        }
+      } else if (SaveUpdateName === "Update") {
+        // PUT for updates
+        const confirm = await Swal.fire({
+          text: `Do you want to Update ${data.DocNum || "this record"}?`,
+          icon: "question",
+          showCancelButton: true,
+          confirmButtonText: "YES",
+          cancelButtonText: "No",
+        });
+
+        if (!confirm.isConfirmed) {
+          setapiloading(false);
+          return;
+        }
+
+        const { data: res } = await apiClient.put(
+          `/VehOutward/${DocEntry}`,
+          obj,
+        );
+
+        if (res.success) {
+          setOpenListPage(0);
+          setOpenListData([]);
+          fetchOpenListData(0);
+          ClearForm();
+
+          Swal.fire({
+            title: "Success!",
+            text: "Outward Vehicle Updated",
+            icon: "success",
+            timer: 1200,
+            showConfirmButton: false,
+          });
+        } else {
+          throw new Error(res.message || "Failed to update vehicle.");
+        }
+      }
+    } catch (error) {
+      console.error("Submit Error:", error);
+      Swal.fire({
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          error.message ||
+          "Something went wrong",
+        icon: "error",
+        confirmButtonText: "Ok",
+      });
+    } finally {
+      setapiloading(false);
+    }
+  };
 
   return (
     <>
-      <SearchModel
-        open={isDialogOpen}
-        onClose={handleCloseDialog}
-        onCancel={handleCloseDialog}
-        title="Select Request"
-        // onChange={onHandleSearchGetListForCreate}
-        value={searchTextGetListForCreate}
-        //   onClickClear={triggerClearSearchTwice}
-        cardData={
-          <>
-            <InfiniteScroll
-              dataLength={
-                getListData.length === 0
-                  ? getListSearchData.length
-                  : getListData.length
-              }
-              // next={fetchMoreGetListForCreate}
-              hasMore={hasMoreGetListForCreate}
-              loader={
-                <BeatLoader
-                  color={theme.palette.mode === "light" ? "black" : "white"}
-                />
-              }
-              scrollableTarget="getListForCreateScroll"
-              endMessage={
-                <Typography textAlign={"center"}>No More Records</Typography>
-              }
-            >
-              {(getListSearchData.length === 0
-                ? getListData
-                : getListSearchData
-              ).map((item) => (
-                <CardComponent
-                  key={item.DocNum}
-                  title={item.DocNum}
-                  subtitle={item.CardName}
-                  description={item.PhoneNumber1}
-                  onClick={() => {}}
-                />
-              ))}
-            </InfiniteScroll>
-          </>
-        }
-      />
-
       <Grid
         container
         width="100%"
         height="calc(100vh - 110px)"
         position="relative"
         component={"form"}
-        // onSubmit={handleSubmit(handleSubmitForm)}
+        onSubmit={handleSubmit(handleSubmitForm)}
       >
+        {/* Sidebar for larger screens */}
+
         <Grid
           container
           item
@@ -373,6 +836,9 @@ export default function IssueMaterial() {
         >
           {sidebarContent}
         </Grid>
+
+        {/* User Creation Form Grid */}
+
         <Grid
           container
           item
@@ -381,43 +847,52 @@ export default function IssueMaterial() {
           sm={12}
           md={12}
           lg={9}
-          component="form"
+          // component="form"
           position="relative"
-          // onClick={handleOnSubmit}
         >
+          {/* Hamburger Menu for smaller screens */}
+
           <IconButton
             edge="start"
             color="inherit"
             aria-label="menu"
             onClick={toggleSidebar}
             sx={{
+              display: {
+                lg: "none",
+              }, // Show only on smaller screens
+
               position: "absolute",
+
+              // top: "10px",
+
               left: "10px",
-              display: { lg: "none", xs: "block" },
             }}
           >
             <MenuIcon />
           </IconButton>
+
           <IconButton
             edge="start"
             color="inherit"
             aria-label="menu"
-            // onClick={ClearForm}
+            onClick={ClearForm}
             sx={{
               display: {},
               position: "absolute",
               right: "10px",
             }}
           >
-            <RefreshIcon />
+            <AddIcon />
           </IconButton>
+
           <Grid
             item
-            width="100%"
+            width={"100%"}
             py={0.5}
-            alignItems="center"
-            border="1px solid silver"
-            borderBottom="none"
+            alignItems={"center"}
+            border={"1px solid silver"}
+            borderBottom={"none"}
           >
             <Typography
               textAlign={"center"}
@@ -427,6 +902,7 @@ export default function IssueMaterial() {
               Outward Vehicle
             </Typography>
           </Grid>
+
           <Grid
             container
             item
@@ -444,7 +920,6 @@ export default function IssueMaterial() {
               overflow={"scroll"}
               sx={{ overflowX: "hidden" }}
               position={"relative"}
-              textTransform={"uppercase"}
             >
               <Box
                 component="form"
@@ -455,289 +930,503 @@ export default function IssueMaterial() {
                 noValidate
                 autoComplete="off"
               >
-                <Grid container >
+                <Grid container>
                   <Grid
+                    container
                     item
-                    sm={6}
-                    md={6}
-                    lg={4}
-                    xs={12}
-                    textAlign={"center"}
-                    mt={0}
+                    style={{
+                      height: "100%",
+                      width: "100%",
+                      overflowX: "hidden",
+                      overflowY: "auto",
+                      paddingBottom: 30,
+                    }}
                   >
-                    <Controller
-                      name="So No"
-                      control={control}
-                      render={({ field, fieldState: { error } }) => (
-                        <InputTextSearchField
-                          label="So No"
-                          type="text"
-                          onClick={openDialog}
-                          {...field}
-                          error={!!error} 
-                          helperText={error ? error.message : null} 
-                        />
-                      )}
-                    />
-                  </Grid>
-                  <Grid
-                    item
-                    sm={6}
-                    md={6}
-                    lg={4}
-                    xs={12}
-                    textAlign={"center"}
-                    mt={0}
-                  >
-                    <InputTextField
-                      label="CONTACT NO"
-                      name="CONTACT NO"
-                      value=""
-                    />
-                  </Grid>
-                  <Grid
-                    item
-                    sm={6}
-                    md={6}
-                    lg={4}
-                    xs={12}
-                    textAlign={"center"}
-                    mt={0}
-                  >
-                    <InputTextField
-                      label="Job Work At"
-                      name="Job Work At "
-                      value=""
-                    />
-                  </Grid>
-                  <Grid
-                    item
-                    sm={6}
-                    md={6}
-                    lg={4}
-                    xs={12}
-                    textAlign={"center"}
-                    mt={0}
-                  >
-                    <InputTextField
-                      label="REGISTRATION NO"
-                      name="REGISTRATION NO "
-                      value=""
-                    />
-                  </Grid>
-                  <Grid
-                    item
-                    sm={6}
-                    md={6}
-                    lg={4}
-                    xs={12}
-                    textAlign={"center"}
-                    mt={0}
-                  >
-                    <InputTextField
-                      label="INVOICE No"
-                      name="INVOICE No"
-                      value=""
-                    />
+                    <Grid container spacing={2} mt={2} px={2}>
+                      <Grid item xs={12} md={6} lg={4}>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            width: "100%",
+                          }}
+                        >
+                          <div className=" mb-3">
+                            <Controller
+                              name="OrderNo"
+                              control={control}
+                              render={({ field }) => (
+                                <InputTextSearchButton
+                                  label="SO NO"
+                                  readOnly={true}
+                                  disabled={!!DocEntry}
+                                  onClick={() => {
+                                    OpenDailog();
+                                  }}
+                                  onChange={OpenDailog}
+                                  type="text"
+                                  {...field}
+                                />
+                              )}
+                            />
+                            <SearchModel
+                              open={searchmodelOpen}
+                              onClose={SearchModelClose}
+                              onCancel={SearchModelClose}
+                              title="Select Sales Order"
+                              onChange={(e) =>
+                                handleGetListSearch(e.target.value)
+                              }
+                              value={getListquery}
+                              onClickClear={handleGetListClear}
+                              cardData={
+                                <>
+                                  <InfiniteScroll
+                                    style={{
+                                      textAlign: "center",
+                                      justifyContent: "center",
+                                    }}
+                                    dataLength={getListData.length}
+                                    next={fetchMoreGetListData}
+                                    hasMore={hasMoreGetList}
+                                    loader={
+                                      <BeatLoader
+                                        color={theme.palette.primary.main}
+                                      />
+                                    }
+                                    scrollableTarget="getListForCreateScroll"
+                                    endMessage={
+                                      <Typography>No More Records</Typography>
+                                    }
+                                  >
+                                    {getListData.map((item, index) => (
+                                      <CardComponent
+                                        // key={index}
+                                        key={item.DocEntry}
+                                        title={item.OrderNo}
+                                        subtitle={item.PhoneNumber1}
+                                        description={item.CardName}
+                                        searchResult={getListquery}
+                                        isSelected={
+                                          allFormData.CardCode === item.CardCode
+                                        }
+                                        onClick={() => {
+                                          onSelectBusinessPartner(
+                                            item.DocEntry,
+                                          );
+                                        }}
+                                      />
+                                    ))}
+                                  </InfiniteScroll>
+                                </>
+                              }
+                            />
+                          </div>
+
+                          <div className=" mb-3">
+                            <Controller
+                              name="RegistrationNo"
+                              control={control}
+                              render={({ field }) => (
+                                <InputFields
+                                  readOnly={true}
+                                  {...field}
+                                  label="REGISTRATION NO"
+                                />
+                              )}
+                            />
+                          </div>
+
+                          <div className=" mb-3">
+                            <Controller
+                              name="CardName"
+                              control={control}
+                              render={({ field }) => (
+                                <InputFields
+                                  readOnly={true}
+                                  {...field}
+                                  label="CUSTOMER NAME"
+                                />
+                              )}
+                            />
+                          </div>
+                        </div>
+                      </Grid>
+                      <Grid item xs={12} md={6} lg={4}>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            width: "100%",
+                          }}
+                        >
+                          <div className=" mb-3">
+                            <Controller
+                              name="PhoneNumber1"
+                              control={control}
+                              render={({ field }) => (
+                                <InputFields
+                                  readOnly={true}
+                                  {...field}
+                                  label="CONTACT NO"
+                                />
+                              )}
+                            />
+                          </div>
+
+                          <div className="mb-3">
+                            <Tooltip
+                              title={(watch("Vehicle") || "").toUpperCase()}
+                              arrow
+                            >
+                              <div style={{ width: "100%" }}>
+                                <Controller
+                                  name="InvoiceNo"
+                                  control={control}
+                                  render={({ field }) => (
+                                    <InputFields
+                                      readOnly={true}
+                                      {...field}
+                                      label="INVOICE NO"
+                                    />
+                                  )}
+                                />
+                              </div>
+                            </Tooltip>
+                          </div>
+                        </div>
+                      </Grid>
+                      <Grid item xs={12} md={6} lg={4}>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            width: "100%",
+                          }}
+                        >
+                          <div className=" mb-3">
+                            <Controller
+                              name="JobWorkAt"
+                              control={control}
+                              render={({ field }) => (
+                                <InputFields
+                                  readOnly={true}
+                                  {...field}
+                                  label="JB WORK AT"
+                                />
+                              )}
+                            />
+                          </div>
+                          <div className="mb-3">
+                            <Tooltip
+                              title={(
+                                watch("JobWorkDetails") || ""
+                              ).toUpperCase()}
+                              arrow
+                            >
+                              <div style={{ width: "100%" }}>
+                                <Controller
+                                  name="JobWorkDetails"
+                                  control={control}
+                                  render={({ field }) => (
+                                    <InputTextAreaFields
+                                      readOnly={true}
+                                      {...field}
+                                      label="JOB WORK DETAILS"
+                                    />
+                                  )}
+                                />
+                              </div>
+                            </Tooltip>
+                          </div>
+                        </div>
+                      </Grid>
+                    </Grid>
                   </Grid>
 
                   <Grid
+                    container
                     item
-                    sm={6}
-                    md={6}
-                    lg={4}
-                    xs={12}
-                    textAlign={"center"}
-                    mt={0}
+                    style={{
+                      height: "100%",
+                      width: "100%",
+                      overflowX: "hidden",
+                      overflowY: "auto",
+                      borderTop: "1px solid #ccc",
+                    }}
                   >
-                    <InputTextField
-                      label="CUSTOMER NAME"
-                      name="CUSTOMER NAME"
-                      value=""
-                    />
+                    <Grid
+                      container
+                      spacing={2}
+                      mt={2}
+                      px={2}
+                      style={{ display: "flex", justifyContent: "center" }}
+                    >
+                      <Grid item xs={12} md={6} lg={4}>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            width: "100%",
+                          }}
+                        >
+                          <div className=" mb-3">
+                            <Controller
+                              name="VehInwardNo"
+                              control={control}
+                              render={({ field }) => (
+                                <InputFields
+                                  readOnly={true}
+                                  {...field}
+                                  label="INWARD NO"
+                                />
+                              )}
+                            />
+                          </div>
+
+                          <div className=" mb-3">
+                            <Controller
+                              name="VehInwardTime"
+                              control={control}
+                              rules={{ required: "Time is Required" }}
+                              render={({ field, fieldState: { error } }) => (
+                                <InputTimePicker
+                                  {...field}
+                                  label="INWARD TIME"
+                                  error={!!error}
+                                  helperText={error?.message}
+                                />
+                              )}
+                            />
+                          </div>
+                        </div>
+                      </Grid>
+
+                      <Grid item xs={12} md={6} lg={4}>
+                        <div className="mb-3">
+                          <Controller
+                            name="VehInwardDate"
+                            control={control}
+                            render={({ field }) => (
+                              <InputDatePickerFields
+                                {...field}
+                                label="INWARD DATE"
+                                value={field.value}
+                                readOnly={true}
+                                onChange={(date) => field.onChange(date)}
+                              />
+                            )}
+                          />
+                        </div>
+
+                        <div className=" mb-3">
+                          <Controller
+                            name="JobCardNo"
+                            control={control}
+                            render={({ field }) => (
+                              <InputFields
+                                readOnly={true}
+                                {...field}
+                                label="JOB CARD NO"
+                              />
+                            )}
+                          />
+                        </div>
+                      </Grid>
+                    </Grid>
                   </Grid>
                   <Grid
+                    container
                     item
-                    sm={6}
-                    md={6}
-                    lg={4}
-                    xs={12}
-                    textAlign={"center"}
-                    mt={0}
+                    style={{
+                      height: "100%",
+                      width: "100%",
+                      overflowX: "hidden",
+                      overflowY: "auto",
+                      marginTop: "30px",
+                      borderTop: "1px solid #ccc",
+                    }}
                   >
-                    <InputTextAreaFields
-                      label="JOB WORK DETAILS"
-                      name="JOB WORK DETAILS"
-                      value=""
-                    />
+                    <Grid
+                      container
+                      spacing={2}
+                      mt={2}
+                      px={2}
+                      style={{ display: "flex", justifyContent: "center" }}
+                    >
+                      <Grid item xs={12} md={4} lg={4}>
+                        <div
+                          style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            alignItems: "center",
+                            width: "100%",
+                          }}
+                        >
+                          <div className=" mb-3">
+                            <Controller
+                              name="DocNum"
+                              control={control}
+                              render={({ field }) => (
+                                <InputFields
+                                  readOnly={true}
+                                  {...field}
+                                  label="OUTWARD NO"
+                                />
+                              )}
+                            />
+                          </div>
+
+                          <div className=" mb-3">
+                            <Controller
+                              name="VehInwardTime"
+                              control={control}
+                              rules={{ required: "Time is Required" }}
+                              render={({ field, fieldState: { error } }) => (
+                                <InputTimePicker
+                                  {...field}
+                                  label="OUTWARD TIME"
+                                  error={!!error}
+                                  helperText={error?.message}
+                                />
+                              )}
+                            />
+                          </div>
+                        </div>
+                      </Grid>
+
+                      <Grid item xs={12} md={4} lg={4}>
+                        <div className="mb-3">
+                          <Controller
+                            name="VehInwardDate"
+                            control={control}
+                            render={({ field }) => (
+                              <InputDatePickerFields
+                                {...field}
+                                label="OUTWARD DATE"
+                                value={field.value}
+                                readOnly={true}
+                                onChange={(date) => field.onChange(date)}
+                              />
+                            )}
+                          />
+                        </div>
+                      </Grid>
+                    </Grid>
                   </Grid>
-                </Grid>
-                <hr />
-                <Grid container>
+
                   <Grid
+                    container
                     item
-                    sm={6}
-                    md={6}
-                    lg={6}
-                    xs={12}
-                    textAlign={"center"}
-                    mt={1}
+                    columnSpacing={2}
+                    width="100%"
+                    px={3}
+                    style={{ paddingTop: 30 }}
                   >
-                    <InputTextField
-                      label="INWARD NO"
-                      name="INWARD NO"
-                      value=""
-                    />
-                  </Grid>
-                  <Grid
-                    item
-                    sm={6}
-                    md={6}
-                    lg={6}
-                    xs={12}
-                    textAlign={"center"}
-                    mt={1}
-                  >
-                    <InputDatePickerFields
-                      label="INWARD Date"
-                      name="Date"
-                      value={dayjs(undefined)}
-                    />
-                  </Grid>
-                  <Grid
-                    item
-                    sm={6}
-                    md={6}
-                    lg={6}
-                    xs={12}
-                    textAlign={"center"}
-                    mt={1}
-                  >
-                    <InputTextField
-                      label="INWARD TIME"
-                      name="INWARD TIME"
-                      value=""
-                    />
-                  </Grid>
-                  <Grid
-                    item
-                    sm={6}
-                    md={6}
-                    lg={6}
-                    xs={12}
-                    textAlign={"center"}
-                    mt={1}
-                  >
-                    <InputTextField
-                      label="JOB CARD NO"
-                      name="JOB CARD NO"
-                      value=""
-                    />
-                  </Grid>
-                </Grid>
-                <hr />
-                <Grid container>
-                  <Grid
-                    item
-                    sm={6}
-                    md={6}
-                    lg={4}
-                    xs={12}
-                    textAlign={"center"}
-                    mt={1}
-                  >
-                    <InputTextField
-                      label="outward NO"
-                      name="outward NO"
-                      value=""
-                    />
-                  </Grid>
-                  <Grid
-                    item
-                    sm={6}
-                    md={6}
-                    lg={4}
-                    xs={12}
-                    textAlign={"center"}
-                    mt={1}
-                  >
-                    <InputDatePickerFields
-                      label="outward Date"
-                      name="Date"
-                      value={dayjs(undefined)}
-                    />
-                  </Grid>
-                  <Grid
-                    item
-                    sm={6}
-                    md={6}
-                    lg={4}
-                    xs={12}
-                    textAlign={"center"}
-                    mt={1}
-                  >
-                    <InputTextField
-                      label="outward TIME"
-                      name="outward TIME"
-                      value=""
-                    />
-                  </Grid>
-                </Grid>
-                <Grid
-                  container
-                  item
-                  columnSpacing={2}
-                  width="100%"
-                  px={3}
-                  pt={3}
-                >
-                  <Grid item width="100%" textAlign="center">
-                    <label>Signature</label>&nbsp;
-                    <IconButton size="small" onClick={clearSignature}>
-                      X
-                    </IconButton>
-                    <FormControl fullWidth style={{ marginBottom: 3 }}>
-                      <SignatureCanvas
-                        ref={signatureRef}
-                        penColor="black"
-                        canvasProps={{
-                          style: {
-                            background: "white",
-                            height: 100,
-                          },
+                    <Grid item width="100%" style={{ paddingBottom: 15 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: 1,
                         }}
-                      />
-                    </FormControl>
+                      >
+                        <Typography
+                          sx={{
+                            fontWeight: 600,
+                            fontSize: "16px",
+                            marginBottom: 0,
+                          }}
+                        >
+                          Signature
+                        </Typography>
+
+                        {isSigned && signatureEditable && (
+                          <IconButton
+                            onClick={clearSignature}
+                            size="small"
+                            sx={{
+                              color: "red",
+                            }}
+                          >
+                            <CloseIcon fontSize="small" />
+                          </IconButton>
+                        )}
+                      </Box>
+                    </Grid>
+
+                    <Grid item width="100%">
+                      <div
+                        className="Signaturefield"
+                        style={{
+                          margin: "0 auto",
+                        }}
+                      >
+                        <SignatureCanvas
+                          ref={sigCanvas}
+                          penColor="black"
+                          canvasProps={{
+                            className: "sigCanvas",
+                            style: {
+                              width: "100%",
+                              height: "100%",
+                              pointerEvents: signatureEditable
+                                ? "auto"
+                                : "none",
+                            },
+                          }}
+                          onEnd={handleEnd}
+                        />
+                      </div>
+                    </Grid>
                   </Grid>
                 </Grid>
               </Box>
             </Grid>
+
             <Grid
               item
               px={1}
+              // md={12}
               xs={12}
               style={{
                 display: "flex",
                 justifyContent: "space-between",
                 alignItems: "end",
                 position: "sticky",
+                bottom: "0px",
               }}
             >
               <Button
                 variant="contained"
-                sx={{ color: "white" }}
                 color="success"
+                type="submit"
+                name={SaveUpdateName}
+                disabled={
+                  (SaveUpdateName === "SAVE" && !perms.IsAdd) ||
+                  (SaveUpdateName === "UPDATE" && !perms.IsEdit) ||
+                  allFormData.Status === "0"
+                }
               >
-                Save
+                SAVE
               </Button>
+
+              <Button variant="contained" type="button">
+                SHEET
+              </Button>
+
               <Button
-                sx={{ justifyItem: "left" }}
+                disabled={SaveUpdateName === "SAVE"}
+                DocEntry={DocEntry}
+                PrintData={PrintData}
                 variant="contained"
                 color="primary"
               >
-                SHEET
-              </Button>
-              <Button variant="contained" color="primary">
                 PRINT
               </Button>
             </Grid>

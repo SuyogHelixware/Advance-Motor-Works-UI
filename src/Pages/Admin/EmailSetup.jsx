@@ -100,47 +100,46 @@ export default function EmailSetup() {
     fetchOpenListData(openListPage + 1, openListSearching ? openListquery : "");
     setOpenListPage((prev) => prev + 1);
   };
- const fetchOpenListData = async (pageNum, searchTerm = "") => {
-  try {
-    setLoading(true);
+  const fetchOpenListData = async (pageNum, searchTerm = "") => {
+    try {
+      setLoading(true);
 
-    const url = searchTerm
-      ? `/Email?SearchText=${searchTerm}&Status=1&Page=${pageNum}&Limit=20`
-      : `/Email?Status=1&Page=${pageNum}&Limit=20`;
+      const url = searchTerm
+        ? `/Email?SearchText=${searchTerm}&Status=1&Page=${pageNum}&Limit=20`
+        : `/Email?Status=1&Page=${pageNum}&Limit=20`;
 
-    const response = await apiClient.get(url);
+      const response = await apiClient.get(url);
 
-    if (response?.data?.success) {
-      const newData = response.data.values || [];
+      if (response?.data?.success) {
+        const newData = response.data.values || [];
 
-      setHasMoreOpen(newData.length === 20);
+        setHasMoreOpen(newData.length === 20);
 
-      setOpenListData((prev) =>
-        pageNum === 0 ? newData : [...prev, ...newData]
-      );
-    } else {
+        setOpenListData((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+      } else {
+        Swal.fire({
+          icon: "warning",
+          title: "Warning!",
+          text: response?.data?.message || "No records found",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching open email list:", error);
+
       Swal.fire({
-        icon: "warning",
-        title: "Warning!",
-        text: response?.data?.message || "No records found",
+        icon: "error",
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to fetch email data. Please try again later.",
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching open email list:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to fetch email data. Please try again later.",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   useEffect(() => {
     fetchOpenListData(0); // Load first page on mount
@@ -187,47 +186,46 @@ export default function EmailSetup() {
       });
     }
   };
- const setEmailData = async (DocEntry) => {
-  if (!DocEntry) return;
+  const setEmailData = async (DocEntry) => {
+    if (!DocEntry) return;
 
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const response = await apiClient.get(`/Email?DocEntry=${DocEntry}`);
+      const response = await apiClient.get(`/Email?DocEntry=${DocEntry}`);
 
-    if (response?.data?.success) {
-      const data = response.data.values;
+      if (response?.data?.success) {
+        const data = response.data.values;
 
-      toggleDrawer();
-      reset(data);
-      setSaveUpdateName("UPDATE");
-      setDocEntry(DocEntry);
-      setSelectedData(DocEntry);
-    } else {
+        toggleDrawer();
+        reset(data);
+        setSaveUpdateName("UPDATE");
+        setDocEntry(DocEntry);
+        setSelectedData(DocEntry);
+      } else {
+        Swal.fire({
+          title: "Warning!",
+          text: response?.data?.message || "Email data not found",
+          icon: "warning",
+          confirmButtonText: "Ok",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching email data:", error);
+
       Swal.fire({
-        title: "Warning!",
-        text: response?.data?.message || "Email data not found",
-        icon: "warning",
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "An error occurred while fetching the Email data.",
+        icon: "error",
         confirmButtonText: "Ok",
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching email data:", error);
-
-    Swal.fire({
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "An error occurred while fetching the Email data.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   // ==============useForm====================================
 
@@ -242,40 +240,85 @@ export default function EmailSetup() {
   const { isDirty } = useFormState({ control });
   // ===============PUT and POST API ===================================
 
-const handleSubmitForm = async (data) => {
-  const obj = {
-    DocEntry: data.DocEntry || "",
-    UserId: user.UserId,
-    CreatedBy: user.UserName || "",
-    CreatedDate: dayjs().format("YYYY/MM/DD"),
-    ModifiedBy: user.UserName || "",
-    ModifiedDate: dayjs().format("YYYY/MM/DD"),
-    Name: String(data.Name),
-    Email: String(data.Email),
-    SMTPServer: String(data.SMTPServer),
-    SMTPPort: String(data.SMTPPort),
-    UseSSL: Boolean(data.UseSSL),
-    Username: String(data.Username),
-    Password: String(data.Password),
-    IsDefault: Boolean(data.IsDefault),
-    IMAPServer: data.IMAPServer ? String(data.IMAPServer) : null,
-    IMAPPort: data.IMAPPort ? String(data.IMAPPort) : null,
-    IMAPUsername: data.IMAPUsername ? String(data.IMAPUsername) : null,
-    IMAPPassword: data.IMAPPassword ? String(data.IMAPPassword) : null,
-    IMAPUseSSL: Boolean(data.IMAPUseSSL),
-    EnableIncoming: Boolean(data.EnableIncoming),
-    EnableOutgoing: Boolean(data.EnableOutgoing),
-    Status: "1",
-  };
+  const handleSubmitForm = async (data) => {
+    const obj = {
+      DocEntry: data.DocEntry || "",
+      UserId: user.UserId,
+      CreatedBy: user.UserName || "",
+      CreatedDate: dayjs().format("YYYY/MM/DD"),
+      ModifiedBy: user.UserName || "",
+      ModifiedDate: dayjs().format("YYYY/MM/DD"),
+      Name: String(data.Name),
+      Email: String(data.Email),
+      SMTPServer: String(data.SMTPServer),
+      SMTPPort: String(data.SMTPPort),
+      UseSSL: Boolean(data.UseSSL),
+      Username: String(data.Username),
+      Password: String(data.Password),
+      IsDefault: Boolean(data.IsDefault),
+      IMAPServer: data.IMAPServer ? String(data.IMAPServer) : null,
+      IMAPPort: data.IMAPPort ? String(data.IMAPPort) : null,
+      IMAPUsername: data.IMAPUsername ? String(data.IMAPUsername) : null,
+      IMAPPassword: data.IMAPPassword ? String(data.IMAPPassword) : null,
+      IMAPUseSSL: Boolean(data.IMAPUseSSL),
+      EnableIncoming: Boolean(data.EnableIncoming),
+      EnableOutgoing: Boolean(data.EnableOutgoing),
+      Status: "1",
+    };
 
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    // ================= SAVE =================
-    if (SaveUpdateName === "SAVE") {
-      const resp = await apiClient.post(`/Email`, obj);
+      // ================= SAVE =================
+      if (SaveUpdateName === "SAVE") {
+        const resp = await apiClient.post(`/Email`, obj);
 
-      if (resp?.data?.success) {
+        if (resp?.data?.success) {
+          clearFormData();
+          setOpenListPage(0);
+          setOpenListData([]);
+          fetchOpenListData(0);
+
+          Swal.fire({
+            title: "Success!",
+            text: "Email Added Successfully",
+            icon: "success",
+            timer: 1000,
+            showConfirmButton: false,
+          });
+        } else {
+          Swal.fire({
+            title: "Error!",
+            text: resp?.data?.message || "Email not added",
+            icon: "warning",
+          });
+        }
+        return;
+      }
+
+      // ================= UPDATE =================
+      const result = await Swal.fire({
+        text: `Do You Want to Update "${data.Name}"?`,
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonText: "YES",
+        cancelButtonText: "NO",
+      });
+
+      if (!result.isConfirmed) {
+        Swal.fire({
+          text: "Email Not Updated",
+          icon: "info",
+          toast: true,
+          timer: 1500,
+          showConfirmButton: false,
+        });
+        return;
+      }
+
+      const response = await apiClient.put(`/Email/${DocEntry}`, obj);
+
+      if (response?.data?.success) {
         clearFormData();
         setOpenListPage(0);
         setOpenListData([]);
@@ -283,7 +326,7 @@ const handleSubmitForm = async (data) => {
 
         Swal.fire({
           title: "Success!",
-          text: "Email Added Successfully",
+          text: "Email Updated Successfully",
           icon: "success",
           timer: 1000,
           showConfirmButton: false,
@@ -291,16 +334,31 @@ const handleSubmitForm = async (data) => {
       } else {
         Swal.fire({
           title: "Error!",
-          text: resp?.data?.message || "Email not added",
+          text: response?.data?.message || "Email update failed",
           icon: "warning",
         });
       }
-      return;
-    }
+    } catch (error) {
+      console.error("Error submitting email form:", error);
 
-    // ================= UPDATE =================
+      Swal.fire({
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong",
+        icon: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ===============Delete API ===================================
+
+  const handleOnDelete = async (data) => {
     const result = await Swal.fire({
-      text: `Do You Want to Update "${data.Name}"?`,
+      text: "Do You Want to Delete?",
       icon: "question",
       showCancelButton: true,
       confirmButtonText: "YES",
@@ -309,121 +367,59 @@ const handleSubmitForm = async (data) => {
 
     if (!result.isConfirmed) {
       Swal.fire({
-        text: "Email Not Updated",
+        text: "Email Not Deleted",
         icon: "info",
         toast: true,
-        timer: 1500,
         showConfirmButton: false,
+        timer: 1500,
       });
       return;
     }
 
-    const response = await apiClient.put(`/Email/${DocEntry}`, obj);
+    try {
+      setLoading(true);
 
-    if (response?.data?.success) {
-      clearFormData();
-      setOpenListPage(0);
-      setOpenListData([]);
-      fetchOpenListData(0);
+      const response = await apiClient.delete(`/Email/${DocEntry}`);
 
-      Swal.fire({
-        title: "Success!",
-        text: "Email Updated Successfully",
-        icon: "success",
-        timer: 1000,
-        showConfirmButton: false,
-      });
-    } else {
-      Swal.fire({
-        title: "Error!",
-        text: response?.data?.message || "Email update failed",
-        icon: "warning",
-      });
-    }
-  } catch (error) {
-    console.error("Error submitting email form:", error);
+      if (response?.data?.success) {
+        clearFormData();
+        setOpenListPage(0);
+        setOpenListData([]);
+        fetchOpenListData(0);
 
-    Swal.fire({
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong",
-      icon: "error",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-  // ===============Delete API ===================================
-
- const handleOnDelete = async (data) => {
-  const result = await Swal.fire({
-    text: "Do You Want to Delete?",
-    icon: "question",
-    showCancelButton: true,
-    confirmButtonText: "YES",
-    cancelButtonText: "NO",
-  });
-
-  if (!result.isConfirmed) {
-    Swal.fire({
-      text: "Email Not Deleted",
-      icon: "info",
-      toast: true,
-      showConfirmButton: false,
-      timer: 1500,
-    });
-    return;
-  }
-
-  try {
-    setLoading(true);
-
-    const response = await apiClient.delete(`/Email/${DocEntry}`);
-
-    if (response?.data?.success) {
-      clearFormData();
-      setOpenListPage(0);
-      setOpenListData([]);
-      fetchOpenListData(0);
+        Swal.fire({
+          text: "Email Deleted Successfully",
+          icon: "success",
+          toast: true,
+          showConfirmButton: false,
+          timer: 1000,
+        });
+      } else {
+        Swal.fire({
+          text: response?.data?.message || "Email not deleted",
+          icon: "warning",
+          toast: true,
+          showConfirmButton: false,
+          timer: 1500,
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting email:", error);
 
       Swal.fire({
-        text: "Email Deleted Successfully",
-        icon: "success",
-        toast: true,
-        showConfirmButton: false,
-        timer: 1000,
-      });
-    } else {
-      Swal.fire({
-        text: response?.data?.message || "Email not deleted",
-        icon: "warning",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "An error occurred while deleting the Email.",
+        icon: "error",
         toast: true,
         showConfirmButton: false,
         timer: 1500,
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error deleting email:", error);
-
-    Swal.fire({
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "An error occurred while deleting the Email.",
-      icon: "error",
-      toast: true,
-      showConfirmButton: false,
-      timer: 1500,
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const sidebarContent = (
     <>
