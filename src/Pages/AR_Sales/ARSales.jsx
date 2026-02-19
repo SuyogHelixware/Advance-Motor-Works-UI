@@ -3,12 +3,12 @@ import React from "react";
 import TileComponent from "../Components/TileComponent";
 export default function ARSales() {
   const Cards_sales = [
-    // {
-    //     id: "1",
-    //     Name: "Item Search",
-    //     Count:0,
-    //     ReDirect: "dynamic-search",
-    //   },
+    {
+      id: "1",
+      Name: "Item Search",
+      Count: 0,
+      ReDirect: "dynamic-search",
+    },
     //   {
     //     id: "2",
     //     Name: "Quotation / SO",
@@ -34,12 +34,12 @@ export default function ARSales() {
       Count: 0,
       ReDirect: "material-request",
     },
-    // {
-    //   id: "6",
-    //   Name: "Invoice",
-    //   Count:0,
-    //   ReDirect: "cash-invoice",
-    // },
+    {
+      id: "6",
+      Name: "Invoice",
+      Count: 0,
+      ReDirect: "cash-invoice",
+    },
     // {
     //   id: "8",
     //   Name: "Order Cancellation",

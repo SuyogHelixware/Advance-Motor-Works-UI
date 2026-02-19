@@ -61,6 +61,7 @@ export default function IssueMaterial() {
     RegistrationNo: "",
     VehInwardNo: "",
     JobWorkAt: "",
+    InwardNo: "",
     ReqRemarks: "",
     RequestBy: "",
     InvTransferNo: "",
@@ -510,7 +511,7 @@ export default function IssueMaterial() {
 
   const getAllWMSStaffList = () => {
     apiClient
-      .get(`/Technician`)
+      .get(`/Technician?HW_WMSStaff=Y`)
       .then((response) => {
         setWMSStaff(response.data.values);
       })
@@ -1376,7 +1377,7 @@ export default function IssueMaterial() {
                       }}
                       render={({ field, fieldState: { error } }) => (
                         <InputDatePickerField
-                          redonly
+                          redOnly
                           label="REQUEST DATE"
                           name={field.name}
                           value={field.value ? dayjs(field.value) : undefined}

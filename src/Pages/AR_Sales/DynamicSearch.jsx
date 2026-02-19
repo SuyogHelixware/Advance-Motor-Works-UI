@@ -24,7 +24,7 @@ import { DataGrid } from "@mui/x-data-grid";
 import { Controller, useForm } from "react-hook-form";
 import {
   InputSelectTextField,
-  InputTextField
+  InputTextField,
 } from "../Components/formComponents";
 const columns = [
   {
@@ -328,12 +328,11 @@ export default function DynamicSearch() {
                         <Button
                           variant="contained"
                           color="success"
-                         
                           sx={{ color: "white" }}
                         >
                           Search
                         </Button>
-                        <Button variant="contained" color="error" >
+                        <Button variant="contained" color="error">
                           Clear
                         </Button>
                       </Grid>

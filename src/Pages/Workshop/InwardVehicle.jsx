@@ -10,7 +10,7 @@ import {
   Tabs,
   Tooltip,
   Typography,
-  useTheme
+  useTheme,
 } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import SignatureCanvas from "react-signature-canvas";
@@ -27,14 +27,15 @@ import {
   InputFields,
   InputTextAreaFields,
   InputTextSearchButton,
-  InputTimePicker
+  InputTimePicker,
 } from "../Components/formComponents";
-import { SearchBPModel } from "../Components/SearchModel";
+import SearchModel from "../Components/SearchModel";
 import usePermissions from "../Components/usePermissions";
+import apiClient from "../../services/apiClient";
 
 export default function InwardVehicle() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [tab, settab] = useState("1");
+  const [tab, settab] = useState("0");
   const [getListData, setGetListData] = useState([]);
   const [getListPage, setGetListPage] = useState(0);
   const [hasMoreGetList, setHasMoreGetList] = useState(true);
@@ -43,20 +44,16 @@ export default function InwardVehicle() {
   const [searchmodelOpen, setSearchmodelOpen] = useState(false);
   const timeoutRef = useRef(null);
   const [DocEntry, setDocEntry] = useState("");
-  const [PrintData, setPrintData] = useState([]);
 
-  const [oldOpenData, setSelectData] = useState(null);
   const [apiloading, setapiloading] = useState(false);
-  let [ok, setok] = useState("OK");
   const [SaveUpdateName, setSaveUpdateName] = useState("SAVE");
   const perms = usePermissions(133);
-
+  //=========================================open List State End================================================================
   const [openListData, setOpenListData] = useState([]);
   const [openListPage, setOpenListPage] = useState(0);
   const [hasMoreOpen, setHasMoreOpen] = useState(true);
   const [openListquery, setOpenListQuery] = useState("");
   const [openListSearching, setOpenListSearching] = useState(false);
-  //=========================================open List State End================================================================
   //=====================================closed List State====================================================================
   const [closedListData, setClosedListData] = useState([]);
   const [closedListPage, setClosedListPage] = useState(0);
@@ -102,7 +99,6 @@ export default function InwardVehicle() {
     OrderType: "",
     VehInwardNo: "",
     InspectionRemarks: "",
-    // Vehicle: "",
   };
 
   const {
@@ -148,11 +144,9 @@ export default function InwardVehicle() {
     const signPathByteArray = watch("SignPathByteArray");
 
     if (sigCanvas.current) {
-      // Always clear the canvas first
       sigCanvas.current.clear();
       setIsSigned(false);
 
-      // Then load new signature if exists
       if (signPathByteArray) {
         const timer = setTimeout(() => {
           sigCanvas.current.fromDataURL(
@@ -165,7 +159,6 @@ export default function InwardVehicle() {
     }
   }, [watch("SignPathByteArray")]);
 
-  // Clear signature when switching to SAVE mode (new record)
   useEffect(() => {
     if (SaveUpdateName === "SAVE" && sigCanvas.current) {
       sigCanvas.current.clear();
@@ -178,7 +171,6 @@ export default function InwardVehicle() {
     const selectedItem = getListData.find((item) => item.DocEntry === DocEntry);
     if (!selectedItem) return;
 
-    // Set all relevant form fields
     const fieldsToSet = {
       OrderNo: selectedItem.OrderNo,
       CardName: selectedItem.CardName,
@@ -188,13 +180,10 @@ export default function InwardVehicle() {
         ? dayjs(selectedItem.AppointDate)
         : null,
       AppointmentNo: selectedItem.DocEntry,
-      Vehicle:`${selectedItem.Year} - ${selectedItem.Make} - ${selectedItem.Model}`,
+      Vehicle: `${selectedItem.Year} - ${selectedItem.Make} - ${selectedItem.Model}`,
       PhoneNumber1: selectedItem.PhoneNumber1,
       OrderDocEntry: selectedItem.OrderDocEntry,
-      //   VehMileage: selectedItem.Mileage,
-      //   VehchassisNo: selectedItem.ChassisNo,
-      //   RegistrationNo: selectedItem.RegistrationNo,
-      //   InspectionRemarks: selectedItem.InspectionRemark,
+
       JobWorkAt: selectedItem.JobWorkAt,
       JobWorkDetails: selectedItem.JobRemarks,
       VehInwardNo: selectedItem.VehInwardNo,
@@ -215,93 +204,76 @@ export default function InwardVehicle() {
 
   const fetchAndSetData = async (DocEntry) => {
     try {
-      const url = `${BASE_URL}/VehInward/${DocEntry}`;
-      const response = await fetch(url);
-      const data = await response.json();
+      if (!DocEntry) return;
 
-      if (data.success && data.values && data.values.length > 0) {
-        const item = data.values[0];
+      const response = await apiClient.get(`/VehInward?DocEntry=${DocEntry}`);
+      const data = response?.data;
 
-        const transformed = {
+      if (data && data.success && data.values) {
+        const item = data.values;
+
+        reset({
           ...item,
-          OrderNo: item.OrderNo,
-          CardName: item.CardName,
-          PhoneNumber1: item.PhoneNumber1,
-          JobWorkAt: item.JobWorkAt,
-          JobWorkDetails: item.JobWorkDetails,
-          VehInwardNo: item.DocNum,
-          AppointmentNo: item.AppointmentNo,
-          AppointDate: item.DocDate ? dayjs(item.DocDate) : null,
-          VehInwardDate: item.DocDate ? dayjs(item.DocDate) : dayjs(),
-          VehInwardTime: item.VehInwardTime,
-          Mileage: item.Mileage,
-          ChassisNo: item.ChassisNo,
-          RegistrationNo: item.RegistrationNo,
-          InspectionRemark: item.InspectionRemark,
-          JobCardNo: item.JobCardNo,
-          Vehicle: `${item.Year} - ${item.Make} - ${item.Model}`,
-          SignPath: item.SignPath,
-          SignPathByteArray: item.SignPathByteArray,
-          OrderType: item.OrderType,
-          Year: item.Year,
-          Make: item.Make,
-          Model: item.Model,
-        };
 
-        reset(transformed);
-        setSelectData(DocEntry);
+          VehInwardDate: item.VehInwardDate
+            ? dayjs(item.VehInwardDate)
+            : dayjs(),
+          VehInwardTime: item.VehInwardTime
+            ? dayjs(item.VehInwardTime)
+            : dayjs(),
+
+          Vehicle:
+            item.Vehicle ||
+            `${item.Year || ""} - ${item.Make || ""} - ${item.Model || ""}`,
+
+          JobWorkDetails: item.JobWorkDetails || "",
+        });
+
         setDocEntry(DocEntry);
-        setSaveUpdateName("UPDATE");
-      } else {
-        console.warn("No values returned from API");
+        setSaveUpdateName("Update");
       }
     } catch (error) {
-      console.error("Error fetching data:", error);
+      console.error("Fetch Error Detail:", error);
       Swal.fire({
-        text: "Failed to fetch data.",
+        text: "Failed to fetch vehicle details.",
         icon: "error",
         confirmButtonText: "OK",
       });
     }
   };
 
-  const setOldOpenData = (DocEntry) => {
-    fetchAndSetData(DocEntry);
-  };
-
   const fetchOpenListData = async (pageNum, searchTerm = "") => {
     try {
-      let url = searchTerm
-        ? `${BASE_URL}/VehInward/search/${searchTerm}/1/${pageNum}`
-        : `${BASE_URL}/VehInward/pages/${pageNum}/1`;
+      const url = searchTerm
+        ? `/VehInward?SearchText=${searchTerm}&Status=1&Page=${pageNum}`
+        : `/VehInward?Status=1&Page=${pageNum}`;
 
-      const response = await fetch(url);
-      const data = await response.json(); // ✅ important
+      const { data } = await apiClient.get(url);
 
-      if (data.success) {
-        const newData = data.values || []; // fallback to empty array
+      if (data?.success) {
+        const newData = data.values ?? [];
+
         setOpenListData((prev) =>
           pageNum === 0 ? newData : [...prev, ...newData],
         );
 
-        // Stop loader if less than page size returned
-        const pageSize = 20; // set your API page size here
+        const pageSize = 20;
         setHasMoreOpen(newData.length === pageSize);
-
-        setOpenListPage(pageNum); // update current page
+        setOpenListPage(pageNum);
       } else {
-        setHasMoreOpen(false); // stop loader if API fails
+        setHasMoreOpen(false);
         Swal.fire({
-          text: data.message,
+          text: data?.message || "Something went wrong",
           icon: "question",
           confirmButtonText: "YES",
         });
       }
     } catch (error) {
       console.error("Error fetching data:", error);
-      setHasMoreOpen(false); // stop loader on error
+      setHasMoreOpen(false);
+
       Swal.fire({
-        text: error.message || error,
+        text: error?.response?.data?.message || error.message || "Server error",
         icon: "question",
         confirmButtonText: "YES",
       });
@@ -312,7 +284,7 @@ export default function InwardVehicle() {
     setOpenListQuery(res);
     setOpenListSearching(true);
     setOpenListPage(0);
-    setOpenListData([]); // Clear current data
+    setOpenListData([]);
 
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -320,16 +292,14 @@ export default function InwardVehicle() {
     timeoutRef.current = setTimeout(() => {
       fetchOpenListData(0, res);
     }, 600);
-    // Fetch with search query
   };
 
-  // Clear search
   const handleOpenListClear = () => {
-    setOpenListQuery(""); // Clear searFullAddressch input
-    setOpenListSearching(false); // Reset search state
-    setOpenListPage(0); // Reset page count
-    setOpenListData([]); // Clear data
-    fetchOpenListData(0); // Fetch first page without search
+    setOpenListQuery("");
+    setOpenListSearching(false);
+    setOpenListPage(0);
+    setOpenListData([]);
+    fetchOpenListData(0);
   };
 
   const fetchMoreOpenListData = () => {
@@ -337,30 +307,30 @@ export default function InwardVehicle() {
     setOpenListPage((prev) => prev + 1);
   };
 
-  // Initial fetch
   useEffect(() => {
     fetchOpenListData(0);
   }, []);
 
   const fetchClosedListData = async (pageNum, searchTerm = "") => {
     try {
-      let url = searchTerm
-        ? `${BASE_URL}/VehInward/search/${searchTerm}/0/${pageNum}`
-        : `${BASE_URL}/VehInward/pages/${pageNum}/0`;
+      const url = searchTerm
+        ? `/VehInward?SearchText=${searchTerm}&Status=0&Page=${pageNum}`
+        : `/VehInward?Status=0&Page=${pageNum}`;
 
-      const response = await fetch(url);
-      const data = await response.json();
+      const { data } = await apiClient.get(url);
 
-      if (data.success) {
-        const newData = data.values;
+      if (data?.success) {
+        const newData = data.values ?? [];
+
         setHasMoreClosed(newData.length === 20);
+
         setClosedListData((prev) =>
           pageNum === 0 ? newData : [...prev, ...newData],
         );
       } else {
         setHasMoreClosed(false);
         Swal.fire({
-          text: data.message,
+          text: data?.message || "Something went wrong",
           icon: "question",
           confirmButtonText: "YES",
         });
@@ -368,19 +338,19 @@ export default function InwardVehicle() {
     } catch (error) {
       console.error("Error fetching data:", error);
       setHasMoreClosed(false);
+
       Swal.fire({
-        text: error.message || error,
+        text: error?.response?.data?.message || error.message || "Server error",
         icon: "question",
         confirmButtonText: "YES",
       });
     }
   };
-
   const handleClosedListSearch = (res) => {
     setClosedListQuery(res);
     setClosedListSearching(true);
     setClosedListPage(0);
-    setClosedListData([]); // Clear current data
+    setClosedListData([]);
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
@@ -390,13 +360,12 @@ export default function InwardVehicle() {
     }, 600);
   };
 
-  // Clear search
   const handleClosedListClear = () => {
-    setClosedListQuery(""); // Clear search input
-    setClosedListSearching(false); // Reset search state
-    setClosedListPage(0); // Reset page count
-    setClosedListData([]); // Clear data
-    fetchClosedListData(0); // Fetch first page without search
+    setClosedListQuery("");
+    setClosedListSearching(false);
+    setClosedListPage(0);
+    setClosedListData([]);
+    fetchClosedListData(0);
   };
 
   const fetchMoreClosedListData = () => {
@@ -407,7 +376,6 @@ export default function InwardVehicle() {
     setClosedListPage((prev) => prev + 1);
   };
 
-  // Initial fetch
   useEffect(() => {
     fetchClosedListData(0);
   }, []);
@@ -578,14 +546,8 @@ export default function InwardVehicle() {
                           subtitle={item.PhoneNumber1}
                           description={item.CardName}
                           searchResult={query}
-                          isSelected={oldOpenData === item.DocEntry}
-                          onClick={() =>
-                            setOldOpenData(
-                              item.DocEntry,
-                              item.CardCode,
-                              item.OrderNo,
-                            )
-                          }
+                          // isSelected={watch("DocEntry") === item.DocEntry}
+                          onClick={() => fetchAndSetData(item.DocEntry)}
                         />
                       ))}
                     </InfiniteScroll>
@@ -598,36 +560,61 @@ export default function InwardVehicle() {
       </Grid>
     </>
   );
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
+  const abortControllerRef = useRef(null);
 
-  const BASE_URL = process.env.REACT_APP_BASE_URL;
-
-  const fetchGetListData = async (pageNum, searchTerm = "") => {
+  const fetchGetListData = async (pageNum = 0, searchTerm = "") => {
     try {
-      let url = searchTerm
-        ? `${BASE_URL}/VehInward/GetListForCreate/Search/${searchTerm}/${pageNum}`
-        : `${BASE_URL}/VehInward/GetListForCreate/${pageNum}`;
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
 
-      const response = await fetch(url);
-      const data = await response.json(); // <-- important
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
 
-      if (data.success) {
-        const newData = data.values;
-        setHasMoreGetList(newData.length === 20); // update loader
+      const encodedSearch = encodeURIComponent(searchTerm.trim());
+
+      const url = encodedSearch
+        ? `/VehInward/CopyFrom?SearchText=${encodedSearch}&Page=${pageNum}`
+        : `/VehInward/CopyFrom?Page=${pageNum}`;
+
+      const { data } = await apiClient.get(url, {
+        signal: controller.signal,
+      });
+
+      if (data?.success) {
+        const newData = data?.values || [];
+
+        setHasMoreGetList(newData.length === 20);
+
         setGetListData((prev) =>
           pageNum === 0 ? newData : [...prev, ...newData],
         );
       } else {
         Swal.fire({
-          text: data.message,
-          icon: "question",
-          confirmButtonText: "YES",
+          text: data?.message || "No data found",
+          icon: "info",
+          confirmButtonText: "OK",
         });
       }
     } catch (error) {
+      // 🔥 Ignore cancel error
+      if (error.name === "CanceledError" || error.code === "ERR_CANCELED") {
+        return;
+      }
+
+      console.error("API Error:", error);
+
       Swal.fire({
-        text: error.message || error,
-        icon: "question",
-        confirmButtonText: "YES",
+        text: error?.response?.data?.message || error.message,
+        icon: "error",
+        confirmButtonText: "OK",
       });
     }
   };
@@ -667,80 +654,70 @@ export default function InwardVehicle() {
   const handleGetListClear = () => {
     setGetListQuery("");
     setGetListSearching(true);
-    setGetListPage(0); // Reset page to 0
-    setGetListData([]); // Clear current data
-    fetchGetListData(0); // Fetch first page without search
+    setGetListPage(0);
+    setGetListData([]);
+    fetchGetListData(0);
   };
 
   const ClearForm = () => {
     reset(initial);
     setSaveUpdateName("SAVE");
     setDocEntry("");
-    reset(initial);
-    setSelectData([]);
-    setok("");
   };
 
   const handleSubmitForm = async (data) => {
-    if (!sigCanvas.current || sigCanvas.current.isEmpty()) {
-      Swal.fire({
-        text: "Please add Signature...",
-        icon: "warning",
-        toast: true,
-        showConfirmButton: false,
-        timer: 2000,
-        timerProgressBar: true,
-      });
-      return;
-    }
-
-    const UserId = localStorage.getItem("UserId");
-    const CreatedBy = localStorage.getItem("UserName");
-    const signatureDataURL = sigCanvas.current.toDataURL().split(",")[1];
-
-    const obj = {
-      UserId: data.DocEntry ? (data.UserId ?? UserId) : UserId,
-      CreatedBy: data.DocEntry ? (data.CreatedBy ?? CreatedBy) : CreatedBy,
-      AppointmentNo: data.AppointmentNo,
-      VehInwardNo: data.VehInwardNo,
-      OrderNo: data.OrderNo,
-      VehInwardDate: dayjs(data.VehInwardDate).format("YYYY-MM-DD HH:mm:ss"),
-      RegistrationNo: String(data.RegistrationNo),
-      InspectionRemark: data.InspectionRemark,
-      VehicleDocEntry: "0",
-      Mileage: String(data.Mileage),
-      ChassisNo: String(data.ChassisNo),
-      VehInwardTime: dayjs(data.VehInwardTime).format("HH:mm"),
-      PhoneNumber1: data.PhoneNumber1,
-      CardName: data.CardName,
-      CardCode: data.CardCode,
-      JobWorkAt: data.JobWorkAt,
-      Year: data.Year,
-      Make: data.Make,
-      Model: data.Model,
-      JobWorkDetails: data.JobWorkDetails,
-      OrderType: data.OrderType,
-      OrderDocEntry: String(data.OrderDocEntry),
-      JobCardNo: "",
-      ScheduleDate: "",
-      SignPath: data.SignPath,
-      SignPathByteArray: signatureDataURL,
-    };
-
-    console.log(obj)
-    return
-
     try {
+      if (!sigCanvas.current || sigCanvas.current.isEmpty()) {
+        Swal.fire({
+          text: "Please add Signature...",
+          icon: "warning",
+          toast: true,
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
+        });
+        return;
+      }
+
       setapiloading(true);
 
-      if (SaveUpdateName === "Submit") {
-        const response = await fetch(`${BASE_URL}/VehInward`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(obj),
-        });
+      const UserId = localStorage.getItem("UserId");
+      const CreatedBy = localStorage.getItem("UserName");
+      const signatureDataURL = sigCanvas.current.toDataURL().split(",")[1];
 
-        const res = await response.json();
+      const obj = {
+        UserId: data.DocEntry ? (data.UserId ?? UserId) : UserId,
+        CreatedBy: data.DocEntry ? (data.CreatedBy ?? CreatedBy) : CreatedBy,
+        AppointmentNo: data.AppointmentNo,
+        VehInwardNo: data.VehInwardNo,
+        OrderNo: data.OrderNo,
+        VehInwardDate: dayjs(data.VehInwardDate).format("YYYY-MM-DD HH:mm:ss"),
+        RegistrationNo: String(data.RegistrationNo || ""),
+        InspectionRemark: data.InspectionRemark,
+        VehicleDocEntry: "0",
+        Mileage: String(data.Mileage || ""),
+        ChassisNo: String(data.ChassisNo || ""),
+        VehInwardTime: data.VehInwardTime
+          ? dayjs(data.VehInwardTime).format("HH:mm")
+          : "",
+        PhoneNumber1: data.PhoneNumber1,
+        CardName: data.CardName,
+        CardCode: data.CardCode,
+        JobWorkAt: data.JobWorkAt,
+        Year: data.Year,
+        Make: data.Make,
+        Model: data.Model,
+        JobWorkDetails: data.JobWorkDetails,
+        OrderType: data.OrderType,
+        OrderDocEntry: String(data.OrderDocEntry || ""),
+        JobCardNo: "",
+        ScheduleDate: "",
+        SignPath: data.SignPath,
+        SignPathByteArray: signatureDataURL,
+      };
+
+      if (SaveUpdateName === "Submit") {
+        const { data: res } = await apiClient.post(`/VehInward`, obj);
 
         if (res.success) {
           setOpenListData([]);
@@ -749,82 +726,72 @@ export default function InwardVehicle() {
           ClearForm();
 
           Swal.fire({
+            title: "Success!",
             text: "Inward Vehicle Added",
             icon: "success",
-            title: "Success!",
-            showConfirmButton: false,
             timer: 1500,
+            showConfirmButton: false,
           });
         } else {
-          Swal.fire({
-            title: "Error!",
-            text: res.message,
-            icon: "warning",
-            confirmButtonText: "Ok",
-          });
+          throw new Error(res.message || "Failed to add vehicle.");
         }
-      } else if (SaveUpdateName === "Update") {
-        const result = await Swal.fire({
+      }
+
+      // ==============================
+      // 🔹 UPDATE
+      // ==============================
+      else if (SaveUpdateName === "Update") {
+        const confirm = await Swal.fire({
           text: `Do you want to Update ${data.VehInwardNo}?`,
           icon: "question",
+          showCancelButton: true,
           confirmButtonText: "YES",
           cancelButtonText: "No",
-          showConfirmButton: true,
-          showCancelButton: true,
         });
 
-        if (!result.isConfirmed) {
+        if (!confirm.isConfirmed) {
           setapiloading(false);
-          Swal.fire({
-            title: "Info",
-            text: "Inward Vehicle Not Updated",
-            icon: "info",
-            confirmButtonText: "Ok",
-            timer: 1000,
-          });
           return;
         }
 
-        const response = await fetch(`${BASE_URL}/VehInward/${data.DocEntry}`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(obj),
-        });
-
-        const res = await response.json();
+        // ⚠️ Recommended: PUT for update
+        const { data: res } = await apiClient.put(
+          `/VehInward/${data.DocEntry}`,
+          obj,
+        );
 
         if (res.success) {
           setOpenListPage(0);
-          setapiloading(false);
           setOpenListData([]);
           fetchOpenListData(0);
           handleGetListClear();
           ClearForm();
+
           Swal.fire({
             title: "Success!",
             text: "Inward Vehicle Updated",
             icon: "success",
-            confirmButtonText: "Ok",
-            timer: 1000,
+            timer: 1200,
+            showConfirmButton: false,
           });
         } else {
-          setapiloading(false);
-          Swal.fire({
-            title: "Error!",
-            text: res.message,
-            icon: "warning",
-            confirmButtonText: "Ok",
-          });
+          throw new Error(res.message || "Failed to update vehicle.");
         }
       }
     } catch (error) {
-      setapiloading(false);
+      console.error("Submit Error:", error);
+
       Swal.fire({
         title: "Error!",
-        text: error.message || "Something went wrong",
-        icon: "warning",
+        text:
+          error?.response?.data?.message ||
+          error.message ||
+          "Something went wrong",
+        icon: "error",
         confirmButtonText: "Ok",
       });
+    } finally {
+      setapiloading(false);
     }
   };
 
@@ -993,7 +960,7 @@ export default function InwardVehicle() {
                                 />
                               )}
                             />
-                            <SearchBPModel
+                            <SearchModel
                               open={searchmodelOpen}
                               onClose={SearchModelClose}
                               onCancel={SearchModelClose}
@@ -1006,6 +973,10 @@ export default function InwardVehicle() {
                               cardData={
                                 <>
                                   <InfiniteScroll
+                                    style={{
+                                      textAlign: "center",
+                                      justifyContent: "center",
+                                    }}
                                     dataLength={getListData.length}
                                     next={fetchMoreGetListData}
                                     hasMore={hasMoreGetList}
@@ -1233,7 +1204,7 @@ export default function InwardVehicle() {
                             >
                               <div style={{ width: "100%" }}>
                                 <Controller
-                                  name="InspectionRemark"
+                                  name="InspectionRemarks"
                                   control={control}
                                   rules={{
                                     required: "Inspection Remarks is required",
@@ -1451,7 +1422,7 @@ export default function InwardVehicle() {
               <Button
                 disabled={SaveUpdateName === "SAVE"}
                 DocEntry={DocEntry}
-                PrintData={PrintData}
+                PrintData={""}
                 variant="contained"
                 color="primary"
               >
