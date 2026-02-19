@@ -1280,6 +1280,7 @@ export default function InwardVehicle() {
                                 <InputTimePicker
                                   {...field}
                                   label="INWARD TIME"
+                                  readOnly={true}
                                   error={!!error}
                                   helperText={error?.message}
                                 />

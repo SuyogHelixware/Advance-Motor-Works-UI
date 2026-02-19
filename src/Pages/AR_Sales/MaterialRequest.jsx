@@ -538,8 +538,12 @@ export default function MaterialRequest() {
                       {data.map((item, i) => (
                         <CardComponent
                           key={i}
-                          title={item.CardName}
-                          subtitle={item.DocNum}
+                          title={
+      value === "1"
+        ? item.CardName
+        : `${item.DocNum} | ${item.CardName}`
+    }
+                          subtitle={item.OrderNo}
                           description={item.PhoneNumber1}
                           searchResult={query}
                           isSelected={watch("DocEntry") === item.DocEntry}
