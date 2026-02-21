@@ -776,6 +776,7 @@ export const InputTextField = forwardRef(
       readOnly,
       disabled,
       inputProps,
+      sx,
       ...props
     },
     ref,
@@ -800,6 +801,7 @@ export const InputTextField = forwardRef(
         sx={{
           width: "100%",
           maxWidth: 220,
+          ...sx,
 
           "& .Mui-error": {
             color: "red",
@@ -1082,6 +1084,7 @@ export const InputSelectTextField = forwardRef(
       disabled,
       readOnly,
       usedLevels = [],
+      sx,
       ...props
     },
     ref,
@@ -1101,7 +1104,7 @@ export const InputSelectTextField = forwardRef(
 
     return (
       <FormControl
-        sx={{ width: "100%", maxWidth: 220, m: 1 }}
+        sx={{ width: "100%", maxWidth: 220, m: 1, ...sx }}
         size="small"
         error={error}
         ref={ref}
@@ -1153,6 +1156,7 @@ export const InputSearchSelectTextField = forwardRef(
       disabled,
       readOnly,
       usedLevels = [],
+      sx,
       ...props
     },
     ref,
@@ -1186,7 +1190,7 @@ export const InputSearchSelectTextField = forwardRef(
             size="small"
             error={error}
             helperText={helperText}
-            sx={{ width: "100%", maxWidth: 220, m: 1 }}
+            sx={{ width: "100%", maxWidth: 220, m: 1, ...sx }}
           />
         )}
         renderOption={(props, option) => {

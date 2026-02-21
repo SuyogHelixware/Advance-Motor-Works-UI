@@ -302,3 +302,28 @@
     height: 150px;
     background-color: #fff;
   }
+  .infiniteScroll .MuiTableCell-root {
+  text-align: left;
+  font-family: Montserrat-Regular;
+  font-size: 14px;
+  font-weight: bold;
+
+  padding-top: 6px;
+  padding-bottom: 6px;
+  /* padding-left: 5px;
+  padding-right: 5px; */
+  text-transform: uppercase;
+}
+.infiniteScroll .MuiTableCell-head {
+  background-color: #ebebfa;
+  font-weight: bold;
+  font-size: 12px;
+}
+.wrapTableCell {
+  /* font-size: 11px; */
+  max-width: 100px; /* set desired width */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}

@@ -429,7 +429,7 @@ const FreightModal = ({
                   "& .MuiDataGrid-footerContainer": {
                     borderTop: "2px solid",
                     borderColor: theme.palette.divider,
-                    minHeight: "52px",
+                    minHeight: "62px",
                   },
                   // "& .error-row": {
                   //   backgroundColor: "rgba(255, 0, 0, 0.08)",

@@ -32,6 +32,7 @@ import {
 import SearchModel from "../Components/SearchModel";
 import usePermissions from "../Components/usePermissions";
 import apiClient from "../../services/apiClient";
+import DynamicLoader from "../../Loaders/DynamicLoader";
 
 export default function InwardVehicle() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -108,9 +109,9 @@ export default function InwardVehicle() {
     getValues,
     setValue,
     watch,
-    clearErrors,
-    setError,
-    formState: { errors },
+    // clearErrors,
+    // setError,
+    // formState: { errors },
   } = useForm({
     defaultValues: initial,
   });
@@ -797,6 +798,8 @@ export default function InwardVehicle() {
 
   return (
     <>
+
+    <DynamicLoader open={apiloading} />
       <Grid
         container
         width="100%"

@@ -9,13 +9,11 @@ import {
   IconButton,
   InputAdornment,
   TextField,
-  Typography,
-  useTheme,
+  Typography
 } from "@mui/material";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
-import Logo from "../assets/Logo.png";
 import useAuth from "../Routing/AuthContext";
 import apiClient from "../services/apiClient";
 import "./AddLogin.css";
@@ -29,7 +27,6 @@ const Login = () => {
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const { login, companyData } = useAuth();
-  const theme = useTheme();
 
   const navigate = useNavigate();
   const onSubmit = async (data) => {
