@@ -1,3 +1,6 @@
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import TableViewIcon from "@mui/icons-material/TableView";
+import ViewListIcon from "@mui/icons-material/ViewList";
 import {
   Autocomplete,
   Box,
@@ -26,16 +29,12 @@ import {
   TimePicker as MuiTimePicker,
 } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import TableViewIcon from "@mui/icons-material/TableView";
-import ViewListIcon from "@mui/icons-material/ViewList";
-import React, { forwardRef, useEffect, useMemo, useRef, useState } from "react";
-import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import { TimePicker } from "antd";
+import React, { forwardRef, useEffect, useMemo, useState } from "react";
 
 import SearchIcon from "@mui/icons-material/Search";
-import { Controller } from "react-hook-form";
 import dayjs from "dayjs";
-import { formatForUI } from "./ValueFormatter";
+import { Controller } from "react-hook-form";
 // import { wait } from "@testing-library/user-event/dist/utils";
 export function InputFields(props) {
   return (
@@ -955,6 +954,100 @@ export const SmallInputTextField = forwardRef(
             },
           },
         }}
+      />
+    );
+  },
+);
+
+export const SmallInputSearchSelectTextField = forwardRef(
+  (
+    {
+      label,
+      error,
+      data = [],
+      helperText,
+      value,
+      name,
+      onChange,
+      disabled,
+      readOnly,
+      usedLevels = [],
+      sx,
+      ...props
+    },
+    ref,
+  ) => {
+    // 🔹 resolve selected option (NO null allowed)
+    const selectedOption = useMemo(() => {
+      return data.find((item) => String(item.key) === String(value)) ?? null;
+    }, [data, value]);
+
+    return (
+      <Autocomplete
+        ref={ref}
+        options={data}
+        value={selectedOption}
+        disabled={disabled}
+        disableClearable // 🚫 prevents deselect
+        readOnly={readOnly}
+        isOptionEqualToValue={(opt, val) => opt?.key === val?.key}
+        getOptionLabel={(option) => option?.value || option?.label || ""}
+        onChange={(e, newValue) => {
+          if (!newValue) return;
+          onChange({
+            target: { name, value: newValue.key },
+          });
+        }}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            label={label}
+            size="small"
+            error={error}
+            helperText={helperText}
+            sx={{
+              m: 1,
+              minWidth: 135,
+              maxWidth: 133,
+              "& .MuiInputBase-root": {
+                WebkitAppearance: "none",
+              },
+              "& .MuiInputBase-input": {
+                // Fixed the extra comma
+                // textAlign: "end",
+                "&::-webkit-outer-spin-button, &::-webkit-inner-spin-button": {
+                  WebkitAppearance: "none",
+                },
+              },
+              ...sx,
+            }}
+          />
+        )}
+        renderOption={(props, option) => {
+          const disabledOption = usedLevels.includes(option.key);
+
+          return (
+            <li
+              {...props}
+              key={option.key}
+              // aria-disabled={disabledOption}
+              style={{
+                opacity: disabledOption ? 0.5 : 1,
+                pointerEvents: disabledOption ? "none" : "auto",
+              }}
+            >
+              {option.value?.length > 20 ? (
+                <Tooltip title={option.value} arrow>
+                  <span>{option.value}</span>
+                </Tooltip>
+              ) : (
+                <span>{option.value}</span>
+              )}
+              &nbsp;&nbsp;{option.label}
+            </li>
+          );
+        }}
+        {...props}
       />
     );
   },

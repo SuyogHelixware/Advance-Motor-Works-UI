@@ -1620,6 +1620,7 @@ export default function DynamicSearch() {
                               paginationModel: { pageSize: 100 },
                             },
                           }}
+                          editMode={false}
                           onRowClick={(params) => {
                             const itemCode = params.row.ItemCode;
                             setSelectedRow(params.row);
