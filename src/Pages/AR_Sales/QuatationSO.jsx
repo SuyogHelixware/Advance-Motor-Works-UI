@@ -40,11 +40,11 @@ import {
   TextField,
   Toolbar,
   Typography,
-  useTheme
+  useTheme,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import dayjs from "dayjs";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import {
   InputDatePickerField,
@@ -60,6 +60,8 @@ import {
 import { PhoneNumber } from "../Components/PhoneNumber";
 import SearchInputField from "../Components/SearchInputField";
 import SearchModel from "../Components/SearchModel";
+import { Row } from "antd";
+import { dataGridSx } from "../../Styles/dataGridStyles";
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
@@ -76,8 +78,7 @@ export default function QuatationSO() {
   const [openModal, setOpenModal] = React.useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   // const [formData, setFormData] = useState(InitialObj);
-  const [bankData,setBankData]=useState([])
-  
+  const [bankData, setBankData] = useState([]);
 
   const theme = useTheme();
   const toggleSidebar = () => {
@@ -104,13 +105,12 @@ export default function QuatationSO() {
     setBankData(updatedData);
   };
 
-  const { control,trigger ,getValues,reset} = useForm({
+  const { control, trigger, getValues, reset } = useForm({
     mode: "onChange",
   });
 
-
-
   const [ModeltabValue, setModelTabValue] = React.useState("1");
+  const gridSx = useMemo(() => dataGridSx(theme), [theme]);
 
   const handleModelTabChange = (event, newValue) => {
     setModelTabValue(newValue);
@@ -179,37 +179,48 @@ export default function QuatationSO() {
       field: "Item_Code",
       headerName: "Item Code",
       width: 120,
-      editable: true,
+      editable: false,
     },
     {
       field: "Description",
       headerName: "Item Description",
       width: 150,
-      editable: true,
+      editable: false,
     },
     {
       field: "WHS",
       headerName: "WHS",
       width: 100,
-      editable: true,
+      editable: false,
     },
+    // {
+    //   field: "Qty",
+    //   headerName: "Qty",
+    //   width: 100,
+    //   editable: true,
+    // },
     {
-      field: "Qty",
-      headerName: "Qty",
-      width: 100,
+      field: "Quantity",
+      headerName: "QTY",
+      width: 120,
+      type: "number",
       editable: true,
+      headerAlign: "center",
+      align: "center",
+      renderCell: ({ value }) => (value == null ? "" : value),
     },
+
     {
       field: "Price",
       headerName: "Price",
       width: 100,
-      editable: true,
+      editable: false,
     },
     {
-      field: "Total_Amt",
-      headerName: "Total_Amt",
+      field: "Amount",
+      headerName: "Total Amt",
       width: 100,
-      editable: true,
+      editable: false,
     },
     {
       field: "Fitting",
@@ -221,31 +232,31 @@ export default function QuatationSO() {
       field: "FTS",
       headerName: "FTS",
       width: 110,
-      editable: true,
+      editable: false,
     },
     {
       field: "Tax",
       headerName: "Tax",
       width: 110,
-      editable: true,
+      editable: false,
     },
     {
       field: "Tax_Amt",
       headerName: "	Tax Amt	",
       width: 110,
-      editable: true,
+      editable: false,
     },
     {
       field: "Iss_QTY",
       headerName: "Iss QTY	",
       width: 110,
-      editable: true,
+      editable: false,
     },
     {
       field: "Status",
       headerName: "Status",
       width: 110,
-      editable: true,
+      editable: false,
     },
     {
       field: "Action",
@@ -257,24 +268,22 @@ export default function QuatationSO() {
 
   const rows = [
     {
-      id: 1,
+      id: "1",
       Item_Code: "RDK1355",
-      Description: "ARB DRAWER KITCHEN 1355X500 @",
-      WHS: 1000,
-      Qty: 10,
+      Description: "ARB DRAWER KITCHEN 1355X500",
+      WHS: "1000",
+      Qty: "10",
       Price: "35.000",
       Total_Amt: "0",
       Fitting: "0",
-      FTS: 1.75,
-      Tax: 10,
-      Tax_Amt: 20,
-      Iss_QTY: 0,
+      FTS: "1.75",
+      Tax: "10",
+      Tax_Amt: "20",
+      Iss_QTY: "0",
       Status: "not-issued",
       Action: "",
     },
   ];
-
-
 
   const sidebarContent = (
     <>
@@ -463,19 +472,18 @@ export default function QuatationSO() {
         title="Select Customer"
       />
       <Dialog
-        // style={{ margin: 50 }}
         open={open}
         onClose={handleClose}
         scroll="paper"
         // onSubmit={onSubmit}
-        maxWidth="sm" // Use predefined sizes or define a custom maxWidth
+        maxWidth="sm"
         sx={{
-          '& .MuiDialog-paper': {
-            width: '90vw',  // Make width responsive
-            maxWidth: '370px', // Limit max width
-            height: '60vh',  // Set height responsive
-            maxHeight: '80vh', // Limit max height
-            margin: 'auto',  // Center the Dialog
+          "& .MuiDialog-paper": {
+            width: "90vw",
+            maxWidth: "370px",
+            height: "60vh",
+            maxHeight: "80vh",
+            margin: "auto",
           },
         }}
       >
@@ -488,17 +496,12 @@ export default function QuatationSO() {
           </Grid>
         </DialogTitle>
         <Divider color="gray" />
-        <DialogContent className="bg-light" >
-          <Grid
-            container
-            gap={2}
-           
-          >
-            <Grid item xs={12}  lg={12} textAlign={"center"}>
+        <DialogContent className="bg-light">
+          <Grid container gap={2}>
+            <Grid item xs={12} lg={12} textAlign={"center"}>
               <Controller
                 name="CUSTOMER ID"
                 disabled
-                rules={{ required: "this field is requered" }}
                 control={control}
                 render={({ field, fieldState: { error } }) => (
                   <InputTextField
@@ -512,10 +515,9 @@ export default function QuatationSO() {
               />
             </Grid>
 
-            <Grid item xs={12}  lg={12} textAlign={"center"}>
+            <Grid item xs={12} lg={12} textAlign={"center"}>
               <Controller
                 name="Document No"
-                rules={{ required: "this field is requered" }}
                 control={control}
                 render={({ field, fieldState: { error } }) => (
                   <InputTextField
@@ -529,7 +531,7 @@ export default function QuatationSO() {
               />
             </Grid>
 
-            <Grid item xs={12}  lg={12} textAlign={"center"}>
+            <Grid item xs={12} lg={12} textAlign={"center"}>
               <PhoneNumber
                 defaultCountry="kw"
                 label="CONTACT NUMBER"
@@ -537,10 +539,9 @@ export default function QuatationSO() {
                 onChange={(phone) => setPhone(phone)}
               />
             </Grid>
-            <Grid item xs={12}  lg={12} textAlign={"center"}>
+            <Grid item xs={12} lg={12} textAlign={"center"}>
               <Controller
                 name="EMAIL"
-                rules={{ required: "this field is requered" }}
                 control={control}
                 render={({ field, fieldState: { error } }) => (
                   <InputTextField
@@ -648,9 +649,8 @@ export default function QuatationSO() {
             aria-label="menu"
             // onClick={ClearFormData}
             sx={{
-              display: {}, 
+              display: {},
               position: "absolute",
-
 
               right: "10px",
             }}
@@ -761,11 +761,10 @@ export default function QuatationSO() {
                         >
                           <Controller
                             name="Document No"
-                            rules={{ required: "this field is requered" }}
                             control={control}
                             render={({ field, fieldState: { error } }) => (
                               <InputTextField
-                                label="Document No"
+                                label="DOCUMENT NO"
                                 {...field}
                                 error={!!error}
                                 helperText={error ? error.message : null}
@@ -785,11 +784,10 @@ export default function QuatationSO() {
                         >
                           <Controller
                             name="Customer Name"
-                            rules={{ required: "this field is requered" }}
                             control={control}
                             render={({ field, fieldState: { error } }) => (
                               <InputTextField
-                                label="Customer Name"
+                                label="CUSTOMER NAME"
                                 {...field}
                                 error={!!error}
                                 helperText={error ? error.message : null}
@@ -808,7 +806,6 @@ export default function QuatationSO() {
                         >
                           <Controller
                             name="SALES HISTORY"
-                            rules={{ required: "this field is requered" }}
                             control={control}
                             render={({ field, fieldState: { error } }) => (
                               <InputTextField
@@ -832,7 +829,6 @@ export default function QuatationSO() {
                         >
                           <Controller
                             name="CONTACT NUMBER"
-                            rules={{ required: "this field is requered" }}
                             control={control}
                             render={({ field, fieldState: { error } }) => (
                               <InputTextField
@@ -855,8 +851,7 @@ export default function QuatationSO() {
                           textAlign={"center"}
                         >
                           <Controller
-                            name="CUSTOMER BALANCE"
-                            rules={{ required: "this field is requered" }}
+                            name="CUSTOMERBALANCE"
                             control={control}
                             render={({ field, fieldState: { error } }) => (
                               <InputTextField
@@ -887,10 +882,10 @@ export default function QuatationSO() {
                               <InputDatePickerField
                                 label="TARGET DATE"
                                 name={field.name}
-                                value={field.value} // Value managed by react-hook-form
-                                onChange={(date) => field.onChange(date)} // Handle the change event
-                                error={!!error} // Pass error state
-                                helperText={error ? error.message : null} // Show validation message
+                                value={field.value}
+                                onChange={(date) => field.onChange(date)}
+                                error={!!error}
+                                helperText={error ? error.message : null}
                               />
                             )}
                           />
@@ -905,8 +900,7 @@ export default function QuatationSO() {
                           textAlign={"center"}
                         >
                           <Controller
-                            name="CUSTOMER BALANCE"
-                            rules={{ required: "this field is requered" }}
+                            name="Remarks"
                             control={control}
                             render={({ field, fieldState: { error } }) => (
                               <InputTextArea
@@ -919,7 +913,8 @@ export default function QuatationSO() {
                             )}
                           />
                         </Grid>
-                        <Grid
+
+                        {/* <Grid
                           item
                           xs={12}
                           md={4}
@@ -936,7 +931,7 @@ export default function QuatationSO() {
                         >
                           <Controller
                             name="CR Approved By11"
-                            rules={{ required: "this field is requered" }}
+                           
                             control={control}
                             render={({ field, fieldState: { error } }) => (
                               <InputTextField
@@ -948,8 +943,8 @@ export default function QuatationSO() {
                               />
                             )}
                           />
-                        </Grid>
-                        <Grid
+                        </Grid> */}
+                        {/* <Grid
                           item
                           xs={12}
                           md={4}
@@ -966,7 +961,7 @@ export default function QuatationSO() {
                         >
                           <Controller
                             name="Created By"
-                            rules={{ required: "this field is requered" }}
+                           
                             control={control}
                             render={({ field, fieldState: { error } }) => (
                               <InputTextField
@@ -978,8 +973,8 @@ export default function QuatationSO() {
                               />
                             )}
                           />
-                        </Grid>
-                        <Grid
+                        </Grid> */}
+                        {/* <Grid
                           item
                           xs={12}
                           md={4}
@@ -996,7 +991,7 @@ export default function QuatationSO() {
                         >
                           <Controller
                             name="SO No"
-                            rules={{ required: "this field is requered" }}
+                           
                             control={control}
                             render={({ field, fieldState: { error } }) => (
                               <InputTextField
@@ -1008,8 +1003,8 @@ export default function QuatationSO() {
                               />
                             )}
                           />
-                        </Grid>
-                        <Grid
+                        </Grid> */}
+                        {/* <Grid
                           item
                           xs={12}
                           md={4}
@@ -1026,7 +1021,7 @@ export default function QuatationSO() {
                         >
                           <Controller
                             name="SAP SO No"
-                            rules={{ required: "this field is requered" }}
+                           
                             control={control}
                             render={({ field, fieldState: { error } }) => (
                               <InputTextField
@@ -1038,8 +1033,8 @@ export default function QuatationSO() {
                               />
                             )}
                           />
-                        </Grid>
-                        <Grid
+                        </Grid> */}
+                        {/* <Grid
                           item
                           xs={12}
                           md={4}
@@ -1056,11 +1051,40 @@ export default function QuatationSO() {
                         >
                           <Controller
                             name="Status"
-                            rules={{ required: "this field is requered" }}
+                           
                             control={control}
                             render={({ field, fieldState: { error } }) => (
                               <InputTextField
                                 label="Status"
+                                {...field}
+                                error={!!error}
+                                helperText={error ? error.message : null}
+                                rows={1}
+                              />
+                            )}
+                          />
+                        </Grid> */}
+                        <Grid
+                          item
+                          xs={12}
+                          md={4}
+                          sm={4}
+                          lg={6}
+                          textAlign={"center"}
+                          sx={{
+                            mt: {
+                              xs: -0,
+                              sm: -0,
+                              md: -4,
+                            },
+                          }}
+                        >
+                          <Controller
+                            name="Vehicle"
+                            control={control}
+                            render={({ field, fieldState: { error } }) => (
+                              <InputTextField
+                                label="VEHICLE"
                                 {...field}
                                 error={!!error}
                                 helperText={error ? error.message : null}
@@ -1077,20 +1101,21 @@ export default function QuatationSO() {
                           lg={6}
                           textAlign={"center"}
                         >
-                          <Controller
-                            name="Vehicle"
-                            rules={{ required: "this field is requered" }}
-                            control={control}
-                            render={({ field, fieldState: { error } }) => (
-                              <InputTextField
-                                label="Vehicle"
-                                {...field}
-                                error={!!error}
-                                helperText={error ? error.message : null}
-                                rows={1}
-                              />
-                            )}
-                          />
+                          <Button
+                            variant="contained"
+                            color="success"
+                            size="small"
+                            sx={{
+                              color: "white",
+                              minWidth: 220,
+                              mt: 1,
+                              p: 1,
+                              mb: 2,
+                            }}
+                            onClick={handleClickModel}
+                          >
+                            Search Item
+                          </Button>
                         </Grid>
                         <Grid
                           item
@@ -1107,15 +1132,19 @@ export default function QuatationSO() {
                             },
                           }}
                         >
-                          <Button
-                            variant="contained"
-                            color="success"
-                            size="small"
-                            sx={{ color: "white", minWidth: 220, mt: 1, p: 1 }}
-                            onClick={handleClickModel}
-                          >
-                            Search Item
-                          </Button>
+                          <Controller
+                            name="SalesOrder"
+                            control={control}
+                            render={({ field, fieldState: { error } }) => (
+                              <InputTextField
+                                label="SO NO"
+                                {...field}
+                                error={!!error}
+                                helperText={error ? error.message : null}
+                                rows={1}
+                              />
+                            )}
+                          />
                         </Grid>
                       </Grid>
                     </Grid>
@@ -1137,6 +1166,120 @@ export default function QuatationSO() {
                         </Typography>
                       </Grid>
                     </Grid>
+                  </Grid>
+                  <Grid container item md={12} px={2}>
+                    <Row>
+                      <Grid
+                        item
+                        xs={12}
+                        md={2.4}
+                        sm={4}
+                        lg={2.4}
+                        textAlign={"center"}
+                      >
+                        <Controller
+                          name="OrderType"
+                          control={control}
+                          render={({ field, fieldState: { error } }) => (
+                            <SmallInputFields
+                              label="ORDER TYPE"
+                              {...field}
+                              error={!!error}
+                              helperText={error ? error.message : null}
+                              rows={1}
+                            />
+                          )}
+                        />
+                      </Grid>
+                      <Grid
+                        item
+                        xs={12}
+                        md={2.4}
+                        sm={4}
+                        lg={2.4}
+                        textAlign={"center"}
+                      >
+                        <Controller
+                          name="Approver"
+                          control={control}
+                          render={({ field, fieldState: { error } }) => (
+                            <SmallInputFields
+                              label="CR APPROVED BY"
+                              {...field}
+                              error={!!error}
+                              helperText={error ? error.message : null}
+                              rows={1}
+                            />
+                          )}
+                        />
+                      </Grid>
+                      <Grid
+                        item
+                        xs={12}
+                        md={2.4}
+                        sm={4}
+                        lg={2.4}
+                        textAlign={"center"}
+                      >
+                        <Controller
+                          name="CreatedBy"
+                          control={control}
+                          render={({ field, fieldState: { error } }) => (
+                            <SmallInputFields
+                              label="CREATED BY"
+                              {...field}
+                              error={!!error}
+                              helperText={error ? error.message : null}
+                              rows={1}
+                            />
+                          )}
+                        />
+                      </Grid>
+                      <Grid
+                        item
+                        xs={12}
+                        md={2.4}
+                        sm={4}
+                        lg={2.4}
+                        textAlign={"center"}
+                      >
+                        <Controller
+                          name="SAPDocNum"
+                          control={control}
+                          render={({ field, fieldState: { error } }) => (
+                            <SmallInputFields
+                              label="SAP SO NO"
+                              {...field}
+                              error={!!error}
+                              helperText={error ? error.message : null}
+                              rows={1}
+                            />
+                          )}
+                        />
+                      </Grid>
+                      <Grid
+                        item
+                        xs={12}
+                        md={2.4}
+                        sm={4}
+                        lg={2.4}
+                        textAlign={"center"}
+                      >
+                        <Controller
+                          name="Status"
+                          control={control}
+                          render={({ field, fieldState: { error } }) => (
+                            <SmallInputFields
+                              label="STATUS"
+                              {...field}
+                              error={!!error}
+                              helperText={error ? error.message : null}
+                              rows={1}
+                            />
+                          )}
+                        />
+                      </Grid>
+                    </Row>
                   </Grid>
                   <Grid container item md={12} px={2}>
                     <Grid
@@ -1295,6 +1438,7 @@ export default function QuatationSO() {
                           Search
                         </Button> */}
                   </Grid>
+
                   <Grid
                     container
                     item
@@ -1308,7 +1452,7 @@ export default function QuatationSO() {
                     }}
                   >
                     <Paper sx={{ width: "100%" }}>
-                      <DataGrid
+                      {/* <DataGrid
                         columnHeaderHeight={35}
                         rowHeight={45}
                         className="datagrid-style"
@@ -1334,6 +1478,18 @@ export default function QuatationSO() {
                         hideFooter
                         disableRowSelectionOnClick
                         pageSizeOptions={[3]}
+                      /> */}
+                      <DataGrid
+                        className="datagrid-style"
+                        // rows={oLines}
+                        rows={rows}
+                        columns={columns}
+                        getRowId={(row) => row.id}
+                        columnHeaderHeight={35}
+                        rowHeight={40}
+                        hideFooter
+                        autoHeight="false"
+                        sx={gridSx}
                       />
                     </Paper>
                   </Grid>
@@ -1426,172 +1582,185 @@ export default function QuatationSO() {
                       {tabvalue === 1 && (
                         <>
                           <Grid container>
-                          <Grid
-                            container
-                            item
-                            lg={6}
-                            xs={12}
-                            md={6}
-                            sm={6}
-                            textAlign={"center"}
-                          >
-                            <RadioButtonsField
-                              control={control}
-                              name="myRadioGroup"
-                              data={[
-                                { value: "KNET", label: "KNET" },
-                                { value: "MASTER", label: "MASTER" },
-                                { value: "VISA", label: "VISA" },
-                                { value: "MF", label: "MF" },
-                                { value: "TABBY", label: "TABBY" },
-                                { value: "TAMARA", label: "TAMARA" },
-                              ]}
-                            />
-
                             <Grid
+                              container
                               item
-                              sm={12}
-                              md={6}
                               lg={6}
                               xs={12}
+                              md={6}
+                              sm={6}
                               textAlign={"center"}
                             >
-                              <Controller
-                                name="Creditno"
+                              <RadioButtonsField
                                 control={control}
-                                render={({ field, fieldState: { error } }) => (
-                                  <InputTextField
-                                    label="Credit Card No"
-                                    type="text"
-                                    {...field}
-                                    error={!!error}
-                                    helperText={error ? error.message : null}
-                                  />
-                                )}
+                                name="myRadioGroup"
+                                data={[
+                                  { value: "KNET", label: "KNET" },
+                                  { value: "MASTER", label: "MASTER" },
+                                  { value: "VISA", label: "VISA" },
+                                  { value: "MF", label: "MF" },
+                                  { value: "TABBY", label: "TABBY" },
+                                  { value: "TAMARA", label: "TAMARA" },
+                                ]}
                               />
-                            </Grid>
 
-                            <Grid
-                              item
-                              sm={12}
-                              md={6}
-                              lg={6}
-                              xs={12}
-                              textAlign={"center"}
-                            >
-                              <Controller
-                                name="Amount"
-                                control={control}
-                                render={({ field, fieldState: { error } }) => (
-                                  <SmallInputTextField
-                                    label="Amount"
-                                    type="text"
-                                    {...field}
-                                    error={!!error}
-                                    helperText={error ? error.message : null}
-                                  />
-                                )}
-                              />
-                            </Grid>
-
-                            <Grid
-                              item
-                              sm={12}
-                              md={6}
-                              lg={6}
-                              xs={12}
-                              textAlign={"center"}
-                            >
-                              <Controller
-                                name="AuthCode"
-                                control={control}
-                                rules={{
-                                  required: "Authorization code is required",
-
-                                  maxLength: {
-                                    value: 10,
-                                    message:
-                                      "Authorization code must be exactly 10 digits",
-                                  },
-                                }}
-                                render={({ field, fieldState: { error } }) => (
-                                  <InputTextField
-                                    label="AUTHORIZATION CODE"
-                                    type="text"
-                                    {...field}
-                                    error={!!error}
-                                    helperText={error ? error.message : null}
-                                    onChange={(e) => {
-                                      const value = e.target.value;
-                                      field.onChange(value); // Update the field value
-                                      trigger("AuthCode"); // Trigger validation
-                                    }}
-                                  />
-                                )}
-                              />
-                            </Grid>
-
-                            <Grid
-                              item
-                              sm={12}
-                              md={6}
-                              lg={6}
-                              xs={12}
-                              textAlign={"center"}
-                            >
-                              <Button
-                                variant="contained"
-                                color="success"
-                                sx={{ px: 5, mt: 1 }}
-                                onClick={addRow}
+                              <Grid
+                                item
+                                sm={12}
+                                md={6}
+                                lg={6}
+                                xs={12}
+                                textAlign={"center"}
                               >
-                                ADD
-                              </Button>
-                            </Grid>
+                                <Controller
+                                  name="Creditno"
+                                  control={control}
+                                  render={({
+                                    field,
+                                    fieldState: { error },
+                                  }) => (
+                                    <InputTextField
+                                      label="Credit Card No"
+                                      type="text"
+                                      {...field}
+                                      error={!!error}
+                                      helperText={error ? error.message : null}
+                                    />
+                                  )}
+                                />
+                              </Grid>
+
+                              <Grid
+                                item
+                                sm={12}
+                                md={6}
+                                lg={6}
+                                xs={12}
+                                textAlign={"center"}
+                              >
+                                <Controller
+                                  name="Amount"
+                                  control={control}
+                                  render={({
+                                    field,
+                                    fieldState: { error },
+                                  }) => (
+                                    <SmallInputTextField
+                                      label="Amount"
+                                      type="text"
+                                      {...field}
+                                      error={!!error}
+                                      helperText={error ? error.message : null}
+                                    />
+                                  )}
+                                />
+                              </Grid>
+
+                              <Grid
+                                item
+                                sm={12}
+                                md={6}
+                                lg={6}
+                                xs={12}
+                                textAlign={"center"}
+                              >
+                                <Controller
+                                  name="AuthCode"
+                                  control={control}
+                                  rules={{
+                                    required: "Authorization code is required",
+
+                                    maxLength: {
+                                      value: 10,
+                                      message:
+                                        "Authorization code must be exactly 10 digits",
+                                    },
+                                  }}
+                                  render={({
+                                    field,
+                                    fieldState: { error },
+                                  }) => (
+                                    <InputTextField
+                                      label="AUTHORIZATION CODE"
+                                      type="text"
+                                      {...field}
+                                      error={!!error}
+                                      helperText={error ? error.message : null}
+                                      onChange={(e) => {
+                                        const value = e.target.value;
+                                        field.onChange(value); // Update the field value
+                                        trigger("AuthCode"); // Trigger validation
+                                      }}
+                                    />
+                                  )}
+                                />
+                              </Grid>
+
+                              <Grid
+                                item
+                                sm={12}
+                                md={6}
+                                lg={6}
+                                xs={12}
+                                textAlign={"center"}
+                              >
+                                <Button
+                                  variant="contained"
+                                  color="success"
+                                  sx={{ px: 5, mt: 1 }}
+                                  onClick={addRow}
+                                >
+                                  ADD
+                                </Button>
+                              </Grid>
                             </Grid>
                             <Grid item lg={6} xs={12} md={6} sm={6}>
-                            <TableContainer
-                              // component={Paper}
-                              sx={{ overflow: "auto" }}
-                            >
-                              <Table
-                                stickyHeader
-                                size="small"
-                                // className="table-style"
+                              <TableContainer
+                                // component={Paper}
+                                sx={{ overflow: "auto" }}
                               >
-                                <TableHead>
-                                  <TableRow>
-                                    <TableCell>A/C CODE</TableCell>
-                                    <TableCell>CARD NAME</TableCell>
-                                    <TableCell>CARD NO</TableCell>
-                                    <TableCell>AMOUNT</TableCell>
-                                    <TableCell></TableCell>
-                                  </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                  {bankData.map((data, index) => (
-                                    <TableRow key={index}>
-                                      <TableCell component="th" scope="row">
-                                        {data.AuthCode}
-                                      </TableCell>
-                                      <TableCell>{data.myRadioGroup}</TableCell>
-                                      <TableCell>{data.Creditno}</TableCell>
-                                      <TableCell>{data.Amount}</TableCell>
-                                      <TableCell>
-                                        <IconButton
-                                          onClick={() => removeTableRow1(index)}
-                                        >
-                                          <RemoveCircleIcon
-                                            sx={{ color: "red" }}
-                                          />
-                                        </IconButton>
-                                      </TableCell>
+                                <Table
+                                  stickyHeader
+                                  size="small"
+                                  // className="table-style"
+                                >
+                                  <TableHead>
+                                    <TableRow>
+                                      <TableCell>A/C CODE</TableCell>
+                                      <TableCell>CARD NAME</TableCell>
+                                      <TableCell>CARD NO</TableCell>
+                                      <TableCell>AMOUNT</TableCell>
+                                      <TableCell></TableCell>
                                     </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                            </TableContainer>
-                          </Grid>
+                                  </TableHead>
+                                  <TableBody>
+                                    {bankData.map((data, index) => (
+                                      <TableRow key={index}>
+                                        <TableCell component="th" scope="row">
+                                          {data.AuthCode}
+                                        </TableCell>
+                                        <TableCell>
+                                          {data.myRadioGroup}
+                                        </TableCell>
+                                        <TableCell>{data.Creditno}</TableCell>
+                                        <TableCell>{data.Amount}</TableCell>
+                                        <TableCell>
+                                          <IconButton
+                                            onClick={() =>
+                                              removeTableRow1(index)
+                                            }
+                                          >
+                                            <RemoveCircleIcon
+                                              sx={{ color: "red" }}
+                                            />
+                                          </IconButton>
+                                        </TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </TableContainer>
+                            </Grid>
                           </Grid>
                         </>
                       )}

@@ -9,12 +9,12 @@ export default function ARSales() {
       Count: 0,
       ReDirect: "dynamic-search",
     },
-    //   {
-    //     id: "2",
-    //     Name: "Quotation / SO",
-    //     Count: "0",
-    //     ReDirect: "quotation",
-    //   },
+    {
+      id: "2",
+      Name: "Quotation / SO",
+      Count: "0",
+      ReDirect: "quotation",
+    },
     //   {
     //     id: "3",
     //     Name: "Additional Payment",

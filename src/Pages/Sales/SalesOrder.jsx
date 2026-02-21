@@ -83,7 +83,10 @@ import {
 import LogisticAddress from "../Components/LogisticAddress";
 import PrintMenu from "../Components/PrintMenu";
 import SearchInputField from "../Components/SearchInputField";
-import SearchModel, { CopyFromSearchModel, SearchBPModel } from "../Components/SearchModel";
+import SearchModel, {
+  CopyFromSearchModel,
+  SearchBPModel,
+} from "../Components/SearchModel";
 import { getStatus } from "../Components/status";
 import TableGridFrieght from "../Components/TableGridFrieght";
 import TaxCategoryModel from "../Components/TaxCategoryModel";
@@ -957,7 +960,9 @@ export default function SalesOrder() {
       selectedAddress.State,
       selectedAddress.Zipcode,
       selectedAddress.Country,
-    ].filter(v => v?.trim()).join(", ");
+    ]
+      .filter((v) => v?.trim())
+      .join(", ");
     setValue("DfltAddress", DfltAddress || "");
     setValue("BlockS", selectedAddress.Address1);
     setValue("StreetS", selectedAddress.Address2);
@@ -992,7 +997,9 @@ export default function SalesOrder() {
       selectedAddress.State,
       selectedAddress.Zipcode,
       selectedAddress.Country,
-    ].filter(v => v?.trim()).join(", ");
+    ]
+      .filter((v) => v?.trim())
+      .join(", ");
 
     setValue("Address", Address || "");
     setValue("BlockB", selectedAddress.Address1 || "");
@@ -1022,7 +1029,9 @@ export default function SalesOrder() {
       data.StateB,
       data.ZipCodeB,
       data.CountryB,
-    ].filter(v => v?.trim()).join(", ");
+    ]
+      .filter((v) => v?.trim())
+      .join(", ");
     setValue("Address", Address || "");
     setValue("BlockB", data.BlockB);
     setValue("StreetB", data.StreetB);
@@ -1062,7 +1071,9 @@ export default function SalesOrder() {
         data.StateB,
         data.ZipCodeB,
         data.CountryB,
-      ].filter(v => v?.trim()).join(", ");
+      ]
+        .filter((v) => v?.trim())
+        .join(", ");
       setValue("DfltAddress", ShipToAddress || ""); // Set formatted address only
       setValue("BlockS", data.BlockB);
       setValue("StreetS", data.StreetB);
@@ -1360,9 +1371,9 @@ export default function SalesOrder() {
   };
 
   useEffect(() => {
-    if(searchmodelOpen===true){
-    fetchGetListData(0); 
-     }
+    if (searchmodelOpen === true) {
+      fetchGetListData(0);
+    }
   }, [searchmodelOpen]);
 
   const onSelectBusinessPartner = async (DocEntry) => {
@@ -1384,7 +1395,9 @@ export default function SalesOrder() {
       selectedAddress.State,
       selectedAddress.Zipcode,
       selectedAddress.Country,
-    ].filter(v => v?.trim()).join(", ");
+    ]
+      .filter((v) => v?.trim())
+      .join(", ");
     setValue("DfltAddress", DfltAddress || "");
     setValue("BlockS", selectedAddress.Address1);
     setValue("StreetS", selectedAddress.Address2);
@@ -1405,7 +1418,9 @@ export default function SalesOrder() {
       selectedBillToAddress.State,
       selectedBillToAddress.Zipcode,
       selectedBillToAddress.Country,
-    ].filter(v => v?.trim()).join(", ");;
+    ]
+      .filter((v) => v?.trim())
+      .join(", ");
 
     setValue("Address", DfltBillToAddress || "");
     setValue("BlockB", selectedBillToAddress.Address1);
@@ -1514,22 +1529,22 @@ export default function SalesOrder() {
   };
 
   //#endregion Searching CUSTOMER List
-   const CardCode = getValues("CardCode");
-    const baseType = watch("baseType");
-    const {
-      data: getListPOData,
-      hasMore: hasMorePOList,
-      query: getListqueryCopyFrom,
-      onSearch: handleGetListSearchCopyFrom,
-      onClear: handleGetListClearCopyFrom,
-      fetchMore: fetchMoreGetListCopyFrom,
-    } = useCopyFromList({
-      BasePoint:"/SalesOrder",
-      open: openDialog,
-      CardCode,
-      baseType,
-      type,
-    });
+  const CardCode = getValues("CardCode");
+  const baseType = watch("baseType");
+  const {
+    data: getListPOData,
+    hasMore: hasMorePOList,
+    query: getListqueryCopyFrom,
+    onSearch: handleGetListSearchCopyFrom,
+    onClear: handleGetListClearCopyFrom,
+    fetchMore: fetchMoreGetListCopyFrom,
+  } = useCopyFromList({
+    BasePoint: "/SalesOrder",
+    open: openDialog,
+    CardCode,
+    baseType,
+    type,
+  });
   const handleFright = () => {
     setFrieghtopen(true);
     // freightdata()

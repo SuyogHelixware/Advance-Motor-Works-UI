@@ -10899,6 +10899,7 @@ export default function CashInvoice() {
   const oLines = useWatch({ control, name: "oLines" }) ?? [];
 
   // APi OPen Tab
+
   const getAllOpenList = () => {
     axios
       .request({
@@ -11015,7 +11016,7 @@ export default function CashInvoice() {
   const SetoldData = (item) => {
     console.log(item);
     reset(item);
-    // Also clear bankData when loading a record
+
     setBankData([]);
   };
   // =============================
