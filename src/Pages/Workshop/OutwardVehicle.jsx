@@ -1,5 +1,6 @@
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
+import MenuIcon from "@mui/icons-material/Menu";
 import { TabContext, TabPanel } from "@mui/lab";
 import {
   Box,
@@ -12,15 +13,14 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
-import SignatureCanvas from "react-signature-canvas";
-import SearchInputField from "../Components/SearchInputField";
-import MenuIcon from "@mui/icons-material/Menu";
 import dayjs from "dayjs";
+import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import InfiniteScroll from "react-infinite-scroll-component";
+import SignatureCanvas from "react-signature-canvas";
 import { BeatLoader } from "react-spinners";
 import Swal from "sweetalert2";
+import apiClient from "../../services/apiClient";
 import CardComponent from "../Components/CardComponent";
 import {
   InputDatePickerFields,
@@ -29,9 +29,10 @@ import {
   InputTextSearchButton,
   InputTimePicker,
 } from "../Components/formComponents";
+import SearchInputField from "../Components/SearchInputField";
 import SearchModel from "../Components/SearchModel";
 import usePermissions from "../Components/usePermissions";
-import apiClient from "../../services/apiClient";
+import DynamicLoader from "../../Loaders/DynamicLoader";
 
 export default function InwardVehicle() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -44,11 +45,11 @@ export default function InwardVehicle() {
   const [searchmodelOpen, setSearchmodelOpen] = useState(false);
   const timeoutRef = useRef(null);
   const [DocEntry, setDocEntry] = useState("");
-  const [PrintData, setPrintData] = useState([]);
+  // const [PrintData, setPrintData] = useState([]);
 
-  const [oldOpenData, setSelectData] = useState(null);
+  // const [oldOpenData, setSelectData] = useState(null);
   const [apiloading, setapiloading] = useState(false);
-  let [ok, setok] = useState("OK");
+  // let [ok, setok] = useState("OK");
   const [SaveUpdateName, setSaveUpdateName] = useState("SAVE");
   const perms = usePermissions(133);
 
@@ -114,9 +115,9 @@ export default function InwardVehicle() {
     getValues,
     setValue,
     watch,
-    clearErrors,
-    setError,
-    formState: { errors },
+    // clearErrors,
+    // setError,
+    // formState: { errors },
   } = useForm({
     defaultValues: initial,
   });
@@ -680,8 +681,8 @@ export default function InwardVehicle() {
     reset(initial);
     setSaveUpdateName("SAVE");
     setDocEntry("");
-    setSelectData([]);
-    setok("");
+    // setSelectData([]);
+    // setok("");
   };
 
   const handleSubmitForm = async (data) => {
@@ -807,6 +808,8 @@ export default function InwardVehicle() {
 
   return (
     <>
+
+    <DynamicLoader open={apiloading} />
       <Grid
         container
         width="100%"
@@ -1423,7 +1426,7 @@ export default function InwardVehicle() {
               <Button
                 disabled={SaveUpdateName === "SAVE"}
                 DocEntry={DocEntry}
-                PrintData={PrintData}
+                // PrintData={PrintData}
                 variant="contained"
                 color="primary"
               >
