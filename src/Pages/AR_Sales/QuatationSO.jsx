@@ -246,6 +246,14 @@ export default function QuatationSO() {
     SubCategory: "",
   };
 
+  const initialCustCreation = {
+    CustomerName: "",
+    customerEmail: "",
+    PhoneNumber1: "",
+    GroupCode: false,
+    CardType: "C",
+  };
+
   const {
     control,
     handleSubmit,
@@ -267,6 +275,19 @@ export default function QuatationSO() {
     setValue: setValueMdl,
     watch: watchMdl,
     formState: { errors: errorsMdl },
+  } = useForm({
+    defaultValues: initialCustCreation,
+    shouldFocusError: false,
+  });
+
+  const {
+    control: controlMdl1,
+    handleSubmit: handleSubmitMdl1,
+    reset: resetMdl1,
+    getValues: getValuesMdl1,
+    setValue: setValueMdl1,
+    watch: watchMdl1,
+    formState: { errors: errorsMdl1 },
   } = useForm({
     defaultValues: initialItemSearch,
     shouldFocusError: false,
@@ -697,8 +718,8 @@ export default function QuatationSO() {
 
       if (supplierLists.length > 0) {
         const defaultDocEntry = supplierLists[0].CardName;
-        setValue("CardName", defaultDocEntry);
-        setValue("SAPDocNum", supplierLists[0].SAPDocNum);
+        setValueMdl("CardName", defaultDocEntry);
+        setValueMdl("SAPDocNum", supplierLists[0].SAPDocNum);
       }
     } catch (error) {
       console.error("Error fetching Supplier:", error);
@@ -1368,6 +1389,7 @@ export default function QuatationSO() {
 
   const handleCloseModel = () => {
     setOpenModal(false);
+    resetMdl(initialItemSearch);
   };
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
@@ -1387,6 +1409,117 @@ export default function QuatationSO() {
 
   const toggleDrawer = () => {
     setDrawerOpen(!drawerOpen);
+  };
+
+  const round = (num, decimals = 2) =>
+    Math.round((num + Number.EPSILON) * 10 ** decimals) / 10 ** decimals;
+
+  const onTop20Click = (item, Category) => {
+    // if (!state.selected) {
+    //   Swal.fire({
+    //     text: "Please Select Customer",
+    //     icon: "warning",
+    //     toast: true,
+    //     showConfirmButton: false,
+    //     timer: 2000,
+    //     timerProgressBar: true,
+    //   });
+    //   return;
+    // }
+
+    if (watch("ServiceOrder")) {
+      Swal.fire({
+        text: "You Cannot select Items for Service Order",
+        icon: "warning",
+        toast: true,
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return;
+    }
+
+    const currentOLines = getValues("oLines") || [];
+
+    // Prevent duplicate
+    if (currentOLines.some((p) => p.ItemCode === item.ItemCode)) {
+      Swal.fire({
+        toast: true,
+        position: "center",
+        icon: "warning",
+        title: "Item Already Selected",
+        showConfirmButton: false,
+        timer: 1500,
+      });
+      return;
+    }
+
+    const isCNCActive =
+      watch("CNC") === true &&
+      watch("JobWorkAt")?.toUpperCase() === "ORP WORKSHOP";
+
+    const realFittingCharge = item.FittingCharge;
+
+    const newLine = {
+      ItemCode: item.ItemCode,
+      ItemName: item.ItemName,
+      WHSCode: item.WHSCode ?? "1000",
+      Quantity: 1,
+      Price: round(item.Price, 3),
+      DesiredDisc: "0",
+      Amount: item.Price,
+      FTSQty: item.FTSQty,
+      LineFittingTime: isCNCActive ? 0 : item.FittingTime,
+      LineFittingCharge: isCNCActive ? 0 : realFittingCharge,
+      FittingCharge: isCNCActive ? 0 : realFittingCharge,
+      LineJobRemarks: item.LineJobRemarks,
+      IssueQuantity: item.IssueQuantity,
+    };
+
+    setStoredFittingCharges((prev) => {
+      const merged = [...prev];
+      const idx = merged.findIndex((m) => m.ItemCode === item.ItemCode);
+      if (idx >= 0)
+        merged[idx] = {
+          ItemCode: item.ItemCode,
+          FittingCharge: realFittingCharge,
+        };
+      else
+        merged.push({
+          ItemCode: item.ItemCode,
+          FittingCharge: realFittingCharge,
+        });
+      return merged;
+    });
+
+    const updatedOLines = [...currentOLines, newLine];
+    setValue("oLines", updatedOLines);
+
+    // Now update rows
+    const price = Number(item.Price || 0);
+    const quantity = 1;
+    const total = price * quantity;
+
+    const rows = getValues("rows") || [];
+
+    const newRow = {
+      ItemCode: item.ItemCode,
+      DesiredDisc: item.DesiredDisc || "0",
+      ItemName: item.ItemName,
+      Price: price,
+      Quantity: quantity,
+      TotalAmt: total,
+      LineFittingCharge: isCNCActive ? 0 : realFittingCharge,
+      FittingCharge: isCNCActive ? 0 : realFittingCharge,
+      IssueQuantity: item.IssueQuantity || "0",
+      WHSCode: item.WHSCode ?? "1000",
+    };
+
+    const updatedRows = [...rows, newRow];
+    setValue("rows", updatedRows);
+
+    updateSummaryFields();
+    calculateData();
   };
 
   const oLines = useWatch({ control, name: "oLines" });
@@ -1666,8 +1799,8 @@ export default function QuatationSO() {
               <Controller
                 name="CUSTOMER ID"
                 disabled
-                control={control}
-                render={({ field, fieldState: { error } }) => (
+                control={controlMdl1}
+                render={({ field, fieldState: { errorsMdl1 } }) => (
                   <InputTextField label="CUSTOMER ID" {...field} rows={1} />
                 )}
               />
@@ -1675,14 +1808,14 @@ export default function QuatationSO() {
 
             <Grid item xs={12} lg={12} textAlign={"center"}>
               <Controller
-                name="Document No"
-                control={control}
-                render={({ field, fieldState: { error } }) => (
+                name="CardName"
+                control={controlMdl1}
+                render={({ field, fieldState: { errorsMdl1 } }) => (
                   <InputTextField
                     label="CUSTOMER NAME"
                     {...field}
-                    error={!!error}
-                    helperText={error ? error.message : null}
+                    error={!!errorsMdl1}
+                    helperText={errorsMdl1 ? errorsMdl1.message : null}
                     rows={1}
                   />
                 )}
@@ -1700,13 +1833,13 @@ export default function QuatationSO() {
             <Grid item xs={12} lg={12} textAlign={"center"}>
               <Controller
                 name="EMAIL"
-                control={control}
-                render={({ field, fieldState: { error } }) => (
+                control={controlMdl1}
+                render={({ field, fieldState: { errorsMdl1 } }) => (
                   <InputTextField
                     label="EMAIL"
                     {...field}
-                    error={!!error}
-                    helperText={error ? error.message : null}
+                    error={!!errorsMdl1}
+                    helperText={errorsMdl1 ? errorsMdl1.message : null}
                     rows={1}
                   />
                 )}
@@ -2094,12 +2227,7 @@ export default function QuatationSO() {
                     </Grid>
                   </Grid>
 
-                  <Grid
-                    item
-                    xs={12}
-                    lg={6}
-                    md={4}
-                  >
+                  <Grid item xs={12} lg={6} md={4}>
                     <Grid
                       item
                       md={12}
@@ -2116,11 +2244,14 @@ export default function QuatationSO() {
                         Top 20 Product
                       </Typography>
                     </Grid>
-                    <div style={{ height: 300, overflowY: "auto",padding:5 }}>
+                    <div style={{ height: 300, overflowY: "auto", padding: 5 }}>
                       {top20ItemsList?.map((item, index) => (
                         <Card
-                        elevation={5}
+                          elevation={5}
                           key={index}
+                          onClick={() => {
+                            onTop20Click(item, item.SUBCATEGORY);
+                          }}
                           sx={{
                             height: "80px",
                             width: "100%",
