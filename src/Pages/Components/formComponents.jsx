@@ -2145,6 +2145,7 @@ export function InputTimePicker(props) {
         onChange={props.onChange}
         disabled={props.disabled}
         readOnly={props.readOnly}
+        format="HH:mm"
         slotProps={{
           textField: {
             size: "small",
