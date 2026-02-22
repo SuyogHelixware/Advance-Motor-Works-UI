@@ -10,6 +10,7 @@ import RemoveCircleIcon from "@mui/icons-material/RemoveCircle";
 import RequestQuoteIcon from "@mui/icons-material/RequestQuote";
 import SearchIcon from "@mui/icons-material/Search";
 import TextSnippetIcon from "@mui/icons-material/TextSnippet";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 import {
@@ -56,6 +57,7 @@ import {
   RadioButtonsField,
   SmallInputFields,
   SmallInputTextField,
+  TableNumberInput,
 } from "../Components/formComponents";
 import { PhoneNumber } from "../Components/PhoneNumber";
 import SearchInputField from "../Components/SearchInputField";
@@ -105,8 +107,8 @@ export default function QuatationSO() {
     setBankData(updatedData);
   };
 
-  const { control, trigger, getValues, reset } = useForm({
-    mode: "onChange",
+  const { control, trigger, getValues, reset, setValue } = useForm({
+    defaultValues: "",
   });
 
   const [ModeltabValue, setModelTabValue] = React.useState("1");
@@ -265,17 +267,16 @@ export default function QuatationSO() {
       editable: true,
     },
   ];
-
-  const rows = [
+  const [rows, setRows] = useState([
     {
       id: "1",
       Item_Code: "RDK1355",
       Description: "ARB DRAWER KITCHEN 1355X500",
       WHS: "1000",
-      Qty: "10",
+      Qty: "",
       Price: "35.000",
       Total_Amt: "0",
-      Fitting: "0",
+      Fitting: "",
       FTS: "1.75",
       Tax: "10",
       Tax_Amt: "20",
@@ -283,7 +284,113 @@ export default function QuatationSO() {
       Status: "not-issued",
       Action: "",
     },
-  ];
+    {
+      id: "2",
+      Item_Code: "3455",
+      Description: "1355X500",
+      WHS: "1000",
+      Qty: "",
+      Price: "5",
+      Total_Amt: "0",
+      Fitting: "",
+      FTS: "1.75",
+      Tax: "10",
+      Tax_Amt: "20",
+      Iss_QTY: "0",
+      Status: "not-issued",
+      Action: "",
+    },
+  ]);
+
+  // const HandleTableOnChange = (id, value) => {
+  //   setRows((prev) => {
+  //     const updatedRows = prev.map((row) =>
+  //       row.id === id
+  //         ? {
+  //             ...row,
+  //             Qty: value,
+  //             Total_Amt: value * row.Price,
+  //           }
+  //         : row,
+  //     );
+
+  //     const totalPartsValue = updatedRows.reduce(
+  //       (sum, row) => sum + Number(row.Total_Amt || 0),
+  //       0,
+  //     );
+
+  //     setValue("TotalPartsValue", totalPartsValue);
+
+  //     return updatedRows;
+  //   });
+  // };
+
+  const HandleTableOnChange = (newRow, oldRow) => {
+    const qty = Number(newRow.Quantity) || 0;
+    const price = Number(newRow.Price) || 0;
+
+    const totalAmt = qty * price;
+
+    const updatedRow = { ...newRow, Amount: totalAmt };
+
+    setRows((prevRows) => {
+      const updatedRows = prevRows.map((row) =>
+        row.id === newRow.id ? updatedRow : row,
+      );
+
+      const totalPartsSum = updatedRows.reduce(
+        (sum, row) => sum + (Number(row.Amount) || 0),
+        0,
+      );
+      const Fittingcharge = updatedRows.reduce(
+        (sum, row) => sum + (Number(row.Fitting) || 0),
+        0,
+      );
+
+      setValue("TotalPartsValue", totalPartsSum.toFixed(3));
+      setValue("ServiceAndInstallation", Fittingcharge.toFixed(3));
+      setValue("NetPartsValue", totalPartsSum.toFixed(3));
+      setValue("TotalDocAmt", totalPartsSum.toFixed(3));
+
+      return updatedRows;
+    });
+
+    HandleOnFildChange();
+    return updatedRow;
+  };
+  const round = (num, decimals = 2) =>
+    Math.round((num + Number.EPSILON) * 10 ** decimals) / 10 ** decimals;
+  const HandleOnFildChange = () => {
+    const allformdata = getValues();
+
+    const specialDiscPercent = Number(getValues("SpecialDisc")) || 0;
+    const DesiredDiscPercent = Number(getValues("DesiredDisc")) || 0;
+
+    const sDiscAmt = round(
+      (allformdata.TotalPartsValue * specialDiscPercent) / 100,
+    );
+
+    const fittingcharge = allformdata.ServiceAndInstallation;
+
+    const dDiscAmt = round(
+      (allformdata.TotalPartsValue * DesiredDiscPercent) / 100,
+    );
+
+    const netParts =
+      Number(allformdata.TotalPartsValue) -
+      Number(sDiscAmt) -
+      Number(dDiscAmt) +
+      Number(fittingcharge) +
+      Number(allformdata.RoundingAmt);
+
+    const TotTotalDocAmt = Number(netParts) + Number(allformdata.ShippingAmt);
+
+    setValue("SpecialDiscAmt", sDiscAmt.toFixed(3));
+    setValue("DesiredDiscAmt", dDiscAmt.toFixed(3));
+    setValue("NetPartsValue", netParts.toFixed(3));
+    setValue("NetPartsValue", netParts.toFixed(3));
+    setValue("TotalDocAmt", TotTotalDocAmt.toFixed(3));
+  };
 
   const sidebarContent = (
     <>
@@ -1481,55 +1588,64 @@ export default function QuatationSO() {
                       /> */}
                       <DataGrid
                         className="datagrid-style"
-                        // rows={oLines}
                         rows={rows}
                         columns={columns}
                         getRowId={(row) => row.id}
                         columnHeaderHeight={35}
                         rowHeight={40}
                         hideFooter
-                        autoHeight="false"
+                        processRowUpdate={HandleTableOnChange}
+                        onProcessRowUpdateError={(error) => console.log(error)}
                         sx={gridSx}
                       />
                     </Paper>
                   </Grid>
                   <Grid container item mt={1}>
                     <Grid item sm={3} md={4} lg={2} xs={6} textAlign={"center"}>
-                      <SmallInputFields label="PARTS VALUE" />
+                      <SmallInputFields
+                        name="TotalPartsValue"
+                        control={control}
+                        label="PARTS VALUE"
+                        width={140}
+                        readOnly
+                      />
                     </Grid>
                     <Grid item sm={3} md={4} lg={2} xs={6} textAlign={"center"}>
-                      <SmallInputFields label="DISC(%)" />
+                      <SmallInputFields
+                        name="DesiredDisc"
+                        control={control}
+                        label="DISC (%)"
+                        width={140}
+                        onChange={HandleOnFildChange}
+                      />
                     </Grid>
                     <Grid item sm={3} md={4} lg={2} xs={6} textAlign={"center"}>
-                      <SmallInputFields label="DICS AMT" />
+                      <SmallInputFields
+                        name="DesiredDiscAmt"
+                        control={control}
+                        label="DISC AMT"
+                        width={140}
+                        readOnly
+                      />
                     </Grid>
                     <Grid item sm={3} md={4} lg={2} xs={6} textAlign={"center"}>
-                      <SmallInputFields label="SPECIAL DISC(%)" />
+                      <SmallInputFields
+                        name="SpecialDisc"
+                        control={control}
+                        label="SPECIAL DISC (%)"
+                        width={140}
+                        onChange={HandleOnFildChange}
+                      />{" "}
                     </Grid>
                     <Grid item sm={3} md={4} lg={2} xs={6} textAlign={"center"}>
-                      <SmallInputFields label="SPECIAL DISC AMT" />
+                      <SmallInputFields
+                        name="SpecialDiscAmt"
+                        control={control}
+                        label="SPECIAL DISC AMT"
+                        width={140}
+                        readOnly
+                      />{" "}
                     </Grid>
-                    <Grid item sm={3} md={4} lg={2} xs={6} textAlign={"center"}>
-                      <SmallInputFields label="TOTAL DOC VALUE" />
-                    </Grid>
-                    <Grid item sm={3} md={4} lg={2} xs={6} textAlign={"center"}>
-                      <SmallInputFields label="SERVICE & INSURANCE" />
-                    </Grid>
-                    <Grid item sm={3} md={4} lg={2} xs={6} textAlign={"center"}>
-                      <SmallInputFields label="ROUNDING OFF" />
-                    </Grid>
-                    <Grid item sm={3} md={4} lg={2} xs={6} textAlign={"center"}>
-                      <SmallInputFields label="NET PARTS VALUE" />
-                    </Grid>
-
-                    <Grid item sm={3} md={4} lg={2} xs={6} textAlign={"center"}>
-                      <SmallInputFields label="SHIPPING" />
-                    </Grid>
-
-                    <Grid item sm={3} md={4} lg={2} xs={6} textAlign={"center"}>
-                      <SmallInputFields label="TAX AMOUNT" />
-                    </Grid>
-
                     <Grid
                       item
                       sm={3}
@@ -1542,6 +1658,53 @@ export default function QuatationSO() {
                       <Button variant="contained" color="primary">
                         CALC DISC
                       </Button>
+                    </Grid>
+
+                    <Grid item sm={3} md={4} lg={2} xs={6} textAlign={"center"}>
+                      <SmallInputFields
+                        name="ServiceAndInstallation"
+                        control={control}
+                        label="SERVICE & INSTALL"
+                        width={140}
+                        readOnly
+                      />{" "}
+                    </Grid>
+                    <Grid item sm={3} md={4} lg={2} xs={6} textAlign={"center"}>
+                      <SmallInputFields
+                        name="RoundingAmt"
+                        control={control}
+                        label="ROUNDING OFF"
+                        width={140}
+                        onChange={HandleOnFildChange}
+                      />{" "}
+                    </Grid>
+                    <Grid item sm={3} md={4} lg={2} xs={6} textAlign={"center"}>
+                      <SmallInputFields
+                        name="NetPartsValue"
+                        control={control}
+                        label="NET PARTS VALUE"
+                        width={140}
+                        readOnly
+                      />{" "}
+                    </Grid>
+                    <Grid item sm={3} md={4} lg={2} xs={6} textAlign={"center"}>
+                      <SmallInputFields
+                        name="ShippingAmt"
+                        control={control}
+                        label="SHIPPING"
+                        width={140}
+                        onChange={HandleOnFildChange}
+                      />{" "}
+                    </Grid>
+
+                    <Grid item sm={3} md={4} lg={2} xs={6} textAlign={"center"}>
+                      <SmallInputFields
+                        name="TotalDocAmt"
+                        control={control}
+                        label="TOTAL DOC VALUE"
+                        width={140}
+                        readOnly
+                      />{" "}
                     </Grid>
                   </Grid>
 
