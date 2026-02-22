@@ -126,44 +126,59 @@ export const SmallInputSelectTextField = forwardRef(
     );
   },
 );
-export const SmallInputFields = forwardRef((props, ref) => {
-  return (
-    <TextField
-      id={props.name}
-      name={props.name}
-      label={props.label}
-      onChange={props.onChange}
-      value={props.value}
-      size="small"
-      type={props.type}
-      multiline={props.multiline}
-      rows={props.rows}
-      inputRef={ref}
-      onWheel={(e) => e.target.blur()}
-      InputProps={{
-        inputProps: {
-          min: 0,
-          step: 0.001,
-          readOnly: props.disabled,
-        },
-      }}
-      sx={{
-        m: 1,
-        minWidth: 123,
-        maxWidth: 133,
-        "& .MuiInputBase-root": {
-          WebkitAppearance: "none",
-        },
-        "& .MuiInputBase-input": {
-          textAlign: "left",
-          "&::-webkit-outer-spin-button, &::-webkit-inner-spin-button": {
+export const SmallInputFields = forwardRef(
+  (
+    {
+      label,
+      type,
+      error,
+      helperText,
+      readOnly,
+      disabled,
+      inputProps,
+      sx,
+      ...props
+    },
+    ref,
+  ) => {
+    return (
+      <TextField
+        id={props.name}
+        name={props.name}
+        label={label}
+        type={type}
+        error={!!error}
+        helperText={helperText}
+        onChange={props.onChange}
+        value={props.value}
+        size="small"
+        multiline={props.multiline}
+        rows={props.rows}
+        inputRef={ref}
+        onWheel={(e) => e.target.blur()}
+        inputProps={{
+          ...inputProps,
+          readOnly,
+          disabled,
+        }}
+        sx={{
+          m: 1,
+          minWidth: 123,
+          maxWidth: 133,
+          "& .MuiInputBase-root": {
             WebkitAppearance: "none",
           },
-        },
-      }}
-    />
-  );
-});
+          "& .MuiInputBase-input": {
+            textAlign: "left",
+            "&::-webkit-outer-spin-button, &::-webkit-inner-spin-button": {
+              WebkitAppearance: "none",
+            },
+          },
+        }}
+      />
+    );
+  },
+);
 export function InputTextAreaFields(props) {
   return (
     <>
