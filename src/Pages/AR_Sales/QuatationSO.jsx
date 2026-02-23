@@ -111,7 +111,7 @@ export default function QuatationSO() {
   const [hasMoreOpenSO, setHasMoreOpenSO] = useState(true);
   const [loadingOpenSO, setLoadingOpenSO] = useState(false);
 
-  const [filteredList, setFilteredList] = useState("");
+  const [filteredList, setFilteredList] = useState([]);
   const [ModalLoading, setModalLoading] = useState(false);
   const [Suppliers, setSuppliers] = useState([]);
   const [storedFittingCharges, setStoredFittingCharges] = useState([]);
@@ -995,7 +995,8 @@ export default function QuatationSO() {
 
   const updateFilteredListDisabledRows = () => {
     const oLineItemCodes = getValues("oLines")?.map((item) => item.ItemCode);
-    const updatedFiltered = filteredList.map((item) => {
+    const currentList = Array.isArray(filteredList) ? filteredList : [];
+    const updatedFiltered = currentList.map((item) => {
       const stillInForm = oLineItemCodes.includes(item.ItemCode);
       return {
         ...item,
@@ -1753,7 +1754,7 @@ export default function QuatationSO() {
 
     try {
       const obj = {
-        Supplier: data.SAPDocNum,
+        Supplier: data.SAPDocNum === null ? "" : data.SAPDocNum,
         ItemName: data.ItemName,
         ItemCode: data.ItemCode,
         IsActive: data.IsActive === true ? 0 : 1,
@@ -1966,6 +1967,11 @@ export default function QuatationSO() {
       shouldDirty: true,
     });
     setValue("rows", updatedRows, { shouldValidate: true, shouldDirty: true });
+    setSelectionModel((prev) => prev.filter((id) => id !== itemCode));
+
+    checkedRowsRef.current = checkedRowsRef.current.filter(
+      (row) => row.ItemCode !== itemCode,
+    );
     updateFilteredListDisabledRows();
     calculateData();
   };
@@ -1975,68 +1981,75 @@ export default function QuatationSO() {
       field: "ItemCode",
       headerName: "ITEM CODE",
       width: 150,
-      editable: true,
     },
     {
       field: "ItemName",
       headerName: "ITEM DESCRIPTION",
-      width: 625,
-      editable: true,
+      width: 425,
     },
     {
       field: "WHSCode",
       headerName: "WHS",
       width: 100,
-      editable: true,
     },
     {
       field: "Quantity",
       headerName: "QTY",
       width: 100,
+      align: "right",
+      headerAlign: "right",
       editable: true,
+      type: "number",
     },
     {
       field: "Price",
       headerName: "PRICE",
       width: 100,
-      editable: true,
+      align: "right",
+      headerAlign: "right",
     },
     {
       field: "DesiredDisc",
       headerName: "DISC%",
       width: 100,
-      editable: true,
+      align: "right",
+      headerAlign: "right",
     },
     {
       field: "Amount",
       headerName: "TOTAL AMT",
       width: 100,
-      editable: true,
+      align: "right",
+      headerAlign: "right",
     },
     {
       field: "LineFittingCharge",
       headerName: "FITTING",
       width: 110,
       editable: true,
+      type: "number",
+      align: "right",
+      headerAlign: "right",
     },
     {
       field: "FTSQty",
       headerName: "FTS",
       width: 110,
-      editable: true,
+      align: "right",
+      headerAlign: "right",
     },
     {
       field: "IssueQuantity",
       headerName: "ISS QTY",
       width: 110,
-      editable: true,
       renderCell: (params) => params.value || "0",
+      align: "right",
+      headerAlign: "right",
     },
     {
       field: "IssueStatus",
       headerName: "STATUS",
       width: 110,
-      editable: true,
     },
     {
       field: "actions",
@@ -2424,6 +2437,8 @@ export default function QuatationSO() {
     reset(initial);
     setDocEntry("");
     setSaveUpdateName("SAVE");
+    setSelectionModel([]); 
+    checkedRowsRef.current = []; 
   };
 
   return (
