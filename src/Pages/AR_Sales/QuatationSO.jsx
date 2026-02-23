@@ -1951,6 +1951,21 @@ export default function QuatationSO() {
 
   const oLines = useWatch({ control, name: "oLines" });
   const oCCPay = useWatch({ control, name: "oCCPay" });
+  const [selectionModel, setSelectionModel] = useState([]);
+
+  const handleRowDelete = (itemCode) => {
+    const currentRows = structuredClone(getValues("oLines") || []);
+    const updatedRows = currentRows.filter(
+      (item) => item.ItemCode !== itemCode,
+    );
+    setValue("oLines", updatedRows, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+    setValue("rows", updatedRows, { shouldValidate: true, shouldDirty: true });
+    updateFilteredListDisabledRows();
+    calculateData();
+  };
 
   const columns = [
     {
@@ -2012,10 +2027,95 @@ export default function QuatationSO() {
       headerName: "ISS QTY",
       width: 110,
       editable: true,
+      renderCell: (params) => params.value || "0",
     },
     {
       field: "IssueStatus",
       headerName: "STATUS",
+      width: 110,
+      editable: true,
+    },
+    {
+      field: "actions",
+      headerName: "ACTION",
+      width: 100,
+      sortable: false,
+      filterable: false,
+      renderCell: (params) => (
+        <IconButton
+          color="error"
+          onClick={() => handleRowDelete(params.row.ItemCode)}
+        >
+          <RemoveCircleIcon />
+        </IconButton>
+      ),
+    },
+  ];
+
+  const ItemSearchcolumns = [
+    {
+      field: "ItemCode",
+      headerName: "Item Code",
+      width: 150,
+      editable: true,
+    },
+    {
+      field: "ItemName",
+      headerName: "Item Description",
+      width: 625,
+      editable: true,
+    },
+    {
+      field: "D_FTS",
+      headerName: "D-FTS",
+      width: 100,
+      editable: true,
+    },
+    {
+      field: "UAE_TO_KWT",
+      headerName: "INTRANS",
+      width: 100,
+      editable: true,
+    },
+    {
+      field: "OH_KWT",
+      headerName: "OH-KWT",
+      width: 100,
+      editable: true,
+    },
+    {
+      field: "RSVD_KWT",
+      headerName: "RSVD-KWT",
+      width: 100,
+      editable: true,
+    },
+    {
+      field: "FTS_KWT",
+      headerName: "FTS-KWT",
+      width: 100,
+      editable: true,
+    },
+    {
+      field: "Price",
+      headerName: "PRICE",
+      width: 110,
+      editable: true,
+    },
+    {
+      field: "FittingCharge",
+      headerName: "FITING",
+      width: 110,
+      editable: true,
+    },
+    {
+      field: "InTransit",
+      headerName: "GIT",
+      width: 110,
+      editable: true,
+    },
+    {
+      field: "OrderQty",
+      headerName: "ORDRD",
       width: 110,
       editable: true,
     },
@@ -3821,9 +3921,11 @@ export default function QuatationSO() {
               color="inherit"
               sx={{ color: "white" }}
               onClick={() => {
+                handleSubmitMdl(onSubmitDynamicSearch)();
                 handleSave();
                 // setItemSearchOpen(false);
-                setFilteredList([]);
+                // setFilteredList([]);
+                handleCloseModel();
               }}
             >
               save
@@ -4881,7 +4983,7 @@ export default function QuatationSO() {
                             cursor: "pointer",
                           }}
                           rows={filteredList}
-                          columns={columns}
+                          columns={ItemSearchcolumns}
                           pageSizeOptions={[25, 50, 100]}
                           initialState={{
                             pagination: {
@@ -4890,10 +4992,50 @@ export default function QuatationSO() {
                           }}
                           checkboxSelection
                           editMode={false}
+                          rowSelectionModel={[
+                            ...(oLines || []).map((line) => line.ItemCode),
+                            ...selectionModel,
+                          ]}
+                          isRowSelectable={(params) =>
+                            !(oLines || []).some(
+                              (line) => line.ItemCode === params.row.ItemCode,
+                            )
+                          }
+                          onRowSelectionModelChange={(selectedIds) => {
+                            const alreadyInOLines = (oLines || []).map(
+                              (l) => l.ItemCode,
+                            );
+                            const newlySelected = selectedIds.filter(
+                              (id) => !alreadyInOLines.includes(id),
+                            );
+                            setSelectionModel(newlySelected);
+                            checkedRowsRef.current = (
+                              Array.isArray(filteredList) ? filteredList : []
+                            ).filter((row) =>
+                              newlySelected.includes(row.ItemCode),
+                            );
+                          }}
                           onRowClick={(params) => {
                             const itemCode = params.row.ItemCode;
                             setSelectedRow(params.row);
                             handleCheck(itemCode);
+                            // Toggle checkbox on row click (skip if already in oLines)
+                            const alreadyInOLines = (oLines || []).some(
+                              (line) => line.ItemCode === itemCode,
+                            );
+                            if (!alreadyInOLines) {
+                              const newSelection = selectionModel.includes(
+                                itemCode,
+                              )
+                                ? selectionModel.filter((id) => id !== itemCode)
+                                : [...selectionModel, itemCode];
+                              setSelectionModel(newSelection);
+                              checkedRowsRef.current = (
+                                Array.isArray(filteredList) ? filteredList : []
+                              ).filter((row) =>
+                                newSelection.includes(row.ItemCode),
+                              );
+                            }
                           }}
                         />
                       </Box>
