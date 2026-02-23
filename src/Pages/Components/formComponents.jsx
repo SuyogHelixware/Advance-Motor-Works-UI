@@ -253,6 +253,60 @@ export const TableNumberInput = ({ value, rowId, onChange, min = 0 }) => {
 //   );
 // };
 
+export const InputsmallFilds = forwardRef(
+  (
+    {
+      label,
+      type,
+      error,
+      helperText,
+      readOnly,
+      disabled,
+      inputProps,
+      sx,
+      ...props
+    },
+    ref,
+  ) => {
+    return (
+      <TextField
+        id={props.name}
+        name={props.name}
+        label={label}
+        type={type}
+        error={!!error}
+        helperText={helperText}
+        onChange={props.onChange}
+        value={props.value}
+        size="small"
+        multiline={props.multiline}
+        rows={props.rows}
+        inputRef={ref}
+        onWheel={(e) => e.target.blur()}
+        inputProps={{
+          ...inputProps,
+          readOnly,
+          disabled,
+        }}
+        sx={{
+          m: 1,
+          minWidth: 123,
+          maxWidth: 133,
+          "& .MuiInputBase-root": {
+            WebkitAppearance: "none",
+          },
+          "& .MuiInputBase-input": {
+            textAlign: "left",
+            "&::-webkit-outer-spin-button, &::-webkit-inner-spin-button": {
+              WebkitAppearance: "none",
+            },
+          },
+        }}
+      />
+    );
+  },
+);
+
 export const SmallInputFields = ({
   name,
   control,

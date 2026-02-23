@@ -65,6 +65,7 @@ import CardComponent from "../Components/CardComponent";
 import {
   InputDatePickerField,
   InputSearchSelectTextField,
+  InputsmallFilds,
   InputTextArea,
   InputTextField,
   InputTimePicker,
@@ -82,10 +83,10 @@ const Transition = React.forwardRef(function Transition(props, ref) {
 });
 export default function QuatationSO() {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [tab, settab] = useState("1");
+  const [tab, settab] = useState("0");
   const [open, setOpen] = useState(false);
   const [phone, setPhone] = useState("");
-  const [tabValue, setTabValue] = useState("1");
+  const [tabValue, setTabValue] = useState(0);
   const [openModal, setOpenModal] = React.useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [bankData, setBankData] = useState([]);
@@ -922,48 +923,48 @@ export default function QuatationSO() {
     resetMdl(initialItemSearch);
   };
 
-  const handleOnChange = (index, field, value) => {
-    const val = value === "" ? 0 : parseFloat(parseFloat(value).toFixed(3));
+  // const handleOnChange = (index, field, value) => {
+  //   const val = value === "" ? 0 : parseFloat(parseFloat(value).toFixed(3));
 
-    const qty =
-      field === "Quantity"
-        ? val
-        : parseFloat(getValues(`oLines.${index}.Quantity`) || 0);
+  //   const qty =
+  //     field === "Quantity"
+  //       ? val
+  //       : parseFloat(getValues(`oLines.${index}.Quantity`) || 0);
 
-    const price =
-      field === "Price"
-        ? val
-        : parseFloat(getValues(`oLines.${index}.Price`) || 0);
+  //   const price =
+  //     field === "Price"
+  //       ? val
+  //       : parseFloat(getValues(`oLines.${index}.Price`) || 0);
 
-    let fittingCharge =
-      field === "LineFittingCharge"
-        ? qty > 0
-          ? parseFloat((val / qty).toFixed(6))
-          : 0
-        : parseFloat(getValues(`oLines.${index}.FittingCharge`) || 0);
+  //   let fittingCharge =
+  //     field === "LineFittingCharge"
+  //       ? qty > 0
+  //         ? parseFloat((val / qty).toFixed(6))
+  //         : 0
+  //       : parseFloat(getValues(`oLines.${index}.FittingCharge`) || 0);
 
-    const amount = parseFloat((qty * price).toFixed(3));
-    const lineFittingCharge =
-      field === "LineFittingCharge"
-        ? val
-        : parseFloat((Number(qty) * Number(fittingCharge)).toFixed(3));
+  //   const amount = parseFloat((qty * price).toFixed(3));
+  //   const lineFittingCharge =
+  //     field === "LineFittingCharge"
+  //       ? val
+  //       : parseFloat((Number(qty) * Number(fittingCharge)).toFixed(3));
 
-    setValue(`oLines.${index}.Amount`, amount);
+  //   setValue(`oLines.${index}.Amount`, amount);
 
-    setValue(`oLines.${index}.LineFittingCharge`, lineFittingCharge);
+  //   setValue(`oLines.${index}.LineFittingCharge`, lineFittingCharge);
 
-    const updatedOLines = [...getValues("oLines")];
-    if (updatedOLines[index]) {
-      updatedOLines[index][field] = val;
-      updatedOLines[index].Amount = amount;
-      updatedOLines[index].FittingCharge = fittingCharge;
-      updatedOLines[index].LineFittingCharge = lineFittingCharge;
-    }
+  //   const updatedOLines = [...getValues("oLines")];
+  //   if (updatedOLines[index]) {
+  //     updatedOLines[index][field] = val;
+  //     updatedOLines[index].Amount = amount;
+  //     updatedOLines[index].FittingCharge = fittingCharge;
+  //     updatedOLines[index].LineFittingCharge = lineFittingCharge;
+  //   }
 
-    setValue("oLines", updatedOLines);
-    setValue("rows", updatedOLines);
-    calculateData();
-  };
+  //   setValue("oLines", updatedOLines);
+  //   setValue("rows", updatedOLines);
+  //   calculateData();
+  // };
 
   const updateFilteredListDisabledRows = () => {
     const oLineItemCodes = getValues("oLines")?.map((item) => item.ItemCode);
@@ -1292,7 +1293,6 @@ export default function QuatationSO() {
       calculateData();
       updateSummaryFields();
       updateFilteredListDisabledRows();
-      handleOnChange();
 
       checkedRowsRef.current = [];
     } catch (err) {
@@ -1503,7 +1503,7 @@ export default function QuatationSO() {
         0,
       );
       const Fittingcharge = updatedRows.reduce(
-        (sum, row) => sum + (Number(row.Fitting) || 0),
+        (sum, row) => sum + (Number(row.LineFittingCharge) || 0),
         0,
       );
 
@@ -1511,11 +1511,11 @@ export default function QuatationSO() {
       setValue("ServiceAndInstallation", Fittingcharge.toFixed(3));
       setValue("NetPartsValue", totalPartsSum.toFixed(3));
       setValue("TotalDocAmt", totalPartsSum.toFixed(3));
+      calculateData();
 
       return updatedRows;
     });
 
-    HandleOnFildChange();
     return updatedRow;
   };
   const round = (num, decimals = 2) =>
@@ -1547,7 +1547,6 @@ export default function QuatationSO() {
 
     setValue("SpecialDiscAmt", sDiscAmt.toFixed(3));
     setValue("DesiredDiscAmt", dDiscAmt.toFixed(3));
-    setValue("NetPartsValue", netParts.toFixed(3));
     setValue("NetPartsValue", netParts.toFixed(3));
     setValue("TotalDocAmt", TotTotalDocAmt.toFixed(3));
   };
@@ -1919,7 +1918,7 @@ export default function QuatationSO() {
               alignContent={"center"}
               height={"100%"}
             >
-              Quatation So
+              Quotation So
             </Typography>
           </Grid>
 
@@ -2276,7 +2275,7 @@ export default function QuatationSO() {
                       name="OrderType"
                       control={control}
                       render={({ field }) => (
-                        <SmallInputFields
+                        <InputsmallFilds
                           label="ORDER TYPE"
                           {...field}
                           rows={1}
@@ -2290,7 +2289,7 @@ export default function QuatationSO() {
                       name="Approver"
                       control={control}
                       render={({ field }) => (
-                        <SmallInputFields
+                        <InputsmallFilds
                           label="CR APPROVED BY"
                           {...field}
                           rows={1}
@@ -2304,7 +2303,7 @@ export default function QuatationSO() {
                       name="CreatedBy"
                       control={control}
                       render={({ field }) => (
-                        <SmallInputFields
+                        <InputsmallFilds
                           label="CREATED BY"
                           {...field}
                           rows={1}
@@ -2318,7 +2317,7 @@ export default function QuatationSO() {
                       name="Status"
                       control={control}
                       render={({ field }) => (
-                        <SmallInputFields
+                        <InputsmallFilds
                           label="STATUS"
                           {...field}
                           rows={1}
@@ -2332,7 +2331,7 @@ export default function QuatationSO() {
                       name="SAPDocNum"
                       control={control}
                       render={({ field }) => (
-                        <SmallInputFields
+                        <InputsmallFilds
                           label="SAP SO NO"
                           {...field}
                           rows={1}
@@ -2346,7 +2345,7 @@ export default function QuatationSO() {
                       name="OrderNo"
                       control={control}
                       render={({ field }) => (
-                        <InputTextField
+                        <InputsmallFilds
                           label="SO NO"
                           {...field}
                           rows={1}
@@ -2496,6 +2495,8 @@ export default function QuatationSO() {
                       columnHeaderHeight={35}
                       rowHeight={40}
                       hideFooter
+                      processRowUpdate={HandleTableOnChange}
+                      onProcessRowUpdateError={(error) => console.log(error)}
                       autoHeight="false"
                       sx={gridSx}
                     />
@@ -2533,17 +2534,13 @@ export default function QuatationSO() {
                         xs={6}
                         textAlign={"center"}
                       >
-                        <Controller
+                        <SmallInputFields
                           name="ServiceAndInstallation"
                           control={control}
-                          render={({ field }) => (
-                            <SmallInputTextField
-                              label="SERVICE & INSTALL"
-                              {...field}
-                              readOnly={true}
-                            />
-                          )}
-                        />
+                          label="SERVICE & INSTALL"
+                          width={140}
+                          readOnly
+                        />{" "}
                       </Grid>
                     </Grid>
                   </Grid>
@@ -2558,16 +2555,12 @@ export default function QuatationSO() {
                         xs={6}
                         textAlign={"center"}
                       >
-                        <Controller
+                        <SmallInputFields
                           name="DesiredDisc"
                           control={control}
-                          render={({ field }) => (
-                            <SmallInputTextField
-                              label="DISC (%)"
-                              {...field}
-                              readOnly={true}
-                            />
-                          )}
+                          label="DISC (%)"
+                          width={140}
+                          onChange={calculateData}
                         />
                       </Grid>
                       <Grid
@@ -2578,16 +2571,12 @@ export default function QuatationSO() {
                         xs={6}
                         textAlign={"center"}
                       >
-                        <Controller
+                        <SmallInputFields
                           name="RoundingAmt"
                           control={control}
-                          render={({ field }) => (
-                            <SmallInputTextField
-                              label="ROUNDING OFF"
-                              {...field}
-                              readOnly={true}
-                            />
-                          )}
+                          label="ROUNDING OFF"
+                          width={140}
+                          onChange={calculateData}
                         />
                       </Grid>
                     </Grid>
@@ -2648,16 +2637,12 @@ export default function QuatationSO() {
                         xs={6}
                         textAlign={"center"}
                       >
-                        <Controller
+                        <SmallInputFields
                           name="SpecialDisc"
                           control={control}
-                          render={({ field }) => (
-                            <SmallInputTextField
-                              label="SPECIAL DISC(%)"
-                              {...field}
-                              readOnly={true}
-                            />
-                          )}
+                          label="SPECIAL DISC (%)"
+                          width={140}
+                          onChange={calculateData}
                         />
                       </Grid>
                       <Grid
@@ -2668,17 +2653,13 @@ export default function QuatationSO() {
                         xs={6}
                         textAlign={"center"}
                       >
-                        <Controller
+                        <SmallInputFields
                           name="ShippingAmt"
                           control={control}
-                          render={({ field }) => (
-                            <SmallInputTextField
-                              label="SHIPPING"
-                              {...field}
-                              readOnly={true}
-                            />
-                          )}
-                        />
+                          label="SHIPPING"
+                          width={140}
+                          onChange={calculateData}
+                        />{" "}
                       </Grid>
                     </Grid>
                   </Grid>
@@ -2700,7 +2681,6 @@ export default function QuatationSO() {
                             <SmallInputTextField
                               label="SPECIAL DISC AMT"
                               {...field}
-                              readOnly={true}
                             />
                           )}
                         />
@@ -2765,17 +2745,26 @@ export default function QuatationSO() {
                       <>
                         <Grid container lg={9} md={12} padding={2}>
                           <Grid item sm={5} md={6} lg={4} xs={12}>
-                            <Controller
+                            {/* <Controller
                               name="CashPaid"
                               control={control}
                               render={({ field }) => (
                                 <InputTextField
                                   label="CASH PAID"
                                   {...field}
+                                  onChange={PaymentsCalculations}
                                   type="Number"
                                 />
                               )}
-                            />
+                            /> */}
+                            <SmallInputFields
+                              name="CashPaid"
+                              control={control}
+                              label="CASH PAID"
+                              width={140}
+                              onChange={PaymentsCalculations}
+                              type="Number"
+                            />{" "}
                           </Grid>
                           <Grid item sm={5} md={6} lg={4} xs={12}>
                             <Controller
@@ -2935,21 +2924,26 @@ export default function QuatationSO() {
                       <>
                         <Grid container padding={2}>
                           <Grid sm={12} md={6} lg={3} xs={12}>
-                            <Controller
+                            {/* <Controller
                               name="TransferSum"
                               control={control}
                               render={({ field }) => (
                                 <InputTextField
                                   label="TRANSFER SUM"
                                   {...field}
-                                  // onChange={(e) => {
-                                  //   field.onChange(e);
-                                  //   PaymentCalc(e);
-                                  // }}
+                                  onChange={PaymentsCalculations}
                                   type="Number"
                                 />
                               )}
-                            />
+                            /> */}
+                            <SmallInputFields
+                              name="TransferSum"
+                              control={control}
+                              label="TRANSFER SUM"
+                              width={140}
+                              onChange={PaymentsCalculations}
+                              type="Number"
+                            />{" "}
                           </Grid>
                           <Grid sm={12} md={6} lg={3} xs={12}>
                             <Controller
@@ -3074,19 +3068,7 @@ export default function QuatationSO() {
                       )}
                     />
                   </Grid>
-                  <Grid item lg={2} md={3} xs={6} textAlign={"center"}>
-                    <Controller
-                      name="SAPDocNum"
-                      control={control}
-                      render={({ field }) => (
-                        <SmallInputTextField
-                          label="SAP SO NO"
-                          {...field}
-                          readOnly={true}
-                        />
-                      )}
-                    />
-                  </Grid>
+
                   <Grid item lg={2} md={3} xs={6} textAlign={"center"}>
                     <Controller
                       name="AdvanceReceiptNo"
