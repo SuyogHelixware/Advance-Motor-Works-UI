@@ -388,10 +388,10 @@ export default function QuatationSO() {
   const fetchGetListData = async (pageNum, searchTerm = "") => {
     try {
       const url = searchTerm
-        ? `${BASE_URL}/BP?Status=1&CardType=C&SearchText/${searchTerm}/${pageNum}`
-        : `${BASE_URL}/BP?Status=1&CardType=C&Page=${pageNum}`;
+        ? `/BPV2?Status=1&CardType=C&GroupCode=0&Limit=${pageNum}&SearchText=${searchTerm}`
+        : `/BPV2?Status=1&CardType=C&GroupCode=0&Page=${pageNum}`;
 
-      const response = await axios.get(url);
+      const response = await apiClient.get(url);
 
       if (response.data.success) {
         const newData = response.data.values;
@@ -417,10 +417,10 @@ export default function QuatationSO() {
   const fetchOpenListData = async (pageNum, searchTerm = "") => {
     try {
       let url = searchTerm
-        ? `${BASE_URL}/QuotationSO/search/${searchTerm}/1/${pageNum}`
-        : `${BASE_URL}/QuotationSO/pages/${pageNum}/1`;
+        ? `/QuotationSO?Status=1&Page=${pageNum}&SearchText=${searchTerm}`
+        : `/QuotationSO?Status=1&Page=${pageNum}`;
 
-      const response = await axios.get(url);
+      const response = await apiClient.get(url);
 
       if (response.data.success) {
         const newData = response.data.values;
@@ -453,9 +453,9 @@ export default function QuatationSO() {
 
   const fetchAndSetData = async (DocEntry) => {
     try {
-      const res = await axios.get(`${BASE_URL}/QuotationSo/${DocEntry}`);
+      const res = await apiClient.get(`/QuotationSo/${DocEntry}`);
 
-      const data = res.data?.values[0];
+      const data = res.data?.values;
 
       const transformed = {
         ...data,
@@ -609,10 +609,12 @@ export default function QuatationSO() {
   const fetchClosedListData = async (pageNum, searchTerm = "") => {
     try {
       let url = searchTerm
-        ? `${BASE_URL}/QuotationSO/search/${searchTerm}/0/${pageNum}`
-        : `${BASE_URL}/QuotationSO/pages/${pageNum}/0`;
+        ? // ? `${BASE_URL}/QuotationSO/search/${searchTerm}/0/${pageNum}`
+          // : `${BASE_URL}/QuotationSO/pages/${pageNum}/0`;
+          `/QuotationSO?Status=0&Page=${pageNum}&SearchText=${searchTerm}`
+        : `/QuotationSO?Status=0&Page=${pageNum}`;
 
-      const response = await axios.get(url);
+      const response = await apiClient.get(url);
 
       if (response.data.success) {
         const newData = response.data.values;
@@ -707,8 +709,8 @@ export default function QuatationSO() {
     try {
       setModalLoading(true);
 
-      const res = await axios.get(
-        `${BASE_URL}/BP?Status=1&CardType=S&Page=0&Limit=200`,
+      const res = await apiClient.get(
+        `/BPV2?Status=1&CardType=C&Page=0&GroupCode=0&Limit=200`,
       );
 
       const data = res?.data;
@@ -1594,6 +1596,7 @@ export default function QuatationSO() {
               {
                 UserId: String(UserId),
                 CreatedBy: CreatedBy,
+                ModifiedBy: CreatedBy,
                 TransferAccount: "1201022",
                 TransferAccountName: "Bank NBK 2008134452",
                 TransferReference: String(data.TransferReference),
@@ -1658,8 +1661,8 @@ export default function QuatationSO() {
             // }
             res = await apiClient.post(`/quotationSo`, obj);
 
-            formModeForLead = "ADD";
-          } else if (SaveUpdateName === "Update") {
+            // formModeForLead = "ADD";
+          } else if (SaveUpdateName === "UPDATE") {
             // obj.CardCode = watch("CardCode");
             // obj.BaseRef = watch("BaseRef");
             res = await apiClient.put(`/quotationSo/${data.DocEntry}`, obj);
@@ -2016,6 +2019,12 @@ export default function QuatationSO() {
     {
       field: "IssueStatus",
       headerName: "STATUS",
+      width: 110,
+      editable: true,
+    },
+    {
+      field: "ACTION",
+      headerName: "Action",
       width: 110,
       editable: true,
     },
@@ -3353,26 +3362,26 @@ export default function QuatationSO() {
                   </Grid>
                 </Grid>
 
-                {/* {getValues("OrderNo") === "" && ( */}
-                <Grid container lg={12} md={12} px={1}>
-                  <Grid item width="100%" m={1} border="1px solid grey">
-                    <Tabs
-                      value={tabValue}
-                      onChange={handleTabChange}
-                      aria-label="disabled tabs example"
-                      variant="scrollable"
-                      scrollButtons="auto"
-                    >
-                      <Tab value={0} label="Cash" />
-                      <Tab value={1} label="Credit card" />
-                      <Tab value={2} label="Bank Transfer" />
-                    </Tabs>
-                    <Divider />
-                    {tabValue === 0 && (
-                      <>
-                        <Grid container lg={9} md={12} padding={2}>
-                          <Grid item sm={5} md={6} lg={4} xs={12}>
-                            {/* <Controller
+                {getValues("OrderNo") === "" && (
+                  <Grid container lg={12} md={12} px={1}>
+                    <Grid item width="100%" m={1} border="1px solid grey">
+                      <Tabs
+                        value={tabValue}
+                        onChange={handleTabChange}
+                        aria-label="disabled tabs example"
+                        variant="scrollable"
+                        scrollButtons="auto"
+                      >
+                        <Tab value={0} label="Cash" />
+                        <Tab value={1} label="Credit card" />
+                        <Tab value={2} label="Bank Transfer" />
+                      </Tabs>
+                      <Divider />
+                      {tabValue === 0 && (
+                        <>
+                          <Grid container lg={9} md={12} padding={2}>
+                            <Grid item sm={5} md={6} lg={4} xs={12}>
+                              {/* <Controller
                               name="CashPaid"
                               control={control}
                               render={({ field }) => (
@@ -3384,174 +3393,180 @@ export default function QuatationSO() {
                                 />
                               )}
                             /> */}
-                            <SmallInputFields
-                              name="CashPaid"
-                              control={control}
-                              label="CASH PAID"
-                              width={140}
-                              onChange={PaymentsCalculations}
-                              type="Number"
-                            />{" "}
+                              <SmallInputFields
+                                name="CashPaid"
+                                control={control}
+                                label="CASH PAID"
+                                width={140}
+                                onChange={PaymentsCalculations}
+                                type="Number"
+                              />{" "}
+                            </Grid>
+                            <Grid item sm={5} md={6} lg={4} xs={12}>
+                              <Controller
+                                name="CashAccount"
+                                control={control}
+                                defaultValue={"1201011"}
+                                render={({ field }) => (
+                                  <InputSearchSelectTextField
+                                    {...field}
+                                    label="ACCOUNT CODE"
+                                    data={[
+                                      { key: "1201011", value: "Cash A/C" },
+                                    ]}
+                                    readOnly={true}
+                                  />
+                                )}
+                              />
+                            </Grid>
+                            <Grid item sm={5} md={6} lg={4} xs={12}>
+                              <Controller
+                                name="ReceiptDate"
+                                control={control}
+                                render={({ field }) => (
+                                  <InputDatePickerField
+                                    label="RECEIPT DATE"
+                                    name={field.name}
+                                    value={dayjs(undefined)}
+                                    readOnly={true}
+                                  />
+                                )}
+                              />
+                            </Grid>
                           </Grid>
-                          <Grid item sm={5} md={6} lg={4} xs={12}>
-                            <Controller
-                              name="CashAccount"
-                              control={control}
-                              defaultValue={"1201011"}
-                              render={({ field }) => (
-                                <InputSearchSelectTextField
-                                  {...field}
-                                  label="ACCOUNT CODE"
-                                  data={[{ key: "1201011", value: "Cash A/C" }]}
-                                  readOnly={true}
+                        </>
+                      )}
+                      {tabValue === 1 && (
+                        <>
+                          <Grid container padding={2}>
+                            <Grid container item lg={6} xs={12} md={6} sm={6}>
+                              <RadioButtonsField
+                                control={control}
+                                name="myRadioGroup"
+                                data={[
+                                  { value: "KNET", label: "KNET" },
+                                  { value: "MASTER", label: "MASTER" },
+                                  { value: "VISA", label: "VISA" },
+                                  { value: "MF", label: "MF" },
+                                  { value: "TABBY", label: "TABBY" },
+                                  { value: "TAMARA", label: "TAMARA" },
+                                ]}
+                              />
+
+                              <Grid item sm={12} md={6} lg={6} xs={12}>
+                                <Controller
+                                  name="CreditCardNumber"
+                                  control={control}
+                                  render={({ field }) => (
+                                    <InputTextField
+                                      label="CREDIT CARD NO"
+                                      type="Number"
+                                      {...field}
+                                    />
+                                  )}
                                 />
-                              )}
-                            />
-                          </Grid>
-                          <Grid item sm={5} md={6} lg={4} xs={12}>
-                            <Controller
-                              name="ReceiptDate"
-                              control={control}
-                              render={({ field }) => (
-                                <InputDatePickerField
-                                  label="RECEIPT DATE"
-                                  name={field.name}
-                                  value={dayjs(undefined)}
-                                  readOnly={true}
+                              </Grid>
+
+                              <Grid item sm={12} md={6} lg={6} xs={12}>
+                                <Controller
+                                  name="CreditSum"
+                                  control={control}
+                                  render={({ field }) => (
+                                    <SmallInputTextField
+                                      label="CREDIT SUM"
+                                      type="Number"
+                                      {...field}
+                                    />
+                                  )}
                                 />
-                              )}
-                            />
-                          </Grid>
-                        </Grid>
-                      </>
-                    )}
-                    {tabValue === 1 && (
-                      <>
-                        <Grid container padding={2}>
-                          <Grid container item lg={6} xs={12} md={6} sm={6}>
-                            <RadioButtonsField
-                              control={control}
-                              name="myRadioGroup"
-                              data={[
-                                { value: "KNET", label: "KNET" },
-                                { value: "MASTER", label: "MASTER" },
-                                { value: "VISA", label: "VISA" },
-                                { value: "MF", label: "MF" },
-                                { value: "TABBY", label: "TABBY" },
-                                { value: "TAMARA", label: "TAMARA" },
-                              ]}
-                            />
+                              </Grid>
 
-                            <Grid item sm={12} md={6} lg={6} xs={12}>
-                              <Controller
-                                name="CreditCardNumber"
-                                control={control}
-                                render={({ field }) => (
-                                  <InputTextField
-                                    label="CREDIT CARD NO"
-                                    type="Number"
-                                    {...field}
-                                  />
-                                )}
-                              />
+                              <Grid item sm={12} md={6} lg={6} xs={12}>
+                                <Controller
+                                  name="VoucherNum"
+                                  control={control}
+                                  render={({ field }) => (
+                                    <InputTextField
+                                      label="AUTHORIZATION CODE"
+                                      type="text"
+                                      {...field}
+                                    />
+                                  )}
+                                />
+                              </Grid>
+
+                              <Grid item sm={12} md={6} lg={6} xs={12}>
+                                <Button
+                                  variant="contained"
+                                  color="success"
+                                  style={{
+                                    padding: 5,
+                                    marginLeft: 8,
+                                    marginTop: 5,
+                                    paddingLeft: 30,
+                                    paddingRight: 30,
+                                  }}
+                                  // onClick={handleOnCreditCardAdd}
+                                >
+                                  ADD
+                                </Button>
+                              </Grid>
                             </Grid>
-
-                            <Grid item sm={12} md={6} lg={6} xs={12}>
-                              <Controller
-                                name="CreditSum"
-                                control={control}
-                                render={({ field }) => (
-                                  <SmallInputTextField
-                                    label="CREDIT SUM"
-                                    type="Number"
-                                    {...field}
-                                  />
-                                )}
-                              />
-                            </Grid>
-
-                            <Grid item sm={12} md={6} lg={6} xs={12}>
-                              <Controller
-                                name="VoucherNum"
-                                control={control}
-                                render={({ field }) => (
-                                  <InputTextField
-                                    label="AUTHORIZATION CODE"
-                                    type="text"
-                                    {...field}
-                                  />
-                                )}
-                              />
-                            </Grid>
-
-                            <Grid item sm={12} md={6} lg={6} xs={12}>
-                              <Button
-                                variant="contained"
-                                color="success"
-                                style={{
-                                  padding: 5,
-                                  marginLeft: 8,
-                                  marginTop: 5,
-                                  paddingLeft: 30,
-                                  paddingRight: 30,
-                                }}
-                                // onClick={handleOnCreditCardAdd}
+                            <Grid item lg={6} xs={12} md={6} sm={6}>
+                              <TableContainer
+                                // component={Paper}
+                                sx={{ overflow: "auto" }}
                               >
-                                ADD
-                              </Button>
-                            </Grid>
-                          </Grid>
-                          <Grid item lg={6} xs={12} md={6} sm={6}>
-                            <TableContainer
-                              // component={Paper}
-                              sx={{ overflow: "auto" }}
-                            >
-                              <Table
-                                stickyHeader
-                                size="small"
-                                className="infiniteScroll table-style-scroll"
-                              >
-                                <TableHead>
-                                  <TableRow>
-                                    <TableCell>A/C CODE</TableCell>
-                                    <TableCell>CARD NAME</TableCell>
-                                    <TableCell>CARD NO</TableCell>
-                                    <TableCell>AMOUNT</TableCell>
-                                    <TableCell></TableCell>
-                                  </TableRow>
-                                </TableHead>
-                                <TableBody>
-                                  {bankData.map((data, index) => (
-                                    <TableRow key={index}>
-                                      <TableCell component="th" scope="row">
-                                        {data.AuthCode}
-                                      </TableCell>
-                                      <TableCell>{data.myRadioGroup}</TableCell>
-                                      <TableCell>{data.Creditno}</TableCell>
-                                      <TableCell>{data.Amount}</TableCell>
-                                      <TableCell>
-                                        <IconButton
-                                          onClick={() => removeTableRow1(index)}
-                                        >
-                                          <RemoveCircleIcon
-                                            sx={{ color: "red" }}
-                                          />
-                                        </IconButton>
-                                      </TableCell>
+                                <Table
+                                  stickyHeader
+                                  size="small"
+                                  className="infiniteScroll table-style-scroll"
+                                >
+                                  <TableHead>
+                                    <TableRow>
+                                      <TableCell>A/C CODE</TableCell>
+                                      <TableCell>CARD NAME</TableCell>
+                                      <TableCell>CARD NO</TableCell>
+                                      <TableCell>AMOUNT</TableCell>
+                                      <TableCell></TableCell>
                                     </TableRow>
-                                  ))}
-                                </TableBody>
-                              </Table>
-                            </TableContainer>
+                                  </TableHead>
+                                  <TableBody>
+                                    {bankData.map((data, index) => (
+                                      <TableRow key={index}>
+                                        <TableCell component="th" scope="row">
+                                          {data.AuthCode}
+                                        </TableCell>
+                                        <TableCell>
+                                          {data.myRadioGroup}
+                                        </TableCell>
+                                        <TableCell>{data.Creditno}</TableCell>
+                                        <TableCell>{data.Amount}</TableCell>
+                                        <TableCell>
+                                          <IconButton
+                                            onClick={() =>
+                                              removeTableRow1(index)
+                                            }
+                                          >
+                                            <RemoveCircleIcon
+                                              sx={{ color: "red" }}
+                                            />
+                                          </IconButton>
+                                        </TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </TableContainer>
+                            </Grid>
                           </Grid>
-                        </Grid>
-                      </>
-                    )}
-                    {tabValue === 2 && (
-                      <>
-                        <Grid container padding={2}>
-                          <Grid sm={12} md={6} lg={3} xs={12}>
-                            {/* <Controller
+                        </>
+                      )}
+                      {tabValue === 2 && (
+                        <>
+                          <Grid container padding={2}>
+                            <Grid sm={12} md={6} lg={3} xs={12}>
+                              {/* <Controller
                               name="TransferSum"
                               control={control}
                               render={({ field }) => (
@@ -3563,72 +3578,72 @@ export default function QuatationSO() {
                                 />
                               )}
                             /> */}
-                            <SmallInputFields
-                              name="TransferSum"
-                              control={control}
-                              label="TRANSFER SUM"
-                              width={140}
-                              onChange={PaymentsCalculations}
-                              type="Number"
-                            />{" "}
+                              <SmallInputFields
+                                name="TransferSum"
+                                control={control}
+                                label="TRANSFER SUM"
+                                width={140}
+                                onChange={PaymentsCalculations}
+                                type="Number"
+                              />{" "}
+                            </Grid>
+                            <Grid sm={12} md={6} lg={3} xs={12}>
+                              <Controller
+                                name="TransferReference"
+                                control={control}
+                                render={({ field }) => (
+                                  <InputTextField
+                                    label="TRANSFER REF NO"
+                                    type="text"
+                                    {...field}
+                                    // onChange={(e) => {
+                                    //   field.onChange(e);
+                                    //   handleOnChangeCreditValue(e);
+                                    // }}
+                                  />
+                                )}
+                              />
+                            </Grid>
+                            <Grid item xs={12} md={6} sm={6} lg={3}>
+                              <Controller
+                                name="TransferAccount"
+                                control={control}
+                                defaultValue={"1201022"}
+                                render={({ field }) => (
+                                  <InputSearchSelectTextField
+                                    {...field}
+                                    label="TRANSFER ACCOUNT"
+                                    data={[
+                                      {
+                                        key: "1201022",
+                                        value: "Bank NBK 2008134452",
+                                      },
+                                    ]}
+                                    readOnly={true}
+                                  />
+                                )}
+                              />
+                            </Grid>
+                            <Grid item sm={5} md={6} lg={3} xs={12}>
+                              <Controller
+                                name="TransferDate"
+                                control={control}
+                                render={({ field }) => (
+                                  <InputDatePickerField
+                                    label="TRANSFER DATE"
+                                    name={field.name}
+                                    value={dayjs(undefined)}
+                                    readOnly={true}
+                                  />
+                                )}
+                              />
+                            </Grid>
                           </Grid>
-                          <Grid sm={12} md={6} lg={3} xs={12}>
-                            <Controller
-                              name="TransferReference"
-                              control={control}
-                              render={({ field }) => (
-                                <InputTextField
-                                  label="TRANSFER REF NO"
-                                  type="text"
-                                  {...field}
-                                  // onChange={(e) => {
-                                  //   field.onChange(e);
-                                  //   handleOnChangeCreditValue(e);
-                                  // }}
-                                />
-                              )}
-                            />
-                          </Grid>
-                          <Grid item xs={12} md={6} sm={6} lg={3}>
-                            <Controller
-                              name="TransferAccount"
-                              control={control}
-                              defaultValue={"1201022"}
-                              render={({ field }) => (
-                                <InputSearchSelectTextField
-                                  {...field}
-                                  label="TRANSFER ACCOUNT"
-                                  data={[
-                                    {
-                                      key: "1201022",
-                                      value: "Bank NBK 2008134452",
-                                    },
-                                  ]}
-                                  readOnly={true}
-                                />
-                              )}
-                            />
-                          </Grid>
-                          <Grid item sm={5} md={6} lg={3} xs={12}>
-                            <Controller
-                              name="TransferDate"
-                              control={control}
-                              render={({ field }) => (
-                                <InputDatePickerField
-                                  label="TRANSFER DATE"
-                                  name={field.name}
-                                  value={dayjs(undefined)}
-                                  readOnly={true}
-                                />
-                              )}
-                            />
-                          </Grid>
-                        </Grid>
-                      </>
-                    )}
+                        </>
+                      )}
+                    </Grid>
                   </Grid>
-                </Grid>
-                {/* )} */}
+                )}
 
                 <Grid container lg={12} md={12} spacing={2} py={1}>
                   <Grid item lg={2} md={3} xs={6} textAlign={"center"}>
