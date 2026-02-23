@@ -18,6 +18,7 @@ import {
   Radio,
   RadioGroup,
   Select,
+  TableCell,
   TextField,
   Tooltip,
   Typography,
@@ -126,7 +127,133 @@ export const SmallInputSelectTextField = forwardRef(
     );
   },
 );
-export const SmallInputFields = forwardRef(
+
+// export const TableNumberInput = ({
+//   value,
+//   rowId,
+//   onChange,
+//   min = 0,
+//   width = 200,
+//   height = 100,
+// }) => {
+//   return (
+//     <TableCell sx={{ width }}>
+//       <TextField
+//         type="number"
+//         size="small"
+//         value={value ?? ""}
+//         onChange={(e) => onChange(rowId, Number(e.target.value))}
+//         onWheel={(e) => e.target.blur()}
+//         inputProps={{ min }}
+//         sx={{
+//           width: "100%",
+//           "& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button":
+//             {
+//               display: "none",
+//             },
+//           "& input[type=number]": {
+//             MozAppearance: "textfield",
+//           },
+//         }}
+//       />
+//     </TableCell>
+//   );
+// };
+export const TableNumberInput = ({ value, rowId, onChange, min = 0 }) => {
+  return (
+    <TextField
+      type="number"
+      size="small"
+      value={value ?? ""}
+      onChange={(e) => onChange(rowId, Number(e.target.value))}
+      onWheel={(e) => e.target.blur()}
+      inputProps={{ min }}
+      sx={{
+        width: "70px",
+        "& input": {
+          textAlign: "lef", // ✅ center number inside input
+        },
+        "& input::-webkit-outer-spin-button, & input::-webkit-inner-spin-button":
+          {
+            display: "none",
+          },
+        "& input[type=number]": {
+          MozAppearance: "textfield",
+        },
+      }}
+    />
+  );
+};
+
+// export const SmallInputFields = forwardRef((props, ref) => {
+//   return (
+//     <TextField
+//       id={props.name}
+//       name={props.name}
+//       label={props.label}
+//       onChange={props.onChange}
+//       value={props.value}
+//       size="small"
+//       type={props.type}
+//       multiline={props.multiline}
+//       rows={props.rows}
+//       inputRef={ref}
+//       onWheel={(e) => e.target.blur()}
+//       InputProps={{
+//         inputProps: {
+//           min: 0,
+//           step: 0.001,
+//           readOnly: props.disabled,
+//         },
+//       }}
+//       sx={{
+//         m: 1,
+//         minWidth: 123,
+//         maxWidth: 133,
+//         "& .MuiInputBase-root": {
+//           WebkitAppearance: "none",
+//         },
+//         "& .MuiInputBase-input": {
+//           textAlign: "left",
+//           "&::-webkit-outer-spin-button, &::-webkit-inner-spin-button": {
+//             WebkitAppearance: "none",
+//           },
+//         },
+//       }}
+//     />
+//   );
+// });
+
+// export const SmallInputFields = ({
+//   name,
+//   control,
+//   label,
+//   width = 150,
+//   readOnly = false,
+//   onChange,
+// }) => {
+//   if (!control) return null;
+
+//   return (
+//     <Controller
+//       name={name}
+//       defaultValue={0}
+//       control={control}
+//       render={({ field }) => (
+//         <TextField
+//           {...field}
+//           label={label}
+//           size="small"
+//           InputProps={{ readOnly }}
+//           InputLabelProps={{ shrink: true }}
+//           sx={{ width }}
+//         />
+//       )}
+//     />
+//   );
+// };
+
+export const InputsmallFilds = forwardRef(
   (
     {
       label,
@@ -179,6 +306,55 @@ export const SmallInputFields = forwardRef(
     );
   },
 );
+
+export const SmallInputFields = ({
+  name,
+  control,
+  label,
+  width = 150,
+  readOnly = false,
+  onChange,
+}) => {
+  if (!control) return null;
+
+  return (
+    <Controller
+      name={name}
+      defaultValue={0}
+      control={control}
+      render={({ field }) => (
+        <TextField
+          {...field}
+          label={label}
+          type="number"
+          size="small"
+          InputProps={{ readOnly }}
+          onWheel={(e) => e.target.blur()}
+          InputLabelProps={{ shrink: true }}
+          onChange={(e) => {
+            field.onChange(e);
+            if (onChange) {
+              onChange(e);
+            }
+          }}
+          sx={{
+            width,
+            "& .MuiInputBase-root": {
+              WebkitAppearance: "none",
+            },
+            "& .MuiInputBase-input": {
+              textAlign: "left",
+              "&::-webkit-outer-spin-button, &::-webkit-inner-spin-button": {
+                WebkitAppearance: "none",
+              },
+            },
+          }}
+        />
+      )}
+    />
+  );
+};
+
 export function InputTextAreaFields(props) {
   return (
     <>

@@ -9,6 +9,7 @@ import RemoveCircleIcon from "@mui/icons-material/RemoveCircle";
 import RequestQuoteIcon from "@mui/icons-material/RequestQuote";
 import SearchIcon from "@mui/icons-material/Search";
 import TextSnippetIcon from "@mui/icons-material/TextSnippet";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 import {
@@ -64,27 +65,30 @@ import CardComponent from "../Components/CardComponent";
 import {
   InputDatePickerField,
   InputSearchSelectTextField,
+  InputsmallFilds,
   InputTextArea,
   InputTextField,
   InputTimePicker,
   RadioButtonsField,
   SmallInputFields,
   SmallInputTextField,
+  TableNumberInput,
 } from "../Components/formComponents";
 import { PhoneNumber } from "../Components/PhoneNumber";
 import SearchInputField from "../Components/SearchInputField";
 import SearchModel from "../Components/SearchModel";
 import usePermissions from "../Components/usePermissions";
+import apiClient from "../../services/apiClient";
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
 });
 export default function QuatationSO() {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [tab, settab] = useState("1");
+  const [tab, settab] = useState("0");
   const [open, setOpen] = useState(false);
   const [phone, setPhone] = useState("");
-  const [tabValue, setTabValue] = useState("1");
+  const [tabValue, setTabValue] = useState(0);
   const [openModal, setOpenModal] = React.useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [bankData, setBankData] = useState([]);
@@ -139,7 +143,7 @@ export default function QuatationSO() {
   const [SaveUpdateName, setSaveUpdateName] = useState("Submit");
 
   const theme = useTheme();
-  const BASE_URL = process.env.REACT_APP_BASE_URL;
+  const BASE_URL = "http://hwaceri5:8070/api";
   const checkedRowsRef = useRef([]);
 
   const initial = {
@@ -483,11 +487,11 @@ export default function QuatationSO() {
         TransferDate: data.TransferDate ? dayjs(data.TransferDate) : dayjs(),
         ReceiptDate: data.ReceiptDate ? dayjs(data.ReceiptDate) : dayjs(),
         DocDate: data.DocDate ? dayjs(data.DocDate) : dayjs(),
-        DiscApproStatus: Discapprovreq.oLines?.find(
-          (line) => line.ApprovalStatus === "PENDING",
-        )
-          ? "PENDING"
-          : data.DiscApproStatus,
+        // DiscApproStatus: Discapprovreq.oLines?.find(
+        //   (line) => line.ApprovalStatus === "PENDING",
+        // )
+        //   ? "PENDING"
+        //   : data.DiscApproStatus,
         oLines: data.oLines.map((line) => ({
           ...line,
           Quantity: parseFloat(line.Quantity),
@@ -944,48 +948,48 @@ export default function QuatationSO() {
     resetMdl(initialItemSearch);
   };
 
-  const handleOnChange = (index, field, value) => {
-    const val = value === "" ? 0 : parseFloat(parseFloat(value).toFixed(3));
+  // const handleOnChange = (index, field, value) => {
+  //   const val = value === "" ? 0 : parseFloat(parseFloat(value).toFixed(3));
 
-    const qty =
-      field === "Quantity"
-        ? val
-        : parseFloat(getValues(`oLines.${index}.Quantity`) || 0);
+  //   const qty =
+  //     field === "Quantity"
+  //       ? val
+  //       : parseFloat(getValues(`oLines.${index}.Quantity`) || 0);
 
-    const price =
-      field === "Price"
-        ? val
-        : parseFloat(getValues(`oLines.${index}.Price`) || 0);
+  //   const price =
+  //     field === "Price"
+  //       ? val
+  //       : parseFloat(getValues(`oLines.${index}.Price`) || 0);
 
-    let fittingCharge =
-      field === "LineFittingCharge"
-        ? qty > 0
-          ? parseFloat((val / qty).toFixed(6))
-          : 0
-        : parseFloat(getValues(`oLines.${index}.FittingCharge`) || 0);
+  //   let fittingCharge =
+  //     field === "LineFittingCharge"
+  //       ? qty > 0
+  //         ? parseFloat((val / qty).toFixed(6))
+  //         : 0
+  //       : parseFloat(getValues(`oLines.${index}.FittingCharge`) || 0);
 
-    const amount = parseFloat((qty * price).toFixed(3));
-    const lineFittingCharge =
-      field === "LineFittingCharge"
-        ? val
-        : parseFloat((Number(qty) * Number(fittingCharge)).toFixed(3));
+  //   const amount = parseFloat((qty * price).toFixed(3));
+  //   const lineFittingCharge =
+  //     field === "LineFittingCharge"
+  //       ? val
+  //       : parseFloat((Number(qty) * Number(fittingCharge)).toFixed(3));
 
-    setValue(`oLines.${index}.Amount`, amount);
+  //   setValue(`oLines.${index}.Amount`, amount);
 
-    setValue(`oLines.${index}.LineFittingCharge`, lineFittingCharge);
+  //   setValue(`oLines.${index}.LineFittingCharge`, lineFittingCharge);
 
-    const updatedOLines = [...getValues("oLines")];
-    if (updatedOLines[index]) {
-      updatedOLines[index][field] = val;
-      updatedOLines[index].Amount = amount;
-      updatedOLines[index].FittingCharge = fittingCharge;
-      updatedOLines[index].LineFittingCharge = lineFittingCharge;
-    }
+  //   const updatedOLines = [...getValues("oLines")];
+  //   if (updatedOLines[index]) {
+  //     updatedOLines[index][field] = val;
+  //     updatedOLines[index].Amount = amount;
+  //     updatedOLines[index].FittingCharge = fittingCharge;
+  //     updatedOLines[index].LineFittingCharge = lineFittingCharge;
+  //   }
 
-    setValue("oLines", updatedOLines);
-    setValue("rows", updatedOLines);
-    calculateData();
-  };
+  //   setValue("oLines", updatedOLines);
+  //   setValue("rows", updatedOLines);
+  //   calculateData();
+  // };
 
   const updateFilteredListDisabledRows = () => {
     const oLineItemCodes = getValues("oLines")?.map((item) => item.ItemCode);
@@ -1314,12 +1318,431 @@ export default function QuatationSO() {
       calculateData();
       updateSummaryFields();
       updateFilteredListDisabledRows();
-      handleOnChange();
 
       checkedRowsRef.current = [];
     } catch (err) {
       console.error(" handleSave error:", err);
     }
+  };
+  const onSubmit = async (data) => {
+    const allFormData = getValues();
+
+    const qtyLess = oLines.filter(
+      (line) =>
+        (line.IssueStatus === "P-ISSUED" || line.IssueStatus === "C-ISSUED") &&
+        line.Quantity < line.OldQuantity,
+    ).length;
+    const Qty = oLines.filter(
+      (line) => line.Quantity === "" || line.Quantity === undefined,
+    ).length;
+    if (allFormData.CardName === "") {
+      Swal.fire({
+        text: "Please Select Customer",
+        icon: "warning",
+        toast: true,
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return;
+    } else if (oLines.length === 0) {
+      Swal.fire({
+        text: "Please Select Product",
+        icon: "warning",
+        toast: true,
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return;
+    } else if (
+      allFormData.Shipping === true &&
+      Number(allFormData.ShippingAmt) <= 0
+    ) {
+      Swal.fire({
+        text: "Shipping charges should not be zero !",
+        icon: "warning",
+        toast: true,
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return;
+    } else if (Qty > 0) {
+      Swal.fire({
+        text: "Item Quantity should not be zero !",
+        icon: "warning",
+        toast: true,
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return;
+    } else if (qtyLess > 0) {
+      Swal.fire({
+        text: "Item Quantity Cannot be less than issue quantity !",
+        icon: "warning",
+        toast: true,
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return;
+    } else if (
+      watch("SpecialOrder") === true &&
+      allFormData.AdvancePayment > 0 &&
+      allFormData.AdvancePayment < 100
+    ) {
+      Swal.fire({
+        text: "100% Payment Compulsory for this customer",
+        icon: "warning",
+        toast: true,
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return;
+    } else if (Number(allFormData.TotalDocAmt || 0) === 0) {
+      Swal.fire({
+        text: "Total Document value should not be zero !",
+        icon: "warning",
+        toast: true,
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return;
+    } else if (
+      allFormData.AdvancePayment > 0 &&
+      allFormData.AdvancePayment < 50 &&
+      allFormData.OrderNo === ""
+    ) {
+      Swal.fire({
+        text: "50% Payment Compulsory for this Order",
+        icon: "warning",
+        toast: true,
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return;
+    } else if (allFormData.QuotStatus === "0" || allFormData.QuotStatus === 0) {
+      Swal.fire({
+        text: "Please Update Order To Add More Items",
+        icon: "warning",
+        toast: true,
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return;
+    }
+    // } else if (GetPaymentChecked === true && allFormData.AdvancePayment < 50) {
+    //   Swal.fire({
+    //     text: "Please Get The Payment.",
+    //     icon: "warning",
+    //     toast: true,
+    //     showConfirmButton: false,
+    //     timer: 2000,
+    //     timerProgressBar: true,
+    //   });
+    //   return;
+    // }
+
+    const UserId = localStorage.getItem("UserId");
+    const CreatedBy = localStorage.getItem("UserName");
+
+    const obj = {
+      DocNum: data?.DocNum || null,
+      UserId: SaveUpdateName === "Update" ? data.UserId : String(UserId),
+      CreatedBy: SaveUpdateName === "Update" ? data.CreatedBy : CreatedBy,
+      DocDate: dayjs(data.DocDate).format("YYYY-MM-DD"),
+      Status: data.Status === `OPEN` ? "1" : data.Status,
+      JobRemarks: (data.JobRemarks ?? "").toUpperCase(),
+      JobWorkAt: allFormData.CNC === true ? "CNC" : "ORP Workshop",
+      SparesAmount: String(data.SparesAmount),
+      DesiredDisc: String(data.DesiredDisc),
+      ModifiedBy: data.DocEntry ? CreatedBy : "",
+      DesiredDiscAmt: String(data.DesiredDiscAmt),
+      SpecialDisc: String(data.SpecialDisc || "0"),
+      SpecialDiscAmt: String(data.SpecialDiscAmt),
+      SparesNetAmt: String(data.SparesNetAmt),
+      FittingCharge: String(data.FittingCharge),
+      TotalDocAmt: String(data.TotalDocAmt),
+      FittingTimeReq: String(data.FittingTimeReq),
+      SpecialDiscBy: String(watch("SpecialDisc") > 0 ? CreatedBy : ""),
+      SpecialDiscDate: String(dayjs(data.SpecialDiscDate).format("YYYY-MM-DD")),
+      SpecialDiscRemarks: data.SpecialDiscRemarks,
+      AdvancePayment: String(data.AdvancePayment),
+      AdvanceAmount: String(data.AdvanceAmount),
+      DueAmount: String(data.DueAmount),
+      PaidAmount: String(data.PaidAmount),
+      PaidAmountPer: String(data.PaidAmountPer),
+      AdvanceReceiptNo: String(data.AdvanceReceiptNo),
+      ReceiptDate: String(dayjs(data.ReceiptDate).format("YYYY-MM-DD")),
+      ModelModifiedBy: CreatedBy,
+      Type: String(data.ServiceOrder === true ? "Service" : "Item"),
+      RoundingAmt: String(data.RoundingAmt || "0"),
+      CardName: data.CardName,
+      PhoneNumber1: String(data.PhoneNumber1),
+      IsDupliQuot: data.IsDupliQuot,
+      // CardCode:`LED-${LeadId}`===watch("CardCode")?String(data.CardCode):"",
+      CardCode: String(data.CardCode),
+      GroupCode: String(data.GroupCode),
+      SalesHistory: String(data.SalesHistory),
+      CustomerBalance: String(data.CustomerBalance),
+      SpecialOrder: data.SpecialOrder === true ? "1" : "0",
+      DeliveredLater: data.DeliveredLater === true ? "1" : "0",
+      ServiceOrder: data.ServiceOrder === true ? "1" : "0",
+      Shipping: data.Shipping === true ? "1" : "0",
+      ShippingAmt: String(data.ShippingAmt),
+      Approver: data.CRApproved === true ? CreatedBy : "",
+      ApprovalStatus: data.CRApproved === true ? "1" : "0",
+      TotalPartsValue: String(data.TotalPartsValue),
+      NetPartsValue: String(data.NetPartsValue),
+      ServiceAndInstallation: String(data.ServiceAndInstallation),
+      OrderNo: String(data.OrderNo),
+      OrderType: String(data.OrderType),
+      OrderSubType: String(data.OrderSubType),
+      SAPSyncSO: String(data.SAPSyncSO),
+      SAPSyncDP: String(data.SAPSyncDP),
+      SAPSyncPAY: String(data.SAPSyncPAY),
+      SAPSyncCancel: String(data.SAPSyncCancel),
+      WalkIn: data.WalkIn === true ? "1" : "0",
+      InvoiceStatus: String(data.InvoiceStatus),
+      SAPDocEntry: String(data.SAPDocEntry),
+      SAPDocNum: String(data.SAPDocNum),
+      CancelRemarks: data.CancelRemarks,
+      // BaseRef: CardCode1 ? "Lead" : "",
+      // BaseRefId: SaveUpdateName === "Update" ? data.BaseRefId : LeadId,
+      VehicleDocEntry: String(data.VehicleDocEntry),
+      CountryCode: "KW",
+      DirectInvoice: String("0"),
+      TaxAmt: "0",
+      TaxCode: "",
+      CustomsDutyPer: "0",
+      CustomsDutyAmt: "0",
+      Currency: "KWD",
+      CurrencyRate: "0",
+      CurrAmt: "0",
+      SendWPAttach: "",
+      // DiscApproReqId: "",
+      CurrApproLevel: "",
+      DiscApproRemarks: "",
+      // DiscApproStatus:
+      //   Discapprov &&
+      //   Discapprov.length > 0 &&
+      //   Math.min(...Discapprov.map((item) => item.MinDiscount || 0)) <=
+      //     watch("SpecialDisc") &&
+      //   watch("DiscApproStatus") !== "APPROVED"
+      //     ? "PENDING"
+      //     : "",
+      // DiscApproReqId:
+      //   data.DiscApproStatus === "REJECTED" || data.DiscApproStatus === ""
+      //     ? "0"
+      //     : data.DiscApproReqId,
+      Year: String(data.Year),
+      Make: String(data.Make),
+      Model: String(data.Model),
+      oLines: oLines.map((line) => ({
+        CreatedBy: CreatedBy,
+        UserId: String(UserId),
+        Status: "1",
+        Currency: "KWD",
+        ItemCode: String(line.ItemCode),
+        Quantity: String(line.Quantity),
+        Price: String(line.Price),
+        WHSCode: String(line.WHSCode),
+        LineNetAmount: "0",
+        Amount: String(line.Amount),
+        DesiredDisc: String(line.DesiredDisc),
+        LineFittingTime: String(line.LineFittingTime || "0"),
+        LineFittingCharge: String(line.LineFittingCharge),
+        LineTotalAmount: String(0),
+        QuotStatus: line.QuotStatus === undefined ? "1" : line.QuotStatus,
+        ItemName: line.ItemName,
+        IssueQuantity: String(line.IssueQuantity || "0"),
+        TaxCode: "0",
+        TaxPer: String(0),
+        TaxAmt: String(0),
+      })),
+      oCashPay:
+        data.CashPaid > 0
+          ? [
+              {
+                UserId: String(UserId),
+                CreatedBy: CreatedBy,
+                CashSum: String(data.CashPaid),
+                CashAccount: "1201011",
+                TaxDate: String(dayjs(data.TaxDate).format("YYYY-MM-DD")),
+              },
+            ]
+          : [],
+      oCCPay: (oCCPay || []).map((creditCard) => ({
+        UserId: String(UserId),
+        CreatedBy: CreatedBy,
+        CreditCard: String(creditCard.CreditCard),
+        CreditAcct: String(creditCard.CashAccount),
+        CreditCardNumber: String(creditCard.CreditCardNumber),
+        PaymentMethodCode: "0",
+        VoucherNum: String(creditCard.VoucherNum),
+        CreditSum: String(creditCard.CreditSum),
+      })),
+      BankPay:
+        data.TransferSum > 0
+          ? [
+              {
+                UserId: String(UserId),
+                CreatedBy: CreatedBy,
+                TransferAccount: "1201022",
+                TransferAccountName: "Bank NBK 2008134452",
+                TransferReference: String(data.TransferReference),
+                TransferDate: dayjs(data.TransferDate).format("YYYY-MMM-DD"),
+                TransferSum: String(data.TransferSum || "0"),
+              },
+            ]
+          : [],
+    };
+    if (data.TransferSum > 0 && !data.TransferReference) {
+      Swal.fire({
+        text: "Transfer Reference No is required",
+        icon: "warning",
+        toast: true,
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return;
+    }
+    if (
+      watch("UserId") === "" ||
+      watch("UserId") === null ||
+      watch("UserId") === undefined
+    ) {
+      Swal.fire({
+        text: "User ID is missing. Please log in again to continue.",
+        icon: "warning",
+        // toast: true,
+        showConfirmButton: true,
+        // timer: 2000,
+        timerProgressBar: true,
+      });
+      return;
+    }
+
+    Swal.fire({
+      text: `Do You Want Save`,
+      icon: "question",
+      input: "checkbox",
+      inputValue: 0,
+      inputPlaceholder: `Send Attachment Copy On Whatsapp`,
+      confirmButtonText: "YES",
+      cancelButtonText: "No",
+      showConfirmButton: true,
+      showDenyButton: true,
+    }).then(async (results) => {
+      if (results.isConfirmed) {
+        obj.SendWPAttach = results.value === 1 ? true : false;
+
+        setModalLoading(true);
+
+        try {
+          let res;
+          let formModeForLead = "";
+
+          if (SaveUpdateName === "Submit") {
+            // const CardCode1 = await OnSubmitBpLead();
+            // if (CardCode1) {
+            //   obj.CardCode = CardCode1;
+            //   obj.BaseRef = CardCode1 ? "Lead" : "";
+            // }
+            res = await apiClient.post(`/quotationSo`, obj);
+
+            formModeForLead = "ADD";
+          } else if (SaveUpdateName === "Update") {
+            // obj.CardCode = watch("CardCode");
+            // obj.BaseRef = watch("BaseRef");
+            res = await apiClient.put(`/quotationSo/${data.DocEntry}`, obj);
+
+            formModeForLead = "UPDATE";
+          } else {
+            setModalLoading(false);
+            return Swal.fire({
+              text: "Document Not Saved",
+              icon: "info",
+              toast: true,
+              showConfirmButton: false,
+              timer: 1500,
+            });
+          }
+
+          if (res.data.success) {
+            const data = res.data.values;
+            // resetallformdata();
+            // getQuotationdata();
+            // OpenQuotationModal(false);
+            // setModalLoading(false);
+            // getSalesCounter();
+            // UpdateLeadStage(data, formModeForLead);
+
+            Swal.fire({
+              title: "Success!",
+              icon: "success",
+              text:
+                allFormData.AdvancePayment < 50
+                  ? `Quotation ${SaveUpdateName} Successfully`
+                  : `Order ${SaveUpdateName} Successfully`,
+              confirmButtonText: "Ok",
+              timer: 1000,
+            });
+
+            // const VehicleObj = {
+            //   UserId: obj.UserId,
+            //   CreatedBy: obj.CreatedBy,
+            //   Status: "1",
+            //   Year: obj.Year,
+            //   Make: obj.Make,
+            //   Model: obj.Model,
+            //   JobRemarks: obj.JobRemarks,
+            //   CardCode: obj.CardCode,
+            // };
+            // if (obj.Year && obj.Make && obj.Model) {
+            //   AddBPVehicle(VehicleObj);
+            // }
+
+            // setTimeout(() => {
+            //   printReport(data.DocEntry, data.OrderNo);
+            // }, 1200);
+          } else {
+            setModalLoading(false);
+            Swal.fire({
+              title: "Error!",
+              text: res.data.message,
+              icon: "warning",
+              confirmButtonText: "Ok",
+            });
+          }
+        } catch (error) {
+          setModalLoading(false);
+          Swal.fire({
+            title: "Error!123",
+            text: error,
+            icon: "warning",
+            confirmButtonText: "Ok",
+          });
+        }
+      } else {
+        Swal.fire({
+          title: "Info!",
+          text: "Document Not Saved",
+          icon: "info",
+          // toast: true,
+          confirmButtonText: "Ok",
+          timer: 1500,
+        });
+      }
+    });
+    // }
   };
 
   const onSubmitDynamicSearch = async (data) => {
@@ -1527,6 +1950,7 @@ export default function QuatationSO() {
   };
 
   const oLines = useWatch({ control, name: "oLines" });
+  const oCCPay = useWatch({ control, name: "oCCPay" });
 
   const columns = [
     {
@@ -1596,6 +2020,134 @@ export default function QuatationSO() {
       editable: true,
     },
   ];
+
+  // const HandleTableOnChange = (id, value) => {
+  //   setRows((prev) => {
+  //     const updatedRows = prev.map((row) =>
+  //       row.id === id
+  //         ? {
+  //             ...row,
+  //             Qty: value,
+  //             Total_Amt: value * row.Price,
+  //           }
+  //         : row,
+  //     );
+
+  //     const totalPartsValue = updatedRows.reduce(
+  //       (sum, row) => sum + Number(row.Total_Amt || 0),
+  //       0,
+  //     );
+
+  //     setValue("TotalPartsValue", totalPartsValue);
+
+  //     return updatedRows;
+  //   });
+  // };
+
+  // const HandleTableOnChange = (newRow, oldRow) => {
+  //   const qty = Number(newRow.Quantity) || 0;
+  //   const price = Number(newRow.Price) || 0;
+
+  //   const totalAmt = qty * price;
+
+  //   const updatedRow = { ...newRow, Amount: totalAmt };
+
+  //   setValue("oLines", (prevRows) => {
+  //     const updatedRows = prevRows.map((row) =>
+  //       row.id === newRow.id ? updatedRow : row,
+  //     );
+
+  //     const totalPartsSum = updatedRows.reduce(
+  //       (sum, row) => sum + (Number(row.Amount) || 0),
+  //       0,
+  //     );
+  //     const Fittingcharge = updatedRows.reduce(
+  //       (sum, row) => sum + (Number(row.LineFittingCharge) || 0),
+  //       0,
+  //     );
+
+  //     setValue("TotalPartsValue", totalPartsSum.toFixed(3));
+  //     setValue("ServiceAndInstallation", Fittingcharge.toFixed(3));
+  //     setValue("NetPartsValue", totalPartsSum.toFixed(3));
+  //     setValue("TotalDocAmt", totalPartsSum.toFixed(3));
+  //     calculateData();
+
+  //     return updatedRows;
+  //   });
+
+  //   return updatedRow;
+  // };
+
+  const HandleTableOnChange = (newRow, oldRow) => {
+    const qty = Number(newRow.Quantity) || 0;
+    const price = Number(newRow.Price) || 0;
+    const fitting = Number(newRow.FittingCharge) || 0;
+    const totalAmt = qty * price;
+
+    const updatedRow = {
+      ...newRow,
+      Amount: totalAmt.toFixed(3),
+    };
+
+    const currentLines = getValues("oLines") || [];
+
+    const updatedRows = currentLines.map((row) =>
+      row.ItemCode === newRow.ItemCode ? updatedRow : row,
+    );
+
+    const totalPartsSum = updatedRows.reduce(
+      (sum, row) => sum + (Number(row.Amount) || 0),
+      0,
+    );
+
+    const totalFittingCharge = updatedRows.reduce(
+      (sum, row) => sum + (Number(row.LineFittingCharge) || 0),
+      0,
+    );
+
+    setValue("oLines", updatedRows);
+    setValue("TotalPartsValue", totalPartsSum.toFixed(3));
+    setValue("ServiceAndInstallation", totalFittingCharge.toFixed(3));
+
+    const shipping = Number(getValues("ShippingAmt")) || 0;
+    const finalDocAmt = totalPartsSum + totalFittingCharge + shipping;
+
+    setValue("TotalDocAmt", finalDocAmt.toFixed(3));
+    setValue("DueAmount", finalDocAmt.toFixed(3));
+    setValue("BalanceDueAmount", finalDocAmt.toFixed(3));
+
+    return updatedRow;
+  };
+  const HandleOnFildChange = () => {
+    const allformdata = getValues();
+
+    const specialDiscPercent = Number(getValues("SpecialDisc")) || 0;
+    const DesiredDiscPercent = Number(getValues("DesiredDisc")) || 0;
+
+    const sDiscAmt = round(
+      (allformdata.TotalPartsValue * specialDiscPercent) / 100,
+    );
+
+    const fittingcharge = allformdata.ServiceAndInstallation;
+
+    const dDiscAmt = round(
+      (allformdata.TotalPartsValue * DesiredDiscPercent) / 100,
+    );
+
+    const netParts =
+      Number(allformdata.TotalPartsValue) -
+      Number(sDiscAmt) -
+      Number(dDiscAmt) +
+      Number(fittingcharge) +
+      Number(allformdata.RoundingAmt);
+
+    const TotTotalDocAmt = Number(netParts) + Number(allformdata.ShippingAmt);
+
+    setValue("SpecialDiscAmt", sDiscAmt.toFixed(3));
+    setValue("DesiredDiscAmt", dDiscAmt.toFixed(3));
+    setValue("NetPartsValue", netParts.toFixed(3));
+    setValue("TotalDocAmt", TotTotalDocAmt.toFixed(3));
+  };
 
   const sidebarContent = (
     <>
@@ -1880,7 +2432,7 @@ export default function QuatationSO() {
         height="calc(100vh - 110px)"
         position="relative"
         component={"form"}
-        onSubmit={hadlesubmit}
+        onSubmit={handleSubmit(onSubmit)}
       >
         <Grid
           container
@@ -1965,7 +2517,7 @@ export default function QuatationSO() {
               alignContent={"center"}
               height={"100%"}
             >
-              Quatation So
+              Quotation So
             </Typography>
           </Grid>
 
@@ -2248,7 +2800,7 @@ export default function QuatationSO() {
                             mb: 2,
                           }}
                           onClick={handleClickModel}
-                          disabled={!watch("CardCode")} 
+                          disabled={!watch("CardCode")}
                         >
                           Search Item
                         </Button>
@@ -2349,7 +2901,7 @@ export default function QuatationSO() {
                       name="OrderType"
                       control={control}
                       render={({ field }) => (
-                        <SmallInputFields
+                        <InputsmallFilds
                           label="ORDER TYPE"
                           {...field}
                           rows={1}
@@ -2363,7 +2915,7 @@ export default function QuatationSO() {
                       name="Approver"
                       control={control}
                       render={({ field }) => (
-                        <SmallInputFields
+                        <InputsmallFilds
                           label="CR APPROVED BY"
                           {...field}
                           rows={1}
@@ -2377,7 +2929,7 @@ export default function QuatationSO() {
                       name="CreatedBy"
                       control={control}
                       render={({ field }) => (
-                        <SmallInputFields
+                        <InputsmallFilds
                           label="CREATED BY"
                           {...field}
                           rows={1}
@@ -2391,7 +2943,7 @@ export default function QuatationSO() {
                       name="Status"
                       control={control}
                       render={({ field }) => (
-                        <SmallInputFields
+                        <InputsmallFilds
                           label="STATUS"
                           {...field}
                           rows={1}
@@ -2405,7 +2957,7 @@ export default function QuatationSO() {
                       name="SAPDocNum"
                       control={control}
                       render={({ field }) => (
-                        <SmallInputFields
+                        <InputsmallFilds
                           label="SAP SO NO"
                           {...field}
                           rows={1}
@@ -2569,6 +3121,8 @@ export default function QuatationSO() {
                       columnHeaderHeight={35}
                       rowHeight={40}
                       hideFooter
+                      processRowUpdate={HandleTableOnChange}
+                      onProcessRowUpdateError={(error) => console.log(error)}
                       autoHeight="false"
                       sx={gridSx}
                     />
@@ -2606,17 +3160,13 @@ export default function QuatationSO() {
                         xs={6}
                         textAlign={"center"}
                       >
-                        <Controller
+                        <SmallInputFields
                           name="ServiceAndInstallation"
                           control={control}
-                          render={({ field }) => (
-                            <SmallInputTextField
-                              label="SERVICE & INSTALL"
-                              {...field}
-                              readOnly={true}
-                            />
-                          )}
-                        />
+                          label="SERVICE & INSTALL"
+                          width={140}
+                          readOnly
+                        />{" "}
                       </Grid>
                     </Grid>
                   </Grid>
@@ -2631,16 +3181,12 @@ export default function QuatationSO() {
                         xs={6}
                         textAlign={"center"}
                       >
-                        <Controller
+                        <SmallInputFields
                           name="DesiredDisc"
                           control={control}
-                          render={({ field }) => (
-                            <SmallInputTextField
-                              label="DISC (%)"
-                              {...field}
-                              readOnly={true}
-                            />
-                          )}
+                          label="DISC (%)"
+                          width={140}
+                          onChange={calculateData}
                         />
                       </Grid>
                       <Grid
@@ -2651,16 +3197,12 @@ export default function QuatationSO() {
                         xs={6}
                         textAlign={"center"}
                       >
-                        <Controller
+                        <SmallInputFields
                           name="RoundingAmt"
                           control={control}
-                          render={({ field }) => (
-                            <SmallInputTextField
-                              label="ROUNDING OFF"
-                              {...field}
-                              readOnly={true}
-                            />
-                          )}
+                          label="ROUNDING OFF"
+                          width={140}
+                          onChange={calculateData}
                         />
                       </Grid>
                     </Grid>
@@ -2721,16 +3263,12 @@ export default function QuatationSO() {
                         xs={6}
                         textAlign={"center"}
                       >
-                        <Controller
+                        <SmallInputFields
                           name="SpecialDisc"
                           control={control}
-                          render={({ field }) => (
-                            <SmallInputTextField
-                              label="SPECIAL DISC(%)"
-                              {...field}
-                              readOnly={true}
-                            />
-                          )}
+                          label="SPECIAL DISC (%)"
+                          width={140}
+                          onChange={calculateData}
                         />
                       </Grid>
                       <Grid
@@ -2741,17 +3279,13 @@ export default function QuatationSO() {
                         xs={6}
                         textAlign={"center"}
                       >
-                        <Controller
+                        <SmallInputFields
                           name="ShippingAmt"
                           control={control}
-                          render={({ field }) => (
-                            <SmallInputTextField
-                              label="SHIPPING"
-                              {...field}
-                              readOnly={true}
-                            />
-                          )}
-                        />
+                          label="SHIPPING"
+                          width={140}
+                          onChange={calculateData}
+                        />{" "}
                       </Grid>
                     </Grid>
                   </Grid>
@@ -2773,7 +3307,6 @@ export default function QuatationSO() {
                             <SmallInputTextField
                               label="SPECIAL DISC AMT"
                               {...field}
-                              readOnly={true}
                             />
                           )}
                         />
@@ -2820,7 +3353,7 @@ export default function QuatationSO() {
                   </Grid>
                 </Grid>
 
-                {getValues("OrderNo") === "" && (
+                {/* {getValues("OrderNo") === "" && ( */}
                 <Grid container lg={12} md={12} px={1}>
                   <Grid item width="100%" m={1} border="1px solid grey">
                     <Tabs
@@ -2839,17 +3372,26 @@ export default function QuatationSO() {
                       <>
                         <Grid container lg={9} md={12} padding={2}>
                           <Grid item sm={5} md={6} lg={4} xs={12}>
-                            <Controller
+                            {/* <Controller
                               name="CashPaid"
                               control={control}
                               render={({ field }) => (
                                 <InputTextField
                                   label="CASH PAID"
                                   {...field}
+                                  onChange={PaymentsCalculations}
                                   type="Number"
                                 />
                               )}
-                            />
+                            /> */}
+                            <SmallInputFields
+                              name="CashPaid"
+                              control={control}
+                              label="CASH PAID"
+                              width={140}
+                              onChange={PaymentsCalculations}
+                              type="Number"
+                            />{" "}
                           </Grid>
                           <Grid item sm={5} md={6} lg={4} xs={12}>
                             <Controller
@@ -3009,21 +3551,26 @@ export default function QuatationSO() {
                       <>
                         <Grid container padding={2}>
                           <Grid sm={12} md={6} lg={3} xs={12}>
-                            <Controller
+                            {/* <Controller
                               name="TransferSum"
                               control={control}
                               render={({ field }) => (
                                 <InputTextField
                                   label="TRANSFER SUM"
                                   {...field}
-                                  // onChange={(e) => {
-                                  //   field.onChange(e);
-                                  //   PaymentCalc(e);
-                                  // }}
+                                  onChange={PaymentsCalculations}
                                   type="Number"
                                 />
                               )}
-                            />
+                            /> */}
+                            <SmallInputFields
+                              name="TransferSum"
+                              control={control}
+                              label="TRANSFER SUM"
+                              width={140}
+                              onChange={PaymentsCalculations}
+                              type="Number"
+                            />{" "}
                           </Grid>
                           <Grid sm={12} md={6} lg={3} xs={12}>
                             <Controller
@@ -3081,7 +3628,7 @@ export default function QuatationSO() {
                     )}
                   </Grid>
                 </Grid>
-                )}
+                {/* )} */}
 
                 <Grid container lg={12} md={12} spacing={2} py={1}>
                   <Grid item lg={2} md={3} xs={6} textAlign={"center"}>
@@ -3149,19 +3696,7 @@ export default function QuatationSO() {
                       )}
                     />
                   </Grid>
-                  <Grid item lg={2} md={3} xs={6} textAlign={"center"}>
-                    <Controller
-                      name="SAPDocNum"
-                      control={control}
-                      render={({ field }) => (
-                        <SmallInputTextField
-                          label="SAP SO NO"
-                          {...field}
-                          readOnly={true}
-                        />
-                      )}
-                    />
-                  </Grid>
+
                   <Grid item lg={2} md={3} xs={6} textAlign={"center"}>
                     <Controller
                       name="AdvanceReceiptNo"
@@ -3223,12 +3758,12 @@ export default function QuatationSO() {
                 color="success"
                 sx={{ color: "white" }}
                 name={SaveUpdateName}
+                type="submit"
                 disabled={
                   (SaveUpdateName === "SAVE" && !perms.IsAdd) ||
                   (SaveUpdateName === "UPDATE" && !perms.IsEdit) ||
                   allFormData.Status === "0"
                 }
-
               >
                 {SaveUpdateName}
               </Button>
