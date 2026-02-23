@@ -74,6 +74,7 @@ import {
 import { PhoneNumber } from "../Components/PhoneNumber";
 import SearchInputField from "../Components/SearchInputField";
 import SearchModel from "../Components/SearchModel";
+import usePermissions from "../Components/usePermissions";
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
@@ -135,6 +136,7 @@ export default function QuatationSO() {
   const [top20Loading, setTop20Loading] = useState(false);
   const top20CancelToken = useRef(null);
   const top20DebounceTimer = useRef(null);
+  const [SaveUpdateName, setSaveUpdateName] = useState("Submit");
 
   const theme = useTheme();
   const BASE_URL = process.env.REACT_APP_BASE_URL;
@@ -294,6 +296,7 @@ export default function QuatationSO() {
   });
 
   const allFormData = getValues();
+  const perms = usePermissions(133);
 
   const getIssueStatus = (Qty, IssueQty) => {
     if (Qty > IssueQty && IssueQty > 0) return "P-ISSUED";
@@ -516,7 +519,7 @@ export default function QuatationSO() {
 
       reset(transformed);
       setDocEntry(DocEntry);
-      // setSaveUpdateName("UPDATE");
+      setSaveUpdateName("UPDATE");
     } catch (error) {
       console.error("Error fetching data:", error);
 
@@ -1415,17 +1418,18 @@ export default function QuatationSO() {
     Math.round((num + Number.EPSILON) * 10 ** decimals) / 10 ** decimals;
 
   const onTop20Click = (item, Category) => {
-    // if (!state.selected) {
-    //   Swal.fire({
-    //     text: "Please Select Customer",
-    //     icon: "warning",
-    //     toast: true,
-    //     showConfirmButton: false,
-    //     timer: 2000,
-    //     timerProgressBar: true,
-    //   });
-    //   return;
-    // }
+    const cardCode = getValues("CardCode");
+    if (!cardCode?.trim()) {
+      Swal.fire({
+        text: "Please Select Customer",
+        icon: "warning",
+        toast: true,
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return;
+    }
 
     if (watch("ServiceOrder")) {
       Swal.fire({
@@ -1764,6 +1768,7 @@ export default function QuatationSO() {
   const ClearFormData = () => {
     reset(initial);
     setDocEntry("");
+    setSaveUpdateName("SAVE");
   };
 
   return (
@@ -1995,49 +2000,72 @@ export default function QuatationSO() {
                   <Grid item xs={12} lg={3} md={4}>
                     <Grid container direction="column">
                       <Grid item textAlign="center">
-                        <Controller
-                          name="CardCode"
-                          control={control}
-                          render={({ field }) => (
-                            <TextField
-                              size="small"
-                              label="CUSTOMER ID"
-                              autoFocus
-                              readOnly={true}
-                              disabled={watch("DocEntry")}
-                              placeholder="Search ..."
-                              sx={{ m: 1, width: "100%", maxWidth: 220 }}
-                              InputProps={{
-                                endAdornment: (
-                                  <InputAdornment position="end">
-                                    <IconButton
-                                      color="primary"
-                                      onClick={() => {
-                                        OpenDailog();
-                                      }}
-                                      onChange={OpenDailog}
-                                      disabled={!!DocEntry}
-                                    >
-                                      <SearchIcon />
-                                    </IconButton>
-                                    <IconButton
-                                      onClick={handleClickOpen}
-                                      size="small"
-                                      style={{
-                                        backgroundColor: "green",
-                                        borderRadius: "20%",
-                                        color: "white",
-                                        padding: 4,
-                                      }}
-                                    >
-                                      <ContactMailOutlinedIcon />
-                                    </IconButton>
-                                  </InputAdornment>
-                                ),
-                              }}
+                        <Grid
+                          container
+                          alignItems="center"
+                          justifyContent={"center"}
+                          paddingLeft={3.5}
+                        >
+                          <Grid item lg="9" md="9" sm="10" xs="10">
+                            <Controller
+                              name="CardCode"
+                              control={control}
+                              render={({ field }) => (
+                                <InputTextField
+                                  {...field}
+                                  size="small"
+                                  label="CUSTOMER ID"
+                                  autoFocus
+                                  readOnly
+                                  disabled={!!watch("DocEntry")}
+                                  placeholder="Search ..."
+                                  sx={{ width: "100%" }}
+                                  InputProps={{
+                                    endAdornment: (
+                                      <InputAdornment position="end">
+                                        <IconButton
+                                          color="primary"
+                                          onClick={OpenDailog}
+                                          disabled={!!watch("DocEntry")}
+                                        >
+                                          <SearchIcon />
+                                        </IconButton>
+                                      </InputAdornment>
+                                    ),
+                                  }}
+                                />
+                              )}
                             />
-                          )}
-                        />
+                          </Grid>
+
+                          <Grid
+                            item
+                            lg="auto"
+                            md="auto"
+                            sm="auto"
+                            xs="auto"
+                            className="d-flex align-items-end ps-0"
+                            style={{
+                              marginLeft: 5,
+                            }}
+                          >
+                            <IconButton
+                              onClick={handleClickOpen}
+                              size="small"
+                              sx={{
+                                backgroundColor: "green",
+                                borderRadius: "20%",
+                                color: "white",
+                                p: 0.8,
+                                "&:hover": {
+                                  backgroundColor: "darkgreen",
+                                },
+                              }}
+                            >
+                              <ContactMailOutlinedIcon />
+                            </IconButton>
+                          </Grid>
+                        </Grid>
                         <SearchModel
                           open={searchmodelOpen}
                           onClose={SearchModelClose}
@@ -2220,6 +2248,7 @@ export default function QuatationSO() {
                             mb: 2,
                           }}
                           onClick={handleClickModel}
+                          disabled={!watch("CardCode")} 
                         >
                           Search Item
                         </Button>
@@ -2390,7 +2419,7 @@ export default function QuatationSO() {
                       name="OrderNo"
                       control={control}
                       render={({ field }) => (
-                        <InputTextField
+                        <SmallInputFields
                           label="SO NO"
                           {...field}
                           rows={1}
@@ -2791,6 +2820,7 @@ export default function QuatationSO() {
                   </Grid>
                 </Grid>
 
+                {getValues("OrderNo") === "" && (
                 <Grid container lg={12} md={12} px={1}>
                   <Grid item width="100%" m={1} border="1px solid grey">
                     <Tabs
@@ -3051,6 +3081,7 @@ export default function QuatationSO() {
                     )}
                   </Grid>
                 </Grid>
+                )}
 
                 <Grid container lg={12} md={12} spacing={2} py={1}>
                   <Grid item lg={2} md={3} xs={6} textAlign={"center"}>
@@ -3191,8 +3222,15 @@ export default function QuatationSO() {
                 variant="contained"
                 color="success"
                 sx={{ color: "white" }}
+                name={SaveUpdateName}
+                disabled={
+                  (SaveUpdateName === "SAVE" && !perms.IsAdd) ||
+                  (SaveUpdateName === "UPDATE" && !perms.IsEdit) ||
+                  allFormData.Status === "0"
+                }
+
               >
-                SAVE
+                {SaveUpdateName}
               </Button>
               <Button variant="contained" color="error">
                 DELETE
