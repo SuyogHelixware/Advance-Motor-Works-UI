@@ -77,6 +77,8 @@ import {
 import { PhoneNumber } from "../Components/PhoneNumber";
 import SearchInputField from "../Components/SearchInputField";
 import SearchModel from "../Components/SearchModel";
+import usePermissions from "../Components/usePermissions";
+import apiClient from "../../services/apiClient";
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
@@ -138,6 +140,7 @@ export default function QuatationSO() {
   const [top20Loading, setTop20Loading] = useState(false);
   const top20CancelToken = useRef(null);
   const top20DebounceTimer = useRef(null);
+  const [SaveUpdateName, setSaveUpdateName] = useState("Submit");
 
   const theme = useTheme();
   const BASE_URL = "http://hwaceri5:8070/api";
@@ -249,6 +252,14 @@ export default function QuatationSO() {
     SubCategory: "",
   };
 
+  const initialCustCreation = {
+    CustomerName: "",
+    customerEmail: "",
+    PhoneNumber1: "",
+    GroupCode: false,
+    CardType: "C",
+  };
+
   const {
     control,
     handleSubmit,
@@ -271,11 +282,25 @@ export default function QuatationSO() {
     watch: watchMdl,
     formState: { errors: errorsMdl },
   } = useForm({
+    defaultValues: initialCustCreation,
+    shouldFocusError: false,
+  });
+
+  const {
+    control: controlMdl1,
+    handleSubmit: handleSubmitMdl1,
+    reset: resetMdl1,
+    getValues: getValuesMdl1,
+    setValue: setValueMdl1,
+    watch: watchMdl1,
+    formState: { errors: errorsMdl1 },
+  } = useForm({
     defaultValues: initialItemSearch,
     shouldFocusError: false,
   });
 
   const allFormData = getValues();
+  const perms = usePermissions(133);
 
   const getIssueStatus = (Qty, IssueQty) => {
     if (Qty > IssueQty && IssueQty > 0) return "P-ISSUED";
@@ -462,11 +487,11 @@ export default function QuatationSO() {
         TransferDate: data.TransferDate ? dayjs(data.TransferDate) : dayjs(),
         ReceiptDate: data.ReceiptDate ? dayjs(data.ReceiptDate) : dayjs(),
         DocDate: data.DocDate ? dayjs(data.DocDate) : dayjs(),
-        DiscApproStatus: Discapprovreq.oLines?.find(
-          (line) => line.ApprovalStatus === "PENDING",
-        )
-          ? "PENDING"
-          : data.DiscApproStatus,
+        // DiscApproStatus: Discapprovreq.oLines?.find(
+        //   (line) => line.ApprovalStatus === "PENDING",
+        // )
+        //   ? "PENDING"
+        //   : data.DiscApproStatus,
         oLines: data.oLines.map((line) => ({
           ...line,
           Quantity: parseFloat(line.Quantity),
@@ -498,7 +523,7 @@ export default function QuatationSO() {
 
       reset(transformed);
       setDocEntry(DocEntry);
-      // setSaveUpdateName("UPDATE");
+      setSaveUpdateName("UPDATE");
     } catch (error) {
       console.error("Error fetching data:", error);
 
@@ -700,8 +725,8 @@ export default function QuatationSO() {
 
       if (supplierLists.length > 0) {
         const defaultDocEntry = supplierLists[0].CardName;
-        setValue("CardName", defaultDocEntry);
-        setValue("SAPDocNum", supplierLists[0].SAPDocNum);
+        setValueMdl("CardName", defaultDocEntry);
+        setValueMdl("SAPDocNum", supplierLists[0].SAPDocNum);
       }
     } catch (error) {
       console.error("Error fetching Supplier:", error);
@@ -1299,6 +1324,426 @@ export default function QuatationSO() {
       console.error(" handleSave error:", err);
     }
   };
+  const onSubmit = async (data) => {
+    const allFormData = getValues();
+
+    const qtyLess = oLines.filter(
+      (line) =>
+        (line.IssueStatus === "P-ISSUED" || line.IssueStatus === "C-ISSUED") &&
+        line.Quantity < line.OldQuantity,
+    ).length;
+    const Qty = oLines.filter(
+      (line) => line.Quantity === "" || line.Quantity === undefined,
+    ).length;
+    if (allFormData.CardName === "") {
+      Swal.fire({
+        text: "Please Select Customer",
+        icon: "warning",
+        toast: true,
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return;
+    } else if (oLines.length === 0) {
+      Swal.fire({
+        text: "Please Select Product",
+        icon: "warning",
+        toast: true,
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return;
+    } else if (
+      allFormData.Shipping === true &&
+      Number(allFormData.ShippingAmt) <= 0
+    ) {
+      Swal.fire({
+        text: "Shipping charges should not be zero !",
+        icon: "warning",
+        toast: true,
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return;
+    } else if (Qty > 0) {
+      Swal.fire({
+        text: "Item Quantity should not be zero !",
+        icon: "warning",
+        toast: true,
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return;
+    } else if (qtyLess > 0) {
+      Swal.fire({
+        text: "Item Quantity Cannot be less than issue quantity !",
+        icon: "warning",
+        toast: true,
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return;
+    } else if (
+      watch("SpecialOrder") === true &&
+      allFormData.AdvancePayment > 0 &&
+      allFormData.AdvancePayment < 100
+    ) {
+      Swal.fire({
+        text: "100% Payment Compulsory for this customer",
+        icon: "warning",
+        toast: true,
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return;
+    } else if (Number(allFormData.TotalDocAmt || 0) === 0) {
+      Swal.fire({
+        text: "Total Document value should not be zero !",
+        icon: "warning",
+        toast: true,
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return;
+    } else if (
+      allFormData.AdvancePayment > 0 &&
+      allFormData.AdvancePayment < 50 &&
+      allFormData.OrderNo === ""
+    ) {
+      Swal.fire({
+        text: "50% Payment Compulsory for this Order",
+        icon: "warning",
+        toast: true,
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return;
+    } else if (allFormData.QuotStatus === "0" || allFormData.QuotStatus === 0) {
+      Swal.fire({
+        text: "Please Update Order To Add More Items",
+        icon: "warning",
+        toast: true,
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return;
+    }
+    // } else if (GetPaymentChecked === true && allFormData.AdvancePayment < 50) {
+    //   Swal.fire({
+    //     text: "Please Get The Payment.",
+    //     icon: "warning",
+    //     toast: true,
+    //     showConfirmButton: false,
+    //     timer: 2000,
+    //     timerProgressBar: true,
+    //   });
+    //   return;
+    // }
+
+    const UserId = localStorage.getItem("UserId");
+    const CreatedBy = localStorage.getItem("UserName");
+
+    const obj = {
+      DocNum: data?.DocNum || null,
+      UserId: SaveUpdateName === "Update" ? data.UserId : String(UserId),
+      CreatedBy: SaveUpdateName === "Update" ? data.CreatedBy : CreatedBy,
+      DocDate: dayjs(data.DocDate).format("YYYY-MM-DD"),
+      Status: data.Status === `OPEN` ? "1" : data.Status,
+      JobRemarks: (data.JobRemarks ?? "").toUpperCase(),
+      JobWorkAt: allFormData.CNC === true ? "CNC" : "ORP Workshop",
+      SparesAmount: String(data.SparesAmount),
+      DesiredDisc: String(data.DesiredDisc),
+      ModifiedBy: data.DocEntry ? CreatedBy : "",
+      DesiredDiscAmt: String(data.DesiredDiscAmt),
+      SpecialDisc: String(data.SpecialDisc || "0"),
+      SpecialDiscAmt: String(data.SpecialDiscAmt),
+      SparesNetAmt: String(data.SparesNetAmt),
+      FittingCharge: String(data.FittingCharge),
+      TotalDocAmt: String(data.TotalDocAmt),
+      FittingTimeReq: String(data.FittingTimeReq),
+      SpecialDiscBy: String(watch("SpecialDisc") > 0 ? CreatedBy : ""),
+      SpecialDiscDate: String(dayjs(data.SpecialDiscDate).format("YYYY-MM-DD")),
+      SpecialDiscRemarks: data.SpecialDiscRemarks,
+      AdvancePayment: String(data.AdvancePayment),
+      AdvanceAmount: String(data.AdvanceAmount),
+      DueAmount: String(data.DueAmount),
+      PaidAmount: String(data.PaidAmount),
+      PaidAmountPer: String(data.PaidAmountPer),
+      AdvanceReceiptNo: String(data.AdvanceReceiptNo),
+      ReceiptDate: String(dayjs(data.ReceiptDate).format("YYYY-MM-DD")),
+      ModelModifiedBy: CreatedBy,
+      Type: String(data.ServiceOrder === true ? "Service" : "Item"),
+      RoundingAmt: String(data.RoundingAmt || "0"),
+      CardName: data.CardName,
+      PhoneNumber1: String(data.PhoneNumber1),
+      IsDupliQuot: data.IsDupliQuot,
+      // CardCode:`LED-${LeadId}`===watch("CardCode")?String(data.CardCode):"",
+      CardCode: String(data.CardCode),
+      GroupCode: String(data.GroupCode),
+      SalesHistory: String(data.SalesHistory),
+      CustomerBalance: String(data.CustomerBalance),
+      SpecialOrder: data.SpecialOrder === true ? "1" : "0",
+      DeliveredLater: data.DeliveredLater === true ? "1" : "0",
+      ServiceOrder: data.ServiceOrder === true ? "1" : "0",
+      Shipping: data.Shipping === true ? "1" : "0",
+      ShippingAmt: String(data.ShippingAmt),
+      Approver: data.CRApproved === true ? CreatedBy : "",
+      ApprovalStatus: data.CRApproved === true ? "1" : "0",
+      TotalPartsValue: String(data.TotalPartsValue),
+      NetPartsValue: String(data.NetPartsValue),
+      ServiceAndInstallation: String(data.ServiceAndInstallation),
+      OrderNo: String(data.OrderNo),
+      OrderType: String(data.OrderType),
+      OrderSubType: String(data.OrderSubType),
+      SAPSyncSO: String(data.SAPSyncSO),
+      SAPSyncDP: String(data.SAPSyncDP),
+      SAPSyncPAY: String(data.SAPSyncPAY),
+      SAPSyncCancel: String(data.SAPSyncCancel),
+      WalkIn: data.WalkIn === true ? "1" : "0",
+      InvoiceStatus: String(data.InvoiceStatus),
+      SAPDocEntry: String(data.SAPDocEntry),
+      SAPDocNum: String(data.SAPDocNum),
+      CancelRemarks: data.CancelRemarks,
+      // BaseRef: CardCode1 ? "Lead" : "",
+      // BaseRefId: SaveUpdateName === "Update" ? data.BaseRefId : LeadId,
+      VehicleDocEntry: String(data.VehicleDocEntry),
+      CountryCode: "KW",
+      DirectInvoice: String("0"),
+      TaxAmt: "0",
+      TaxCode: "",
+      CustomsDutyPer: "0",
+      CustomsDutyAmt: "0",
+      Currency: "KWD",
+      CurrencyRate: "0",
+      CurrAmt: "0",
+      SendWPAttach: "",
+      // DiscApproReqId: "",
+      CurrApproLevel: "",
+      DiscApproRemarks: "",
+      // DiscApproStatus:
+      //   Discapprov &&
+      //   Discapprov.length > 0 &&
+      //   Math.min(...Discapprov.map((item) => item.MinDiscount || 0)) <=
+      //     watch("SpecialDisc") &&
+      //   watch("DiscApproStatus") !== "APPROVED"
+      //     ? "PENDING"
+      //     : "",
+      // DiscApproReqId:
+      //   data.DiscApproStatus === "REJECTED" || data.DiscApproStatus === ""
+      //     ? "0"
+      //     : data.DiscApproReqId,
+      Year: String(data.Year),
+      Make: String(data.Make),
+      Model: String(data.Model),
+      oLines: oLines.map((line) => ({
+        CreatedBy: CreatedBy,
+        UserId: String(UserId),
+        Status: "1",
+        Currency: "KWD",
+        ItemCode: String(line.ItemCode),
+        Quantity: String(line.Quantity),
+        Price: String(line.Price),
+        WHSCode: String(line.WHSCode),
+        LineNetAmount: "0",
+        Amount: String(line.Amount),
+        DesiredDisc: String(line.DesiredDisc),
+        LineFittingTime: String(line.LineFittingTime || "0"),
+        LineFittingCharge: String(line.LineFittingCharge),
+        LineTotalAmount: String(0),
+        QuotStatus: line.QuotStatus === undefined ? "1" : line.QuotStatus,
+        ItemName: line.ItemName,
+        IssueQuantity: String(line.IssueQuantity || "0"),
+        TaxCode: "0",
+        TaxPer: String(0),
+        TaxAmt: String(0),
+      })),
+      oCashPay:
+        data.CashPaid > 0
+          ? [
+              {
+                UserId: String(UserId),
+                CreatedBy: CreatedBy,
+                CashSum: String(data.CashPaid),
+                CashAccount: "1201011",
+                TaxDate: String(dayjs(data.TaxDate).format("YYYY-MM-DD")),
+              },
+            ]
+          : [],
+      oCCPay: (oCCPay || []).map((creditCard) => ({
+        UserId: String(UserId),
+        CreatedBy: CreatedBy,
+        CreditCard: String(creditCard.CreditCard),
+        CreditAcct: String(creditCard.CashAccount),
+        CreditCardNumber: String(creditCard.CreditCardNumber),
+        PaymentMethodCode: "0",
+        VoucherNum: String(creditCard.VoucherNum),
+        CreditSum: String(creditCard.CreditSum),
+      })),
+      BankPay:
+        data.TransferSum > 0
+          ? [
+              {
+                UserId: String(UserId),
+                CreatedBy: CreatedBy,
+                TransferAccount: "1201022",
+                TransferAccountName: "Bank NBK 2008134452",
+                TransferReference: String(data.TransferReference),
+                TransferDate: dayjs(data.TransferDate).format("YYYY-MMM-DD"),
+                TransferSum: String(data.TransferSum || "0"),
+              },
+            ]
+          : [],
+    };
+    if (data.TransferSum > 0 && !data.TransferReference) {
+      Swal.fire({
+        text: "Transfer Reference No is required",
+        icon: "warning",
+        toast: true,
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return;
+    }
+    if (
+      watch("UserId") === "" ||
+      watch("UserId") === null ||
+      watch("UserId") === undefined
+    ) {
+      Swal.fire({
+        text: "User ID is missing. Please log in again to continue.",
+        icon: "warning",
+        // toast: true,
+        showConfirmButton: true,
+        // timer: 2000,
+        timerProgressBar: true,
+      });
+      return;
+    }
+
+    Swal.fire({
+      text: `Do You Want Save`,
+      icon: "question",
+      input: "checkbox",
+      inputValue: 0,
+      inputPlaceholder: `Send Attachment Copy On Whatsapp`,
+      confirmButtonText: "YES",
+      cancelButtonText: "No",
+      showConfirmButton: true,
+      showDenyButton: true,
+    }).then(async (results) => {
+      if (results.isConfirmed) {
+        obj.SendWPAttach = results.value === 1 ? true : false;
+
+        setModalLoading(true);
+
+        try {
+          let res;
+          let formModeForLead = "";
+
+          if (SaveUpdateName === "Submit") {
+            // const CardCode1 = await OnSubmitBpLead();
+            // if (CardCode1) {
+            //   obj.CardCode = CardCode1;
+            //   obj.BaseRef = CardCode1 ? "Lead" : "";
+            // }
+            res = await apiClient.post(`/quotationSo`, obj);
+
+            formModeForLead = "ADD";
+          } else if (SaveUpdateName === "Update") {
+            // obj.CardCode = watch("CardCode");
+            // obj.BaseRef = watch("BaseRef");
+            res = await apiClient.put(`/quotationSo/${data.DocEntry}`, obj);
+
+            formModeForLead = "UPDATE";
+          } else {
+            setModalLoading(false);
+            return Swal.fire({
+              text: "Document Not Saved",
+              icon: "info",
+              toast: true,
+              showConfirmButton: false,
+              timer: 1500,
+            });
+          }
+
+          if (res.data.success) {
+            const data = res.data.values;
+            // resetallformdata();
+            // getQuotationdata();
+            // OpenQuotationModal(false);
+            // setModalLoading(false);
+            // getSalesCounter();
+            // UpdateLeadStage(data, formModeForLead);
+
+            Swal.fire({
+              title: "Success!",
+              icon: "success",
+              text:
+                allFormData.AdvancePayment < 50
+                  ? `Quotation ${SaveUpdateName} Successfully`
+                  : `Order ${SaveUpdateName} Successfully`,
+              confirmButtonText: "Ok",
+              timer: 1000,
+            });
+
+            // const VehicleObj = {
+            //   UserId: obj.UserId,
+            //   CreatedBy: obj.CreatedBy,
+            //   Status: "1",
+            //   Year: obj.Year,
+            //   Make: obj.Make,
+            //   Model: obj.Model,
+            //   JobRemarks: obj.JobRemarks,
+            //   CardCode: obj.CardCode,
+            // };
+            // if (obj.Year && obj.Make && obj.Model) {
+            //   AddBPVehicle(VehicleObj);
+            // }
+
+            // setTimeout(() => {
+            //   printReport(data.DocEntry, data.OrderNo);
+            // }, 1200);
+          } else {
+            setModalLoading(false);
+            Swal.fire({
+              title: "Error!",
+              text: res.data.message,
+              icon: "warning",
+              confirmButtonText: "Ok",
+            });
+          }
+        } catch (error) {
+          setModalLoading(false);
+          Swal.fire({
+            title: "Error!123",
+            text: error,
+            icon: "warning",
+            confirmButtonText: "Ok",
+          });
+        }
+      } else {
+        Swal.fire({
+          title: "Info!",
+          text: "Document Not Saved",
+          icon: "info",
+          // toast: true,
+          confirmButtonText: "Ok",
+          timer: 1500,
+        });
+      }
+    });
+    // }
+  };
 
   const onSubmitDynamicSearch = async (data) => {
     setModalLoading(true);
@@ -1370,6 +1815,7 @@ export default function QuatationSO() {
 
   const handleCloseModel = () => {
     setOpenModal(false);
+    resetMdl(initialItemSearch);
   };
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
@@ -1391,7 +1837,120 @@ export default function QuatationSO() {
     setDrawerOpen(!drawerOpen);
   };
 
+  const round = (num, decimals = 2) =>
+    Math.round((num + Number.EPSILON) * 10 ** decimals) / 10 ** decimals;
+
+  const onTop20Click = (item, Category) => {
+    const cardCode = getValues("CardCode");
+    if (!cardCode?.trim()) {
+      Swal.fire({
+        text: "Please Select Customer",
+        icon: "warning",
+        toast: true,
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return;
+    }
+
+    if (watch("ServiceOrder")) {
+      Swal.fire({
+        text: "You Cannot select Items for Service Order",
+        icon: "warning",
+        toast: true,
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return;
+    }
+
+    const currentOLines = getValues("oLines") || [];
+
+    // Prevent duplicate
+    if (currentOLines.some((p) => p.ItemCode === item.ItemCode)) {
+      Swal.fire({
+        toast: true,
+        position: "center",
+        icon: "warning",
+        title: "Item Already Selected",
+        showConfirmButton: false,
+        timer: 1500,
+      });
+      return;
+    }
+
+    const isCNCActive =
+      watch("CNC") === true &&
+      watch("JobWorkAt")?.toUpperCase() === "ORP WORKSHOP";
+
+    const realFittingCharge = item.FittingCharge;
+
+    const newLine = {
+      ItemCode: item.ItemCode,
+      ItemName: item.ItemName,
+      WHSCode: item.WHSCode ?? "1000",
+      Quantity: 1,
+      Price: round(item.Price, 3),
+      DesiredDisc: "0",
+      Amount: item.Price,
+      FTSQty: item.FTSQty,
+      LineFittingTime: isCNCActive ? 0 : item.FittingTime,
+      LineFittingCharge: isCNCActive ? 0 : realFittingCharge,
+      FittingCharge: isCNCActive ? 0 : realFittingCharge,
+      LineJobRemarks: item.LineJobRemarks,
+      IssueQuantity: item.IssueQuantity,
+    };
+
+    setStoredFittingCharges((prev) => {
+      const merged = [...prev];
+      const idx = merged.findIndex((m) => m.ItemCode === item.ItemCode);
+      if (idx >= 0)
+        merged[idx] = {
+          ItemCode: item.ItemCode,
+          FittingCharge: realFittingCharge,
+        };
+      else
+        merged.push({
+          ItemCode: item.ItemCode,
+          FittingCharge: realFittingCharge,
+        });
+      return merged;
+    });
+
+    const updatedOLines = [...currentOLines, newLine];
+    setValue("oLines", updatedOLines);
+
+    // Now update rows
+    const price = Number(item.Price || 0);
+    const quantity = 1;
+    const total = price * quantity;
+
+    const rows = getValues("rows") || [];
+
+    const newRow = {
+      ItemCode: item.ItemCode,
+      DesiredDisc: item.DesiredDisc || "0",
+      ItemName: item.ItemName,
+      Price: price,
+      Quantity: quantity,
+      TotalAmt: total,
+      LineFittingCharge: isCNCActive ? 0 : realFittingCharge,
+      FittingCharge: isCNCActive ? 0 : realFittingCharge,
+      IssueQuantity: item.IssueQuantity || "0",
+      WHSCode: item.WHSCode ?? "1000",
+    };
+
+    const updatedRows = [...rows, newRow];
+    setValue("rows", updatedRows);
+
+    updateSummaryFields();
+    calculateData();
+  };
+
   const oLines = useWatch({ control, name: "oLines" });
+  const oCCPay = useWatch({ control, name: "oCCPay" });
 
   const columns = [
     {
@@ -1485,41 +2044,80 @@ export default function QuatationSO() {
   //   });
   // };
 
+  // const HandleTableOnChange = (newRow, oldRow) => {
+  //   const qty = Number(newRow.Quantity) || 0;
+  //   const price = Number(newRow.Price) || 0;
+
+  //   const totalAmt = qty * price;
+
+  //   const updatedRow = { ...newRow, Amount: totalAmt };
+
+  //   setValue("oLines", (prevRows) => {
+  //     const updatedRows = prevRows.map((row) =>
+  //       row.id === newRow.id ? updatedRow : row,
+  //     );
+
+  //     const totalPartsSum = updatedRows.reduce(
+  //       (sum, row) => sum + (Number(row.Amount) || 0),
+  //       0,
+  //     );
+  //     const Fittingcharge = updatedRows.reduce(
+  //       (sum, row) => sum + (Number(row.LineFittingCharge) || 0),
+  //       0,
+  //     );
+
+  //     setValue("TotalPartsValue", totalPartsSum.toFixed(3));
+  //     setValue("ServiceAndInstallation", Fittingcharge.toFixed(3));
+  //     setValue("NetPartsValue", totalPartsSum.toFixed(3));
+  //     setValue("TotalDocAmt", totalPartsSum.toFixed(3));
+  //     calculateData();
+
+  //     return updatedRows;
+  //   });
+
+  //   return updatedRow;
+  // };
+
   const HandleTableOnChange = (newRow, oldRow) => {
     const qty = Number(newRow.Quantity) || 0;
     const price = Number(newRow.Price) || 0;
-
+    const fitting = Number(newRow.FittingCharge) || 0;
     const totalAmt = qty * price;
 
-    const updatedRow = { ...newRow, Amount: totalAmt };
+    const updatedRow = {
+      ...newRow,
+      Amount: totalAmt.toFixed(3),
+    };
 
-    setValue("oLines", (prevRows) => {
-      const updatedRows = prevRows.map((row) =>
-        row.id === newRow.id ? updatedRow : row,
-      );
+    const currentLines = getValues("oLines") || [];
 
-      const totalPartsSum = updatedRows.reduce(
-        (sum, row) => sum + (Number(row.Amount) || 0),
-        0,
-      );
-      const Fittingcharge = updatedRows.reduce(
-        (sum, row) => sum + (Number(row.LineFittingCharge) || 0),
-        0,
-      );
+    const updatedRows = currentLines.map((row) =>
+      row.ItemCode === newRow.ItemCode ? updatedRow : row,
+    );
 
-      setValue("TotalPartsValue", totalPartsSum.toFixed(3));
-      setValue("ServiceAndInstallation", Fittingcharge.toFixed(3));
-      setValue("NetPartsValue", totalPartsSum.toFixed(3));
-      setValue("TotalDocAmt", totalPartsSum.toFixed(3));
-      calculateData();
+    const totalPartsSum = updatedRows.reduce(
+      (sum, row) => sum + (Number(row.Amount) || 0),
+      0,
+    );
 
-      return updatedRows;
-    });
+    const totalFittingCharge = updatedRows.reduce(
+      (sum, row) => sum + (Number(row.LineFittingCharge) || 0),
+      0,
+    );
+
+    setValue("oLines", updatedRows);
+    setValue("TotalPartsValue", totalPartsSum.toFixed(3));
+    setValue("ServiceAndInstallation", totalFittingCharge.toFixed(3));
+
+    const shipping = Number(getValues("ShippingAmt")) || 0;
+    const finalDocAmt = totalPartsSum + totalFittingCharge + shipping;
+
+    setValue("TotalDocAmt", finalDocAmt.toFixed(3));
+    setValue("DueAmount", finalDocAmt.toFixed(3));
+    setValue("BalanceDueAmount", finalDocAmt.toFixed(3));
 
     return updatedRow;
   };
-  const round = (num, decimals = 2) =>
-    Math.round((num + Number.EPSILON) * 10 ** decimals) / 10 ** decimals;
   const HandleOnFildChange = () => {
     const allformdata = getValues();
 
@@ -1722,6 +2320,7 @@ export default function QuatationSO() {
   const ClearFormData = () => {
     reset(initial);
     setDocEntry("");
+    setSaveUpdateName("SAVE");
   };
 
   return (
@@ -1757,8 +2356,8 @@ export default function QuatationSO() {
               <Controller
                 name="CUSTOMER ID"
                 disabled
-                control={control}
-                render={({ field, fieldState: { error } }) => (
+                control={controlMdl1}
+                render={({ field, fieldState: { errorsMdl1 } }) => (
                   <InputTextField label="CUSTOMER ID" {...field} rows={1} />
                 )}
               />
@@ -1766,14 +2365,14 @@ export default function QuatationSO() {
 
             <Grid item xs={12} lg={12} textAlign={"center"}>
               <Controller
-                name="Document No"
-                control={control}
-                render={({ field, fieldState: { error } }) => (
+                name="CardName"
+                control={controlMdl1}
+                render={({ field, fieldState: { errorsMdl1 } }) => (
                   <InputTextField
                     label="CUSTOMER NAME"
                     {...field}
-                    error={!!error}
-                    helperText={error ? error.message : null}
+                    error={!!errorsMdl1}
+                    helperText={errorsMdl1 ? errorsMdl1.message : null}
                     rows={1}
                   />
                 )}
@@ -1791,13 +2390,13 @@ export default function QuatationSO() {
             <Grid item xs={12} lg={12} textAlign={"center"}>
               <Controller
                 name="EMAIL"
-                control={control}
-                render={({ field, fieldState: { error } }) => (
+                control={controlMdl1}
+                render={({ field, fieldState: { errorsMdl1 } }) => (
                   <InputTextField
                     label="EMAIL"
                     {...field}
-                    error={!!error}
-                    helperText={error ? error.message : null}
+                    error={!!errorsMdl1}
+                    helperText={errorsMdl1 ? errorsMdl1.message : null}
                     rows={1}
                   />
                 )}
@@ -1833,7 +2432,7 @@ export default function QuatationSO() {
         height="calc(100vh - 110px)"
         position="relative"
         component={"form"}
-        onSubmit={hadlesubmit}
+        onSubmit={handleSubmit(onSubmit)}
       >
         <Grid
           container
@@ -1953,49 +2552,72 @@ export default function QuatationSO() {
                   <Grid item xs={12} lg={3} md={4}>
                     <Grid container direction="column">
                       <Grid item textAlign="center">
-                        <Controller
-                          name="CardCode"
-                          control={control}
-                          render={({ field }) => (
-                            <TextField
-                              size="small"
-                              label="CUSTOMER ID"
-                              autoFocus
-                              readOnly={true}
-                              disabled={watch("DocEntry")}
-                              placeholder="Search ..."
-                              sx={{ m: 1, width: "100%", maxWidth: 220 }}
-                              InputProps={{
-                                endAdornment: (
-                                  <InputAdornment position="end">
-                                    <IconButton
-                                      color="primary"
-                                      onClick={() => {
-                                        OpenDailog();
-                                      }}
-                                      onChange={OpenDailog}
-                                      disabled={!!DocEntry}
-                                    >
-                                      <SearchIcon />
-                                    </IconButton>
-                                    <IconButton
-                                      onClick={handleClickOpen}
-                                      size="small"
-                                      style={{
-                                        backgroundColor: "green",
-                                        borderRadius: "20%",
-                                        color: "white",
-                                        padding: 4,
-                                      }}
-                                    >
-                                      <ContactMailOutlinedIcon />
-                                    </IconButton>
-                                  </InputAdornment>
-                                ),
-                              }}
+                        <Grid
+                          container
+                          alignItems="center"
+                          justifyContent={"center"}
+                          paddingLeft={3.5}
+                        >
+                          <Grid item lg="9" md="9" sm="10" xs="10">
+                            <Controller
+                              name="CardCode"
+                              control={control}
+                              render={({ field }) => (
+                                <InputTextField
+                                  {...field}
+                                  size="small"
+                                  label="CUSTOMER ID"
+                                  autoFocus
+                                  readOnly
+                                  disabled={!!watch("DocEntry")}
+                                  placeholder="Search ..."
+                                  sx={{ width: "100%" }}
+                                  InputProps={{
+                                    endAdornment: (
+                                      <InputAdornment position="end">
+                                        <IconButton
+                                          color="primary"
+                                          onClick={OpenDailog}
+                                          disabled={!!watch("DocEntry")}
+                                        >
+                                          <SearchIcon />
+                                        </IconButton>
+                                      </InputAdornment>
+                                    ),
+                                  }}
+                                />
+                              )}
                             />
-                          )}
-                        />
+                          </Grid>
+
+                          <Grid
+                            item
+                            lg="auto"
+                            md="auto"
+                            sm="auto"
+                            xs="auto"
+                            className="d-flex align-items-end ps-0"
+                            style={{
+                              marginLeft: 5,
+                            }}
+                          >
+                            <IconButton
+                              onClick={handleClickOpen}
+                              size="small"
+                              sx={{
+                                backgroundColor: "green",
+                                borderRadius: "20%",
+                                color: "white",
+                                p: 0.8,
+                                "&:hover": {
+                                  backgroundColor: "darkgreen",
+                                },
+                              }}
+                            >
+                              <ContactMailOutlinedIcon />
+                            </IconButton>
+                          </Grid>
+                        </Grid>
                         <SearchModel
                           open={searchmodelOpen}
                           onClose={SearchModelClose}
@@ -2178,6 +2800,7 @@ export default function QuatationSO() {
                             mb: 2,
                           }}
                           onClick={handleClickModel}
+                          disabled={!watch("CardCode")}
                         >
                           Search Item
                         </Button>
@@ -2207,6 +2830,9 @@ export default function QuatationSO() {
                         <Card
                           elevation={5}
                           key={index}
+                          onClick={() => {
+                            onTop20Click(item, item.SUBCATEGORY);
+                          }}
                           sx={{
                             height: "80px",
                             width: "100%",
@@ -2345,7 +2971,7 @@ export default function QuatationSO() {
                       name="OrderNo"
                       control={control}
                       render={({ field }) => (
-                        <InputsmallFilds
+                        <SmallInputFields
                           label="SO NO"
                           {...field}
                           rows={1}
@@ -2727,6 +3353,7 @@ export default function QuatationSO() {
                   </Grid>
                 </Grid>
 
+                {/* {getValues("OrderNo") === "" && ( */}
                 <Grid container lg={12} md={12} px={1}>
                   <Grid item width="100%" m={1} border="1px solid grey">
                     <Tabs
@@ -3001,6 +3628,7 @@ export default function QuatationSO() {
                     )}
                   </Grid>
                 </Grid>
+                {/* )} */}
 
                 <Grid container lg={12} md={12} spacing={2} py={1}>
                   <Grid item lg={2} md={3} xs={6} textAlign={"center"}>
@@ -3129,8 +3757,15 @@ export default function QuatationSO() {
                 variant="contained"
                 color="success"
                 sx={{ color: "white" }}
+                name={SaveUpdateName}
+                type="submit"
+                disabled={
+                  (SaveUpdateName === "SAVE" && !perms.IsAdd) ||
+                  (SaveUpdateName === "UPDATE" && !perms.IsEdit) ||
+                  allFormData.Status === "0"
+                }
               >
-                SAVE
+                {SaveUpdateName}
               </Button>
               <Button variant="contained" color="error">
                 DELETE
