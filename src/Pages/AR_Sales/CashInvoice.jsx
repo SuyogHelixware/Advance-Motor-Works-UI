@@ -1,16 +1,15 @@
+import AddIcon from "@mui/icons-material/Add";
+import CloseIcon from "@mui/icons-material/Close";
 import MenuIcon from "@mui/icons-material/Menu";
 import RemoveCircleIcon from "@mui/icons-material/RemoveCircle";
 import { TabContext, TabPanel } from "@mui/lab";
-import { useEffect, useRef, useState } from "react";
-import Swal from "sweetalert2";
-import CloseIcon from "@mui/icons-material/Close";
-import AddIcon from "@mui/icons-material/Add";
 import {
   Box,
   Button,
   Divider,
   Grid,
   IconButton,
+  Paper,
   Tab,
   Table,
   TableBody,
@@ -19,16 +18,18 @@ import {
   TableHead,
   TableRow,
   Tabs,
+  Tooltip,
   Typography,
   useTheme,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import axios from "axios";
 import dayjs from "dayjs";
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { BeatLoader } from "react-spinners";
+import Swal from "sweetalert2";
 import { dataGridSx } from "../../Styles/dataGridStyles";
 import CardComponent from "../Components/CardComponent";
 import {
@@ -42,6 +43,7 @@ import {
   SmallInputSearchSelectTextField,
   SmallInputTextField,
 } from "../Components/formComponents";
+import { Loader } from "../Components/Loader";
 import SearchInputField from "../Components/SearchInputField";
 import SearchModel from "../Components/SearchModel";
 
@@ -153,6 +155,7 @@ export default function CashInvoice() {
 
   const [bankData, setBankData] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [processinv, setprocessinv] = useState(false);
 
   const BASE_URL = "http://hwaceri5:8070/api";
   const columns = [
@@ -205,7 +208,6 @@ export default function CashInvoice() {
     handleSubmit,
     reset,
     formState: { errors },
-    trigger,
     getValues,
     setValue,
     watch,
@@ -385,6 +387,7 @@ export default function CashInvoice() {
           data.VehInwardTime ? dayjs(data.VehInwardTime) : dayjs(),
         );
         setValue("SparesNetAmt", data.SparesNetAmt);
+        setprocessinv(false);
       }
     } catch (error) {
       Swal.fire({
@@ -407,7 +410,6 @@ export default function CashInvoice() {
         },
       })
       .then((response) => {
-        console.log("close list", response);
         setClosedPosts(response.data.values);
         if (response.data.values.length < 20) {
           setHasMoreClose(false);
@@ -563,9 +565,10 @@ export default function CashInvoice() {
         setValue("VehInwardDate", data.VehInwardDate);
         setValue(
           "VehInwardTime",
-          data.VehInwardTime ? dayjs(data.VehInwardTime) : dayjs(),
+          data.VehInwardTime ? dayjs(data.VehInwardTime, "HH:mm") : dayjs(),
         );
         setValue("SparesNetAmt", data.SparesNetAmt);
+        setprocessinv(false);
       }
     } catch (error) {
       Swal.fire({
@@ -657,6 +660,7 @@ export default function CashInvoice() {
       };
 
       reset(filledValues);
+      setprocessinv(true);
       ModelClose();
     } catch (error) {
       console.error("Error fetching ARInvoice:", error);
@@ -674,15 +678,6 @@ export default function CashInvoice() {
   const onSubmit = async (data) => {
     const UserId = localStorage.getItem("UserId");
     const CreatedBy = localStorage.getItem("UserName");
-
-    // Build oCCPay from bankData (credit card table)
-    const oCCPay = bankData.map((item) => ({
-      CreditCard: item.myRadioGroup,
-      CashAccount: "",
-      CreditCardNumber: item.Creditno,
-      VoucherNum: item.AuthCode,
-      CreditSum: item.Amount,
-    }));
 
     const obj = {
       UserId: UserId,
@@ -757,7 +752,7 @@ export default function CashInvoice() {
               },
             ]
           : [],
-      oCCPay: (oCCPay || []).map((creditCard) => ({
+      oCCPay: (bankData || []).map((creditCard) => ({
         UserId: UserId,
         CreatedBy: CreatedBy,
         CreditCard: String(creditCard.CreditCard),
@@ -951,7 +946,7 @@ export default function CashInvoice() {
         CreditSum:
           i === 0 ? lastValidValuesRef.current.CreditSum : item.CreditSum,
       }));
-      setValue("oCCPay", updatedOCCPayList);
+      setBankData(updatedOCCPayList);
 
       return;
     }
@@ -1087,13 +1082,23 @@ export default function CashInvoice() {
       VoucherNum: values.VoucherNum,
     };
 
-    const updatedList = [...(oCCPay || []), newEntry];
+    const updatedList = [...bankData, newEntry];
+    setBankData(updatedList);
     setValue("oCCPay", updatedList);
+
     PaymentCalc();
     setValue("CreditCard", "");
     setValue("CreditCardNumber", "");
     setValue("VoucherNum", "");
     setValue("CreditSum", "");
+  };
+
+  const handleRowDelete = (index) => {
+    const currentList = [...bankData];
+    currentList.splice(index, 1);
+    setBankData(currentList);
+    setValue("oCCPay", currentList);
+    PaymentCalc();
   };
 
   const sidebarContent = (
@@ -1294,6 +1299,7 @@ export default function CashInvoice() {
   );
   return (
     <>
+      <Loader open={loading} />
       <Grid
         container
         width="100%"
@@ -1640,17 +1646,25 @@ export default function CashInvoice() {
                       </Grid>
 
                       <Grid item textAlign={"center"}>
-                        <Controller
-                          name="JobRemarks"
-                          control={control}
-                          render={({ field }) => (
-                            <InputTextArea
-                              label="JOB WORK DETAILS"
-                              type="text"
-                              {...field}
+                        <Tooltip
+                          title={(watch("JobRemarks") || "").toUpperCase()}
+                          arrow
+                        >
+                          <div style={{ width: "100%" }}>
+                            <Controller
+                              name="JobRemarks"
+                              control={control}
+                              render={({ field }) => (
+                                <InputTextArea
+                                  label="JOB WORK DETAILS"
+                                  type="text"
+                                  {...field}
+                                  readOnly={processinv === false}
+                                />
+                              )}
                             />
-                          )}
-                        />
+                          </div>
+                        </Tooltip>
                       </Grid>
 
                       <Grid item textAlign={"center"}>
@@ -2084,8 +2098,8 @@ export default function CashInvoice() {
                                 </Grid>
                                 <Grid item lg={6} xs={12} md={6} sm={6}>
                                   <TableContainer
-                                    // component={Paper}
-                                    sx={{ overflow: "auto" }}
+                                    component={Paper}
+                                    sx={{ overflow: "auto", height: 200 }}
                                   >
                                     <Table
                                       stickyHeader
@@ -2104,24 +2118,23 @@ export default function CashInvoice() {
                                       <TableBody>
                                         {bankData.map((data, index) => (
                                           <TableRow key={index}>
-                                            <TableCell
-                                              component="th"
-                                              scope="row"
-                                            >
-                                              {data.AuthCode}
+                                            <TableCell>
+                                              {data.CashAccount}
                                             </TableCell>
                                             <TableCell>
-                                              {data.myRadioGroup}
+                                              {data.CreditCard}
                                             </TableCell>
                                             <TableCell>
-                                              {data.Creditno}
+                                              {data.CreditCardNumber}
                                             </TableCell>
-                                            <TableCell>{data.Amount}</TableCell>
+                                            <TableCell>
+                                              {data.CreditSum}
+                                            </TableCell>
                                             <TableCell>
                                               <IconButton
-                                              // onClick={() =>
-                                              //   removeTableRow1(index)
-                                              // }
+                                                onClick={() => {
+                                                  handleRowDelete(index);
+                                                }}
                                               >
                                                 <RemoveCircleIcon
                                                   sx={{ color: "red" }}
@@ -2304,7 +2317,12 @@ export default function CashInvoice() {
                 bottom: "0px",
               }}
             >
-              <Button variant="contained" color="success" type="submit">
+              <Button
+                variant="contained"
+                color="success"
+                type="submit"
+                disabled={processinv === false}
+              >
                 PROCESS INVOICE
               </Button>
 

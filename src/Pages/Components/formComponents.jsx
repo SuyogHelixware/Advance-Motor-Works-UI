@@ -1069,7 +1069,20 @@ export const SmallInputSearchSelectTextField = forwardRef(
 );
 
 export const InputTextArea = forwardRef(
-  ({ label, type, error, helperText, value, ...props }, ref) => {
+  (
+    {
+      label,
+      type,
+      error,
+      helperText,
+      value,
+      readOnly,
+      disabled,
+      inputProps,
+      ...props
+    },
+    ref,
+  ) => {
     return (
       <>
         <TextField
@@ -1088,6 +1101,11 @@ export const InputTextArea = forwardRef(
           label={label}
           type={type}
           value={value}
+          inputProps={{
+            ...inputProps,
+            readOnly,
+            disabled,
+          }}
           error={error}
           helperText={helperText}
           {...props}

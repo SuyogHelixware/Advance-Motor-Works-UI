@@ -35,6 +35,7 @@ import SignatureCanvas from "react-signature-canvas";
 
 import {
   InputDatePickerFields,
+  InputTextArea,
   InputTextAreaFields,
   InputTextField,
   InputTextFieldLarge,
@@ -1901,7 +1902,7 @@ export default function IssueMaterial() {
                               name="JobWorkDetails"
                               control={control}
                               render={({ field }) => (
-                                <InputTextAreaFields
+                                <InputTextArea
                                   label="Job Work Details"
                                   readOnly={true}
                                   {...field}
