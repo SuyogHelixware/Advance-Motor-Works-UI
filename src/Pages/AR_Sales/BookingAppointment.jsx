@@ -611,7 +611,7 @@ export default function BinLocationMaster() {
             fetchClosedListData(0);
             Swal.fire({
               title: "Success!",
-              text: "Bin Location saved Successfully",
+              text: "Appointment saved Successfully",
               icon: "success",
               confirmButtonText: "Ok",
               timer: 1000,
