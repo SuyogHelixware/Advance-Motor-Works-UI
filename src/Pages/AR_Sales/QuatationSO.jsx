@@ -1950,7 +1950,7 @@ export default function QuatationSO() {
   };
 
   const onSubmitDynamicSearch = (data) => {
-    fetchFormData(data); 
+    fetchFormData(data);
   };
 
   // const onSubmitDynamicSearch = async (data) => {
@@ -2251,39 +2251,47 @@ export default function QuatationSO() {
     {
       field: "LineFittingCharge",
       headerName: "FITTING",
-      width: 110,
-      editable: true,
-      type: "number",
+      width: 100,
       align: "right",
-      headerAlign: "center",
-      renderCell: (params) => {
-        const index = (getValues("oLines") || []).findIndex(
-          (r) => r.ItemCode === params.row.ItemCode,
-        );
-        return (
-          <SmallInputFields
-            name={`oLines.${index}.LineFittingCharge`}
-            control={control}
-            inputProps={{ style: { textAlign: "right" } }}
-            sx={{
-              m: 0,
-              p: 0,
-              "& .MuiInputBase-root": { margin: 0, textAlign: "right" },
-              "& .MuiOutlinedInput-root": {
-                "& fieldset": { border: "none" },
-                "&:hover fieldset": { border: "none" },
-                "&.Mui-focused fieldset": { border: "none" },
-              },
-            }}
-            onChange={() => {
-              const currentLines = getValues("oLines") || [];
-              const row = currentLines[index];
-              if (row) HandleTableOnChange(row, params.row);
-            }}
-          />
-        );
-      },
+      headerAlign: "right",
+      editable: true,
     },
+    // {
+    //   field: "LineFittingCharge",
+    //   headerName: "FITTING",
+    //   width: 110,
+    //   editable: true,
+    //   type: "number",
+    //   align: "right",
+    //   headerAlign: "center",
+    //   renderCell: (params) => {
+    //     const index = (getValues("oLines") || []).findIndex(
+    //       (r) => r.LineNum === params.row.LineNum,
+    //     );
+    //     return (
+    //       <SmallInputFields
+    //         name={`oLines.${index}.LineFittingCharge`}
+    //         control={control}
+    //         inputProps={{ style: { textAlign: "right" } }}
+    //         sx={{
+    //           m: 0,
+    //           p: 0,
+    //           "& .MuiInputBase-root": { margin: 0, textAlign: "right" },
+    //           "& .MuiOutlinedInput-root": {
+    //             "& fieldset": { border: "none" },
+    //             "&:hover fieldset": { border: "none" },
+    //             "&.Mui-focused fieldset": { border: "none" },
+    //           },
+    //         }}
+    //         onChange={() => {
+    //           const currentLines = getValues("oLines") || [];
+    //           const row = currentLines[index];
+    //           if (row) HandleTableOnChange(row, params.row);
+    //         }}
+    //       />
+    //     );
+    //   },
+    // },
     {
       field: "FTSQty",
       headerName: "FTS",
@@ -2506,14 +2514,26 @@ export default function QuatationSO() {
     if (!newRow) return;
     const qty = Number(newRow.Quantity || 0);
     const price = Number(newRow.Price || 0);
+    const fitting = Number(newRow.LineFittingCharge || 0);
 
     const amount = qty * price;
 
     const currentLines = getValues("oLines") || [];
 
+    // const updatedRows = currentLines.map((row) =>
+    //   row.ItemCode === newRow.ItemCode
+    //     ? { ...row, Amount: amount.toFixed(3) }
+    //     : row,
+    // );
     const updatedRows = currentLines.map((row) =>
       row.ItemCode === newRow.ItemCode
-        ? { ...row, Amount: amount.toFixed(3) }
+        ? {
+            ...row,
+            Quantity: qty,
+            Price: price,
+            LineFittingCharge: fitting,
+            Amount: amount.toFixed(3),
+          }
         : row,
     );
 
@@ -3531,7 +3551,14 @@ export default function QuatationSO() {
                       )}
                     />
                   </Grid>
-                  <Grid item xs={12} md={2} sm={4} lg={1.5} textAlign={"center"}>
+                  <Grid
+                    item
+                    xs={12}
+                    md={2}
+                    sm={4}
+                    lg={1.5}
+                    textAlign={"center"}
+                  >
                     <Controller
                       name="CNC"
                       control={control}
@@ -3555,7 +3582,14 @@ export default function QuatationSO() {
                       )}
                     />
                   </Grid>
-                  <Grid item xs={12} md={2} sm={4} lg={2.5} textAlign={"center"}>
+                  <Grid
+                    item
+                    xs={12}
+                    md={2}
+                    sm={4}
+                    lg={2.5}
+                    textAlign={"center"}
+                  >
                     <Controller
                       name="DeliveredLater"
                       control={control}
@@ -3681,7 +3715,7 @@ export default function QuatationSO() {
                       columnHeaderHeight={35}
                       rowHeight={40}
                       hideFooter
-                      // processRowUpdate={HandleTableOnChange}
+                      processRowUpdate={HandleTableOnChange}
                       onProcessRowUpdateError={(error) => console.log(error)}
                       autoHeight="false"
                       sx={gridSx}
