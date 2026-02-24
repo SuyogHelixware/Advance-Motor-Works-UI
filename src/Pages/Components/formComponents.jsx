@@ -311,9 +311,10 @@ export const SmallInputFields = ({
   name,
   control,
   label,
-  width = 150,
+  // width = 150,
   readOnly = false,
   onChange,
+  sx,
 }) => {
   if (!control) return null;
 
@@ -338,7 +339,10 @@ export const SmallInputFields = ({
             }
           }}
           sx={{
-            width,
+            ...sx,
+            width: "100%",
+          maxWidth: 135,
+            // width,
             "& .MuiInputBase-root": {
               WebkitAppearance: "none",
             },

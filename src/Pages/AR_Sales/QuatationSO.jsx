@@ -302,10 +302,30 @@ export default function QuatationSO() {
   const allFormData = getValues();
   const perms = usePermissions(133);
 
+  const CreditCardList = [
+    { Name: "KNET", AccountCode: "1201024" },
+    { Name: "MASTER", AccountCode: "1201024" },
+    { Name: "VISA", AccountCode: "1201024" },
+    { Name: "MF", AccountCode: "1201029" },
+    { Name: "TABBY", AccountCode: "1201036" },
+    { Name: "TAMARA", AccountCode: "1201039" },
+    { Name: "TALY", AccountCode: "1201041" },
+  ];
+
+  const selectedCard = useWatch({ control, name: "CreditCard" });
+
   const getIssueStatus = (Qty, IssueQty) => {
     if (Qty > IssueQty && IssueQty > 0) return "P-ISSUED";
     else if (Qty === IssueQty) return "C-ISSUED";
     else return "NOT-ISSUED";
+  };
+
+  const handleDeleteCreditAmt = (index) => {
+    const currentList = [...bankData];
+    currentList.splice(index, 1);
+    setBankData(currentList);
+    setValue("oCCPay", currentList);
+    PaymentsCalculations();
   };
 
   const gettop20Items = useCallback((searchText = "") => {
@@ -1118,7 +1138,7 @@ export default function QuatationSO() {
         CreditSum:
           i === 0 ? lastValidValuesRef.current.CreditSum : item.CreditSum,
       }));
-      setValue("oCCPay", updatedOCCPayList);
+      setBankData(updatedOCCPayList);
 
       return;
     }
@@ -1271,6 +1291,126 @@ export default function QuatationSO() {
     } else if (!checked && !isServiceOrder) {
       setValue("oLines", []);
       HandleTableOnChange();
+    }
+  };
+
+  const handleOnCreditCardAdd = () => {
+    const values = getValues();
+
+    const cardValue = String(values.CreditCard).trim();
+    const cardNumber = String(values.CreditCardNumber).trim();
+    const voucherNum = (values.VoucherNum?.toString() || "").trim();
+    const creditSum = parseFloat(values.CreditSum);
+
+    if (!cardValue || cardValue === "undefined" || cardValue === "null") {
+      Swal.fire({
+        text: "Please Select Credit Card",
+        icon: "warning",
+        iconColor: "red",
+        toast: true,
+        showConfirmButton: false,
+        timer: 3000,
+      });
+      return;
+    } else if (!cardNumber || cardNumber.length !== 4) {
+      Swal.fire({
+        text: "Please add valid Credit Card No",
+        icon: "warning",
+        iconColor: "red",
+        toast: true,
+        showConfirmButton: false,
+        timer: 3000,
+      });
+      return;
+    } else if (!voucherNum || voucherNum.length === 0) {
+      Swal.fire({
+        text: "Please add Authorization code",
+        icon: "warning",
+        iconColor: "red",
+        toast: true,
+        showConfirmButton: false,
+        timer: 3000,
+      });
+      return;
+    } else if (!creditSum || creditSum === 0) {
+      Swal.fire({
+        text: "Please add Valid Amount",
+        icon: "warning",
+        iconColor: "red",
+        toast: true,
+        showConfirmButton: false,
+        timer: 3000,
+      });
+      return;
+    }
+
+    const selectedCard = CreditCardList.find(
+      (card) => card.Name === values.CreditCard,
+    );
+
+    const newEntry = {
+      CashAccount: selectedCard?.AccountCode || 1201011,
+      CreditCard: values.CreditCard,
+      CreditCardNumber: values.CreditCardNumber,
+      CreditSum: values.CreditSum,
+      VoucherNum: values.VoucherNum,
+    };
+
+    const updatedList = [...bankData, newEntry];
+    setBankData(updatedList);
+    setValue("oCCPay", updatedList);
+
+    PaymentsCalculations();
+    setValue("CreditCard", "");
+    setValue("CreditCardNumber", "");
+    setValue("VoucherNum", "");
+    setValue("CreditSum", "");
+  };
+
+  const handleOnChangeCreditValue = (e) => {
+    const { name, value } = e.target;
+
+    if (name === "VoucherNum") {
+      if (value.length > 10) {
+        Swal.fire({
+          text: "Authorization Code must be in 10 digits",
+          icon: "warning",
+          toast: true,
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
+        });
+
+        setValue("VoucherNum", value.slice(0, 10));
+        return;
+      }
+    }
+
+    if (name === "CreditSum") {
+      const creditSum = parseFloat(value);
+      const dueAmount = parseFloat(watch("DueAmount"));
+
+      if (creditSum > dueAmount) {
+        Swal.fire({
+          text: "Paid Value should not be greater than Total Due Amount",
+          icon: "warning",
+          toast: true,
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
+        });
+
+        setValue("CreditSum", lastValidValuesRef.current.CreditSum);
+        return;
+      }
+      lastValidValuesRef.current = {
+        CreditSum: creditSum,
+      };
+    }
+
+    if (name === "CreditCardNumber" && value.length === 4) {
+      const nextInput = document.querySelector('input[name="CreditSum"]');
+      nextInput?.focus();
     }
   };
 
@@ -1611,7 +1751,7 @@ export default function QuatationSO() {
               },
             ]
           : [],
-      oCCPay: (oCCPay || []).map((creditCard) => ({
+      oCCPay: (bankData || []).map((creditCard) => ({
         UserId: String(UserId),
         CreatedBy: CreatedBy,
         CreditCard: String(creditCard.CreditCard),
@@ -1834,11 +1974,6 @@ export default function QuatationSO() {
     e.preventDefault();
   }
 
-  const removeTableRow1 = (index) => {
-    const updatedData = bankData.filter((_, i) => i !== index);
-    setBankData(updatedData);
-  };
-
   const gridSx = useMemo(() => dataGridSx(theme), [theme]);
 
   const handleClickModel = () => {
@@ -2027,9 +2162,34 @@ export default function QuatationSO() {
       headerName: "QTY",
       width: 100,
       align: "right",
-      headerAlign: "right",
-      editable: true,
-      type: "number",
+      headerAlign: "center",
+      renderCell: (params) => {
+        const index = (getValues("oLines") || []).findIndex(
+          (r) => r.ItemCode === params.row.ItemCode,
+        );
+        return (
+          <SmallInputFields
+            name={`oLines.${index}.Quantity`}
+            control={control}
+            inputProps={{ style: { textAlign: "right" } }}
+            sx={{
+              m: 0,
+              p: 0,
+              "& .MuiInputBase-root": { margin: 0, textAlign: "right" },
+              "& .MuiOutlinedInput-root": {
+                "& fieldset": { border: "none" },
+                "&:hover fieldset": { border: "none" },
+                "&.Mui-focused fieldset": { border: "none" },
+              },
+            }}
+            onChange={() => {
+              const currentLines = getValues("oLines") || [];
+              const row = currentLines[index];
+              if (row) HandleTableOnChange(row, params.row);
+            }}
+          />
+        );
+      },
     },
     {
       field: "Price",
@@ -2059,7 +2219,34 @@ export default function QuatationSO() {
       editable: true,
       type: "number",
       align: "right",
-      headerAlign: "right",
+      headerAlign: "center",
+      renderCell: (params) => {
+        const index = (getValues("oLines") || []).findIndex(
+          (r) => r.ItemCode === params.row.ItemCode,
+        );
+        return (
+          <SmallInputFields
+            name={`oLines.${index}.LineFittingCharge`}
+            control={control}
+            inputProps={{ style: { textAlign: "right" } }}
+            sx={{
+              m: 0,
+              p: 0,
+              "& .MuiInputBase-root": { margin: 0, textAlign: "right" },
+              "& .MuiOutlinedInput-root": {
+                "& fieldset": { border: "none" },
+                "&:hover fieldset": { border: "none" },
+                "&.Mui-focused fieldset": { border: "none" },
+              },
+            }}
+            onChange={() => {
+              const currentLines = getValues("oLines") || [];
+              const row = currentLines[index];
+              if (row) HandleTableOnChange(row, params.row);
+            }}
+          />
+        );
+      },
     },
     {
       field: "FTSQty",
@@ -2337,87 +2524,87 @@ export default function QuatationSO() {
     setValue("TotalDocAmt", TotTotalDocAmt.toFixed(3));
   };
 
-  const CreditCardList = [
-    { Name: "KNET", AccountCode: "1201024" },
-    { Name: "MASTER", AccountCode: "1201024" },
-    { Name: "VISA", AccountCode: "1201024" },
-    { Name: "MF", AccountCode: "1201029" },
-    { Name: "TABBY", AccountCode: "1201036" },
-    { Name: "TAMARA", AccountCode: "1201039" },
-    { Name: "TALY", AccountCode: "1201041" },
-  ];
-  const handleOnCreditCardAdd = () => {
-    const values = getValues();
+  // const CreditCardList = [
+  //   { Name: "KNET", AccountCode: "1201024" },
+  //   { Name: "MASTER", AccountCode: "1201024" },
+  //   { Name: "VISA", AccountCode: "1201024" },
+  //   { Name: "MF", AccountCode: "1201029" },
+  //   { Name: "TABBY", AccountCode: "1201036" },
+  //   { Name: "TAMARA", AccountCode: "1201039" },
+  //   { Name: "TALY", AccountCode: "1201041" },
+  // ];
+  // const handleOnCreditCardAdd = () => {
+  //   const values = getValues();
 
-    const cardValue = String(values.CreditCard).trim();
-    const cardNumber = String(values.CreditCardNumber).trim();
-    const voucherNum = (values.VoucherNum?.toString() || "").trim();
-    const creditSum = parseFloat(values.CreditSum);
+  //   const cardValue = String(values.CreditCard).trim();
+  //   const cardNumber = String(values.CreditCardNumber).trim();
+  //   const voucherNum = (values.VoucherNum?.toString() || "").trim();
+  //   const creditSum = parseFloat(values.CreditSum);
 
-    if (!cardValue || cardValue === "undefined" || cardValue === "null") {
-      Swal.fire({
-        text: "Please Select Credit Card",
-        icon: "warning",
-        iconColor: "red",
-        toast: true,
-        showConfirmButton: false,
-        timer: 3000,
-      });
-      return;
-    } else if (!cardNumber || cardNumber.length !== 4) {
-      Swal.fire({
-        text: "Please add valid Credit Card No",
-        icon: "warning",
-        iconColor: "red",
-        toast: true,
-        showConfirmButton: false,
-        timer: 3000,
-      });
-      return;
-    } else if (!voucherNum || voucherNum.length === 0) {
-      Swal.fire({
-        text: "Please add Authorization code",
-        icon: "warning",
-        iconColor: "red",
-        toast: true,
-        showConfirmButton: false,
-        timer: 3000,
-      });
-      return;
-    } else if (!creditSum || creditSum === 0) {
-      Swal.fire({
-        text: "Please add Valid Amount",
-        icon: "warning",
-        iconColor: "red",
-        toast: true,
-        showConfirmButton: false,
-        timer: 3000,
-      });
-      return;
-    }
+  //   if (!cardValue || cardValue === "undefined" || cardValue === "null") {
+  //     Swal.fire({
+  //       text: "Please Select Credit Card",
+  //       icon: "warning",
+  //       iconColor: "red",
+  //       toast: true,
+  //       showConfirmButton: false,
+  //       timer: 3000,
+  //     });
+  //     return;
+  //   } else if (!cardNumber || cardNumber.length !== 4) {
+  //     Swal.fire({
+  //       text: "Please add valid Credit Card No",
+  //       icon: "warning",
+  //       iconColor: "red",
+  //       toast: true,
+  //       showConfirmButton: false,
+  //       timer: 3000,
+  //     });
+  //     return;
+  //   } else if (!voucherNum || voucherNum.length === 0) {
+  //     Swal.fire({
+  //       text: "Please add Authorization code",
+  //       icon: "warning",
+  //       iconColor: "red",
+  //       toast: true,
+  //       showConfirmButton: false,
+  //       timer: 3000,
+  //     });
+  //     return;
+  //   } else if (!creditSum || creditSum === 0) {
+  //     Swal.fire({
+  //       text: "Please add Valid Amount",
+  //       icon: "warning",
+  //       iconColor: "red",
+  //       toast: true,
+  //       showConfirmButton: false,
+  //       timer: 3000,
+  //     });
+  //     return;
+  //   }
 
-    const selectedCard = CreditCardList.find(
-      (card) => card.Name === values.CreditCard,
-    );
+  //   const selectedCard = CreditCardList.find(
+  //     (card) => card.Name === values.CreditCard,
+  //   );
 
-    const newEntry = {
-      CashAccount: selectedCard?.AccountCode || 1201011,
-      CreditCard: values.CreditCard,
-      CreditCardNumber: values.CreditCardNumber,
-      CreditSum: values.CreditSum,
-      VoucherNum: values.VoucherNum,
-    };
+  //   const newEntry = {
+  //     CashAccount: selectedCard?.AccountCode || 1201011,
+  //     CreditCard: values.CreditCard,
+  //     CreditCardNumber: values.CreditCardNumber,
+  //     CreditSum: values.CreditSum,
+  //     VoucherNum: values.VoucherNum,
+  //   };
 
-    const updatedList = [...bankData, newEntry];
-    setBankData(updatedList);
-    setValue("oCCPay", updatedList);
+  //   const updatedList = [...bankData, newEntry];
+  //   setBankData(updatedList);
+  //   setValue("oCCPay", updatedList);
 
-    // PaymentCalc();
-    setValue("CreditCard", "");
-    setValue("CreditCardNumber", "");
-    setValue("VoucherNum", "");
-    setValue("CreditSum", "");
-  };
+  //   // PaymentCalc();
+  //   setValue("CreditCard", "");
+  //   setValue("CreditCardNumber", "");
+  //   setValue("VoucherNum", "");
+  //   setValue("CreditSum", "");
+  // };
 
   const sidebarContent = (
     <>
@@ -2590,6 +2777,7 @@ export default function QuatationSO() {
   const ClearFormData = () => {
     reset(initial);
     setDocEntry("");
+    setBankData([]);
     setSaveUpdateName("SAVE");
     setSelectionModel([]);
     checkedRowsRef.current = [];
@@ -3429,7 +3617,7 @@ export default function QuatationSO() {
                       columnHeaderHeight={35}
                       rowHeight={40}
                       hideFooter
-                      processRowUpdate={HandleTableOnChange}
+                      // processRowUpdate={HandleTableOnChange}
                       onProcessRowUpdateError={(error) => console.log(error)}
                       autoHeight="false"
                       sx={gridSx}
@@ -3744,7 +3932,7 @@ export default function QuatationSO() {
                         <>
                           <Grid container padding={2}>
                             <Grid container item lg={6} xs={12} md={6} sm={6}>
-                              <RadioButtonsField
+                              {/* <RadioButtonsField
                                 control={control}
                                 name="myRadioGroup"
                                 data={[
@@ -3755,6 +3943,15 @@ export default function QuatationSO() {
                                   { value: "TABBY", label: "TABBY" },
                                   { value: "TAMARA", label: "TAMARA" },
                                 ]}
+                              /> */}
+                              <RadioButtonsField
+                                control={control}
+                                name="CreditCard"
+                                data={CreditCardList.map((card) => ({
+                                  value: card.Name,
+                                  label: card.Name,
+                                }))}
+                                value={selectedCard}
                               />
 
                               <Grid item sm={12} md={6} lg={6} xs={12}>
@@ -3765,6 +3962,10 @@ export default function QuatationSO() {
                                     <InputTextField
                                       label="CREDIT CARD NO"
                                       type="Number"
+                                      onChange={(e) => {
+                                        field.onChange(e);
+                                        handleOnChangeCreditValue(e);
+                                      }}
                                       {...field}
                                     />
                                   )}
@@ -3772,16 +3973,27 @@ export default function QuatationSO() {
                               </Grid>
 
                               <Grid item sm={12} md={6} lg={6} xs={12}>
-                                <Controller
+                                {/* <Controller
                                   name="CreditSum"
                                   control={control}
                                   render={({ field }) => (
-                                    <SmallInputTextField
+                                    <SmallInputFields
                                       label="CREDIT SUM"
                                       type="Number"
+                                      onChange={(e) => {
+                                        field.onChange(e);
+                                        handleOnChangeCreditValue(e);
+                                      }}
                                       {...field}
                                     />
                                   )}
+                                /> */}
+                                <SmallInputFields
+                                  name="CreditSum"
+                                  control={control}
+                                  label="CREDIT SUM"
+                                  onChange={handleOnChangeCreditValue}
+                                  type="Number"
                                 />
                               </Grid>
 
@@ -3794,6 +4006,10 @@ export default function QuatationSO() {
                                       label="AUTHORIZATION CODE"
                                       type="text"
                                       {...field}
+                                      onChange={(e) => {
+                                        field.onChange(e);
+                                        handleOnChangeCreditValue(e);
+                                      }}
                                     />
                                   )}
                                 />
@@ -3838,19 +4054,19 @@ export default function QuatationSO() {
                                   <TableBody>
                                     {bankData.map((data, index) => (
                                       <TableRow key={index}>
-                                        <TableCell component="th" scope="row">
-                                          {data.AuthCode}
-                                        </TableCell>
                                         <TableCell>
-                                          {data.myRadioGroup}
+                                          {data.CashAccount}
                                         </TableCell>
-                                        <TableCell>{data.Creditno}</TableCell>
-                                        <TableCell>{data.Amount}</TableCell>
+                                        <TableCell>{data.CreditCard}</TableCell>
+                                        <TableCell>
+                                          {data.CreditCardNumber}
+                                        </TableCell>
+                                        <TableCell>{data.CreditSum}</TableCell>
                                         <TableCell>
                                           <IconButton
-                                            onClick={() =>
-                                              removeTableRow1(index)
-                                            }
+                                            onClick={() => {
+                                              handleDeleteCreditAmt(index);
+                                            }}
                                           >
                                             <RemoveCircleIcon
                                               sx={{ color: "red" }}
