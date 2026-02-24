@@ -434,7 +434,7 @@ export default function QuatationSO() {
     }
   };
 
-  const fetchOpenListData = async (pageNum, searchTerm = "") => {
+  const fetchOpenListData = async (pageNum = 0, searchTerm = "") => {
     try {
       let url = searchTerm
         ? `/QuotationSO?Status=1&Page=${pageNum}&SearchText=${searchTerm}`
@@ -626,7 +626,7 @@ export default function QuatationSO() {
     gettop20Items();
   }, []);
 
-  const fetchClosedListData = async (pageNum, searchTerm = "") => {
+  const fetchClosedListData = async (pageNum = 0, searchTerm = "") => {
     try {
       let url = searchTerm
         ? // ? `${BASE_URL}/QuotationSO/search/${searchTerm}/0/${pageNum}`
@@ -1858,6 +1858,8 @@ export default function QuatationSO() {
             // setModalLoading(false);
             // getSalesCounter();
             // UpdateLeadStage(data, formModeForLead);
+            fetchOpenListData();
+            fetchClosedListData();
 
             Swal.fire({
               title: "Success!",

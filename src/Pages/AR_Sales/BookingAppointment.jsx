@@ -572,11 +572,13 @@ export default function BinLocationMaster() {
       VehicleDocEntry: data.VehicleDocEntry,
       IsInward: data.IsInward,
       AppointStatus: data.AppointStatus,
-      Year: data.Year,
-      Make: data.Make,
-      Model: data.Model,
+
+      // 1990 - TOYOTA - LC100
+      Year: data.Year || "1990",
+      Make: data.Make || "TOYOTA",
+      Model: data.Model || "LC100",
       Series: "-1",
-      AppointTimeTo: data.AppointTimeTo,
+      // AppointTimeTo: data.AppointTimeTo,
       oLines: data.oLines.map((item) => ({
         UserId: UserId,
         CreatedBy: UserName,
@@ -1155,7 +1157,7 @@ export default function BinLocationMaster() {
                     <Controller
                       name="AppointmentNo"
                       control={control}
-                      rules={{ required: "Appointment No is Required" }}
+                      // rules={{ required: "Appointment No is Required" }}
                       render={({ field, fieldState: { error } }) => (
                         <InputTextField
                           label="APPOINTMENT NO"
@@ -1237,7 +1239,7 @@ export default function BinLocationMaster() {
                     <Controller
                       name="Vehicle"
                       control={control}
-                      rules={{ required: "Selected Vehicle Is Required" }}
+                      // rules={{ required: "Selected Vehicle Is Required" }}
                       render={({
                         field: { ref, ...fieldList },
                         fieldState: { error },
@@ -1247,7 +1249,7 @@ export default function BinLocationMaster() {
                           inputRef={ref}
                           label="SELECTED VEHICLE"
                           type="text"
-                          value={`${getValues("Year") || ""} - ${getValues("Make") || ""} - ${getValues("Model") || ""}`}
+                          value={`${getValues("Year") || "1990"} - ${getValues("Make") || "TOYOTA"} - ${getValues("Model") || "LC100"}`}
                           readOnly={true}
                           error={!!error}
                           helperText={error ? error.message : null}
