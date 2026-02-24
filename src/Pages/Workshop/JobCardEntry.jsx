@@ -123,7 +123,7 @@ export default function IssueMaterial() {
     });
   };
 
- const QCitemsTable = [
+  const QCitemsTable = [
     {
       field: "Question",
       headerName: "QUESTIONS",
@@ -231,7 +231,7 @@ export default function IssueMaterial() {
           LineJobStatus: Number(Job.LineJobStatus),
         })),
       };
-     
+
       fetchTechnicianData();
       reset(transformed);
       setSelectData(DocEntry);
