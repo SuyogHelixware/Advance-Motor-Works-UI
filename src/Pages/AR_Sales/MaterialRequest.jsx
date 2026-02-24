@@ -1,5 +1,5 @@
-import CloseIcon from "@mui/icons-material/Close";
 import AddIcon from "@mui/icons-material/Add";
+import CloseIcon from "@mui/icons-material/Close";
 import { TabContext, TabPanel } from "@mui/lab";
 import {
   Box,
@@ -9,6 +9,7 @@ import {
   Paper,
   Tab,
   Tabs,
+  Tooltip,
   Typography,
   useTheme,
 } from "@mui/material";
@@ -20,21 +21,21 @@ import MenuIcon from "@mui/icons-material/Menu";
 
 import { DataGrid } from "@mui/x-data-grid";
 import dayjs from "dayjs";
-import { Controller, useForm, useFormState, useWatch } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { BeatLoader } from "react-spinners";
 import Swal from "sweetalert2";
+import apiClient from "../../services/apiClient";
 import { dataGridSx } from "../../Styles/dataGridStyles";
 import CardComponent from "../Components/CardComponent";
 import {
-  InputDatePickerFields,
+  InputDatePickerField,
   InputFields,
-  InputTextAreaFields,
+  InputTextArea,
   InputTextSearchButton,
 } from "../Components/formComponents";
 import SearchModel from "../Components/SearchModel";
 import usePermissions from "../Components/usePermissions";
-import apiClient from "../../services/apiClient";
 
 export default function MaterialRequest() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -46,6 +47,7 @@ export default function MaterialRequest() {
   const [getListSearching, setGetListSearching] = useState(false);
   const [searchmodelOpen, setSearchmodelOpen] = useState(false);
   const timeoutRef = useRef(null);
+  const [DocEntry, setDocEntry] = useState("");
 
   const [apiloading, setapiloading] = useState(false);
 
@@ -115,16 +117,6 @@ export default function MaterialRequest() {
     const selectedBP = getListData.find((item) => item.DocEntry === DocEntry);
     if (!selectedBP) return;
 
-    // setValue("RequestDate", dayjs());
-    // setValue("VehInwardNo", selectedBP.DocNum || "");
-    // setValue("JobWorkAt", selectedBP.JobWorkAt || "");
-    // setValue("RegistrationNo", selectedBP.RegistrationNo || "");
-    // setValue("OrderNo", selectedBP.OrderNo || "");
-    // setValue("JobRemarks", selectedBP.JobWorkDetails || "");
-    // setValue("RequestNo", selectedBP.RequestNo || "");
-    // setValue("OrderDocEntry", selectedBP.OrderDocEntry || "");
-    // setValue("VehInwardDocEntry", selectedBP.DocEntry || "");
-    // setValue("TotalItems", selectedBP?.oLines?.length);
     reset({
       ...selectedBP,
       RequestDate: dayjs(),
@@ -134,7 +126,10 @@ export default function MaterialRequest() {
       TotalItems: selectedBP?.oLines?.length || 0,
       oLines: (selectedBP.oLines || []).map((item, index) => ({
         ItemCode: item.ItemCode,
+        ItemName: item.ItemName,
         IssueQuantity: "0",
+        WHSCode: item.WHSCode,
+        AvailQty: item.AvailQty,
         AppointmentQty: item.Quantity,
         ReqQuantity: item.Quantity,
       })),
@@ -161,6 +156,7 @@ export default function MaterialRequest() {
         OrderNo: item.OrderNo,
         OrderDocEntry: item.OrderDocEntry,
         JobWorkAt: item.JobWorkAt,
+        JobRemarks: item.ReqRemarks,
         TotalItems: item.oLines?.length || 0,
         RequestedBy: item.RequestBy,
         oLines: (item.oLines || []).map((line) => ({
@@ -175,6 +171,7 @@ export default function MaterialRequest() {
       };
 
       reset(transformed);
+      setDocEntry(DocEntry);
       setSaveUpdateName("UPDATE");
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -195,14 +192,12 @@ export default function MaterialRequest() {
     {
       field: "ItemCode",
       headerName: "Item Code",
-      width: 120,
-      editable: true,
+      width: 200,
     },
     {
       field: "ItemName",
       headerName: "Item Description",
-      width: 400,
-      editable: true,
+      width: 500,
       renderCell: (params) => (
         <div
           style={{
@@ -219,32 +214,37 @@ export default function MaterialRequest() {
     {
       field: "WHSCode",
       headerName: "	WHS",
-      width: 100,
-      editable: true,
+      width: 110,
+      align: "center",
+      headerAlign: "center",
     },
     {
       field: "AvailQty",
       headerName: "Avail Qty",
-      width: 100,
-      editable: true,
+      width: 120,
+      align: "right",
+      headerAlign: "right",
     },
     {
       field: "IssueQuantity",
       headerName: "Iss Qty",
-      width: 100,
-      editable: true,
+      width: 120,
+      align: "right",
+      headerAlign: "right",
     },
     {
       field: "AppointmentQty",
       headerName: "Appoint Qty",
       width: 150,
-      editable: true,
+      align: "right",
+      headerAlign: "right",
     },
     {
       field: "ReqQuantity",
       headerName: "Quantity",
-      width: 100,
-      editable: true,
+      width: 130,
+      align: "right",
+      headerAlign: "right",
     },
   ];
 
@@ -539,10 +539,10 @@ export default function MaterialRequest() {
                         <CardComponent
                           key={i}
                           title={
-      value === "1"
-        ? item.CardName
-        : `${item.DocNum} | ${item.CardName}`
-    }
+                            value === "1"
+                              ? item.CardName
+                              : `${item.DocNum} | ${item.CardName}`
+                          }
                           subtitle={item.OrderNo}
                           description={item.PhoneNumber1}
                           searchResult={query}
@@ -566,8 +566,6 @@ export default function MaterialRequest() {
       </Grid>
     </>
   );
-
-  const BASE_URL = process.env.REACT_APP_BASE_URL;
 
   const fetchGetListData = async (pageNum, searchTerm = "") => {
     try {
@@ -598,6 +596,7 @@ export default function MaterialRequest() {
     fetchGetListData(getListPage + 1, getListSearching ? getListquery : "");
     setGetListPage((prev) => prev + 1);
   };
+
   useEffect(() => {
     if (searchmodelOpen === true) {
       fetchGetListData(0);
@@ -607,8 +606,10 @@ export default function MaterialRequest() {
   const OpenDailog = () => {
     setSearchmodelOpen(true);
   };
+
   const SearchModelClose = () => {
     setSearchmodelOpen(false);
+    setGetListQuery("");
   };
 
   const handleGetListSearch = (res) => {
@@ -638,7 +639,7 @@ export default function MaterialRequest() {
     reset(initial);
     setSaveUpdateName("SAVE");
     reset();
-
+    setDocEntry("");
     setValue("VehInwardNo", "");
     setValue("JobRemarks", "");
   };
@@ -838,211 +839,179 @@ export default function MaterialRequest() {
                 noValidate
                 autoComplete="off"
               >
-                <Grid container>
-                  <Grid container item>
-                    <Grid
-                      item
-                      sm={6}
-                      md={6}
-                      lg={4}
-                      xs={12}
-                      textAlign={"center"}
-                    >
-                      <Controller
-                        name="VehInwardNo"
-                        rules={{ required: "this field is required" }}
-                        control={control}
-                        render={({ field, fieldState: { error } }) => (
-                          <InputTextSearchButton
-                            label="INWARD NO"
-                            readOnly={true}
-                            disabled={watch("DocEntry")}
-                            onClick={() => {
-                              OpenDailog();
-                            }}
-                            onChange={OpenDailog}
-                            type="text"
-                            {...field}
-                            error={!!error}
-                            helperText={error ? error.message : null}
-                          />
-                        )}
-                      />
-                      <SearchModel
-                        open={searchmodelOpen}
-                        onClose={SearchModelClose}
-                        onCancel={SearchModelClose}
-                        title="Select Job Card"
-                        onChange={(e) => handleGetListSearch(e.target.value)}
-                        value={getListquery}
-                        onClickClear={handleGetListClear}
-                        cardData={
-                          <>
-                            <InfiniteScroll
-                              style={{
-                                textAlign: "center",
-                                justifyContent: "center",
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={4}>
+                    <Grid container direction="column">
+                      <Grid item textAlign={"center"}>
+                        <Controller
+                          name="VehInwardNo"
+                          rules={{ required: "this field is required" }}
+                          control={control}
+                          render={({ field, fieldState: { error } }) => (
+                            <InputTextSearchButton
+                              label="INWARD NO"
+                              readOnly={true}
+                              disabled={!!DocEntry}
+                              onClick={() => {
+                                OpenDailog();
                               }}
-                              dataLength={getListData.length}
-                              next={fetchMoreGetListData}
-                              hasMore={hasMoreGetList}
-                              loader={
-                                <BeatLoader
-                                  color={theme.palette.primary.main}
+                              onChange={OpenDailog}
+                              type="text"
+                              {...field}
+                              error={!!error}
+                              helperText={error ? error.message : null}
+                            />
+                          )}
+                        />
+                        <SearchModel
+                          open={searchmodelOpen}
+                          onClose={SearchModelClose}
+                          onCancel={SearchModelClose}
+                          title="Select Job Card"
+                          onChange={(e) => handleGetListSearch(e.target.value)}
+                          value={getListquery}
+                          onClickClear={handleGetListClear}
+                          cardData={
+                            <>
+                              <InfiniteScroll
+                                style={{
+                                  textAlign: "center",
+                                  justifyContent: "center",
+                                }}
+                                dataLength={getListData.length}
+                                next={fetchMoreGetListData}
+                                hasMore={hasMoreGetList}
+                                loader={
+                                  <BeatLoader
+                                    color={theme.palette.primary.main}
+                                  />
+                                }
+                                scrollableTarget="getListForCreateScroll"
+                                endMessage={
+                                  <Typography>No More Records</Typography>
+                                }
+                              >
+                                {getListData.map((item, index) => (
+                                  <CardComponent
+                                    // key={index}
+                                    key={item.DocEntry}
+                                    title={item.CardCode}
+                                    subtitle={item.CardName}
+                                    description={item.Cellular}
+                                    searchResult={getListquery}
+                                    isSelected={
+                                      allFormData.CardCode === item.CardCode
+                                    }
+                                    onClick={() => {
+                                      onSelectBusinessPartner(item.DocEntry);
+                                    }}
+                                  />
+                                ))}
+                              </InfiniteScroll>
+                            </>
+                          }
+                        />
+                      </Grid>
+
+                      <Grid item textAlign={"center"}>
+                        <Controller
+                          name="RegistrationNo"
+                          control={control}
+                          render={({ field }) => (
+                            <InputFields
+                              readOnly={true}
+                              {...field}
+                              label="REGISTRATION NO"
+                            />
+                          )}
+                        />
+                      </Grid>
+
+                      <Grid item textAlign={"center"}>
+                        <Controller
+                          name="RequestNo"
+                          control={control}
+                          render={({ field }) => (
+                            <InputFields
+                              readOnly={true}
+                              {...field}
+                              label="REQUEST NO"
+                            />
+                          )}
+                        />
+                      </Grid>
+                    </Grid>
+                  </Grid>
+
+                  <Grid item xs={12} md={4}>
+                    <Grid container direction="column">
+                      <Grid item textAlign={"center"}>
+                        <Controller
+                          name="RequestDate"
+                          control={control}
+                          render={({ field }) => (
+                            <InputDatePickerField
+                              {...field}
+                              label="REQUEST DATE"
+                              value={field.value}
+                              readOnly={true}
+                            />
+                          )}
+                        />
+                      </Grid>
+
+                      <Grid item textAlign={"center"}>
+                        <Controller
+                          name="OrderNo"
+                          control={control}
+                          render={({ field }) => (
+                            <InputFields
+                              readOnly={true}
+                              {...field}
+                              label="SO NO"
+                            />
+                          )}
+                        />
+                      </Grid>
+                    </Grid>
+                  </Grid>
+
+                  <Grid item xs={12} md={4}>
+                    <Grid container direction="column">
+                      <Grid item textAlign={"center"}>
+                        <Controller
+                          name="JobWorkAt"
+                          control={control}
+                          render={({ field }) => (
+                            <InputFields
+                              readOnly={true}
+                              {...field}
+                              label="JOB WORK AT"
+                            />
+                          )}
+                        />
+                      </Grid>
+
+                      <Grid item textAlign={"center"}>
+                        <Tooltip
+                          title={(watch("JobRemarks") || "").toUpperCase()}
+                          arrow
+                        >
+                          <div style={{ width: "100%" }}>
+                            <Controller
+                              name="JobRemarks"
+                              control={control}
+                              render={({ field }) => (
+                                <InputTextArea
+                                  readOnly={true}
+                                  {...field}
+                                  label="JOB WORK DETAILS"
                                 />
-                              }
-                              scrollableTarget="getListForCreateScroll"
-                              endMessage={
-                                <Typography>No More Records</Typography>
-                              }
-                            >
-                              {getListData.map((item, index) => (
-                                <CardComponent
-                                  // key={index}
-                                  key={item.DocEntry}
-                                  title={item.CardCode}
-                                  subtitle={item.CardName}
-                                  description={item.Cellular}
-                                  searchResult={getListquery}
-                                  isSelected={
-                                    allFormData.CardCode === item.CardCode
-                                  }
-                                  onClick={() => {
-                                    onSelectBusinessPartner(item.DocEntry);
-                                  }}
-                                />
-                              ))}
-                            </InfiniteScroll>
-                          </>
-                        }
-                      />
-                    </Grid>
-                    <Grid
-                      item
-                      sm={6}
-                      md={6}
-                      lg={4}
-                      xs={12}
-                      textAlign={"center"}
-                    >
-                      <Controller
-                        name="RequestDate"
-                        control={control}
-                        render={({ field }) => (
-                          <InputDatePickerFields
-                            {...field}
-                            label="REQUEST DATE"
-                            value={field.value}
-                            readOnly={true}
-                            onChange={(date) => field.onChange(date)}
-                          />
-                        )}
-                      />
-                    </Grid>
-
-                    <Grid
-                      item
-                      sm={6}
-                      md={6}
-                      lg={4}
-                      xs={12}
-                      textAlign={"center"}
-                    >
-                      <Controller
-                        name="JobWorkAt"
-                        control={control}
-                        render={({ field }) => (
-                          <InputFields
-                            readOnly={true}
-                            {...field}
-                            label="JOB WORK AT"
-                          />
-                        )}
-                      />
-                    </Grid>
-
-                    <Grid
-                      item
-                      sm={6}
-                      md={6}
-                      lg={4}
-                      xs={12}
-                      textAlign={"center"}
-                    >
-                      <Controller
-                        name="RegistrationNo"
-                        control={control}
-                        render={({ field }) => (
-                          <InputFields
-                            readOnly={true}
-                            {...field}
-                            label="REGISTRATION NO"
-                          />
-                        )}
-                      />
-                    </Grid>
-
-                    <Grid
-                      item
-                      sm={6}
-                      md={6}
-                      lg={4}
-                      xs={12}
-                      textAlign={"center"}
-                    >
-                      <Controller
-                        name="OrderNo"
-                        control={control}
-                        render={({ field }) => (
-                          <InputFields
-                            readOnly={true}
-                            {...field}
-                            label="SO NO"
-                          />
-                        )}
-                      />
-                    </Grid>
-
-                    <Grid
-                      item
-                      sm={6}
-                      md={6}
-                      lg={4}
-                      xs={12}
-                      textAlign={"center"}
-                    >
-                      <Controller
-                        name="JobRemarks"
-                        control={control}
-                        render={({ field }) => (
-                          <InputTextAreaFields
-                            readOnly={true}
-                            {...field}
-                            label="JOB WORK DETAILS"
-                          />
-                        )}
-                      />
-                    </Grid>
-
-                    <Grid
-                      item
-                      sm={6}
-                      md={6}
-                      lg={4}
-                      xs={12}
-                      textAlign={"center"}
-                    >
-                      <Controller
-                        name="RequestNo"
-                        control={control}
-                        render={({ field }) => (
-                          <InputFields
-                            readOnly={true}
-                            {...field}
-                            label="REQUEST NO"
-                          />
-                        )}
-                      />
+                              )}
+                            />
+                          </div>
+                        </Tooltip>
+                      </Grid>
                     </Grid>
                   </Grid>
 
@@ -1050,8 +1019,7 @@ export default function MaterialRequest() {
                     container
                     item
                     sx={{
-                      // px: 2,
-                      overflow: "auto",
+                      overflow: "hidden",
                       width: "100%",
                     }}
                   >
@@ -1072,7 +1040,16 @@ export default function MaterialRequest() {
                       Quantity is same,
                     </Typography>
 
-                    <Paper elevation={5} sx={{ width: "100%", padding: 1 }}>
+                    <Paper
+                      sx={{
+                        width: "100%",
+                        ml: 1,
+                        mr: 1,
+                        maxHeight: 400,
+                        minHeight:150,
+                        overflow: "auto",
+                      }}
+                    >
                       <DataGrid
                         columnHeaderHeight={35}
                         getRowId={(row) => row.ItemCode}
