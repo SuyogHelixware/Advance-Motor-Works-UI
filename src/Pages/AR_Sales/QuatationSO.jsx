@@ -1244,6 +1244,36 @@ export default function QuatationSO() {
     setValue("DueAmount", parseFloat(finaldueamt).toFixed(3));
   };
 
+  const handleOnCheckBoxChange = (checked) => {
+    const isServiceOrder = watch("ServiceOrder") === true;
+
+    if (checked && isServiceOrder) {
+      setValue("SpecialDiscountPer", 0);
+      setValue("SpecialDiscountAmt", 0);
+      setValue("Price", "");
+
+      const serviceLines = [
+        {
+          ItemCode: "S001",
+          ItemName: "SERVICE & INSTALLATION",
+          WHSCode: "01",
+          Quantity: 1,
+          Price: 0.0,
+          DesiredDisc: "0.00",
+          Amount: "0.00",
+          FTSQty: "0.000",
+          LineFittingCharge: "0",
+        },
+      ];
+
+      setValue("oLines", serviceLines);
+      // HandleTableOnChange();
+    } else if (!checked && !isServiceOrder) {
+      setValue("oLines", []);
+      HandleTableOnChange();
+    }
+  };
+
   const handleSave = () => {
     try {
       const checkedRows = Array.isArray(checkedRowsRef?.current)
@@ -2194,45 +2224,87 @@ export default function QuatationSO() {
   //   return updatedRow;
   // };
 
-  const HandleTableOnChange = (newRow, oldRow) => {
-    const qty = Number(newRow.Quantity) || 0;
-    const price = Number(newRow.Price) || 0;
-    const fitting = Number(newRow.FittingCharge) || 0;
-    const totalAmt = qty * price;
+  // const HandleTableOnChange = (newRow, oldRow) => {
+  //   const qty = Number(newRow?.Quantity) ?? 1;
+  //   const price = Number(newRow.Price) || 0;
+  //   const fitting = Number(newRow.FittingCharge) || 0;
+  //   const totalAmt = qty * price;
 
-    const updatedRow = {
-      ...newRow,
-      Amount: totalAmt.toFixed(3),
-    };
+  //   const updatedRow = {
+  //     ...newRow,
+  //     Amount: totalAmt.toFixed(3),
+  //   };
+
+  //   const currentLines = getValues("oLines") || [];
+
+  //   const updatedRows = currentLines.map((row) =>
+  //     row.ItemCode === newRow.ItemCode ? updatedRow : row,
+  //   );
+
+  //   const totalPartsSum = updatedRows.reduce(
+  //     (sum, row) => sum + (Number(row.Amount) || 0),
+  //     0,
+  //   );
+
+  //   const totalFittingCharge = updatedRows.reduce(
+  //     (sum, row) => sum + (Number(row.LineFittingCharge) || 0),
+  //     0,
+  //   );
+
+  //   setValue("oLines", updatedRows);
+  //   setValue("TotalPartsValue", totalPartsSum.toFixed(3));
+  //   setValue("ServiceAndInstallation", totalFittingCharge.toFixed(3));
+
+  //   const shipping = Number(getValues("ShippingAmt")) || 0;
+  //   const finalDocAmt = totalPartsSum + totalFittingCharge + shipping;
+
+  //   setValue("TotalDocAmt", finalDocAmt.toFixed(3));
+  //   setValue("DueAmount", finalDocAmt.toFixed(3));
+  //   setValue("BalanceDueAmount", finalDocAmt.toFixed(3));
+
+  //   return updatedRow;
+  // };
+
+  const HandleTableOnChange = (newRow) => {
+    if (!newRow) return;
+    const qty = Number(newRow.Quantity || 0);
+    const price = Number(newRow.Price || 0);
+
+    const amount = qty * price;
 
     const currentLines = getValues("oLines") || [];
 
     const updatedRows = currentLines.map((row) =>
-      row.ItemCode === newRow.ItemCode ? updatedRow : row,
+      row.ItemCode === newRow.ItemCode
+        ? { ...row, Amount: amount.toFixed(3) }
+        : row,
     );
 
-    const totalPartsSum = updatedRows.reduce(
-      (sum, row) => sum + (Number(row.Amount) || 0),
+    const totalParts = updatedRows.reduce(
+      (sum, row) => sum + Number(row.Amount || 0),
       0,
     );
 
-    const totalFittingCharge = updatedRows.reduce(
-      (sum, row) => sum + (Number(row.LineFittingCharge) || 0),
+    const totalFitting = updatedRows.reduce(
+      (sum, row) => sum + Number(row.LineFittingCharge || 0),
       0,
     );
+
+    const shipping = Number(getValues("ShippingAmt") || 0);
+    const finalTotal = totalParts + totalFitting + shipping;
 
     setValue("oLines", updatedRows);
-    setValue("TotalPartsValue", totalPartsSum.toFixed(3));
-    setValue("ServiceAndInstallation", totalFittingCharge.toFixed(3));
+    setValue("TotalPartsValue", totalParts.toFixed(3));
+    setValue("ServiceAndInstallation", totalFitting.toFixed(3));
+    setValue("TotalDocAmt", finalTotal.toFixed(3));
+    setValue("DueAmount", finalTotal.toFixed(3));
+    setValue("BalanceDueAmount", finalTotal.toFixed(3));
 
-    const shipping = Number(getValues("ShippingAmt")) || 0;
-    const finalDocAmt = totalPartsSum + totalFittingCharge + shipping;
-
-    setValue("TotalDocAmt", finalDocAmt.toFixed(3));
-    setValue("DueAmount", finalDocAmt.toFixed(3));
-    setValue("BalanceDueAmount", finalDocAmt.toFixed(3));
-
-    return updatedRow;
+    if (watch("OrderNo") === "") {
+      PaymentsCalculations();
+    } else {
+      PaymentCalcUpdateTimePaymentPer();
+    }
   };
   const HandleOnFildChange = () => {
     const allformdata = getValues();
@@ -2263,6 +2335,88 @@ export default function QuatationSO() {
     setValue("DesiredDiscAmt", dDiscAmt.toFixed(3));
     setValue("NetPartsValue", netParts.toFixed(3));
     setValue("TotalDocAmt", TotTotalDocAmt.toFixed(3));
+  };
+
+  const CreditCardList = [
+    { Name: "KNET", AccountCode: "1201024" },
+    { Name: "MASTER", AccountCode: "1201024" },
+    { Name: "VISA", AccountCode: "1201024" },
+    { Name: "MF", AccountCode: "1201029" },
+    { Name: "TABBY", AccountCode: "1201036" },
+    { Name: "TAMARA", AccountCode: "1201039" },
+    { Name: "TALY", AccountCode: "1201041" },
+  ];
+  const handleOnCreditCardAdd = () => {
+    const values = getValues();
+
+    const cardValue = String(values.CreditCard).trim();
+    const cardNumber = String(values.CreditCardNumber).trim();
+    const voucherNum = (values.VoucherNum?.toString() || "").trim();
+    const creditSum = parseFloat(values.CreditSum);
+
+    if (!cardValue || cardValue === "undefined" || cardValue === "null") {
+      Swal.fire({
+        text: "Please Select Credit Card",
+        icon: "warning",
+        iconColor: "red",
+        toast: true,
+        showConfirmButton: false,
+        timer: 3000,
+      });
+      return;
+    } else if (!cardNumber || cardNumber.length !== 4) {
+      Swal.fire({
+        text: "Please add valid Credit Card No",
+        icon: "warning",
+        iconColor: "red",
+        toast: true,
+        showConfirmButton: false,
+        timer: 3000,
+      });
+      return;
+    } else if (!voucherNum || voucherNum.length === 0) {
+      Swal.fire({
+        text: "Please add Authorization code",
+        icon: "warning",
+        iconColor: "red",
+        toast: true,
+        showConfirmButton: false,
+        timer: 3000,
+      });
+      return;
+    } else if (!creditSum || creditSum === 0) {
+      Swal.fire({
+        text: "Please add Valid Amount",
+        icon: "warning",
+        iconColor: "red",
+        toast: true,
+        showConfirmButton: false,
+        timer: 3000,
+      });
+      return;
+    }
+
+    const selectedCard = CreditCardList.find(
+      (card) => card.Name === values.CreditCard,
+    );
+
+    const newEntry = {
+      CashAccount: selectedCard?.AccountCode || 1201011,
+      CreditCard: values.CreditCard,
+      CreditCardNumber: values.CreditCardNumber,
+      CreditSum: values.CreditSum,
+      VoucherNum: values.VoucherNum,
+    };
+
+    const updatedList = [...bankData, newEntry];
+    setBankData(updatedList);
+    setValue("oCCPay", updatedList);
+
+    // PaymentCalc();
+    setValue("CreditCard", "");
+    setValue("CreditCardNumber", "");
+    setValue("VoucherNum", "");
+    setValue("CreditSum", "");
   };
 
   const sidebarContent = (
@@ -2437,8 +2591,8 @@ export default function QuatationSO() {
     reset(initial);
     setDocEntry("");
     setSaveUpdateName("SAVE");
-    setSelectionModel([]); 
-    checkedRowsRef.current = []; 
+    setSelectionModel([]);
+    checkedRowsRef.current = [];
   };
 
   return (
@@ -2918,7 +3072,7 @@ export default function QuatationSO() {
                             mb: 2,
                           }}
                           onClick={handleClickModel}
-                          disabled={!watch("CardCode")}
+                          disabled={!watch("CardCode") || watch("ServiceOrder")}
                         >
                           Search Item
                         </Button>
@@ -3103,17 +3257,20 @@ export default function QuatationSO() {
                 <Grid container lg={11} md={12} px={2} py={2}>
                   <Grid item xs={12} md={2} sm={4} lg={2} textAlign={"center"}>
                     <Controller
-                      name="Special Order"
+                      name="SpecialOrder"
                       control={control}
                       defaultValue={false}
-                      render={({ field }) => (
+                      render={({ field: { value, onChange } }) => (
                         <FormControlLabel
                           control={
                             <Checkbox
                               size="medium"
                               sx={{ textAlign: "center", width: 20, mr: 1 }}
-                              {...field}
-                              checked={field.value}
+                              checked={value}
+                              onChange={(e) => {
+                                const checkedValue = e.target.checked;
+                                onChange(checkedValue);
+                              }}
                             />
                           }
                           label="Special Order"
@@ -3127,14 +3284,17 @@ export default function QuatationSO() {
                       name="CNC"
                       control={control}
                       defaultValue={false}
-                      render={({ field }) => (
+                      render={({ field: { value, onChange } }) => (
                         <FormControlLabel
                           control={
                             <Checkbox
                               size="medium"
                               sx={{ textAlign: "center", width: 20, mr: 1 }}
-                              {...field}
-                              checked={field.value}
+                              checked={value}
+                              onChange={(e) => {
+                                const checkedValue = e.target.checked;
+                                onChange(checkedValue);
+                              }}
                             />
                           }
                           label="CNC"
@@ -3145,17 +3305,21 @@ export default function QuatationSO() {
                   </Grid>
                   <Grid item xs={12} md={2} sm={4} lg={2} textAlign={"center"}>
                     <Controller
-                      name="Delivered Later"
+                      name="DeliveredLater"
                       control={control}
                       defaultValue={false}
-                      render={({ field }) => (
+                      render={({ field: { value, onChange } }) => (
                         <FormControlLabel
                           control={
                             <Checkbox
                               size="medium"
                               sx={{ textAlign: "center", width: 20, mr: 1 }}
-                              {...field}
-                              checked={field.value}
+                              disabled={watch("CNC") === false}
+                              checked={value}
+                              onChange={(e) => {
+                                const checkedValue = e.target.checked;
+                                onChange(checkedValue);
+                              }}
                             />
                           }
                           label="Delivered Later"
@@ -3166,17 +3330,22 @@ export default function QuatationSO() {
                   </Grid>
                   <Grid item xs={12} md={2} sm={4} lg={2} textAlign={"center"}>
                     <Controller
-                      name="Service Order"
+                      name="ServiceOrder"
                       control={control}
                       defaultValue={false}
-                      render={({ field }) => (
+                      render={({ field: { value, onChange } }) => (
                         <FormControlLabel
                           control={
                             <Checkbox
                               size="medium"
                               sx={{ textAlign: "center", width: 20, mr: 1 }}
-                              {...field}
-                              checked={field.value}
+                              disabled={watch("CNC") === true}
+                              checked={value}
+                              onChange={(e) => {
+                                const checkedValue = e.target.checked;
+                                onChange(checkedValue);
+                                handleOnCheckBoxChange(checkedValue);
+                              }}
                             />
                           }
                           label="Service Order"
@@ -3190,39 +3359,60 @@ export default function QuatationSO() {
                       name="Shipping"
                       control={control}
                       defaultValue={false}
-                      render={({ field }) => (
+                      render={({ field: { value, onChange } }) => (
                         <FormControlLabel
+                          label="Shipping"
                           control={
                             <Checkbox
-                              size="medium"
-                              sx={{ textAlign: "center", width: 20, mr: 1 }}
-                              {...field}
-                              checked={field.value}
+                              checked={value}
+                              onChange={(e) => {
+                                const checkedValue = e.target.checked;
+                                onChange(checkedValue);
+                              }}
                             />
                           }
-                          label="Shipping"
-                          sx={{ textAlign: "center", width: 100 }}
                         />
                       )}
                     />
                   </Grid>
                   <Grid item xs={12} md={2} sm={4} lg={2} textAlign={"center"}>
                     <Controller
-                      name="CR Approved"
+                      name="CRApproved"
                       control={control}
                       defaultValue={false}
-                      render={({ field }) => (
+                      render={({ field: { value, onChange } }) => (
                         <FormControlLabel
                           control={
                             <Checkbox
                               size="medium"
                               sx={{ textAlign: "center", width: 20, mr: 1 }}
-                              {...field}
-                              checked={field.value}
+                              checked={value}
                             />
                           }
                           label="CR Approved"
                           sx={{ textAlign: "center", width: 130 }}
+                          disabled={
+                            watch("OrderNo") ||
+                            (!watch("DocEntry") && watch("SpecialDisc") > 0)
+                          }
+                          checked={value}
+                          onChange={(e) => {
+                            const checkedValue = e.target.checked;
+                            onChange(checkedValue);
+                            if (checkedValue && watch("Approver") === "")
+                              setValue(
+                                "Approver",
+                                localStorage.getItem("UserName"),
+                              );
+                          }}
+                          // onChange={(e) => {
+                          //   field.onChange(e);
+                          //   if (e.target.checked && watch("Approver") === "")
+                          //     setValue(
+                          //       "Approver",
+                          //       localStorage.getItem("UserName"),
+                          //     );
+                          // }}
                         />
                       )}
                     />
@@ -3403,6 +3593,7 @@ export default function QuatationSO() {
                           label="SHIPPING"
                           width={140}
                           onChange={calculateData}
+                          readOnly={watch("Shipping") === false}
                         />{" "}
                       </Grid>
                     </Grid>
@@ -3463,7 +3654,11 @@ export default function QuatationSO() {
                         textAlign={"center"}
                         p={1}
                       >
-                        <Button variant="contained" color="primary">
+                        <Button
+                          variant="contained"
+                          color="primary"
+                          onClick={CalDesiredDiscountBtn}
+                        >
                           CALC DISC
                         </Button>
                       </Grid>
@@ -3615,7 +3810,7 @@ export default function QuatationSO() {
                                     paddingLeft: 30,
                                     paddingRight: 30,
                                   }}
-                                  // onClick={handleOnCreditCardAdd}
+                                  onClick={handleOnCreditCardAdd}
                                 >
                                   ADD
                                 </Button>
