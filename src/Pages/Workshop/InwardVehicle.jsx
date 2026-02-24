@@ -1,5 +1,6 @@
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
+import MenuIcon from "@mui/icons-material/Menu";
 import { TabContext, TabPanel } from "@mui/lab";
 import {
   Box,
@@ -12,27 +13,26 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
-import SignatureCanvas from "react-signature-canvas";
-import SearchInputField from "../Components/SearchInputField";
-import MenuIcon from "@mui/icons-material/Menu";
 import dayjs from "dayjs";
+import { useEffect, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import InfiniteScroll from "react-infinite-scroll-component";
+import SignatureCanvas from "react-signature-canvas";
 import { BeatLoader } from "react-spinners";
 import Swal from "sweetalert2";
+import DynamicLoader from "../../Loaders/DynamicLoader";
+import apiClient from "../../services/apiClient";
 import CardComponent from "../Components/CardComponent";
 import {
-  InputDatePickerFields,
+  InputDatePickerField,
   InputFields,
   InputTextAreaFields,
   InputTextSearchButton,
-  InputTimePicker,
+  InputTimePicker
 } from "../Components/formComponents";
+import SearchInputField from "../Components/SearchInputField";
 import SearchModel from "../Components/SearchModel";
 import usePermissions from "../Components/usePermissions";
-import apiClient from "../../services/apiClient";
-import DynamicLoader from "../../Loaders/DynamicLoader";
 
 export default function InwardVehicle() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -88,6 +88,7 @@ export default function InwardVehicle() {
     JobWorkDetails: "",
     InwardNo: "",
     VehInwardDate: dayjs(new Date()),
+    AppointDate: dayjs(new Date()),
     VehInwardTime: dayjs(),
     JobCardNo: "",
     OutwardNo: "",
@@ -99,7 +100,7 @@ export default function InwardVehicle() {
     AppointmentNo: "",
     OrderType: "",
     VehInwardNo: "",
-    InspectionRemarks: "",
+    InspectionRemark: "",
   };
 
   const {
@@ -184,7 +185,7 @@ export default function InwardVehicle() {
       Vehicle: `${selectedItem.Year} - ${selectedItem.Make} - ${selectedItem.Model}`,
       PhoneNumber1: selectedItem.PhoneNumber1,
       OrderDocEntry: selectedItem.OrderDocEntry,
-
+      InspectionRemark: selectedItem.InspectionRemark,
       JobWorkAt: selectedItem.JobWorkAt,
       JobWorkDetails: selectedItem.JobRemarks,
       VehInwardNo: selectedItem.VehInwardNo,
@@ -216,13 +217,13 @@ export default function InwardVehicle() {
         reset({
           ...item,
 
-          VehInwardDate: item.VehInwardDate
-            ? dayjs(item.VehInwardDate)
-            : dayjs(),
+          VehInwardDate: item.DocDate ? dayjs(item.DocDate) : dayjs(),
           VehInwardTime: item.VehInwardTime
             ? dayjs(item.VehInwardTime)
             : dayjs(),
-
+          AppointDate: item.DocDate ? dayjs(item.DocDate) : dayjs(),
+          VehInwardNo: item.DocNum,
+          InspectionRemark: item.InspectionRemark,
           Vehicle:
             item.Vehicle ||
             `${item.Year || ""} - ${item.Make || ""} - ${item.Model || ""}`,
@@ -798,8 +799,7 @@ export default function InwardVehicle() {
 
   return (
     <>
-
-    <DynamicLoader open={apiloading} />
+      <DynamicLoader open={apiloading} />
       <Grid
         container
         width="100%"
@@ -1022,12 +1022,11 @@ export default function InwardVehicle() {
                               name="AppointDate"
                               control={control}
                               render={({ field }) => (
-                                <InputDatePickerFields
+                                <InputDatePickerField
                                   {...field}
                                   label="APPOINTMENT DATE"
                                   value={field.value}
                                   readOnly={true}
-                                  onChange={(date) => field.onChange(date)}
                                 />
                               )}
                             />
@@ -1207,7 +1206,7 @@ export default function InwardVehicle() {
                             >
                               <div style={{ width: "100%" }}>
                                 <Controller
-                                  name="InspectionRemarks"
+                                  name="InspectionRemark"
                                   control={control}
                                   rules={{
                                     required: "Inspection Remarks is required",
@@ -1299,12 +1298,11 @@ export default function InwardVehicle() {
                             name="VehInwardDate"
                             control={control}
                             render={({ field }) => (
-                              <InputDatePickerFields
+                              <InputDatePickerField
                                 {...field}
                                 label="INWARD DATE"
                                 value={field.value}
                                 readOnly={true}
-                                onChange={(date) => field.onChange(date)}
                               />
                             )}
                           />
