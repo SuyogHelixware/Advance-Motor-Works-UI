@@ -3183,6 +3183,20 @@ export default function QuatationSO() {
                           )}
                         />
                       </Grid>
+                      <Grid item textAlign="center">
+                        <Controller
+                          name="OrderNo"
+                          control={control}
+                          render={({ field }) => (
+                            <InputTextField
+                              label="SO NO"
+                              readOnly={true}
+                              {...field}
+                              rows={1}
+                            />
+                          )}
+                        />
+                      </Grid>
                     </Grid>
                   </Grid>
 
@@ -4302,8 +4316,8 @@ export default function QuatationSO() {
               >
                 {SaveUpdateName}
               </Button>
-              <Button variant="contained" color="error">
-                DELETE
+              <Button variant="contained" color="primary">
+                PRINT
               </Button>
             </Grid>
           </Grid>
