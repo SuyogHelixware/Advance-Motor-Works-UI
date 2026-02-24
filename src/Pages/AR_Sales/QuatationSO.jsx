@@ -730,7 +730,7 @@ export default function QuatationSO() {
       setModalLoading(true);
 
       const res = await apiClient.get(
-        `/BPV2?Status=1&CardType=C&Page=0&GroupCode=0&Limit=200`,
+        `/BPV2?Status=1&CardType=S&Page=0&GroupCode=0&Limit=200`,
       );
 
       const data = res?.data;
@@ -767,25 +767,25 @@ export default function QuatationSO() {
     }
   };
 
-  const getallformdata = useCallback(async () => {
-    setModalLoading(true);
+  // const getallformdata = useCallback(async () => {
+  //   setModalLoading(true);
 
-    try {
-      const res = await axios.get(`${BASE_URL}/DynamicSearch/all`);
+  //   try {
+  //     const res = await axios.get(`${BASE_URL}/DynamicSearch/all`);
 
-      if (res.data.success) {
-        setFilteredList(res.data.values);
-      }
-    } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Oops...",
-        text: error?.message || "Something went wrong",
-      });
-    } finally {
-      setModalLoading(false);
-    }
-  }, []);
+  //     if (res.data.success) {
+  //       setFilteredList(res.data.values);
+  //     }
+  //   } catch (error) {
+  //     Swal.fire({
+  //       icon: "error",
+  //       title: "Oops...",
+  //       text: error?.message || "Something went wrong",
+  //     });
+  //   } finally {
+  //     setModalLoading(false);
+  //   }
+  // }, []);
 
   const getItemDetails = (ItemCode) => {
     setARInvoicePage(1);
@@ -961,8 +961,8 @@ export default function QuatationSO() {
   };
 
   const clearDynamicSearchList = () => {
-    getallformdata();
-    setSelectedRow();
+    fetchFormData(initialItemSearch);
+    setSelectedRow(null);
     setGrn([]);
     setARInvoice([]);
     setOpenSO([]);
@@ -1919,53 +1919,85 @@ export default function QuatationSO() {
     // }
   };
 
-  const onSubmitDynamicSearch = async (data) => {
+  const fetchFormData = async (payload = {}) => {
     setModalLoading(true);
 
     try {
-      const obj = {
-        Supplier: data.SAPDocNum === null ? "" : data.SAPDocNum,
-        ItemName: data.ItemName,
-        ItemCode: data.ItemCode,
-        IsActive: data.IsActive === true ? 0 : 1,
-        Stock: data.Stock === true ? 0 : 1,
-        Make: data.Make,
-        Model: data.Make === "" ? "" : data.Model,
-        Year: data.Year,
-        Category: data.Category,
-        SubCategory: data.SubCategory,
-        CNC: data.CNC === "1",
-        CRApproved: data.ApprovalStatus === "1",
-        SpecialOrder: data.SpecialOrder === "1",
-        Shipping: data.Shipping !== "0",
+      const body = {
+        Supplier: payload.SAPDocNum || "",
+        ItemName: payload.ItemName || "",
+        ItemCode: payload.ItemCode || "",
+        IsActive: payload.IsActive === true ? 0 : 1,
+        Stock: payload.Stock === true ? 0 : 1,
       };
 
-      const res = await axios.post(
-        `${BASE_URL}/DynamicSearch/QuotSO/search`,
-        obj,
-      );
+      const res = await apiClient.post(`/DynamicSearch/search`, body);
 
-      if (res.data.values.length > 0) {
+      if (res.data.success) {
         setFilteredList(res.data.values);
-      } else {
-        Swal.fire({
-          title: "Oops...",
-          text: "No Record Found",
-          icon: "warning",
-          timer: 1500,
-          confirmButtonText: "Ok",
-        });
       }
     } catch (error) {
       Swal.fire({
         icon: "error",
         title: "Oops...",
-        text: error.message || error.toString(),
+        text: error?.message || "Something went wrong",
       });
     } finally {
       setModalLoading(false);
     }
   };
+
+  const onSubmitDynamicSearch = (data) => {
+    fetchFormData(data); 
+  };
+
+  // const onSubmitDynamicSearch = async (data) => {
+  //   setModalLoading(true);
+
+  //   try {
+  //     const obj = {
+  //       Supplier: data.SAPDocNum === null ? "" : data.SAPDocNum,
+  //       ItemName: data.ItemName,
+  //       ItemCode: data.ItemCode,
+  //       IsActive: data.IsActive === true ? 0 : 1,
+  //       Stock: data.Stock === true ? 0 : 1,
+  //       Make: data.Make,
+  //       Model: data.Make === "" ? "" : data.Model,
+  //       Year: data.Year,
+  //       Category: data.Category,
+  //       SubCategory: data.SubCategory,
+  //       CNC: data.CNC === "1",
+  //       CRApproved: data.ApprovalStatus === "1",
+  //       SpecialOrder: data.SpecialOrder === "1",
+  //       Shipping: data.Shipping !== "0",
+  //     };
+
+  //     const res = await axios.post(
+  //       `${BASE_URL}/DynamicSearch/QuotSO/search`,
+  //       obj,
+  //     );
+
+  //     if (res.data.values.length > 0) {
+  //       setFilteredList(res.data.values);
+  //     } else {
+  //       Swal.fire({
+  //         title: "Oops...",
+  //         text: "No Record Found",
+  //         icon: "warning",
+  //         timer: 1500,
+  //         confirmButtonText: "Ok",
+  //       });
+  //     }
+  //   } catch (error) {
+  //     Swal.fire({
+  //       icon: "error",
+  //       title: "Oops...",
+  //       text: error.message || error.toString(),
+  //     });
+  //   } finally {
+  //     setModalLoading(false);
+  //   }
+  // };
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -1978,12 +2010,14 @@ export default function QuatationSO() {
 
   const handleClickModel = () => {
     setOpenModal(true);
-    getallformdata();
+    setSelectedRow(null);
+    fetchFormData(initialItemSearch);
     getAllBPFormData();
   };
 
   const handleCloseModel = () => {
     setOpenModal(false);
+    setSelectedRow(null);
     resetMdl(initialItemSearch);
   };
   const handleTabChange = (event, newValue) => {
@@ -2289,68 +2323,82 @@ export default function QuatationSO() {
     {
       field: "ItemCode",
       headerName: "Item Code",
-      width: 150,
+      width: 250,
       editable: true,
     },
     {
       field: "ItemName",
       headerName: "Item Description",
-      width: 625,
+      width: 700,
       editable: true,
     },
     {
       field: "D_FTS",
       headerName: "D-FTS",
-      width: 100,
+      width: 120,
       editable: true,
+      align: "right",
+      headerAlign: "right",
     },
-    {
-      field: "UAE_TO_KWT",
-      headerName: "INTRANS",
-      width: 100,
-      editable: true,
-    },
+    // {
+    //   field: "UAE_TO_KWT",
+    //   headerName: "INTRANS",
+    //   width: 100,
+    //   editable: true,
+    // },
     {
       field: "OH_KWT",
       headerName: "OH-KWT",
-      width: 100,
+      width: 110,
       editable: true,
+      align: "right",
+      headerAlign: "right",
     },
     {
       field: "RSVD_KWT",
       headerName: "RSVD-KWT",
-      width: 100,
+      width: 120,
       editable: true,
+      align: "right",
+      headerAlign: "right",
     },
     {
       field: "FTS_KWT",
       headerName: "FTS-KWT",
-      width: 100,
+      width: 110,
       editable: true,
+      align: "right",
+      headerAlign: "right",
     },
     {
       field: "Price",
       headerName: "PRICE",
       width: 110,
       editable: true,
+      align: "right",
+      headerAlign: "right",
     },
     {
       field: "FittingCharge",
       headerName: "FITING",
-      width: 110,
+      width: 120,
       editable: true,
+      align: "right",
+      headerAlign: "right",
     },
-    {
-      field: "InTransit",
-      headerName: "GIT",
-      width: 110,
-      editable: true,
-    },
+    // {
+    //   field: "InTransit",
+    //   headerName: "GIT",
+    //   width: 110,
+    //   editable: true,
+    // },
     {
       field: "OrderQty",
       headerName: "ORDRD",
       width: 110,
       editable: true,
+      align: "right",
+      headerAlign: "right",
     },
   ];
 
@@ -3008,7 +3056,7 @@ export default function QuatationSO() {
                 noValidate
                 autoComplete="off"
               >
-                <Grid container spacing={2}>
+                <Grid container spacing={2} justifyContent="space-between">
                   <Grid item xs={12} lg={3} md={4}>
                     <Grid container direction="column">
                       <Grid item textAlign="center">
@@ -3282,7 +3330,7 @@ export default function QuatationSO() {
                     </Grid>
                   </Grid>
 
-                  <Grid item xs={12} lg={6} md={4}>
+                  <Grid item xs={12} lg={5.5} md={4}>
                     <Grid
                       item
                       md={12}
@@ -3481,7 +3529,7 @@ export default function QuatationSO() {
                       )}
                     />
                   </Grid>
-                  <Grid item xs={12} md={2} sm={4} lg={2} textAlign={"center"}>
+                  <Grid item xs={12} md={2} sm={4} lg={1.5} textAlign={"center"}>
                     <Controller
                       name="CNC"
                       control={control}
@@ -3505,7 +3553,7 @@ export default function QuatationSO() {
                       )}
                     />
                   </Grid>
-                  <Grid item xs={12} md={2} sm={4} lg={2} textAlign={"center"}>
+                  <Grid item xs={12} md={2} sm={4} lg={2.5} textAlign={"center"}>
                     <Controller
                       name="DeliveredLater"
                       control={control}

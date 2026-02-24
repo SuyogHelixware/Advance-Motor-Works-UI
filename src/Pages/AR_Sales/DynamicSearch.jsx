@@ -41,6 +41,7 @@ import {
   InputTextField,
 } from "../Components/formComponents";
 import { Loader } from "../Components/Loader";
+import apiClient from "../../services/apiClient";
 
 export default function DynamicSearch() {
   const [tabValue, setTabValue] = useState("1");
@@ -65,8 +66,6 @@ export default function DynamicSearch() {
   const [filteredList, setFilteredList] = useState("");
   const [ModalLoading, setModalLoading] = useState(false);
   const [Suppliers, setSuppliers] = useState([]);
-
-  const BASE_URL = process.env.REACT_APP_BASE_URL;
 
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
@@ -93,68 +92,82 @@ export default function DynamicSearch() {
     {
       field: "ItemCode",
       headerName: "Item Code",
-      width: 150,
+      width: 250,
       editable: true,
     },
     {
       field: "ItemName",
       headerName: "Item Description",
-      width: 625,
+      width: 700,
       editable: true,
     },
     {
       field: "D_FTS",
       headerName: "D-FTS",
-      width: 100,
+      width: 110,
       editable: true,
+      align: "right",
+      headerAlign: "right",
     },
-    {
-      field: "UAE_TO_KWT",
-      headerName: "INTRANS",
-      width: 100,
-      editable: true,
-    },
+    // {
+    //   field: "UAE_TO_KWT",
+    //   headerName: "INTRANS",
+    //   width: 100,
+    //   editable: true,
+    // },
     {
       field: "OH_KWT",
       headerName: "OH-KWT",
-      width: 100,
+      width: 110,
       editable: true,
+      align: "right",
+      headerAlign: "right",
     },
     {
       field: "RSVD_KWT",
       headerName: "RSVD-KWT",
-      width: 100,
+      width: 110,
       editable: true,
+      align: "right",
+      headerAlign: "right",
     },
     {
       field: "FTS_KWT",
       headerName: "FTS-KWT",
       width: 100,
       editable: true,
+      align: "right",
+      headerAlign: "right",
     },
     {
       field: "Price",
       headerName: "PRICE",
       width: 110,
       editable: true,
+      align: "right",
+      headerAlign: "right",
     },
     {
       field: "FittingCharge",
       headerName: "FITING",
       width: 110,
       editable: true,
+      align: "right",
+      headerAlign: "right",
     },
-    {
-      field: "InTransit",
-      headerName: "GIT",
-      width: 110,
-      editable: true,
-    },
+    // {
+    //   field: "InTransit",
+    //   headerName: "GIT",
+    //   width: 110,
+    //   editable: true,
+    // },
     {
       field: "OrderQty",
       headerName: "ORDRD",
       width: 110,
       editable: true,
+      align: "right",
+      headerAlign: "right",
     },
   ];
 
@@ -162,8 +175,8 @@ export default function DynamicSearch() {
     try {
       setModalLoading(true);
 
-      const res = await axios.get(
-        `${BASE_URL}/BP?Status=1&CardType=S&Page=0&Limit=200`,
+      const res = await apiClient.get(
+        `/BPV2?CardType=S&GroupCode=0&Status=1&Page=0&Limit=200`,
       );
 
       const data = res?.data;
@@ -200,26 +213,6 @@ export default function DynamicSearch() {
     }
   };
 
-  const getallformdata = useCallback(async () => {
-    setModalLoading(true);
-
-    try {
-      const res = await axios.get(`${BASE_URL}/DynamicSearch/all`);
-
-      if (res.data.success) {
-        setFilteredList(res.data.values);
-      }
-    } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Oops...",
-        text: error?.message || "Something went wrong",
-      });
-    } finally {
-      setModalLoading(false);
-    }
-  }, []);
-
   const getItemDetails = (ItemCode) => {
     setARInvoicePage(1);
     setHasMoreARInvoice(true);
@@ -244,10 +237,10 @@ export default function DynamicSearch() {
 
     setModalLoading(true);
 
-    axios
+    apiClient
       .request({
         method: "get",
-        url: `${BASE_URL}/DynamicSearch/itemsdata/${ItemCode}`,
+        url: `/DynamicSearch/itemsdata/${ItemCode}`,
         headers: {
           "Content-Type": "application/json",
         },
@@ -289,7 +282,7 @@ export default function DynamicSearch() {
     const url = `/DynamicSearch/QuotSO/itemsdata/GRN/${selectedRow.ItemCode}/${GRNPage}`;
 
     try {
-      const response = await axios.get(`${BASE_URL}${url}`);
+      const response = await apiClient.get(`${url}`);
 
       const newData = response.data.values || [];
 
@@ -323,7 +316,7 @@ export default function DynamicSearch() {
     const url = `/DynamicSearch/QuotSO/itemsdata/ARInvoice/${selectedRow.ItemCode}/${ARInvoicePage}`;
 
     try {
-      const response = await axios.get(`${BASE_URL}${url}`);
+      const response = await apiClient.get(`${url}`);
 
       const newData = response.data.values || [];
 
@@ -367,7 +360,7 @@ export default function DynamicSearch() {
     const url = `/DynamicSearch/QuotSO/itemsdata/OpenSo/${selectedRow.ItemCode}/${OpenSOPage}`;
 
     try {
-      const response = await axios.get(`${BASE_URL}${url}`);
+      const response = await apiClient.get(`${url}`);
 
       const newData = response.data.values || [];
 
@@ -393,11 +386,6 @@ export default function DynamicSearch() {
     }
   };
 
-  useEffect(() => {
-    getallformdata();
-    getAllBPFormData();
-  }, [getallformdata]);
-
   const clearDynamicSearchList = () => {
     setSelectedRow();
     setGrn([]);
@@ -407,47 +395,84 @@ export default function DynamicSearch() {
     reset(initial);
   };
 
-  const onSubmit = async (data) => {
+  const fetchFormData = async (payload = {}) => {
     setModalLoading(true);
 
     try {
-      const obj = {
-        Supplier: data.SAPDocNum || "",
-        ItemName: data.ItemName || "",
-        ItemCode: data.ItemCode || "",
-        IsActive: data.IsActive === true ? 0 : 1,
-        Stock: data.Stock === true ? 0 : 1,
-        Make: data.Make || "",
-        Model: data.Model || "",
-        Year: data.Year || "",
-        Category: data.Category || "",
-        SubCategory: data.SubCategory || "",
+      const body = {
+        Supplier: payload.SAPDocNum || "",
+        ItemName: payload.ItemName || "",
+        ItemCode: payload.ItemCode || "",
+        IsActive: payload.IsActive === true ? 0 : 1,
+        Stock: payload.Stock === true ? 0 : 1,
       };
 
-      const res = await axios.post(`${BASE_URL}/DynamicSearch/search`, obj);
+      const res = await apiClient.post(`/DynamicSearch/search`, body);
 
-      if (res.data.values.length > 0) {
-        setModalLoading(false);
+      if (res.data.success) {
         setFilteredList(res.data.values);
-      } else if (res.data.values.length === 0) {
-        setModalLoading(false);
-        Swal.fire({
-          text: "No Record Found",
-          icon: "warning",
-          toast: true,
-          timer: 1500,
-          showConfirmButton: false,
-        });
       }
     } catch (error) {
-      setModalLoading(false);
       Swal.fire({
         icon: "error",
         title: "Oops...",
-        text: error.message || error.toString(),
+        text: error?.message || "Something went wrong",
       });
+    } finally {
+      setModalLoading(false);
     }
   };
+
+  useEffect(() => {
+    getAllBPFormData();
+    fetchFormData(initial);
+  }, []);
+
+  const onSubmit = (data) => {
+    fetchFormData(data); 
+  };
+
+  // const onSubmit = async (data) => {
+  //   setModalLoading(true);
+
+  //   try {
+  //     const obj = {
+  //       Supplier: data.SAPDocNum || "",
+  //       ItemName: data.ItemName || "",
+  //       ItemCode: data.ItemCode || "",
+  //       IsActive: data.IsActive === true ? 0 : 1,
+  //       Stock: data.Stock === true ? 0 : 1,
+  //       Make: data.Make || "",
+  //       Model: data.Model || "",
+  //       Year: data.Year || "",
+  //       Category: data.Category || "",
+  //       SubCategory: data.SubCategory || "",
+  //     };
+
+  //     const res = await apiClient.post(`/DynamicSearch/search`, obj);
+
+  //     if (res.data.values.length > 0) {
+  //       setModalLoading(false);
+  //       setFilteredList(res.data.values);
+  //     } else if (res.data.values.length === 0) {
+  //       setModalLoading(false);
+  //       Swal.fire({
+  //         text: "No Record Found",
+  //         icon: "warning",
+  //         toast: true,
+  //         timer: 1500,
+  //         showConfirmButton: false,
+  //       });
+  //     }
+  //   } catch (error) {
+  //     setModalLoading(false);
+  //     Swal.fire({
+  //       icon: "error",
+  //       title: "Oops...",
+  //       text: error.message || error.toString(),
+  //     });
+  //   }
+  // };
 
   const exportExcel = async () => {
     if (!filteredList || filteredList.length === 0) {
@@ -774,7 +799,7 @@ export default function DynamicSearch() {
                                 fullWidth
                                 type="button"
                                 onClick={() => {
-                                  getallformdata();
+                                  fetchFormData(initial);
                                   clearDynamicSearchList();
                                   reset(initial);
                                 }}
