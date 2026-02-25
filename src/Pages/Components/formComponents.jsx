@@ -341,7 +341,7 @@ export const SmallInputFields = ({
           sx={{
             ...sx,
             width: "100%",
-          maxWidth: 135,
+            maxWidth: 135,
             // width,
             "& .MuiInputBase-root": {
               WebkitAppearance: "none",

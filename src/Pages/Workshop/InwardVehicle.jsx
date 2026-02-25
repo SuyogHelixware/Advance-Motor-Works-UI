@@ -28,7 +28,7 @@ import {
   InputFields,
   InputTextArea,
   InputTextSearchButton,
-  InputTimePicker
+  InputTimePicker,
 } from "../Components/formComponents";
 import SearchInputField from "../Components/SearchInputField";
 import SearchModel from "../Components/SearchModel";
