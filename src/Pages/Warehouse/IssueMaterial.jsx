@@ -1,7 +1,7 @@
+import AddIcon from "@mui/icons-material/Add";
 import ClearIcon from "@mui/icons-material/Clear";
 import CloseIcon from "@mui/icons-material/Close";
 import MenuIcon from "@mui/icons-material/Menu";
-import AddIcon from "@mui/icons-material/Add";
 import RemoveCircleIcon from "@mui/icons-material/RemoveCircle";
 import { TabContext, TabPanel } from "@mui/lab";
 import {
@@ -18,13 +18,19 @@ import {
 import { useTheme } from "@mui/material/styles";
 import TextField from "@mui/material/TextField";
 import { DataGrid } from "@mui/x-data-grid";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { BeatLoader } from "react-spinners";
 
-import CardComponent from "../Components/CardComponent";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import dayjs from "dayjs";
+import { useMemo } from "react";
+import Swal from "sweetalert2";
+import useAuth from "../../Routing/AuthContext";
+import apiClient from "../../services/apiClient";
+import { dataGridSx } from "../../Styles/dataGridStyles";
+import CardComponent from "../Components/CardComponent";
 import {
   InputDatePickerField,
   InputSelectTextField,
@@ -32,16 +38,10 @@ import {
   InputTableTextField,
   InputTextArea,
   InputTextField,
-  InputTextSearchField,
+  InputTextSearchButton,
 } from "../Components/formComponents";
 import SearchInputField from "../Components/SearchInputField";
 import SearchModel from "../Components/SearchModel";
-import useAuth from "../../Routing/AuthContext";
-import Swal from "sweetalert2";
-import dayjs from "dayjs";
-import apiClient from "../../services/apiClient";
-import { useMemo } from "react";
-import { dataGridSx } from "../../Styles/dataGridStyles";
 
 export default function IssueMaterial() {
   const initialFormData = {
@@ -204,7 +204,7 @@ export default function IssueMaterial() {
     }
   };
 
-  const removeTableRow = (index) => {
+  const removeTableRow = (rowId) => {
     if (oLines.length === 1) {
       Swal.fire({
         text: "At least One Item Required",
@@ -215,8 +215,11 @@ export default function IssueMaterial() {
         timerProgressBar: true,
       });
     } else {
-      const updatedOLines = [...oLines];
-      updatedOLines.splice(index, 1);
+      // const updatedOLines = [...oLines];
+      // updatedOLines.splice(index, 1);
+      const updatedOLines = oLines.filter(
+        (row) => row.id !== rowId && row.ItemCode !== rowId,
+      );
       setoLines(updatedOLines);
     }
   };
@@ -599,7 +602,7 @@ export default function IssueMaterial() {
 
     {
       field: "ToWHS",
-      headerName: "To Whs	",
+      headerName: "To Whs",
       width: 100,
       sortable: false,
       renderCell: (params) => (
@@ -607,6 +610,8 @@ export default function IssueMaterial() {
           value={watchShowAge === "CNC" ? "99" : "98" || ""}
         />
       ),
+      align: "center",
+      headerAlign: "center",
     },
     {
       field: "AvailQty",
@@ -616,6 +621,8 @@ export default function IssueMaterial() {
       renderCell: (params) => (
         <InputTableTextField value={Number(params.value).toFixed(0) || ""} />
       ),
+      align: "center",
+      headerAlign: "center",
     },
     {
       field: "ReqQuantity",
@@ -625,6 +632,8 @@ export default function IssueMaterial() {
       renderCell: (params) => (
         <InputTableTextField value={Number(params.value).toFixed(0) || ""} />
       ),
+      align: "center",
+      headerAlign: "center",
     },
     {
       field: "OpenQuantity",
@@ -634,6 +643,8 @@ export default function IssueMaterial() {
       renderCell: (params) => (
         <InputTableTextField value={Number(params.value).toFixed(0) || ""} />
       ),
+      align: "center",
+      headerAlign: "center",
     },
     {
       field: "IssueQuantity",
@@ -649,6 +660,7 @@ export default function IssueMaterial() {
                 <IconButton
                   size="small"
                   onClick={(e) => clareissueqty(e, params.row.ItemCode)}
+                  disabled={Disabled}
                 >
                   <ClearIcon fontSize="small" />
                 </IconButton>
@@ -657,6 +669,8 @@ export default function IssueMaterial() {
           />
         );
       },
+      align: "center",
+      headerAlign: "center",
     },
     {
       field: "Action",
@@ -666,7 +680,7 @@ export default function IssueMaterial() {
       renderCell: (params) => (
         <IconButton
           onClick={() => {
-            removeTableRow(params.id);
+            removeTableRow(params.row.ItemCode);
           }}
         >
           <RemoveCircleIcon sx={{ color: "red" }} />
@@ -1312,17 +1326,17 @@ export default function IssueMaterial() {
                     <Controller
                       name="RequestNo"
                       control={control}
-                      render={({ field, fieldState: { error } }) => (
-                        <InputTextSearchField
+                      render={({ field }) => (
+                        <InputTextSearchButton
                           label="Request NO"
                           type="text"
+                          readOnly={true}
+                          disabled={!!field.value}
                           onClick={() => {
                             openDialog();
-                            ClearForm();
                           }}
                           {...field}
-                          error={!!error}
-                          helperText={error ? error.message : null}
+                          onChange={openDialog}
                         />
                       )}
                     />
@@ -1384,7 +1398,7 @@ export default function IssueMaterial() {
                     <Controller
                       name="OrderType"
                       control={control}
-                      render={({ field}) => (
+                      render={({ field }) => (
                         <InputTextField
                           label="Order Type"
                           type="text"
@@ -1426,7 +1440,7 @@ export default function IssueMaterial() {
                     <Controller
                       name="InwardNo"
                       control={control}
-                      render={({ field}) => (
+                      render={({ field }) => (
                         <InputTextField
                           label="Inward No"
                           type="text"
@@ -1440,7 +1454,7 @@ export default function IssueMaterial() {
                     <Controller
                       name="JobWorkAt"
                       control={control}
-                      render={({ field}) => (
+                      render={({ field }) => (
                         <InputTextField
                           label="Job Work At"
                           type="text"
@@ -1456,9 +1470,9 @@ export default function IssueMaterial() {
                       variant="contained"
                       fullWidth
                       sx={{ maxWidth: 220 }}
-                      disabled={Disabled}
+                      disabled={!watch("RequestNo") || Disabled}
                     >
-                      {Disabled ? "Print Picklist" : "Print Picklist"}
+                      Print Picklist
                     </Button>
                   </Grid>
 
@@ -1471,7 +1485,7 @@ export default function IssueMaterial() {
                         <Controller
                           name="ReqRemarks"
                           control={control}
-                          render={({ field}) => (
+                          render={({ field }) => (
                             <InputTextArea
                               label="Job Work Details"
                               type="text"
@@ -1493,6 +1507,7 @@ export default function IssueMaterial() {
                       autoFocus
                       value={barcodeItem}
                       onChange={handleBarcodeChange}
+                      disabled={!watch("RequestNo") || Disabled}
                     />
                   </Grid>
                 </Grid>
@@ -1533,7 +1548,7 @@ export default function IssueMaterial() {
                     <Controller
                       name="RequestBy"
                       control={control}
-                      render={({ field}) => (
+                      render={({ field }) => (
                         <InputTextField
                           label="Requested By"
                           type="text"
@@ -1577,7 +1592,7 @@ export default function IssueMaterial() {
                     <Controller
                       name="IssuedBy"
                       control={control}
-                      render={({ field}) => (
+                      render={({ field }) => (
                         <InputTextField
                           label="Issue By"
                           type="text"
@@ -1610,6 +1625,7 @@ export default function IssueMaterial() {
                             key: item.DocEntry,
                             value: item.TechnicianName,
                           }))}
+                          readOnly={!watch("RequestNo") || Disabled}
                           {...field}
                           error={!!error}
                           helperText={error?.message}
@@ -1637,9 +1653,9 @@ export default function IssueMaterial() {
                 sx={{ color: "white" }}
                 color="success"
                 type="submit"
-                disabled={Disabled}
+                disabled={!watch("RequestNo") || Disabled}
               >
-                {Disabled ? "Save" : "Save"}
+                Save
               </Button>
               <Button onClick={handlePrint} variant="contained" color="primary">
                 PRINT

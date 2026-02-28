@@ -1428,6 +1428,14 @@ export const InputSelectTextField = forwardRef(
           disabled={disabled}
           readOnly={readOnly}
           MenuProps={menuProps}
+          sx={{
+            textAlign: "left",
+            "& .MuiSelect-select": {
+              textAlign: "left",
+              display: "flex",
+              justifyContent: "flex-start",
+            },
+          }}
         >
           {data.map((item) => (
             <MenuItem
