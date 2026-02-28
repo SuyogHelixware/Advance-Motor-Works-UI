@@ -1,232 +1,29 @@
-// import React, { useState } from "react";
-
-// import { Box, Grid, IconButton, Typography } from "@mui/material";
-
-// import RefreshIcon from "@mui/icons-material/Refresh";
-// import { InputSearchButton } from "../Components/formComponents";
-
-// import { DataGrid } from "@mui/x-data-grid";
-// import { useTheme } from "@mui/material/styles";
-
-// export default function Barcode() {
-//   //const [phone, setPhone] = useState("");
-//   const theme = useTheme();
-
-//   // data grid Table
-//   const columns = [
-//     {
-//       field: "SN",
-//       headerName: "SN",
-//       width: 200,
-//       editable: true,
-//     },
-//     {
-//       field: "ITEM CODE",
-//       headerName: "ITEM CODE",
-//       width: 200,
-//       editable: true,
-//     },
-//     {
-//       field: "ITEM DESCRIPTION",
-//       headerName: "ITEM DESCRIPTION",
-//       width: 200,
-//       editable: true,
-//     },
-//     {
-//       field: "QUANTITY",
-//       headerName: "QUANTITY	",
-//       width: 200,
-//       editable: true,
-//     },
-//     {
-//       field: "PRINT",
-//       headerName: "PRINT	",
-//       width: 200,
-//       editable: true,
-//     },
-//   ];
-
-//   const rows = [
-//     { id: 1, SN: "Snow", firstName: "Jon", age: 14 },
-//     { id: 2, lastName: "Lannister", firstName: "Cersei", age: 31 },
-//     { id: 3, lastName: "Lannister", firstName: "Jaime", age: 31 },
-//     { id: 4, lastName: "Stark", firstName: "Arya", age: 11 },
-//     { id: 5, lastName: "Targaryen", firstName: "Daenerys", age: null },
-//   ];
-
-//   const [drawerOpen, setDrawerOpen] = useState(false);
-
-//   const toggleDrawer = () => {
-//     setDrawerOpen(!drawerOpen);
-//   };
-
-//   // const onHandleSearch = () => {
-//   //   alert();
-//   // };
-
-//   // const [age, setAge] = React.useState("");
-
-//   // const handleChange = (event) => {
-//   //   setAge(event.target.value);
-//   // };
-
-//   return (
-//     <>
-//       <Grid container height="calc(100vh - 110px)">
-//         <Grid
-//           container
-//           item
-//           width="100%"
-//           height="100%"
-//           sm={12}
-//           md={12}
-//           lg={12}
-//           component="form"
-//           position="relative"
-//         >
-//           {/* Hamburger Menu for smaller screens */}
-
-//           <IconButton
-//             edge="start"
-//             color="inherit"
-//             aria-label="menu"
-//             onClick={toggleDrawer}
-//             sx={{
-//               display: {
-//                 lg: "none",
-//               },
-//               position: "absolute",
-//               left: "10px",
-//             }}
-//           ></IconButton>
-
-//           <IconButton
-//             edge="start"
-//             color="inherit"
-//             aria-label="menu"
-//             sx={{
-//               display: {},
-//               position: "absolute",
-//               right: "10px",
-//             }}
-//           >
-//             <RefreshIcon />
-//           </IconButton>
-
-//           <Grid
-//             item
-//             width={"100%"}
-//             py={0.5}
-//             alignItems={"center"}
-//             border={"1px solid silver"}
-//             borderBottom={"none"}
-//           >
-//             <Typography
-//               textAlign={"center"}
-//               alignContent={"center"}
-//               height={"100%"}
-//             >
-//               Barcode Print
-//             </Typography>
-//           </Grid>
-
-//           <Grid
-//             container
-//             item
-//             width={"100%"}
-//             height={"100%"}
-//             border={"1px silver solid"}
-//           >
-//             <Grid
-//               container
-//               item
-//               padding={1}
-//               md={12}
-//               sm={12}
-//               height="calc(100% - 40px)"
-//               overflow={"scroll"}
-//               sx={{ overflowX: "hidden" }}
-//               position={"relative"}
-//             >
-//               <Box
-//                 component="form"
-//                 sx={{
-//                   "& .MuiTextField-root": { m: 1 },
-//                   width: "100%",
-//                 }}
-//                 noValidate
-//                 autoComplete="off"
-//               >
-//                 <Grid container>
-//                   <Grid item sm={6} md={6} lg={2} xs={12} textAlign={"center"}>
-//                     <InputSearchButton />
-//                   </Grid>
-//                 </Grid>
-//                 <Grid
-//                   container
-//                   sx={{
-//                     // px: 2,
-//                     overflow: "auto",
-//                     width: "100%",
-//                     //backgroundColor: "#f2f2f2",
-//                     height: "80%",
-//                   }}
-//                 >
-//                   {/* Data grid table start */}
-//                   <DataGrid
-//                     rows={rows}
-//                     columns={columns}
-//                     initialState={{
-//                       pagination: {
-//                         paginationModel: {
-//                           pageSize: 5,
-//                         },
-//                       },
-//                     }}
-//                     sx={{
-//                       backgroundColor:
-//                         theme.palette.mode === "light" ? "#F5F6FA" : "#080D2B",
-//                     }}
-//                     pageSizeOptions={[5]}
-//                     disableRowSelectionOnClick
-//                   />
-//                 </Grid>
-//               </Box>
-//             </Grid>
-//           </Grid>
-//         </Grid>
-//       </Grid>
-//     </>
-//   );
-// }
-
-import React, { useState, useEffect, useRef } from "react";
-import axios from "axios";
+import AddIcon from "@mui/icons-material/Add";
+import MenuIcon from "@mui/icons-material/Menu";
 import PrintIcon from "@mui/icons-material/Print";
-import { Divider, Grid, IconButton } from "@mui/material";
-import { DataGrid, GridToolbarQuickFilter } from "@mui/x-data-grid";
-import ReactToPrint from "react-to-print";
-
-// Internal Components
+import { Grid, IconButton, Paper, Typography } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import {
-  AddClearIconButton,
-  PageSubTitle,
-  TableAmountField,
-} from "../component/FormInputs";
-import { BarcodeReportToPrint } from "../LayoutReports/BarcodePrintReport";
-import Loader from "../component/Loader";
+  DataGrid,
+  GridToolbarQuickFilter,
+  useGridApiRef,
+} from "@mui/x-data-grid";
+import axios from "axios";
+import { useEffect, useMemo, useRef, useState } from "react";
+import ReactToPrint from "react-to-print";
+import { dataGridSx } from "../../Styles/dataGridStyles";
+import { Loader } from "../Components/Loader";
 
-const BarcodePrint = () => {
-  // --- State Hooks ---
+export default function Barcode() {
   const [itemDetails, setItemDetails] = useState([]);
-  const [itemsLoadCount, setItemsLoadCount] = useState(0);
   const [open, setOpen] = useState(false);
   const [printBarcode, setPrintBarcode] = useState([]);
-
-  // --- Refs ---
   const componentRef = useRef();
+  const theme = useTheme();
+  const apiRef = useGridApiRef();
 
-  // --- Side Effects (componentDidMount) ---
+  const gridSx = useMemo(() => dataGridSx(theme), [theme]);
+
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
@@ -241,7 +38,6 @@ const BarcodePrint = () => {
           ItemCode: item.ItemCode,
           ItemName: item.ItemName,
           DocEntry: item.DocEntry,
-          Quantity: "",
         }));
 
         setItemDetails(mappedData);
@@ -253,21 +49,9 @@ const BarcodePrint = () => {
     fetchInitialData();
   }, []);
 
-  // --- Handlers ---
-  const handleOnQuantityChange = (event, id) => {
-    const newValue = event.target.value;
-    setItemDetails((prevItems) =>
-      prevItems.map((item) =>
-        item.DocEntry === id ? { ...item, Quantity: newValue } : item,
-      ),
-    );
-  };
-
   const handlePrintAction = (rowData) => {
     setOpen(true);
     setPrintBarcode(rowData);
-
-    // Mimicking your original delay for the print trigger
     setTimeout(() => {
       const printBtn = document.getElementById("hidden-print-trigger");
       if (printBtn) printBtn.click();
@@ -276,29 +60,25 @@ const BarcodePrint = () => {
   };
 
   const clearFormData = () => {
-    // Logic for clearing form if needed
-    console.log("Clear form clicked");
+    if (apiRef.current) {
+      apiRef.current.setQuickFilterValues([]);
+    }
   };
 
-  // --- Column Definitions ---
   const columns = [
-    { field: "DocEntry", headerName: "SN" },
-    { field: "ItemCode", headerName: "ITEM CODE", width: 170 },
-    { field: "ItemName", headerName: "ITEM DESCRIPTION", width: 500 },
     {
-      field: "Quantity",
-      headerName: "QUANTITY",
-      renderCell: (params) => (
-        <TableAmountField
-          id={`qty-${params.id}`}
-          value={params.row.Quantity}
-          onChange={(event) => handleOnQuantityChange(event, params.id)}
-        />
-      ),
+      field: "DocEntry",
+      headerName: "SN",
+      renderCell: (params) =>
+        params.api.getSortedRowIds().indexOf(params.id) + 1,
     },
+    { field: "ItemCode", headerName: "ITEM CODE", width: 200 },
+    { field: "ItemName", headerName: "ITEM DESCRIPTION", width: 1200 },
     {
       field: "Print",
       headerName: "PRINT",
+      headerAlign: "center",
+      align: "center",
       renderCell: (params) => (
         <>
           <IconButton
@@ -327,8 +107,7 @@ const BarcodePrint = () => {
     },
   ];
 
-  // --- Toolbar Component ---
-  const SearchItemTableRecord = () => (
+  const SearchItemTableRecord = ({ apiRef }) => (
     <div className="col-3" style={{ padding: "10px" }}>
       <GridToolbarQuickFilter
         variant="outlined"
@@ -339,59 +118,117 @@ const BarcodePrint = () => {
             .map((value) => value.trim())
             .filter((value) => value !== "")
         }
+        onChange={(e) => {
+          apiRef.current.setQuickFilterValues([e.target.value]);
+        }}
       />
     </div>
   );
-
   return (
     <>
       <Loader open={open} />
 
       <Grid
         container
-        width="100%"
-        height="100vh"
-        sx={{ border: "1px silver solid" }}
+        width={"100%"}
+        height="calc(100vh - 110px)"
+        position={"relative"}
+        component={"form"}
       >
-        {/* Header Section */}
         <Grid
           container
           item
           width="100%"
-          height="30px"
-          className="pageSubTitle-style"
+          height="100%"
+          sm={12}
+          md={12}
+          lg={12}
+          position="relative"
         >
-          <Grid item width="90%">
-            <PageSubTitle title="Barcode Print" />
-            <Divider color="gray" />
-          </Grid>
-          <Grid item width="10%">
-            <AddClearIconButton onClick={clearFormData} />
-            <Divider color="gray" />
-          </Grid>
-        </Grid>
-
-        {/* DataGrid Section */}
-        <Grid container item width="100%" height="calc(100% - 35px)">
-          <DataGrid
-            className="datagrid-style"
-            rowHeight={40}
-            rows={itemDetails}
-            columns={columns}
-            getRowId={(row) => row.DocEntry}
-            slots={{
-              toolbar: SearchItemTableRecord,
+          <IconButton
+            edge="start"
+            color="inherit"
+            aria-label="menu"
+            sx={{
+              display: {
+                lg: "none",
+              },
+              position: "absolute",
+              left: "10px",
             }}
-          />
-        </Grid>
+          >
+            <MenuIcon />
+          </IconButton>
 
-        {/* Hidden Print Report */}
-        <div style={{ display: "none" }}>
-          <BarcodeReportToPrint data={printBarcode} ref={componentRef} />
-        </div>
+          <IconButton
+            edge="start"
+            color="inherit"
+            aria-label="menu"
+            onClick={clearFormData}
+            sx={{
+              display: {},
+              position: "absolute",
+              right: "10px",
+            }}
+          >
+            <AddIcon />
+          </IconButton>
+
+          <Grid
+            item
+            width={"100%"}
+            py={0.5}
+            alignItems={"center"}
+            border={"1px solid silver"}
+            borderBottom={"none"}
+          >
+            <Typography
+              textAlign={"center"}
+              alignContent={"center"}
+              height={"100%"}
+            >
+              Barcode Print
+            </Typography>
+          </Grid>
+
+          <Grid
+            container
+            item
+            width={"100%"}
+            height={"100%"}
+            border={"1px silver solid"}
+          >
+            <Grid
+              container
+              component={Paper}
+              item
+              sx={{
+                overflow: "auto",
+                width: "100%",
+                height: 800,
+                padding: 3,
+              }}
+            >
+              <DataGrid
+                className="datagrid-style"
+                rowHeight={40}
+                rows={itemDetails}
+                apiRef={apiRef}
+                columns={columns}
+                getRowId={(row) => row.DocEntry}
+                // slots={{
+                //   toolbar: SearchItemTableRecord,
+                // }}
+                slots={{
+                  toolbar: () => <SearchItemTableRecord apiRef={apiRef} />,
+                }}
+                autoHeight="false"
+                sx={gridSx}
+              />
+            </Grid>
+          </Grid>
+        </Grid>
       </Grid>
     </>
   );
-};
-
-export default BarcodePrint;
+}
