@@ -21,19 +21,20 @@ import {
   useTheme,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
-import axios from "axios";
 import dayjs from "dayjs";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import InfiniteScroll from "react-infinite-scroll-component";
+import SignatureCanvas from "react-signature-canvas";
 import { BeatLoader } from "react-spinners";
 import Swal from "sweetalert2";
 import { dataGridSx } from "../../Styles/dataGridStyles";
 import AutoCompleteDropdown from "../Components/AutoCompleteDropdown";
 import CardComponent from "../Components/CardComponent";
-import SignatureCanvas from "react-signature-canvas";
 
+import apiClient from "../../services/apiClient";
 import {
+  InputDatePickerField,
   InputDatePickerFields,
   InputTextArea,
   InputTextAreaFields,
@@ -45,7 +46,6 @@ import {
 import SearchInputField from "../Components/SearchInputField";
 import SearchModel from "../Components/SearchModel";
 import usePermissions from "../Components/usePermissions";
-import apiClient from "../../services/apiClient";
 
 export default function IssueMaterial() {
   const theme = useTheme();
@@ -123,7 +123,7 @@ export default function IssueMaterial() {
     });
   };
 
- const QCitemsTable = [
+  const QCitemsTable = [
     {
       field: "Question",
       headerName: "QUESTIONS",
@@ -231,8 +231,10 @@ export default function IssueMaterial() {
           LineJobStatus: Number(Job.LineJobStatus),
         })),
       };
-     
-      fetchTechnicianData();
+
+      // fetchTechnicianData();
+      // reset(transformed);
+      await Promise.all([fetchTechnicianData(), fetchJacks()]);
       reset(transformed);
       setSelectData(DocEntry);
       setDocEntry(DocEntry);
@@ -468,7 +470,7 @@ export default function IssueMaterial() {
         const options = [
           { key: "", value: "" },
           ...res.data.values.map((jack) => ({
-            key: jack.DocEntry,
+            key: Number(jack.DocEntry),
             value: jack.JackName,
           })),
         ];
@@ -489,7 +491,7 @@ export default function IssueMaterial() {
 
       if (res.data.success) {
         const options = res.data.values.map((jack) => ({
-          key: jack.DocEntry,
+          key: Number(jack.DocEntry),
           value: jack.TechnicianName,
         }));
 
@@ -1195,7 +1197,7 @@ export default function IssueMaterial() {
       CardName: data.CardName,
       CardCode: data.CardCode,
       JobCardStatus: "",
-      DocDate: dayjs(),
+      // DocDate: dayjs(),
       RequestDate: dayjs(data.RequestDate).format("YYYY-MM-DD HH:mm:ss"),
       RequestNo: data.ReqNo,
       RequestDocNums: data.RequestDocNums,
@@ -1994,10 +1996,11 @@ export default function IssueMaterial() {
                       name="JobStartDate"
                       control={control}
                       render={({ field }) => (
-                        <InputDatePickerFields
+                        <InputDatePickerField
                           label="DATE"
                           {...field}
                           value={field.value}
+                          readOnly={true}
                         />
                       )}
                     />
@@ -2007,10 +2010,11 @@ export default function IssueMaterial() {
                       name="JobCloseDate"
                       control={control}
                       render={({ field }) => (
-                        <InputDatePickerFields
+                        <InputDatePickerField
                           label="JOB-WORK DONE ON"
                           {...field}
                           value={field.value}
+                          readOnly={true}
                         />
                       )}
                     />

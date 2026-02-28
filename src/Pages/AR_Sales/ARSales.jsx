@@ -40,18 +40,18 @@ export default function ARSales() {
       Count: 0,
       ReDirect: "cash-invoice",
     },
-    // {
-    //   id: "8",
-    //   Name: "Order Cancellation",
-    //   Count: 0,
-    //   ReDirect: "order-cancellation",
-    // },
-    // {
-    //   id: "9",
-    //   Name: "Customer Sales History",
-    //   Count: 0,
-    //   ReDirect: "customer-sales-history",
-    // },
+    {
+      id: "8",
+      Name: "Order Cancellation",
+      Count: 0,
+      ReDirect: "order-cancellation",
+    },
+    {
+      id: "9",
+      Name: "Customer Sales History",
+      Count: 0,
+      ReDirect: "customer-sales-history",
+    },
   ];
 
   return (
