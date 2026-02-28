@@ -136,6 +136,7 @@ export default function BinLocationMaster() {
       OrderSubType: data.OrderType,
       AppointType: data.OrderSubType,
       OrderDocEntry: data.DocEntry,
+      AppointDate: dayjs(),
       oLines: data.oLines.map((line) => ({
         ItemName: line.ItemName,
         ItemCode: line.ItemCode,
