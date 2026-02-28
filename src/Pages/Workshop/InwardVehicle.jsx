@@ -218,11 +218,15 @@ export default function InwardVehicle() {
           ...item,
 
           VehInwardDate: item.DocDate ? dayjs(item.DocDate) : dayjs(),
+          // VehInwardTime: item.VehInwardTime
+          //   ? dayjs(item.VehInwardTime)
+          //   : dayjs(),
           VehInwardTime: item.VehInwardTime
-            ? dayjs(item.VehInwardTime)
-            : dayjs(),
+            ? dayjs(item.VehInwardTime, "HH:mm")
+            : null,
           AppointDate: item.DocDate ? dayjs(item.DocDate) : dayjs(),
           VehInwardNo: item.DocNum,
+          JobCardNo: item.JobCardNo,
           InspectionRemark: item.InspectionRemark,
           Vehicle:
             item.Vehicle ||
@@ -1371,7 +1375,7 @@ export default function InwardVehicle() {
                           </div>
 
                           <div className=" mb-3">
-                            <Controller
+                            {/* <Controller
                               name="VehInwardTime"
                               control={control}
                               rules={{ required: "Time is Required" }}
@@ -1382,6 +1386,22 @@ export default function InwardVehicle() {
                                   readOnly={true}
                                   error={!!error}
                                   helperText={error?.message}
+                                />
+                              )}
+                            /> */}
+                            <Controller
+                              name="VehInwardTime"
+                              control={control}
+                              render={({ field }) => (
+                                <InputFields
+                                  {...field}
+                                  label="INWARD TIME"
+                                  value={
+                                    field.value
+                                      ? dayjs(field.value).format("HH:mm")
+                                      : ""
+                                  }
+                                  readOnly={true}
                                 />
                               )}
                             />

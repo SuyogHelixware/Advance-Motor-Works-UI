@@ -1,7 +1,7 @@
 import ClearIcon from "@mui/icons-material/Clear";
 import CloseIcon from "@mui/icons-material/Close";
 import MenuIcon from "@mui/icons-material/Menu";
-import RefreshIcon from "@mui/icons-material/Refresh";
+import AddIcon from "@mui/icons-material/Add";
 import RemoveCircleIcon from "@mui/icons-material/RemoveCircle";
 import { TabContext, TabPanel } from "@mui/lab";
 import {
@@ -521,13 +521,6 @@ export default function IssueMaterial() {
   };
 
   const columns = [
-    // {
-    //   field: "ItemCode",
-    //   headerName: "Item Code",
-    //   width: 130,
-    //   editable: false,
-    //   sortable: false,
-    // },
     {
       field: "ItemCode",
       headerName: "Item Code",
@@ -574,7 +567,6 @@ export default function IssueMaterial() {
       field: "ItemName",
       headerName: "Item Description",
       minWidth: 250,
-      editable: false,
       sortable: false,
       flex: 1,
     },
@@ -582,7 +574,6 @@ export default function IssueMaterial() {
       field: "WHSCode",
       headerName: "From WHS",
       width: 100,
-      editable: false,
       sortable: false,
       type: "number",
     },
@@ -590,7 +581,6 @@ export default function IssueMaterial() {
       field: "BinList",
       headerName: "From Bin",
       width: 130,
-      editable: false,
       sortable: false,
       renderCell: (params) => (
         <InputTableSelectField
@@ -611,7 +601,6 @@ export default function IssueMaterial() {
       field: "ToWHS",
       headerName: "To Whs	",
       width: 100,
-      editable: false,
       sortable: false,
       renderCell: (params) => (
         <InputTableTextField
@@ -623,7 +612,6 @@ export default function IssueMaterial() {
       field: "AvailQty",
       headerName: "Avl Qty	",
       width: 100,
-      editable: false,
       sortable: false,
       renderCell: (params) => (
         <InputTableTextField value={Number(params.value).toFixed(0) || ""} />
@@ -633,7 +621,6 @@ export default function IssueMaterial() {
       field: "ReqQuantity",
       headerName: "Req Qty",
       width: 100,
-      editable: false,
       sortable: false,
       renderCell: (params) => (
         <InputTableTextField value={Number(params.value).toFixed(0) || ""} />
@@ -643,7 +630,6 @@ export default function IssueMaterial() {
       field: "OpenQuantity",
       headerName: "Open Qty	",
       width: 100,
-      editable: false,
       sortable: false,
       renderCell: (params) => (
         <InputTableTextField value={Number(params.value).toFixed(0) || ""} />
@@ -676,7 +662,6 @@ export default function IssueMaterial() {
       field: "Action",
       headerName: "Action	",
       width: 100,
-      editable: true,
       sortable: false,
       renderCell: (params) => (
         <IconButton
@@ -1272,7 +1257,7 @@ export default function IssueMaterial() {
               right: "10px",
             }}
           >
-            <RefreshIcon />
+            <AddIcon />
           </IconButton>
 
           <Grid
@@ -1346,16 +1331,12 @@ export default function IssueMaterial() {
                     <Controller
                       name="OrderNo"
                       control={control}
-                      rules={{
-                        required: "so No is required",
-                      }}
-                      render={({ field, fieldState: { error } }) => (
+                      render={({ field }) => (
                         <InputTextField
                           label="SO NO"
                           type="text"
                           {...field}
-                          error={!!error}
-                          helperText={error ? error.message : null}
+                          readOnly={true}
                         />
                       )}
                     />
@@ -1372,20 +1353,13 @@ export default function IssueMaterial() {
                     <Controller
                       name="RequestDate"
                       control={control}
-                      rules={{
-                        required: "REQUEST DATE is required",
-                      }}
-                      render={({ field, fieldState: { error } }) => (
+                      render={({ field }) => (
                         <InputDatePickerField
                           redOnly
                           label="REQUEST DATE"
                           name={field.name}
                           value={field.value ? dayjs(field.value) : undefined}
-                          onChange={(date) =>
-                            field.onChange(date ? date.toISOString : undefined)
-                          }
-                          error={!!error}
-                          helperText={error ? error.message : null}
+                          readOnly={true}
                         />
                       )}
                     />
@@ -1395,20 +1369,12 @@ export default function IssueMaterial() {
                     <Controller
                       name="IssueDate"
                       control={control}
-                      rules={{
-                        required: "issue date is required",
-                      }}
-                      render={({ field, fieldState: { error } }) => (
+                      render={({ field }) => (
                         <InputDatePickerField
-                          readOnly
+                          readOnly={true}
                           label="Issue Date"
                           name={field.name}
                           value={field.value ? dayjs(field.value) : undefined}
-                          onChange={(date) =>
-                            field.onChange(date ? date.toISOString : undefined)
-                          }
-                          error={!!error}
-                          helperText={error ? error.message : null}
                         />
                       )}
                     />
@@ -1417,17 +1383,13 @@ export default function IssueMaterial() {
                   <Grid item sm={6} md={6} lg={4} xs={12} textAlign="center">
                     <Controller
                       name="OrderType"
-                      rules={{
-                        required: "Order Type is required",
-                      }}
                       control={control}
-                      render={({ field, fieldState: { error } }) => (
+                      render={({ field}) => (
                         <InputTextField
                           label="Order Type"
                           type="text"
                           {...field}
-                          error={!!error}
-                          helperText={error ? error.message : null}
+                          readOnly={true}
                         />
                       )}
                     />
@@ -1436,16 +1398,12 @@ export default function IssueMaterial() {
                     <Controller
                       name="1"
                       control={control}
-                      // rules={{
-                      //   required: "issue no is required",
-                      // }}
-                      render={({ field, fieldState: { error } }) => (
+                      render={({ field }) => (
                         <InputTextField
                           label="Issue No "
                           type="text"
                           {...field}
-                          error={!!error}
-                          helperText={error ? error.message : null}
+                          readOnly={true}
                         />
                       )}
                     />
@@ -1454,16 +1412,12 @@ export default function IssueMaterial() {
                     <Controller
                       name="RegistrationNo"
                       control={control}
-                      // rules={{
-                      //   required: "Registration No is required",
-                      // }}
-                      render={({ field, fieldState: { error } }) => (
+                      render={({ field }) => (
                         <InputTextField
                           label="Registration No"
                           type="text"
                           {...field}
-                          error={!!error}
-                          helperText={error ? error.message : null}
+                          readOnly={true}
                         />
                       )}
                     />
@@ -1472,16 +1426,12 @@ export default function IssueMaterial() {
                     <Controller
                       name="InwardNo"
                       control={control}
-                      // rules={{
-                      //   required: "Inward No is required",
-                      // }}
-                      render={({ field, fieldState: { error } }) => (
+                      render={({ field}) => (
                         <InputTextField
                           label="Inward No"
                           type="text"
                           {...field}
-                          error={!!error}
-                          helperText={error ? error.message : null}
+                          readOnly={true}
                         />
                       )}
                     />
@@ -1490,17 +1440,13 @@ export default function IssueMaterial() {
                     <Controller
                       name="JobWorkAt"
                       control={control}
-                      // rules={{
-                      //   required: "Job Work At is required",
-                      // }}
-                      render={({ field, fieldState: { error } }) => (
+                      render={({ field}) => (
                         <InputTextField
                           label="Job Work At"
                           type="text"
                           {...register("JobWorkAt")}
                           {...field}
-                          error={!!error}
-                          helperText={error ? error.message : null}
+                          readOnly={true}
                         />
                       )}
                     />
@@ -1517,19 +1463,25 @@ export default function IssueMaterial() {
                   </Grid>
 
                   <Grid item sm={6} md={6} lg={4} xs={12} textAlign="center">
-                    <Controller
-                      name="ReqRemarks"
-                      control={control}
-                      render={({ field, fieldState: { error } }) => (
-                        <InputTextArea
-                          label="Job Work Details"
-                          type="text"
-                          {...field}
-                          error={!!error}
-                          helperText={error ? error.message : null}
+                    <Tooltip
+                      title={(watch("ReqRemarks") || "").toUpperCase()}
+                      arrow
+                    >
+                      <div style={{ width: "100%" }}>
+                        <Controller
+                          name="ReqRemarks"
+                          control={control}
+                          render={({ field}) => (
+                            <InputTextArea
+                              label="Job Work Details"
+                              type="text"
+                              {...field}
+                              readOnly={true}
+                            />
+                          )}
                         />
-                      )}
-                    />
+                      </div>
+                    </Tooltip>
                   </Grid>
                 </Grid>
 
@@ -1537,7 +1489,7 @@ export default function IssueMaterial() {
                   <Grid item md={12} lg={12} xs={12} textAlign="center" m={2}>
                     <TextField
                       fullWidth
-                      placeholder="Search..."
+                      placeholder="Scan Barcode"
                       autoFocus
                       value={barcodeItem}
                       onChange={handleBarcodeChange}
@@ -1565,16 +1517,6 @@ export default function IssueMaterial() {
                     disableRowSelectionOnClick
                     autoHeight="false"
                     sx={gridSx}
-                    // sx={{
-                    //   backgroundColor:
-                    //     theme.palette.mode === "light" ? "#F5F6FA" : "#080D2B",
-                    //   "& .MuiDataGrid-cell": {
-                    //     border: "none",
-                    //   },
-                    //   "& .MuiDataGrid-cell:focus": {
-                    //     outline: "none",
-                    //   },
-                    // }}
                   />
                 </Grid>
 
@@ -1591,16 +1533,12 @@ export default function IssueMaterial() {
                     <Controller
                       name="RequestBy"
                       control={control}
-                      rules={{
-                        required: "Requested By is required",
-                      }}
-                      render={({ field, fieldState: { error } }) => (
+                      render={({ field}) => (
                         <InputTextField
                           label="Requested By"
                           type="text"
                           {...field}
-                          error={!!error}
-                          helperText={error ? error.message : null}
+                          readOnly={true}
                         />
                       )}
                     />
@@ -1617,13 +1555,12 @@ export default function IssueMaterial() {
                     <Controller
                       name="InvTransferNo"
                       control={control}
-                      render={({ field, fieldState: { error } }) => (
+                      render={({ field }) => (
                         <InputTextField
                           label="Inventory Transfer Number"
                           type="text"
+                          readOnly={true}
                           {...field}
-                          error={!!error}
-                          helperText={error ? error.message : null}
                         />
                       )}
                     />
@@ -1640,16 +1577,12 @@ export default function IssueMaterial() {
                     <Controller
                       name="IssuedBy"
                       control={control}
-                      rules={{
-                        required: "issue by is required",
-                      }}
-                      render={({ field, fieldState: { error } }) => (
+                      render={({ field}) => (
                         <InputTextField
                           label="Issue By"
                           type="text"
                           {...field}
-                          error={!!error}
-                          helperText={error ? error.message : null}
+                          readOnly={true}
                         />
                       )}
                     />

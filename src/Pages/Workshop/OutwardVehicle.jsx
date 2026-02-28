@@ -23,8 +23,10 @@ import Swal from "sweetalert2";
 import apiClient from "../../services/apiClient";
 import CardComponent from "../Components/CardComponent";
 import {
+  InputDatePickerField,
   InputDatePickerFields,
   InputFields,
+  InputTextArea,
   InputTextAreaFields,
   InputTextSearchButton,
   InputTimePicker,
@@ -82,11 +84,10 @@ export default function InwardVehicle() {
   };
 
   const initial = {
-    OrderNo: "",
+    SoNo: "",
     CardName: "",
     PhoneNumber1: "",
-    Mileage: "",
-    ChassisNo: "",
+    InvoiceNo: "",
     RegistrationNo: "",
     JobWorkAt: "",
     JobWorkDetails: "",
@@ -95,17 +96,10 @@ export default function InwardVehicle() {
     VehInwardTime: dayjs(),
     JobCardNo: "",
     OutwardNo: "",
+    VehOutwardDate: dayjs(new Date()),
+    VehOutwardTime: dayjs(),
     OrderDocEntry: "",
     SignPath: "",
-    InvoiceNo: "",
-    Year: "",
-    Make: "",
-    Model: "",
-    AppointmentNo: "",
-    OrderType: "",
-    VehInwardNo: "",
-    InspectionRemarks: "",
-    // Vehicle: "",
   };
 
   const {
@@ -175,44 +169,38 @@ export default function InwardVehicle() {
     }
   }, [SaveUpdateName]);
 
-  const onSelectBusinessPartner = (DocEntry) => {
+  const onSelectBusinessPartner = async (selectedItem) => {
     clearSignature();
-    const selectedItem = getListData.find((item) => item.DocEntry === DocEntry);
-    if (!selectedItem) return;
 
-    const fieldsToSet = {
-      OrderNo: selectedItem.OrderNo,
-      CardName: selectedItem.CardName,
-      CardCode: selectedItem.CardCode,
-      InvoiceNo: selectedItem.DocNum,
-      AppointDate: selectedItem.AppointDate
-        ? dayjs(selectedItem.AppointDate)
-        : null,
-      AppointmentNo: selectedItem.DocEntry,
-      Vehicle: `${selectedItem.Year} - ${selectedItem.Make} - ${selectedItem.Model}`,
-      PhoneNumber1: selectedItem.PhoneNumber1,
-      OrderDocEntry: selectedItem.OrderDocEntry,
-      //   VehMileage: selectedItem.Mileage,
-      //   VehchassisNo: selectedItem.ChassisNo,
-      //   RegistrationNo: selectedItem.RegistrationNo,
-      //   InspectionRemarks: selectedItem.InspectionRemark,
-      JobWorkAt: selectedItem.JobWorkAt,
-      JobWorkDetails: selectedItem.JobRemarks,
-      VehInwardNo: selectedItem.VehInwardNo,
-      JobCardNo: selectedItem.JobCardNo,
-      SignPath: selectedItem.SignPath,
-      OrderType: selectedItem.OrderType,
-      Year: selectedItem.Year,
-      Make: selectedItem.Make,
-      Model: selectedItem.Model,
-    };
+    try {
+      const filledValues = {
+        ...selectedItem,
+        OrderNo: selectedItem.OrderNo,
+        CardName: selectedItem.CardName,
+        CardCode: selectedItem.CardCode,
+        InvoiceNo: selectedItem.DocNum,
+        PhoneNumber1: selectedItem.PhoneNumber1,
+        RegistrationNo: selectedItem.RegistrationNo,
+        JobWorkAt: selectedItem.JobWorkAt,
+        JobWorkDetails: selectedItem.JobRemarks,
+        VehInwardNo: selectedItem.VehInwardNo,
+        VehInwardDate: selectedItem.VehInwardDate
+          ? dayjs(selectedItem.VehInwardDate)
+          : null,
+        VehInwardTime: dayjs(selectedItem.VehInwardTime, "HH:mm"),
+        JobCardNo: selectedItem.JobCardNo,
+        VehOutwardDate: dayjs(new Date()),
+        VehOutwardTime: dayjs(),
+        SignPath: selectedItem.SignPath,
+      };
 
-    Object.entries(fieldsToSet).forEach(([key, value]) => {
-      setValue(key, value, { shouldValidate: true });
-    });
-
-    SearchModelClose();
+      reset(filledValues);
+      SearchModelClose();
+    } catch (error) {
+      console.error("Error fetching ARInvoice:", error);
+    }
   };
+
   const fetchAndSetData = async (DocEntry) => {
     try {
       if (!DocEntry) return;
@@ -256,6 +244,7 @@ export default function InwardVehicle() {
       });
     }
   };
+
   const fetchOpenListData = async (pageNum, searchTerm = "") => {
     try {
       const url = searchTerm
@@ -565,7 +554,6 @@ export default function InwardVehicle() {
                           subtitle={item.PhoneNumber1}
                           description={item.CardName}
                           searchResult={query}
-                          // isSelected={watch("DocEntry") === item.DocEntry}
                           onClick={() => fetchAndSetData(item.DocEntry)}
                         />
                       ))}
@@ -681,8 +669,7 @@ export default function InwardVehicle() {
     reset(initial);
     setSaveUpdateName("SAVE");
     setDocEntry("");
-    // setSelectData([]);
-    // setok("");
+    clearSignature();
   };
 
   const handleSubmitForm = async (data) => {
@@ -808,8 +795,7 @@ export default function InwardVehicle() {
 
   return (
     <>
-
-    <DynamicLoader open={apiloading} />
+      <DynamicLoader open={apiloading} />
       <Grid
         container
         width="100%"
@@ -850,11 +836,8 @@ export default function InwardVehicle() {
           sm={12}
           md={12}
           lg={9}
-          // component="form"
           position="relative"
         >
-          {/* Hamburger Menu for smaller screens */}
-
           <IconButton
             edge="start"
             color="inherit"
@@ -863,12 +846,8 @@ export default function InwardVehicle() {
             sx={{
               display: {
                 lg: "none",
-              }, // Show only on smaller screens
-
+              },
               position: "absolute",
-
-              // top: "10px",
-
               left: "10px",
             }}
           >
@@ -933,219 +912,181 @@ export default function InwardVehicle() {
                 noValidate
                 autoComplete="off"
               >
-                <Grid container>
-                  <Grid
-                    container
-                    item
-                    style={{
-                      height: "100%",
-                      width: "100%",
-                      overflowX: "hidden",
-                      overflowY: "auto",
-                      paddingBottom: 30,
-                    }}
-                  >
-                    <Grid container spacing={2} mt={2} px={2}>
-                      <Grid item xs={12} md={6} lg={4}>
-                        <div
-                          style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            width: "100%",
-                          }}
-                        >
-                          <div className=" mb-3">
-                            <Controller
-                              name="OrderNo"
-                              control={control}
-                              render={({ field }) => (
-                                <InputTextSearchButton
-                                  label="SO NO"
-                                  readOnly={true}
-                                  disabled={!!DocEntry}
-                                  onClick={() => {
-                                    OpenDailog();
-                                  }}
-                                  onChange={OpenDailog}
-                                  type="text"
-                                  {...field}
-                                />
-                              )}
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={4}>
+                    <Grid container direction="column">
+                      <Grid item textAlign="center">
+                        <Controller
+                          name="OrderNo"
+                          control={control}
+                          render={({ field }) => (
+                            <InputTextSearchButton
+                              label="SO NO"
+                              readOnly={true}
+                              disabled={!!DocEntry}
+                              onClick={() => {
+                                OpenDailog();
+                              }}
+                              onChange={OpenDailog}
+                              type="text"
+                              {...field}
                             />
-                            <SearchModel
-                              open={searchmodelOpen}
-                              onClose={SearchModelClose}
-                              onCancel={SearchModelClose}
-                              title="Select Sales Order"
-                              onChange={(e) =>
-                                handleGetListSearch(e.target.value)
-                              }
-                              value={getListquery}
-                              onClickClear={handleGetListClear}
-                              cardData={
-                                <>
-                                  <InfiniteScroll
-                                    style={{
-                                      textAlign: "center",
-                                      justifyContent: "center",
+                          )}
+                        />
+                        <SearchModel
+                          open={searchmodelOpen}
+                          onClose={SearchModelClose}
+                          onCancel={SearchModelClose}
+                          title="Select Sales Order"
+                          onChange={(e) => handleGetListSearch(e.target.value)}
+                          value={getListquery}
+                          onClickClear={handleGetListClear}
+                          cardData={
+                            <>
+                              <InfiniteScroll
+                                style={{
+                                  textAlign: "center",
+                                  justifyContent: "center",
+                                }}
+                                dataLength={getListData.length}
+                                next={fetchMoreGetListData}
+                                hasMore={hasMoreGetList}
+                                loader={
+                                  <BeatLoader
+                                    color={theme.palette.primary.main}
+                                  />
+                                }
+                                scrollableTarget="getListForCreateScroll"
+                                endMessage={
+                                  <Typography>No More Records</Typography>
+                                }
+                              >
+                                {getListData.map((item, index) => (
+                                  <CardComponent
+                                    // key={index}
+                                    key={item.DocEntry}
+                                    title={item.OrderNo}
+                                    subtitle={item.PhoneNumber1}
+                                    description={item.CardName}
+                                    searchResult={getListquery}
+                                    isSelected={
+                                      allFormData.CardCode === item.CardCode
+                                    }
+                                    onClick={() => {
+                                      onSelectBusinessPartner(item);
                                     }}
-                                    dataLength={getListData.length}
-                                    next={fetchMoreGetListData}
-                                    hasMore={hasMoreGetList}
-                                    loader={
-                                      <BeatLoader
-                                        color={theme.palette.primary.main}
-                                      />
-                                    }
-                                    scrollableTarget="getListForCreateScroll"
-                                    endMessage={
-                                      <Typography>No More Records</Typography>
-                                    }
-                                  >
-                                    {getListData.map((item, index) => (
-                                      <CardComponent
-                                        // key={index}
-                                        key={item.DocEntry}
-                                        title={item.OrderNo}
-                                        subtitle={item.PhoneNumber1}
-                                        description={item.CardName}
-                                        searchResult={getListquery}
-                                        isSelected={
-                                          allFormData.CardCode === item.CardCode
-                                        }
-                                        onClick={() => {
-                                          onSelectBusinessPartner(
-                                            item.DocEntry,
-                                          );
-                                        }}
-                                      />
-                                    ))}
-                                  </InfiniteScroll>
-                                </>
-                              }
-                            />
-                          </div>
-
-                          <div className=" mb-3">
-                            <Controller
-                              name="RegistrationNo"
-                              control={control}
-                              render={({ field }) => (
-                                <InputFields
-                                  readOnly={true}
-                                  {...field}
-                                  label="REGISTRATION NO"
-                                />
-                              )}
-                            />
-                          </div>
-
-                          <div className=" mb-3">
-                            <Controller
-                              name="CardName"
-                              control={control}
-                              render={({ field }) => (
-                                <InputFields
-                                  readOnly={true}
-                                  {...field}
-                                  label="CUSTOMER NAME"
-                                />
-                              )}
-                            />
-                          </div>
-                        </div>
+                                  />
+                                ))}
+                              </InfiniteScroll>
+                            </>
+                          }
+                        />
                       </Grid>
-                      <Grid item xs={12} md={6} lg={4}>
-                        <div
-                          style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            width: "100%",
-                          }}
-                        >
-                          <div className=" mb-3">
-                            <Controller
-                              name="PhoneNumber1"
-                              control={control}
-                              render={({ field }) => (
-                                <InputFields
-                                  readOnly={true}
-                                  {...field}
-                                  label="CONTACT NO"
-                                />
-                              )}
-                            />
-                          </div>
 
-                          <div className="mb-3">
-                            <Tooltip
-                              title={(watch("Vehicle") || "").toUpperCase()}
-                              arrow
-                            >
-                              <div style={{ width: "100%" }}>
-                                <Controller
-                                  name="InvoiceNo"
-                                  control={control}
-                                  render={({ field }) => (
-                                    <InputFields
-                                      readOnly={true}
-                                      {...field}
-                                      label="INVOICE NO"
-                                    />
-                                  )}
-                                />
-                              </div>
-                            </Tooltip>
-                          </div>
-                        </div>
+                      <Grid item textAlign="center">
+                        <Controller
+                          name="RegistrationNo"
+                          control={control}
+                          render={({ field }) => (
+                            <InputFields
+                              readOnly={true}
+                              {...field}
+                              label="REGISTRATION NO"
+                            />
+                          )}
+                        />
                       </Grid>
-                      <Grid item xs={12} md={6} lg={4}>
-                        <div
-                          style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            width: "100%",
-                          }}
+
+                      <Grid item textAlign="center">
+                        <Controller
+                          name="CardName"
+                          control={control}
+                          render={({ field }) => (
+                            <InputFields
+                              readOnly={true}
+                              {...field}
+                              label="CUSTOMER NAME"
+                            />
+                          )}
+                        />
+                      </Grid>
+                    </Grid>
+                  </Grid>
+
+                  <Grid item xs={12} md={4}>
+                    <Grid container direction="column">
+                      <Grid item textAlign="center">
+                        <Controller
+                          name="PhoneNumber1"
+                          control={control}
+                          render={({ field }) => (
+                            <InputFields
+                              readOnly={true}
+                              {...field}
+                              label="CONTACT NO"
+                            />
+                          )}
+                        />
+                      </Grid>
+
+                      <Grid item textAlign="center">
+                        <Tooltip
+                          title={(watch("Vehicle") || "").toUpperCase()}
+                          arrow
                         >
-                          <div className=" mb-3">
+                          <div style={{ width: "100%" }}>
                             <Controller
-                              name="JobWorkAt"
+                              name="InvoiceNo"
                               control={control}
                               render={({ field }) => (
                                 <InputFields
                                   readOnly={true}
                                   {...field}
-                                  label="JB WORK AT"
+                                  label="INVOICE NO"
                                 />
                               )}
                             />
                           </div>
-                          <div className="mb-3">
-                            <Tooltip
-                              title={(
-                                watch("JobWorkDetails") || ""
-                              ).toUpperCase()}
-                              arrow
-                            >
-                              <div style={{ width: "100%" }}>
-                                <Controller
-                                  name="JobWorkDetails"
-                                  control={control}
-                                  render={({ field }) => (
-                                    <InputTextAreaFields
-                                      readOnly={true}
-                                      {...field}
-                                      label="JOB WORK DETAILS"
-                                    />
-                                  )}
+                        </Tooltip>
+                      </Grid>
+                    </Grid>
+                  </Grid>
+
+                  <Grid item xs={12} md={4}>
+                    <Grid container direction="column">
+                      <Grid item textAlign="center">
+                        <Controller
+                          name="JobWorkAt"
+                          control={control}
+                          render={({ field }) => (
+                            <InputFields
+                              readOnly={true}
+                              {...field}
+                              label="JB WORK AT"
+                            />
+                          )}
+                        />
+                      </Grid>
+
+                      <Grid item textAlign="center">
+                        <Tooltip
+                          title={(watch("JobWorkDetails") || "").toUpperCase()}
+                          arrow
+                        >
+                          <div style={{ width: "100%" }}>
+                            <Controller
+                              name="JobWorkDetails"
+                              control={control}
+                              render={({ field }) => (
+                                <InputTextArea
+                                  readOnly={true}
+                                  {...field}
+                                  label="JOB WORK DETAILS"
                                 />
-                              </div>
-                            </Tooltip>
+                              )}
+                            />
                           </div>
-                        </div>
+                        </Tooltip>
                       </Grid>
                     </Grid>
                   </Grid>
@@ -1159,25 +1100,19 @@ export default function InwardVehicle() {
                       overflowX: "hidden",
                       overflowY: "auto",
                       borderTop: "1px solid #ccc",
+                      marginTop: 20,
                     }}
                   >
                     <Grid
                       container
                       spacing={2}
-                      mt={2}
+                      mt={1}
                       px={2}
                       style={{ display: "flex", justifyContent: "center" }}
                     >
-                      <Grid item xs={12} md={6} lg={4}>
-                        <div
-                          style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            width: "100%",
-                          }}
-                        >
-                          <div className=" mb-3">
+                      <Grid item xs={12} md={4}>
+                        <Grid container direction="column">
+                          <Grid item textAlign="center">
                             <Controller
                               name="VehInwardNo"
                               control={control}
@@ -1189,56 +1124,55 @@ export default function InwardVehicle() {
                                 />
                               )}
                             />
-                          </div>
+                          </Grid>
 
-                          <div className=" mb-3">
+                          <Grid item textAlign="center">
                             <Controller
                               name="VehInwardTime"
                               control={control}
-                              rules={{ required: "Time is Required" }}
-                              render={({ field, fieldState: { error } }) => (
+                              render={({ field }) => (
                                 <InputTimePicker
                                   {...field}
                                   label="INWARD TIME"
-                                  error={!!error}
-                                  helperText={error?.message}
+                                  readOnly={true}
                                 />
                               )}
                             />
-                          </div>
-                        </div>
+                          </Grid>
+                        </Grid>
                       </Grid>
 
-                      <Grid item xs={12} md={6} lg={4}>
-                        <div className="mb-3">
-                          <Controller
-                            name="VehInwardDate"
-                            control={control}
-                            render={({ field }) => (
-                              <InputDatePickerFields
-                                {...field}
-                                label="INWARD DATE"
-                                value={field.value}
-                                readOnly={true}
-                                onChange={(date) => field.onChange(date)}
-                              />
-                            )}
-                          />
-                        </div>
+                      <Grid item xs={12} md={4}>
+                        <Grid container direction="column">
+                          <Grid item textAlign="center">
+                            <Controller
+                              name="VehInwardDate"
+                              control={control}
+                              render={({ field }) => (
+                                <InputDatePickerField
+                                  {...field}
+                                  label="INWARD DATE"
+                                  value={field.value}
+                                  readOnly={true}
+                                />
+                              )}
+                            />
+                          </Grid>
 
-                        <div className=" mb-3">
-                          <Controller
-                            name="JobCardNo"
-                            control={control}
-                            render={({ field }) => (
-                              <InputFields
-                                readOnly={true}
-                                {...field}
-                                label="JOB CARD NO"
-                              />
-                            )}
-                          />
-                        </div>
+                          <Grid item textAlign="center">
+                            <Controller
+                              name="JobCardNo"
+                              control={control}
+                              render={({ field }) => (
+                                <InputFields
+                                  readOnly={true}
+                                  {...field}
+                                  label="JOB CARD NO"
+                                />
+                              )}
+                            />
+                          </Grid>
+                        </Grid>
                       </Grid>
                     </Grid>
                   </Grid>
@@ -1252,72 +1186,61 @@ export default function InwardVehicle() {
                       overflowY: "auto",
                       marginTop: "30px",
                       borderTop: "1px solid #ccc",
+                      paddingTop: 20,
                     }}
                   >
-                    <Grid
-                      container
-                      spacing={2}
-                      mt={2}
-                      px={2}
-                      style={{ display: "flex", justifyContent: "center" }}
-                    >
-                      <Grid item xs={12} md={4} lg={4}>
-                        <div
-                          style={{
-                            display: "flex",
-                            flexDirection: "column",
-                            alignItems: "center",
-                            width: "100%",
-                          }}
-                        >
-                          <div className=" mb-3">
-                            <Controller
-                              name="DocNum"
-                              control={control}
-                              render={({ field }) => (
-                                <InputFields
-                                  readOnly={true}
-                                  {...field}
-                                  label="OUTWARD NO"
-                                />
-                              )}
-                            />
-                          </div>
-
-                          <div className=" mb-3">
-                            <Controller
-                              name="VehInwardTime"
-                              control={control}
-                              rules={{ required: "Time is Required" }}
-                              render={({ field, fieldState: { error } }) => (
-                                <InputTimePicker
-                                  {...field}
-                                  label="OUTWARD TIME"
-                                  error={!!error}
-                                  helperText={error?.message}
-                                />
-                              )}
-                            />
-                          </div>
-                        </div>
+                    <Grid item xs={12} md={4}>
+                      <Grid container direction="column">
+                        <Grid item textAlign="center">
+                          <Controller
+                            name="DocNum"
+                            control={control}
+                            render={({ field }) => (
+                              <InputFields
+                                readOnly={true}
+                                {...field}
+                                label="OUTWARD NO"
+                              />
+                            )}
+                          />
+                        </Grid>
                       </Grid>
+                    </Grid>
 
-                      <Grid item xs={12} md={4} lg={4}>
-                        <div className="mb-3">
+                    <Grid item xs={12} md={4}>
+                      <Grid container direction="column">
+                        <Grid item textAlign="center">
+                          <Controller
+                            name="VehInwardTime"
+                            control={control}
+                            render={({ field }) => (
+                              <InputTimePicker
+                                {...field}
+                                label="OUTWARD TIME"
+                                readOnly={true}
+                              />
+                            )}
+                          />
+                        </Grid>
+                      </Grid>
+                    </Grid>
+
+                    <Grid item xs={12} md={4}>
+                      <Grid container direction="column">
+                        <Grid item textAlign="center">
                           <Controller
                             name="VehInwardDate"
                             control={control}
                             render={({ field }) => (
-                              <InputDatePickerFields
+                              <InputDatePickerField
                                 {...field}
                                 label="OUTWARD DATE"
                                 value={field.value}
                                 readOnly={true}
-                                onChange={(date) => field.onChange(date)}
                               />
                             )}
                           />
-                        </div>
+                        </Grid>
                       </Grid>
                     </Grid>
                   </Grid>
@@ -1395,7 +1318,6 @@ export default function InwardVehicle() {
             <Grid
               item
               px={1}
-              // md={12}
               xs={12}
               style={{
                 display: "flex",
