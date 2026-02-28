@@ -826,6 +826,7 @@ export default function InwardVehicle() {
       const obj = {
         UserId: UserId,
         CreatedBy: CreatedBy,
+        DocDate: dayjs(),
         AppointmentNo: data.AppointmentNo || "",
         VehInwardNo: data.VehInwardNo || "",
         OrderNo: data.OrderNo || "",
@@ -852,6 +853,7 @@ export default function InwardVehicle() {
         VehicleDocEntry: "0",
         JobCardNo: "",
         ScheduleDate: "",
+
         SignPath: "",
         SignPathByteArray: signatureDataURL,
       };

@@ -1892,7 +1892,7 @@ export default function GoodsReceipt() {
           TotalSumSy: String(item.TotalSumSy),
           AcctCode: String(item.AcctCode),
           Price: String(item.PriceBefDi),
-          Rate: String(DocRateLine) || "1",
+          Rate: "1",
           Currency: data.DocCur,
           StockSum: String(item.StockSum || "0"),
           StockSumSc: String(item.StockSumSc || "0"),

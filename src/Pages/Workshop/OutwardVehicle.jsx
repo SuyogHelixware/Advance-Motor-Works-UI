@@ -86,6 +86,8 @@ export default function InwardVehicle() {
   const initial = {
     SoNo: "",
     CardName: "",
+    DocNum: "",
+    OrderNo: "",
     PhoneNumber1: "",
     InvoiceNo: "",
     RegistrationNo: "",
@@ -1127,13 +1129,29 @@ export default function InwardVehicle() {
                           </Grid>
 
                           <Grid item textAlign="center">
-                            <Controller
+                            {/* <Controller
                               name="VehInwardTime"
                               control={control}
                               render={({ field }) => (
                                 <InputTimePicker
                                   {...field}
                                   label="INWARD TIME"
+                                  readOnly={true}
+                                />
+                              )}
+                            /> */}
+                            <Controller
+                              name="VehInwardTime"
+                              control={control}
+                              render={({ field }) => (
+                                <InputFields
+                                  {...field}
+                                  label="INWARD TIME"
+                                  value={
+                                    field.value
+                                      ? dayjs(field.value).format("HH:mm")
+                                      : ""
+                                  }
                                   readOnly={true}
                                 />
                               )}
@@ -1210,13 +1228,29 @@ export default function InwardVehicle() {
                     <Grid item xs={12} md={4}>
                       <Grid container direction="column">
                         <Grid item textAlign="center">
-                          <Controller
-                            name="VehInwardTime"
+                          {/* <Controller
+                            name="VehOutwardTime"
                             control={control}
                             render={({ field }) => (
                               <InputTimePicker
                                 {...field}
                                 label="OUTWARD TIME"
+                                readOnly={true}
+                              />
+                            )}
+                          /> */}
+                          <Controller
+                            name="VehOutwardTime"
+                            control={control}
+                            render={({ field }) => (
+                              <InputFields
+                                {...field}
+                                label="OUTWARD TIME"
+                                value={
+                                  field.value
+                                    ? dayjs(field.value).format("HH:mm")
+                                    : ""
+                                }
                                 readOnly={true}
                               />
                             )}

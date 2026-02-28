@@ -344,8 +344,8 @@ export default function QuatationSO() {
 
       top20CancelToken.current = axios.CancelToken.source();
 
-      axios
-        .get(`${BASE_URL}/TopProducts/all`, {
+      apiClient
+        .get(`/TopProducts/all`, {
           cancelToken: top20CancelToken.current.token,
         })
         .then((res) => {
@@ -481,6 +481,7 @@ export default function QuatationSO() {
       const data = res.data?.values;
 
       reset(data);
+      // alert(watch("Status"));
 
       reset({
         ...data,
@@ -492,6 +493,7 @@ export default function QuatationSO() {
         SpecialOrder: data.SpecialOrder !== "0",
         Approver: data.Approver,
         InvoiceStatus: data.InvoiceStatus,
+        Status: data.Status,
         OrderType: data.OrderType,
         oCCPay: [],
         BankPay: [],
@@ -512,11 +514,7 @@ export default function QuatationSO() {
         TransferDate: data.TransferDate ? dayjs(data.TransferDate) : dayjs(),
         ReceiptDate: data.ReceiptDate ? dayjs(data.ReceiptDate) : dayjs(),
         DocDate: data.DocDate ? dayjs(data.DocDate) : dayjs(),
-        // DiscApproStatus: Discapprovreq.oLines?.find(
-        //   (line) => line.ApprovalStatus === "PENDING",
-        // )
-        //   ? "PENDING"
-        //   : data.DiscApproStatus,
+
         oLines: data.oLines.map((line) => ({
           ...line,
           Quantity: parseFloat(line.Quantity),
@@ -1437,6 +1435,8 @@ export default function QuatationSO() {
   };
 
   const onSubmitCustmoreModal = async (data) => {
+    const UserId = localStorage.getItem("UserId");
+    const CreatedBy = localStorage.getItem("UserName");
     const obj = {
       UserId: "",
       CreatedBy: localStorage.getItem("UserName"),
@@ -1452,71 +1452,251 @@ export default function QuatationSO() {
       Remarks: "",
       CardType: "C",
       GroupCode: data.GroupCode === true ? "102" : "100",
-      SAPDocEntry: "",
-      SAPDocNum: "",
-      CustomerBalance: "0",
-      SalesHistory: "0",
-      DfltShiped: "",
-      DfltBilled: "",
       Status: "1",
-      Fax: "",
+      CardCode: "25-064",
       Series: "-1",
-      DflIBAN: "",
-      DiscRel: "0",
-      DunTerm: "",
-      HldCode: "0",
-      ListNum: "",
-      SlpCode: "0",
-      ValidTo: dayjs().format("YYYY-MM-DD"),
-      AutoPost: "",
-      BankCode: "0",
-      BankName: "",
-      Cellular: "0",
-      Currency: "0",
-      DebtLine: "0",
-      DflSwift: "0",
-      Discount: "0",
-      FrozenTo: dayjs().format("YYYY-MM-DD"),
-      GroupNum: "0",
-      ShipType: "0",
-      SignDate: dayjs().format("YYYY-MM-DD"),
-      validFor: "0",
-      AttcEntry: "0",
-      CardFName: "0",
-      CardValid: dayjs().format("YYYY-MM-DD"),
-      CntctPrsn: "0",
-      CrCardNum: "0",
-      DflBranch: "0",
-      FreeTexts: "0",
+      Currency: "INR",
+      LicTradNum: "",
+      PhoneNumber2: "",
+      Cellular: "",
+      Fax: "",
+      Email: "",
+      validFor: "1",
       frozenFor: "0",
-      HouseBank: "0",
-      HsBnkIBAN: "0",
-      MandateID: "0",
-      OwnerCode: "0",
-      ValidComm: "0",
-      ValidComm: "0",
-      ValidFrom: dayjs().format("YYYY-MM-DD"),
-      AvrageLate: "0",
-      BankCountr: "0",
-      BankCtlKey: "0",
-      CreditCard: "0",
-      CreditLine: "0",
-      DflAccount: "0",
-      FrozenFrom: dayjs().format("YYYY-MM-DD"),
-      HousBnkAct: "0",
-      HousBnkBrn: "0",
-      HsBnkSwift: "0",
+      ValidComm: "",
+      Remarks: "",
+      FreeTexts: "",
+      BankCountr: "",
+      ShipType: "35",
+      Balance: "0",
+      ChecksBal: "0",
+      DNotesBal: "0",
+      OrdersBal: "0",
+      DNoteBalFC: "0",
+      OrderBalFC: "0",
+      DNoteBalSy: "0",
+      OrderBalSy: "0",
+      BalanceSys: "0",
+      BalanceFC: "0",
+      ValidFrom: "01/01/1900 00:00:00",
+      ValidTo: "01/01/2099 00:00:00",
+      FrozenFrom: "01/01/1900 00:00:00",
+      FrozenTo: "01/01/1900 00:00:00",
+      GroupNum: "1050",
       IntrstRate: "0",
-      LicTradNum: "0",
-      HousBnkCry: "0",
-      OwnerIdNum: "0",
-      ContactPerson: "",
+      ListNum: "1291",
+      Discount: "0",
+      CreditLine: "0",
+      DebtLine: "0",
+      CardFName: "",
+      DunTerm: "0",
+      AutoPost: "1",
+      DflIBAN: "",
+      HldCode: "0",
+      SlpCode: "",
+      BankCode: "",
+      BankName: "",
+      DflSwift: "",
+      AttcEntry: "",
+      CardValid: "",
+      CrCardNum: "0",
+      DflBranch: "",
+      HouseBank: "0",
       HsBnkIBAN: "",
+      OwnerCode: "",
+      AvrageLate: "",
+      Country: "",
+      CreditCard: "",
+      DflAccount: "",
+      Series: "6",
+      HousBnkAct: "",
+      HousBnkBrn: "",
+      HousBnkCry: "",
+      HsBnkSwift: "",
+      OwnerIdNum: "",
+      BankCtlKey: "",
+      ContactPerson: "",
+      MandateID: "",
+      DiscRel: "",
+      SignDate: "2026-02-28",
+      CntctPrsn: "",
+      DfltBilled: "0",
+      DfltShiped: "0",
+      FatherCard: "",
+      FatherType: "",
+      DebPayAcct: "203000",
+      DpmClear: "",
+      DpmIntAct: "",
+      DpmDppAct: "203000",
+      DpmOpnDebAct: "140060",
+      TaxId0: "",
+      TaxId1: "",
+      TaxId2: "",
+      TaxId3: "",
+      TaxId4: "",
+      TaxId5: "",
+      TaxId6: "",
+      TaxId7: "",
+      TaxId8: "",
+      TaxId9: "",
+      TaxId10: "",
+      TaxId11: "",
+      TaxId13: "",
+      WTLiable: "0",
+      CrtfcateNO: "",
+      ExpireDate: "",
+      NINum: "",
+      TypWTReprt: "",
+      WTTaxCat: "",
+      SurOver: "0",
+      Remark1: "",
+      ConCerti: "",
+      ThreshOver: "0",
+      VendTID: "",
+      WTaxCodesAllowed: "",
+      UseShpdGd: "0",
+      AccCritria: "",
       oLines: [],
-      oVehicleLines: [],
-      oBPBankAccLines: [],
       oCPLines: [],
+      oBPBankAccLines: [],
     };
+
+    // CardName: (data?.CardName ?? "").toString().toUpperCase(),
+    // PhoneNumber1: data.PhoneNumber1,
+    // DocDate: dayjs(),
+    // ModifiedBy: CreatedBy,
+    // UserId: UserId,
+    // DocDate: "2026-02-28 16:48:42",
+    // DocNum: "25-064",
+    // CreatedBy: CreatedBy,
+    // Status: "1",
+    // CardCode: "25-064",
+    // CardName: "25-064",
+    // CardType: "V",
+    // CardFName: "",
+    // Currency: "INR",
+    // LicTradNum: "",
+    // GroupCode: "19",
+    // PhoneNumber1: "",
+    // PhoneNumber2: "",
+    // Cellular: "",
+    // Fax: "",
+    // Email: "",
+    // validFor: "1",
+    // frozenFor: "0",
+    // ValidComm: "",
+    // Remarks: "",
+    // FreeTexts: "",
+    // BankCountr: "",
+    // ShipType: "35",
+    // Balance: "0",
+    // ChecksBal: "0",
+    // DNotesBal: "0",
+    // OrdersBal: "0",
+    // DNoteBalFC: "0",
+    // OrderBalFC: "0",
+    // DNoteBalSy: "0",
+
+    // OrderBalSy: "0",
+
+    // BalanceSys: "0",
+
+    // BalanceFC: "0",
+
+    // ValidFrom: "01/01/1900 00:00:00",
+
+    // ValidTo: "01/01/2099 00:00:00",
+
+    // FrozenFrom: "01/01/1900 00:00:00",
+
+    // FrozenTo: "01/01/1900 00:00:00",
+
+    // GroupNum: "1050",
+
+    // IntrstRate: "0",
+
+    // ListNum: "1291",
+
+    // Discount: "0",
+
+    // CreditLine: "0",
+
+    // DebtLine: "0",
+
+    // DunTerm: "0",
+
+    // AutoPost: "1",
+
+    // DflIBAN: "",
+
+    // HldCode: "0",
+
+    // SlpCode: "",
+    // BankCode: "",
+    // BankName: "",
+    // DflSwift: "",
+    // AttcEntry: "",
+    // CardValid: "",
+    // CrCardNum: "0",
+    // DflBranch: "",
+    // HouseBank: "0",
+    // HsBnkIBAN: "",
+    // OwnerCode: "",
+    // AvrageLate: "",
+    // Country: "",
+    // CreditCard: "",
+    // DflAccount: "",
+    // Series: "6",
+    // HousBnkAct: "",
+    // HousBnkBrn: "",
+    // HousBnkCry: "",
+    // HsBnkSwift: "",
+    // OwnerIdNum: "",
+    // BankCtlKey: "",
+    // ContactPerson: "",
+    // MandateID: "",
+    // DiscRel: "",
+    // SignDate: "2026-02-28",
+    // CntctPrsn: "",
+    // DfltBilled: "0",
+    // DfltShiped: "0",
+    // FatherCard: "",
+    // FatherType: "",
+    // DebPayAcct: "203000",
+    // DpmClear: "",
+    // DpmIntAct: "",
+    // DpmDppAct: "203000",
+    // DpmOpnDebAct: "140060",
+    // TaxId0: "",
+    // TaxId1: "",
+    // TaxId2: "",
+    // TaxId3: "",
+    // TaxId4: "",
+    // TaxId5: "",
+    // TaxId6: "",
+    // TaxId7: "",
+    // TaxId8: "",
+    // TaxId9: "",
+    // TaxId10: "",
+    // TaxId11: "",
+    // TaxId13: "",
+    // WTLiable: "0",
+    // CrtfcateNO: "",
+    // ExpireDate: "",
+    // NINum: "",
+    // TypWTReprt: "",
+    // WTTaxCat: "",
+    // SurOver: "0",
+    // Remark1: "",
+    // ConCerti: "",
+    // ThreshOver: "0",
+    // VendTID: "",
+    // WTaxCodesAllowed: "",
+    // UseShpdGd: "0",
+    // AccCritria: "",
+    // oLines: [],
+    // oCPLines: [],
+    // oBPBankAccLines: [],
 
     try {
       const response = await apiClient.post(`/BPV2/V2`, obj);
@@ -1713,6 +1893,7 @@ export default function QuatationSO() {
       CustomerBalance: String(data.CustomerBalance),
       SpecialOrder: data.SpecialOrder === true ? "1" : "0",
       DeliveredLater: data.DeliveredLater === true ? "1" : "0",
+      CNC: data.CNC === true ? "1" : "0",
       ServiceOrder: data.ServiceOrder === true ? "1" : "0",
       Shipping: data.Shipping === true ? "1" : "0",
       ShippingAmt: String(data.ShippingAmt),
@@ -1912,7 +2093,7 @@ export default function QuatationSO() {
 
     try {
       const body = {
-        Supplier: payload.SAPDocNum || "",
+        // Supplier: payload.SAPDocNum || "",
         ItemName: payload.ItemName || "",
         ItemCode: payload.ItemCode || "",
         IsActive: payload.IsActive === true ? 0 : 1,
@@ -2609,20 +2790,6 @@ export default function QuatationSO() {
           <DialogContent className="bg-light">
             <Grid container gap={2}>
               {/* CUSTOMER ID */}
-              <Grid item xs={12} lg={12} textAlign={"center"}>
-                <Controller
-                  name="CUSTOMER ID"
-                  control={controlMdl1}
-                  render={({ field }) => (
-                    <InputTextField
-                      label="CUSTOMER ID"
-                      {...field}
-                      rows={1}
-                      disabled
-                    />
-                  )}
-                />
-              </Grid>
 
               {/* CUSTOMER NAME */}
               <Grid item xs={12} lg={12} textAlign={"center"}>
@@ -3412,6 +3579,10 @@ export default function QuatationSO() {
                               onChange={(e) => {
                                 const checkedValue = e.target.checked;
                                 onChange(checkedValue);
+                                if (checkedValue === false) {
+                                  setValue("ShippingAmt", 0);
+                                  calculateData();
+                                }
                               }}
                             />
                           }
@@ -3443,11 +3614,14 @@ export default function QuatationSO() {
                           onChange={(e) => {
                             const checkedValue = e.target.checked;
                             onChange(checkedValue);
-                            if (checkedValue && watch("Approver") === "")
+                            if (checkedValue && watch("Approver") === "") {
                               setValue(
                                 "Approver",
                                 localStorage.getItem("UserName"),
                               );
+                            } else {
+                              setValue("Approver", "");
+                            }
                           }}
                         />
                       )}
@@ -4093,8 +4267,7 @@ export default function QuatationSO() {
                 type="submit"
                 disabled={
                   (SaveUpdateName === "SAVE" && !perms.IsAdd) ||
-                  (SaveUpdateName === "UPDATE" && !perms.IsEdit) ||
-                  allFormData.Status === "0"
+                  (SaveUpdateName === "UPDATE" && !perms.IsEdit)
                 }
               >
                 {SaveUpdateName}

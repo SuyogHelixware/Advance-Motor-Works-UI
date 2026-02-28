@@ -357,7 +357,10 @@ export default function BinLocationMaster() {
           CustomerName: values.CardName,
           ContactNo: values.PhoneNumber1,
           AppointmentNo: values.DocNum,
-          OrderSubType: values.OrderType,
+          AppointTimeFrom: values.AppointTimeFrom,
+          AppointTimeTo: values.AppointTimeTo,
+          OrderSubType: values.AppointType,
+          OrderType: values.OrderType,
           AppointType: values.AppointType,
           Vehicle: values.Vehicle,
           IsInward: values.IsInward,
@@ -625,7 +628,7 @@ export default function BinLocationMaster() {
               text: res.data.message,
               icon: "error",
               confirmButtonText: "Ok",
-              timer: 1000,
+              // timer: 1000,
             });
           }
         })
@@ -771,8 +774,8 @@ export default function BinLocationMaster() {
                 indicatorColor="primary"
                 textColor="inherit"
               >
-                <Tab value="1" label="Active" />
-                <Tab value="0" label="Inactive" />
+                <Tab value="1" label="OPEN" />
+                <Tab value="0" label="CLOSED" />
               </Tabs>
               <TabPanel
                 value={"1"}
@@ -1250,7 +1253,7 @@ export default function BinLocationMaster() {
                           inputRef={ref}
                           label="SELECTED VEHICLE"
                           type="text"
-                          value={`${getValues("Year") || "1990"} - ${getValues("Make") || "TOYOTA"} - ${getValues("Model") || "LC100"}`}
+                          // value={`${getValues("Year") || "1990"} - ${getValues("Make") || "TOYOTA"} - ${getValues("Model") || "LC100"}`}
                           readOnly={true}
                           error={!!error}
                           helperText={error ? error.message : null}
@@ -1480,7 +1483,8 @@ export default function BinLocationMaster() {
                 type="submit"
                 disabled={
                   (SaveUpdateName === "SAVE" && !perms.IsAdd) ||
-                  (SaveUpdateName !== "SAVE" && !perms.IsEdit)
+                  (SaveUpdateName !== "SAVE" && !perms.IsEdit) ||
+                  getValues("Status") === 0
                 }
                 // disabled={tab !== "1"}
               >
