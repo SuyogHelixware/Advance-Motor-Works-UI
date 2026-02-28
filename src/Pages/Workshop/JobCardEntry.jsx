@@ -46,6 +46,7 @@ import {
 import SearchInputField from "../Components/SearchInputField";
 import SearchModel from "../Components/SearchModel";
 import usePermissions from "../Components/usePermissions";
+import { Loader } from "../Components/Loader";
 
 export default function IssueMaterial() {
   const theme = useTheme();
@@ -199,7 +200,7 @@ export default function IssueMaterial() {
         OrderNo: data.OrderNo,
         CardName: data.CardName,
         CardCode: data.CardCode,
-        RequestDate: data.RequestDate,
+        // RequestDate: data.RequestDate,
         RequestDate: data.RequestDate ? dayjs(data.RequestDate) : dayjs(),
         ReqNo: data.RequestNo,
         JobCardNo: data.JobCardNo,
@@ -267,8 +268,6 @@ export default function IssueMaterial() {
     setSelectData([]);
   };
 
-  const BASE_URL = process.env.REACT_APP_BASE_URL;
-
   const initial = {
     CardName: "",
     RequestDocNums: "",
@@ -304,14 +303,12 @@ export default function IssueMaterial() {
     getValues,
     watch,
     setValue,
-    formState: { errors },
+    // formState: { errors },
   } = useForm({
     defaultValues: initial,
   });
 
   const {
-    control: controlMdl,
-    handleSubmit: handleSubmitMdl,
     setValue: setValueMdl,
   } = useForm({});
 
@@ -464,7 +461,7 @@ export default function IssueMaterial() {
   const fetchJacks = async () => {
     setLoading(true);
     try {
-      const res = await apiClient.get(`/Jack`);
+      const res = await apiClient.get(`/Jack?Limit=50`);
 
       if (res.data.success) {
         const options = [
@@ -487,7 +484,7 @@ export default function IssueMaterial() {
   const fetchTechnicianData = async () => {
     setLoading(true);
     try {
-      const res = await apiClient.get(`/Technician`);
+      const res = await apiClient.get(`/Technician?Limit=200`);
 
       if (res.data.success) {
         const options = res.data.values.map((jack) => ({
@@ -988,6 +985,7 @@ export default function IssueMaterial() {
 
   const sidebarContent = (
     <>
+      <Loader open={loading} />
       <Grid
         item
         width={"100%"}
@@ -1255,7 +1253,6 @@ export default function IssueMaterial() {
         const res = await apiClient.post(`/jobcard`, obj);
 
         if (res.data.success) {
-          const data = res.data.values;
           setOpenListData([]);
           fetchOpenListData(0);
           handleGetListClear();

@@ -341,7 +341,7 @@ export const SmallInputFields = ({
           sx={{
             ...sx,
             width: "100%",
-          maxWidth: 135,
+            maxWidth: 135,
             // width,
             "& .MuiInputBase-root": {
               WebkitAppearance: "none",
@@ -1428,6 +1428,14 @@ export const InputSelectTextField = forwardRef(
           disabled={disabled}
           readOnly={readOnly}
           MenuProps={menuProps}
+          sx={{
+            textAlign: "left",
+            "& .MuiSelect-select": {
+              textAlign: "left",
+              display: "flex",
+              justifyContent: "flex-start",
+            },
+          }}
         >
           {data.map((item) => (
             <MenuItem
