@@ -254,10 +254,12 @@ export default function QuatationSO() {
 
   const initialCustCreation = {
     CustomerName: "",
-    customerEmail: "",
+    CardName: "",
+    Email: "",
     PhoneNumber1: "",
     GroupCode: false,
     CardType: "C",
+    Status: "1",
   };
 
   const {
@@ -342,8 +344,8 @@ export default function QuatationSO() {
 
       top20CancelToken.current = axios.CancelToken.source();
 
-      axios
-        .get(`${BASE_URL}/TopProducts/all`, {
+      apiClient
+        .get(`/TopProducts/all`, {
           cancelToken: top20CancelToken.current.token,
         })
         .then((res) => {
@@ -409,7 +411,8 @@ export default function QuatationSO() {
     try {
       const url = searchTerm
         ? `/BPV2?Status=1&CardType=C&GroupCode=0&Limit=${pageNum}&SearchText=${searchTerm}`
-        : `/BPV2?Status=1&CardType=C&GroupCode=0&Page=${pageNum}`;
+        : // : `/BPV2?Status=1&CardType=C&GroupCode=0&Page=${pageNum}`;
+          `/BPV2/V2/Pages/1/${pageNum}/20`;
 
       const response = await apiClient.get(url);
 
@@ -434,7 +437,7 @@ export default function QuatationSO() {
     }
   };
 
-  const fetchOpenListData = async (pageNum, searchTerm = "") => {
+  const fetchOpenListData = async (pageNum = 0, searchTerm = "") => {
     try {
       let url = searchTerm
         ? `/QuotationSO?Status=1&Page=${pageNum}&SearchText=${searchTerm}`
@@ -477,7 +480,10 @@ export default function QuatationSO() {
 
       const data = res.data?.values;
 
-      const transformed = {
+      reset(data);
+      // alert(watch("Status"));
+
+      reset({
         ...data,
         CNC: data.JobWorkAt === "CNC",
         ServiceOrder: data.ServiceOrder !== "0",
@@ -487,6 +493,7 @@ export default function QuatationSO() {
         SpecialOrder: data.SpecialOrder !== "0",
         Approver: data.Approver,
         InvoiceStatus: data.InvoiceStatus,
+        Status: data.Status,
         OrderType: data.OrderType,
         oCCPay: [],
         BankPay: [],
@@ -507,11 +514,7 @@ export default function QuatationSO() {
         TransferDate: data.TransferDate ? dayjs(data.TransferDate) : dayjs(),
         ReceiptDate: data.ReceiptDate ? dayjs(data.ReceiptDate) : dayjs(),
         DocDate: data.DocDate ? dayjs(data.DocDate) : dayjs(),
-        // DiscApproStatus: Discapprovreq.oLines?.find(
-        //   (line) => line.ApprovalStatus === "PENDING",
-        // )
-        //   ? "PENDING"
-        //   : data.DiscApproStatus,
+
         oLines: data.oLines.map((line) => ({
           ...line,
           Quantity: parseFloat(line.Quantity),
@@ -539,9 +542,9 @@ export default function QuatationSO() {
             Number(line.IssueQuantity),
           ),
         })),
-      };
+      });
 
-      reset(transformed);
+      // reset(transformed);
       setDocEntry(DocEntry);
       setSaveUpdateName("UPDATE");
     } catch (error) {
@@ -593,24 +596,21 @@ export default function QuatationSO() {
     setOpenListQuery(res);
     setOpenListSearching(true);
     setOpenListPage(0);
-    setOpenListData([]); // Clear current data
-
+    setOpenListData([]);
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
     timeoutRef.current = setTimeout(() => {
       fetchOpenListData(0, res);
     }, 600);
-    // Fetch with search query
   };
 
-  // Clear search
   const handleOpenListClear = () => {
-    setOpenListQuery(""); // Clear searFullAddressch input
-    setOpenListSearching(false); // Reset search state
-    setOpenListPage(0); // Reset page count
-    setOpenListData([]); // Clear data
-    fetchOpenListData(0); // Fetch first page without search
+    setOpenListQuery("");
+    setOpenListSearching(false);
+    setOpenListPage(0);
+    setOpenListData([]);
+    fetchOpenListData(0);
   };
 
   const handleGetListClear = () => {
@@ -626,7 +626,7 @@ export default function QuatationSO() {
     gettop20Items();
   }, []);
 
-  const fetchClosedListData = async (pageNum, searchTerm = "") => {
+  const fetchClosedListData = async (pageNum = 0, searchTerm = "") => {
     try {
       let url = searchTerm
         ? // ? `${BASE_URL}/QuotationSO/search/${searchTerm}/0/${pageNum}`
@@ -693,13 +693,12 @@ export default function QuatationSO() {
     }, 600);
   };
 
-  // Clear search
   const handleClosedListClear = () => {
-    setClosedListQuery(""); // Clear search input
-    setClosedListSearching(false); // Reset search state
-    setClosedListPage(0); // Reset page count
-    setClosedListData([]); // Clear data
-    fetchClosedListData(0); // Fetch first page without search
+    setClosedListQuery("");
+    setClosedListSearching(false);
+    setClosedListPage(0);
+    setClosedListData([]);
+    fetchClosedListData(0);
   };
 
   const tabData = [
@@ -766,26 +765,6 @@ export default function QuatationSO() {
       setModalLoading(false);
     }
   };
-
-  // const getallformdata = useCallback(async () => {
-  //   setModalLoading(true);
-
-  //   try {
-  //     const res = await axios.get(`${BASE_URL}/DynamicSearch/all`);
-
-  //     if (res.data.success) {
-  //       setFilteredList(res.data.values);
-  //     }
-  //   } catch (error) {
-  //     Swal.fire({
-  //       icon: "error",
-  //       title: "Oops...",
-  //       text: error?.message || "Something went wrong",
-  //     });
-  //   } finally {
-  //     setModalLoading(false);
-  //   }
-  // }, []);
 
   const getItemDetails = (ItemCode) => {
     setARInvoicePage(1);
@@ -969,49 +948,6 @@ export default function QuatationSO() {
     setImages([]);
     resetMdl(initialItemSearch);
   };
-
-  // const handleOnChange = (index, field, value) => {
-  //   const val = value === "" ? 0 : parseFloat(parseFloat(value).toFixed(3));
-
-  //   const qty =
-  //     field === "Quantity"
-  //       ? val
-  //       : parseFloat(getValues(`oLines.${index}.Quantity`) || 0);
-
-  //   const price =
-  //     field === "Price"
-  //       ? val
-  //       : parseFloat(getValues(`oLines.${index}.Price`) || 0);
-
-  //   let fittingCharge =
-  //     field === "LineFittingCharge"
-  //       ? qty > 0
-  //         ? parseFloat((val / qty).toFixed(6))
-  //         : 0
-  //       : parseFloat(getValues(`oLines.${index}.FittingCharge`) || 0);
-
-  //   const amount = parseFloat((qty * price).toFixed(3));
-  //   const lineFittingCharge =
-  //     field === "LineFittingCharge"
-  //       ? val
-  //       : parseFloat((Number(qty) * Number(fittingCharge)).toFixed(3));
-
-  //   setValue(`oLines.${index}.Amount`, amount);
-
-  //   setValue(`oLines.${index}.LineFittingCharge`, lineFittingCharge);
-
-  //   const updatedOLines = [...getValues("oLines")];
-  //   if (updatedOLines[index]) {
-  //     updatedOLines[index][field] = val;
-  //     updatedOLines[index].Amount = amount;
-  //     updatedOLines[index].FittingCharge = fittingCharge;
-  //     updatedOLines[index].LineFittingCharge = lineFittingCharge;
-  //   }
-
-  //   setValue("oLines", updatedOLines);
-  //   setValue("rows", updatedOLines);
-  //   calculateData();
-  // };
 
   const updateFilteredListDisabledRows = () => {
     const oLineItemCodes = getValues("oLines")?.map((item) => item.ItemCode);
@@ -1497,6 +1433,310 @@ export default function QuatationSO() {
       console.error(" handleSave error:", err);
     }
   };
+
+  const onSubmitCustmoreModal = async (data) => {
+    const UserId = localStorage.getItem("UserId");
+    const CreatedBy = localStorage.getItem("UserName");
+    const obj = {
+      UserId: "",
+      CreatedBy: localStorage.getItem("UserName"),
+      CardCode: data.CardCode,
+
+      CreatedDate: dayjs(undefined).format("YYYY-MM-DD HH:mm:ss"),
+      ModifiedDate: dayjs(undefined).format("YYYY-MM-DD HH:mm:ss"),
+      CardName: (data?.CardName ?? "").toString().toUpperCase(),
+      PhoneNumber1: data.PhoneNumber1,
+      DocDate: dayjs(),
+      PhoneNumber2: "",
+      Email: data.Email,
+      Remarks: "",
+      CardType: "C",
+      GroupCode: data.GroupCode === true ? "102" : "100",
+      Status: "1",
+      CardCode: "25-064",
+      Series: "-1",
+      Currency: "INR",
+      LicTradNum: "",
+      PhoneNumber2: "",
+      Cellular: "",
+      Fax: "",
+      Email: "",
+      validFor: "1",
+      frozenFor: "0",
+      ValidComm: "",
+      Remarks: "",
+      FreeTexts: "",
+      BankCountr: "",
+      ShipType: "35",
+      Balance: "0",
+      ChecksBal: "0",
+      DNotesBal: "0",
+      OrdersBal: "0",
+      DNoteBalFC: "0",
+      OrderBalFC: "0",
+      DNoteBalSy: "0",
+      OrderBalSy: "0",
+      BalanceSys: "0",
+      BalanceFC: "0",
+      ValidFrom: "01/01/1900 00:00:00",
+      ValidTo: "01/01/2099 00:00:00",
+      FrozenFrom: "01/01/1900 00:00:00",
+      FrozenTo: "01/01/1900 00:00:00",
+      GroupNum: "1050",
+      IntrstRate: "0",
+      ListNum: "1291",
+      Discount: "0",
+      CreditLine: "0",
+      DebtLine: "0",
+      CardFName: "",
+      DunTerm: "0",
+      AutoPost: "1",
+      DflIBAN: "",
+      HldCode: "0",
+      SlpCode: "",
+      BankCode: "",
+      BankName: "",
+      DflSwift: "",
+      AttcEntry: "",
+      CardValid: "",
+      CrCardNum: "0",
+      DflBranch: "",
+      HouseBank: "0",
+      HsBnkIBAN: "",
+      OwnerCode: "",
+      AvrageLate: "",
+      Country: "",
+      CreditCard: "",
+      DflAccount: "",
+      Series: "6",
+      HousBnkAct: "",
+      HousBnkBrn: "",
+      HousBnkCry: "",
+      HsBnkSwift: "",
+      OwnerIdNum: "",
+      BankCtlKey: "",
+      ContactPerson: "",
+      MandateID: "",
+      DiscRel: "",
+      SignDate: "2026-02-28",
+      CntctPrsn: "",
+      DfltBilled: "0",
+      DfltShiped: "0",
+      FatherCard: "",
+      FatherType: "",
+      DebPayAcct: "203000",
+      DpmClear: "",
+      DpmIntAct: "",
+      DpmDppAct: "203000",
+      DpmOpnDebAct: "140060",
+      TaxId0: "",
+      TaxId1: "",
+      TaxId2: "",
+      TaxId3: "",
+      TaxId4: "",
+      TaxId5: "",
+      TaxId6: "",
+      TaxId7: "",
+      TaxId8: "",
+      TaxId9: "",
+      TaxId10: "",
+      TaxId11: "",
+      TaxId13: "",
+      WTLiable: "0",
+      CrtfcateNO: "",
+      ExpireDate: "",
+      NINum: "",
+      TypWTReprt: "",
+      WTTaxCat: "",
+      SurOver: "0",
+      Remark1: "",
+      ConCerti: "",
+      ThreshOver: "0",
+      VendTID: "",
+      WTaxCodesAllowed: "",
+      UseShpdGd: "0",
+      AccCritria: "",
+      oLines: [],
+      oCPLines: [],
+      oBPBankAccLines: [],
+    };
+
+    // CardName: (data?.CardName ?? "").toString().toUpperCase(),
+    // PhoneNumber1: data.PhoneNumber1,
+    // DocDate: dayjs(),
+    // ModifiedBy: CreatedBy,
+    // UserId: UserId,
+    // DocDate: "2026-02-28 16:48:42",
+    // DocNum: "25-064",
+    // CreatedBy: CreatedBy,
+    // Status: "1",
+    // CardCode: "25-064",
+    // CardName: "25-064",
+    // CardType: "V",
+    // CardFName: "",
+    // Currency: "INR",
+    // LicTradNum: "",
+    // GroupCode: "19",
+    // PhoneNumber1: "",
+    // PhoneNumber2: "",
+    // Cellular: "",
+    // Fax: "",
+    // Email: "",
+    // validFor: "1",
+    // frozenFor: "0",
+    // ValidComm: "",
+    // Remarks: "",
+    // FreeTexts: "",
+    // BankCountr: "",
+    // ShipType: "35",
+    // Balance: "0",
+    // ChecksBal: "0",
+    // DNotesBal: "0",
+    // OrdersBal: "0",
+    // DNoteBalFC: "0",
+    // OrderBalFC: "0",
+    // DNoteBalSy: "0",
+
+    // OrderBalSy: "0",
+
+    // BalanceSys: "0",
+
+    // BalanceFC: "0",
+
+    // ValidFrom: "01/01/1900 00:00:00",
+
+    // ValidTo: "01/01/2099 00:00:00",
+
+    // FrozenFrom: "01/01/1900 00:00:00",
+
+    // FrozenTo: "01/01/1900 00:00:00",
+
+    // GroupNum: "1050",
+
+    // IntrstRate: "0",
+
+    // ListNum: "1291",
+
+    // Discount: "0",
+
+    // CreditLine: "0",
+
+    // DebtLine: "0",
+
+    // DunTerm: "0",
+
+    // AutoPost: "1",
+
+    // DflIBAN: "",
+
+    // HldCode: "0",
+
+    // SlpCode: "",
+    // BankCode: "",
+    // BankName: "",
+    // DflSwift: "",
+    // AttcEntry: "",
+    // CardValid: "",
+    // CrCardNum: "0",
+    // DflBranch: "",
+    // HouseBank: "0",
+    // HsBnkIBAN: "",
+    // OwnerCode: "",
+    // AvrageLate: "",
+    // Country: "",
+    // CreditCard: "",
+    // DflAccount: "",
+    // Series: "6",
+    // HousBnkAct: "",
+    // HousBnkBrn: "",
+    // HousBnkCry: "",
+    // HsBnkSwift: "",
+    // OwnerIdNum: "",
+    // BankCtlKey: "",
+    // ContactPerson: "",
+    // MandateID: "",
+    // DiscRel: "",
+    // SignDate: "2026-02-28",
+    // CntctPrsn: "",
+    // DfltBilled: "0",
+    // DfltShiped: "0",
+    // FatherCard: "",
+    // FatherType: "",
+    // DebPayAcct: "203000",
+    // DpmClear: "",
+    // DpmIntAct: "",
+    // DpmDppAct: "203000",
+    // DpmOpnDebAct: "140060",
+    // TaxId0: "",
+    // TaxId1: "",
+    // TaxId2: "",
+    // TaxId3: "",
+    // TaxId4: "",
+    // TaxId5: "",
+    // TaxId6: "",
+    // TaxId7: "",
+    // TaxId8: "",
+    // TaxId9: "",
+    // TaxId10: "",
+    // TaxId11: "",
+    // TaxId13: "",
+    // WTLiable: "0",
+    // CrtfcateNO: "",
+    // ExpireDate: "",
+    // NINum: "",
+    // TypWTReprt: "",
+    // WTTaxCat: "",
+    // SurOver: "0",
+    // Remark1: "",
+    // ConCerti: "",
+    // ThreshOver: "0",
+    // VendTID: "",
+    // WTaxCodesAllowed: "",
+    // UseShpdGd: "0",
+    // AccCritria: "",
+    // oLines: [],
+    // oCPLines: [],
+    // oBPBankAccLines: [],
+
+    try {
+      const response = await apiClient.post(`/BPV2/V2`, obj);
+      if (response.data && response.data.success) {
+        handleClose();
+        onSelectBusinessPartner(obj);
+
+        const data = response.data;
+        console.log("object", data);
+
+        Swal.fire({
+          text: "Customer Created Successfully",
+          icon: "success",
+          showConfirmButton: false,
+          toast: true,
+          timer: 1500,
+        });
+
+        // const createdCustomer = Array.isArray(response.data.values)
+        //   ? response.data.values[0]
+        //   : response.data.values;
+      } else {
+        const errorMessage =
+          response.data?.message || "Failed to create customer";
+        Swal.fire({
+          text: errorMessage,
+          icon: "error",
+          showConfirmButton: true,
+        });
+      }
+    } catch (error) {
+      console.error("Error saving customer:", error);
+      Swal.fire({
+        text: error?.message || "Failed to create customer",
+        icon: "error",
+        showConfirmButton: true,
+      });
+    }
+  };
+
   const onSubmit = async (data) => {
     const allFormData = getValues();
 
@@ -1610,21 +1850,9 @@ export default function QuatationSO() {
       });
       return;
     }
-    // } else if (GetPaymentChecked === true && allFormData.AdvancePayment < 50) {
-    //   Swal.fire({
-    //     text: "Please Get The Payment.",
-    //     icon: "warning",
-    //     toast: true,
-    //     showConfirmButton: false,
-    //     timer: 2000,
-    //     timerProgressBar: true,
-    //   });
-    //   return;
-    // }
 
     const UserId = localStorage.getItem("UserId");
     const CreatedBy = localStorage.getItem("UserName");
-
     const obj = {
       DocNum: data?.DocNum || null,
       UserId: SaveUpdateName === "Update" ? data.UserId : String(UserId),
@@ -1659,13 +1887,13 @@ export default function QuatationSO() {
       CardName: data.CardName,
       PhoneNumber1: String(data.PhoneNumber1),
       IsDupliQuot: data.IsDupliQuot,
-      // CardCode:`LED-${LeadId}`===watch("CardCode")?String(data.CardCode):"",
       CardCode: String(data.CardCode),
       GroupCode: String(data.GroupCode),
       SalesHistory: String(data.SalesHistory),
       CustomerBalance: String(data.CustomerBalance),
       SpecialOrder: data.SpecialOrder === true ? "1" : "0",
       DeliveredLater: data.DeliveredLater === true ? "1" : "0",
+      CNC: data.CNC === true ? "1" : "0",
       ServiceOrder: data.ServiceOrder === true ? "1" : "0",
       Shipping: data.Shipping === true ? "1" : "0",
       ShippingAmt: String(data.ShippingAmt),
@@ -1686,8 +1914,7 @@ export default function QuatationSO() {
       SAPDocEntry: String(data.SAPDocEntry),
       SAPDocNum: String(data.SAPDocNum),
       CancelRemarks: data.CancelRemarks,
-      // BaseRef: CardCode1 ? "Lead" : "",
-      // BaseRefId: SaveUpdateName === "Update" ? data.BaseRefId : LeadId,
+
       VehicleDocEntry: String(data.VehicleDocEntry),
       CountryCode: "KW",
       DirectInvoice: String("0"),
@@ -1699,21 +1926,9 @@ export default function QuatationSO() {
       CurrencyRate: "0",
       CurrAmt: "0",
       SendWPAttach: "",
-      // DiscApproReqId: "",
       CurrApproLevel: "",
       DiscApproRemarks: "",
-      // DiscApproStatus:
-      //   Discapprov &&
-      //   Discapprov.length > 0 &&
-      //   Math.min(...Discapprov.map((item) => item.MinDiscount || 0)) <=
-      //     watch("SpecialDisc") &&
-      //   watch("DiscApproStatus") !== "APPROVED"
-      //     ? "PENDING"
-      //     : "",
-      // DiscApproReqId:
-      //   data.DiscApproStatus === "REJECTED" || data.DiscApproStatus === ""
-      //     ? "0"
-      //     : data.DiscApproReqId,
+
       Year: String(data.Year),
       Make: String(data.Make),
       Model: String(data.Model),
@@ -1777,6 +1992,7 @@ export default function QuatationSO() {
             ]
           : [],
     };
+
     if (data.TransferSum > 0 && !data.TransferReference) {
       Swal.fire({
         text: "Transfer Reference No is required",
@@ -1784,21 +2000,6 @@ export default function QuatationSO() {
         toast: true,
         showConfirmButton: false,
         timer: 2000,
-        timerProgressBar: true,
-      });
-      return;
-    }
-    if (
-      watch("UserId") === "" ||
-      watch("UserId") === null ||
-      watch("UserId") === undefined
-    ) {
-      Swal.fire({
-        text: "User ID is missing. Please log in again to continue.",
-        icon: "warning",
-        // toast: true,
-        showConfirmButton: true,
-        // timer: 2000,
         timerProgressBar: true,
       });
       return;
@@ -1822,23 +2023,11 @@ export default function QuatationSO() {
 
         try {
           let res;
-          let formModeForLead = "";
 
           if (SaveUpdateName === "Submit") {
-            // const CardCode1 = await OnSubmitBpLead();
-            // if (CardCode1) {
-            //   obj.CardCode = CardCode1;
-            //   obj.BaseRef = CardCode1 ? "Lead" : "";
-            // }
             res = await apiClient.post(`/quotationSo`, obj);
-
-            // formModeForLead = "ADD";
           } else if (SaveUpdateName === "UPDATE") {
-            // obj.CardCode = watch("CardCode");
-            // obj.BaseRef = watch("BaseRef");
             res = await apiClient.put(`/quotationSo/${data.DocEntry}`, obj);
-
-            formModeForLead = "UPDATE";
           } else {
             setModalLoading(false);
             return Swal.fire({
@@ -1852,12 +2041,10 @@ export default function QuatationSO() {
 
           if (res.data.success) {
             const data = res.data.values;
-            // resetallformdata();
-            // getQuotationdata();
-            // OpenQuotationModal(false);
-            // setModalLoading(false);
-            // getSalesCounter();
-            // UpdateLeadStage(data, formModeForLead);
+
+            fetchOpenListData();
+            fetchClosedListData();
+            reset(initial);
 
             Swal.fire({
               title: "Success!",
@@ -1869,24 +2056,6 @@ export default function QuatationSO() {
               confirmButtonText: "Ok",
               timer: 1000,
             });
-
-            // const VehicleObj = {
-            //   UserId: obj.UserId,
-            //   CreatedBy: obj.CreatedBy,
-            //   Status: "1",
-            //   Year: obj.Year,
-            //   Make: obj.Make,
-            //   Model: obj.Model,
-            //   JobRemarks: obj.JobRemarks,
-            //   CardCode: obj.CardCode,
-            // };
-            // if (obj.Year && obj.Make && obj.Model) {
-            //   AddBPVehicle(VehicleObj);
-            // }
-
-            // setTimeout(() => {
-            //   printReport(data.DocEntry, data.OrderNo);
-            // }, 1200);
           } else {
             setModalLoading(false);
             Swal.fire({
@@ -1924,7 +2093,7 @@ export default function QuatationSO() {
 
     try {
       const body = {
-        Supplier: payload.SAPDocNum || "",
+        // Supplier: payload.SAPDocNum || "",
         ItemName: payload.ItemName || "",
         ItemCode: payload.ItemCode || "",
         IsActive: payload.IsActive === true ? 0 : 1,
@@ -1948,56 +2117,8 @@ export default function QuatationSO() {
   };
 
   const onSubmitDynamicSearch = (data) => {
-    fetchFormData(data); 
+    fetchFormData(data);
   };
-
-  // const onSubmitDynamicSearch = async (data) => {
-  //   setModalLoading(true);
-
-  //   try {
-  //     const obj = {
-  //       Supplier: data.SAPDocNum === null ? "" : data.SAPDocNum,
-  //       ItemName: data.ItemName,
-  //       ItemCode: data.ItemCode,
-  //       IsActive: data.IsActive === true ? 0 : 1,
-  //       Stock: data.Stock === true ? 0 : 1,
-  //       Make: data.Make,
-  //       Model: data.Make === "" ? "" : data.Model,
-  //       Year: data.Year,
-  //       Category: data.Category,
-  //       SubCategory: data.SubCategory,
-  //       CNC: data.CNC === "1",
-  //       CRApproved: data.ApprovalStatus === "1",
-  //       SpecialOrder: data.SpecialOrder === "1",
-  //       Shipping: data.Shipping !== "0",
-  //     };
-
-  //     const res = await axios.post(
-  //       `${BASE_URL}/DynamicSearch/QuotSO/search`,
-  //       obj,
-  //     );
-
-  //     if (res.data.values.length > 0) {
-  //       setFilteredList(res.data.values);
-  //     } else {
-  //       Swal.fire({
-  //         title: "Oops...",
-  //         text: "No Record Found",
-  //         icon: "warning",
-  //         timer: 1500,
-  //         confirmButtonText: "Ok",
-  //       });
-  //     }
-  //   } catch (error) {
-  //     Swal.fire({
-  //       icon: "error",
-  //       title: "Oops...",
-  //       text: error.message || error.toString(),
-  //     });
-  //   } finally {
-  //     setModalLoading(false);
-  //   }
-  // };
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -2030,6 +2151,7 @@ export default function QuatationSO() {
 
   const handleClose = () => {
     setOpen(false);
+    resetMdl1(initialCustCreation);
   };
 
   const handleTabChangeRight = (e, newtab) => {
@@ -2230,6 +2352,7 @@ export default function QuatationSO() {
       headerName: "PRICE",
       width: 100,
       align: "right",
+      editable: true,
       headerAlign: "right",
     },
     {
@@ -2246,17 +2369,24 @@ export default function QuatationSO() {
       align: "right",
       headerAlign: "right",
     },
+    // {
+    //   field: "LineFittingCharge",
+    //   headerName: "FITTING",
+    //   width: 100,
+    //   align: "right",
+    //   headerAlign: "right",
+    //   editable: true,
+    // },
     {
       field: "LineFittingCharge",
       headerName: "FITTING",
       width: 110,
-      editable: true,
-      type: "number",
+
       align: "right",
       headerAlign: "center",
       renderCell: (params) => {
         const index = (getValues("oLines") || []).findIndex(
-          (r) => r.ItemCode === params.row.ItemCode,
+          (r) => r.LineNum === params.row.LineNum,
         );
         return (
           <SmallInputFields
@@ -2386,12 +2516,7 @@ export default function QuatationSO() {
       align: "right",
       headerAlign: "right",
     },
-    // {
-    //   field: "InTransit",
-    //   headerName: "GIT",
-    //   width: 110,
-    //   editable: true,
-    // },
+
     {
       field: "OrderQty",
       headerName: "ORDRD",
@@ -2402,116 +2527,30 @@ export default function QuatationSO() {
     },
   ];
 
-  // const HandleTableOnChange = (id, value) => {
-  //   setRows((prev) => {
-  //     const updatedRows = prev.map((row) =>
-  //       row.id === id
-  //         ? {
-  //             ...row,
-  //             Qty: value,
-  //             Total_Amt: value * row.Price,
-  //           }
-  //         : row,
-  //     );
-
-  //     const totalPartsValue = updatedRows.reduce(
-  //       (sum, row) => sum + Number(row.Total_Amt || 0),
-  //       0,
-  //     );
-
-  //     setValue("TotalPartsValue", totalPartsValue);
-
-  //     return updatedRows;
-  //   });
-  // };
-
-  // const HandleTableOnChange = (newRow, oldRow) => {
-  //   const qty = Number(newRow.Quantity) || 0;
-  //   const price = Number(newRow.Price) || 0;
-
-  //   const totalAmt = qty * price;
-
-  //   const updatedRow = { ...newRow, Amount: totalAmt };
-
-  //   setValue("oLines", (prevRows) => {
-  //     const updatedRows = prevRows.map((row) =>
-  //       row.id === newRow.id ? updatedRow : row,
-  //     );
-
-  //     const totalPartsSum = updatedRows.reduce(
-  //       (sum, row) => sum + (Number(row.Amount) || 0),
-  //       0,
-  //     );
-  //     const Fittingcharge = updatedRows.reduce(
-  //       (sum, row) => sum + (Number(row.LineFittingCharge) || 0),
-  //       0,
-  //     );
-
-  //     setValue("TotalPartsValue", totalPartsSum.toFixed(3));
-  //     setValue("ServiceAndInstallation", Fittingcharge.toFixed(3));
-  //     setValue("NetPartsValue", totalPartsSum.toFixed(3));
-  //     setValue("TotalDocAmt", totalPartsSum.toFixed(3));
-  //     calculateData();
-
-  //     return updatedRows;
-  //   });
-
-  //   return updatedRow;
-  // };
-
-  // const HandleTableOnChange = (newRow, oldRow) => {
-  //   const qty = Number(newRow?.Quantity) ?? 1;
-  //   const price = Number(newRow.Price) || 0;
-  //   const fitting = Number(newRow.FittingCharge) || 0;
-  //   const totalAmt = qty * price;
-
-  //   const updatedRow = {
-  //     ...newRow,
-  //     Amount: totalAmt.toFixed(3),
-  //   };
-
-  //   const currentLines = getValues("oLines") || [];
-
-  //   const updatedRows = currentLines.map((row) =>
-  //     row.ItemCode === newRow.ItemCode ? updatedRow : row,
-  //   );
-
-  //   const totalPartsSum = updatedRows.reduce(
-  //     (sum, row) => sum + (Number(row.Amount) || 0),
-  //     0,
-  //   );
-
-  //   const totalFittingCharge = updatedRows.reduce(
-  //     (sum, row) => sum + (Number(row.LineFittingCharge) || 0),
-  //     0,
-  //   );
-
-  //   setValue("oLines", updatedRows);
-  //   setValue("TotalPartsValue", totalPartsSum.toFixed(3));
-  //   setValue("ServiceAndInstallation", totalFittingCharge.toFixed(3));
-
-  //   const shipping = Number(getValues("ShippingAmt")) || 0;
-  //   const finalDocAmt = totalPartsSum + totalFittingCharge + shipping;
-
-  //   setValue("TotalDocAmt", finalDocAmt.toFixed(3));
-  //   setValue("DueAmount", finalDocAmt.toFixed(3));
-  //   setValue("BalanceDueAmount", finalDocAmt.toFixed(3));
-
-  //   return updatedRow;
-  // };
-
   const HandleTableOnChange = (newRow) => {
     if (!newRow) return;
     const qty = Number(newRow.Quantity || 0);
     const price = Number(newRow.Price || 0);
+    const fitting = Number(newRow.LineFittingCharge || 0);
 
     const amount = qty * price;
 
     const currentLines = getValues("oLines") || [];
 
+    // const updatedRows = currentLines.map((row) =>
+    //   row.ItemCode === newRow.ItemCode
+    //     ? { ...row, Amount: amount.toFixed(3) }
+    //     : row,
+    // );
     const updatedRows = currentLines.map((row) =>
       row.ItemCode === newRow.ItemCode
-        ? { ...row, Amount: amount.toFixed(3) }
+        ? {
+            ...row,
+            Quantity: qty,
+            Price: price,
+            LineFittingCharge: fitting,
+            Amount: amount.toFixed(3),
+          }
         : row,
     );
 
@@ -2541,118 +2580,6 @@ export default function QuatationSO() {
       PaymentCalcUpdateTimePaymentPer();
     }
   };
-  const HandleOnFildChange = () => {
-    const allformdata = getValues();
-
-    const specialDiscPercent = Number(getValues("SpecialDisc")) || 0;
-    const DesiredDiscPercent = Number(getValues("DesiredDisc")) || 0;
-
-    const sDiscAmt = round(
-      (allformdata.TotalPartsValue * specialDiscPercent) / 100,
-    );
-
-    const fittingcharge = allformdata.ServiceAndInstallation;
-
-    const dDiscAmt = round(
-      (allformdata.TotalPartsValue * DesiredDiscPercent) / 100,
-    );
-
-    const netParts =
-      Number(allformdata.TotalPartsValue) -
-      Number(sDiscAmt) -
-      Number(dDiscAmt) +
-      Number(fittingcharge) +
-      Number(allformdata.RoundingAmt);
-
-    const TotTotalDocAmt = Number(netParts) + Number(allformdata.ShippingAmt);
-
-    setValue("SpecialDiscAmt", sDiscAmt.toFixed(3));
-    setValue("DesiredDiscAmt", dDiscAmt.toFixed(3));
-    setValue("NetPartsValue", netParts.toFixed(3));
-    setValue("TotalDocAmt", TotTotalDocAmt.toFixed(3));
-  };
-
-  // const CreditCardList = [
-  //   { Name: "KNET", AccountCode: "1201024" },
-  //   { Name: "MASTER", AccountCode: "1201024" },
-  //   { Name: "VISA", AccountCode: "1201024" },
-  //   { Name: "MF", AccountCode: "1201029" },
-  //   { Name: "TABBY", AccountCode: "1201036" },
-  //   { Name: "TAMARA", AccountCode: "1201039" },
-  //   { Name: "TALY", AccountCode: "1201041" },
-  // ];
-  // const handleOnCreditCardAdd = () => {
-  //   const values = getValues();
-
-  //   const cardValue = String(values.CreditCard).trim();
-  //   const cardNumber = String(values.CreditCardNumber).trim();
-  //   const voucherNum = (values.VoucherNum?.toString() || "").trim();
-  //   const creditSum = parseFloat(values.CreditSum);
-
-  //   if (!cardValue || cardValue === "undefined" || cardValue === "null") {
-  //     Swal.fire({
-  //       text: "Please Select Credit Card",
-  //       icon: "warning",
-  //       iconColor: "red",
-  //       toast: true,
-  //       showConfirmButton: false,
-  //       timer: 3000,
-  //     });
-  //     return;
-  //   } else if (!cardNumber || cardNumber.length !== 4) {
-  //     Swal.fire({
-  //       text: "Please add valid Credit Card No",
-  //       icon: "warning",
-  //       iconColor: "red",
-  //       toast: true,
-  //       showConfirmButton: false,
-  //       timer: 3000,
-  //     });
-  //     return;
-  //   } else if (!voucherNum || voucherNum.length === 0) {
-  //     Swal.fire({
-  //       text: "Please add Authorization code",
-  //       icon: "warning",
-  //       iconColor: "red",
-  //       toast: true,
-  //       showConfirmButton: false,
-  //       timer: 3000,
-  //     });
-  //     return;
-  //   } else if (!creditSum || creditSum === 0) {
-  //     Swal.fire({
-  //       text: "Please add Valid Amount",
-  //       icon: "warning",
-  //       iconColor: "red",
-  //       toast: true,
-  //       showConfirmButton: false,
-  //       timer: 3000,
-  //     });
-  //     return;
-  //   }
-
-  //   const selectedCard = CreditCardList.find(
-  //     (card) => card.Name === values.CreditCard,
-  //   );
-
-  //   const newEntry = {
-  //     CashAccount: selectedCard?.AccountCode || 1201011,
-  //     CreditCard: values.CreditCard,
-  //     CreditCardNumber: values.CreditCardNumber,
-  //     CreditSum: values.CreditSum,
-  //     VoucherNum: values.VoucherNum,
-  //   };
-
-  //   const updatedList = [...bankData, newEntry];
-  //   setBankData(updatedList);
-  //   setValue("oCCPay", updatedList);
-
-  //   // PaymentCalc();
-  //   setValue("CreditCard", "");
-  //   setValue("CreditCardNumber", "");
-  //   setValue("VoucherNum", "");
-  //   setValue("CreditSum", "");
-  // };
 
   const sidebarContent = (
     <>
@@ -2837,102 +2764,122 @@ export default function QuatationSO() {
         open={open}
         onClose={handleClose}
         scroll="paper"
-        // onSubmit={onSubmit}
         maxWidth="sm"
         sx={{
           "& .MuiDialog-paper": {
             width: "90vw",
             maxWidth: "370px",
-            height: "60vh",
-            maxHeight: "80vh",
+            height: "50",
+            maxHeight: "90",
             margin: "auto",
           },
         }}
       >
-        <DialogTitle>
-          <Grid item display={"flex"} justifyContent={"center"}>
-            <PersonAddAlt1OutlinedIcon />
-            <Typography textAlign={"center"} fontWeight={"bold"}>
-              &nbsp; &nbsp;Customer Creation Form
-            </Typography>
-          </Grid>
-        </DialogTitle>
-        <Divider color="gray" />
-        <DialogContent className="bg-light">
-          <Grid container gap={2}>
-            <Grid item xs={12} lg={12} textAlign={"center"}>
-              <Controller
-                name="CUSTOMER ID"
-                disabled
-                control={controlMdl1}
-                render={({ field, fieldState: { errorsMdl1 } }) => (
-                  <InputTextField label="CUSTOMER ID" {...field} rows={1} />
-                )}
-              />
+        <form onSubmit={handleSubmitMdl1(onSubmitCustmoreModal)}>
+          <DialogTitle>
+            <Grid item display={"flex"} justifyContent={"center"}>
+              <PersonAddAlt1OutlinedIcon />
+              <Typography textAlign={"center"} fontWeight={"bold"}>
+                &nbsp;&nbsp;Customer Creation Form
+              </Typography>
             </Grid>
+          </DialogTitle>
 
-            <Grid item xs={12} lg={12} textAlign={"center"}>
-              <Controller
-                name="CardName"
-                control={controlMdl1}
-                render={({ field, fieldState: { errorsMdl1 } }) => (
-                  <InputTextField
-                    label="CUSTOMER NAME"
-                    {...field}
-                    error={!!errorsMdl1}
-                    helperText={errorsMdl1 ? errorsMdl1.message : null}
-                    rows={1}
-                  />
-                )}
-              />
-            </Grid>
+          <Divider color="gray" />
 
-            <Grid item xs={12} lg={12} textAlign={"center"}>
-              <PhoneNumber
-                defaultCountry="kw"
-                label="CONTACT NUMBER"
-                value={phone}
-                onChange={(phone) => setPhone(phone)}
-              />
+          <DialogContent className="bg-light">
+            <Grid container gap={2}>
+              {/* CUSTOMER ID */}
+
+              {/* CUSTOMER NAME */}
+              <Grid item xs={12} lg={12} textAlign={"center"}>
+                <Controller
+                  name="CardName"
+                  control={controlMdl1}
+                  rules={{ required: "Customer Name is required" }}
+                  render={({ field, fieldState: { error } }) => (
+                    <InputTextField
+                      label="CUSTOMER NAME"
+                      {...field}
+                      error={!!error}
+                      helperText={error ? error.message : ""}
+                      rows={1}
+                    />
+                  )}
+                />
+              </Grid>
+
+              {/* PHONE NUMBER */}
+              <Grid item xs={12} lg={12} textAlign={"center"}>
+                <Controller
+                  name="PhoneNumber1"
+                  control={controlMdl1}
+                  rules={{
+                    required: "Contact No is required",
+                    validate: (value) =>
+                      value && value.trim() !== ""
+                        ? true
+                        : "Contact No is required",
+                  }}
+                  render={({ field, fieldState: { error } }) => (
+                    <PhoneNumber
+                      defaultCountry="kw"
+                      label="CONTACT NUMBER"
+                      value={field.value || ""}
+                      onChange={(value) => field.onChange(value || "")}
+                      error={!!error}
+                      helperText={error?.message}
+                    />
+                  )}
+                />
+              </Grid>
+
+              {/* EMAIL */}
+              <Grid item xs={12} lg={12} textAlign={"center"}>
+                <Controller
+                  name="Email"
+                  control={controlMdl1}
+                  rules={{
+                    pattern: {
+                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                      message: "Invalid email address",
+                    },
+                  }}
+                  render={({ field, fieldState: { error } }) => (
+                    <InputTextField
+                      label="EMAIL"
+                      {...field}
+                      error={!!error}
+                      helperText={error ? error.message : ""}
+                      rows={1}
+                    />
+                  )}
+                />
+              </Grid>
             </Grid>
-            <Grid item xs={12} lg={12} textAlign={"center"}>
-              <Controller
-                name="EMAIL"
-                control={controlMdl1}
-                render={({ field, fieldState: { errorsMdl1 } }) => (
-                  <InputTextField
-                    label="EMAIL"
-                    {...field}
-                    error={!!errorsMdl1}
-                    helperText={errorsMdl1 ? errorsMdl1.message : null}
-                    rows={1}
-                  />
-                )}
-              />
-            </Grid>
-          </Grid>
-        </DialogContent>
-        <DialogActions sx={{ justifyContent: "space-between" }}>
-          <Button
-            variant="contained"
-            color="success"
-            name="Close"
-            onClick={handleClose}
-            size="small"
-            sx={{ color: "white" }}
-          >
-            Save
-          </Button>
-          <Button
-            variant="contained"
-            color="error"
-            name="Close"
-            onClick={handleClose}
-            size="small"
-          >
-            close
-          </Button>
-        </DialogActions>
+          </DialogContent>
+
+          <DialogActions sx={{ justifyContent: "space-between" }}>
+            <Button
+              variant="contained"
+              color="success"
+              type="submit"
+              size="small"
+              sx={{ color: "white" }}
+            >
+              Save
+            </Button>
+
+            <Button
+              variant="contained"
+              color="error"
+              onClick={handleClose}
+              size="small"
+            >
+              Close
+            </Button>
+          </DialogActions>
+        </form>
       </Dialog>
       <Grid
         container
@@ -3529,7 +3476,14 @@ export default function QuatationSO() {
                       )}
                     />
                   </Grid>
-                  <Grid item xs={12} md={2} sm={4} lg={1.5} textAlign={"center"}>
+                  <Grid
+                    item
+                    xs={12}
+                    md={2}
+                    sm={4}
+                    lg={1.5}
+                    textAlign={"center"}
+                  >
                     <Controller
                       name="CNC"
                       control={control}
@@ -3553,7 +3507,14 @@ export default function QuatationSO() {
                       )}
                     />
                   </Grid>
-                  <Grid item xs={12} md={2} sm={4} lg={2.5} textAlign={"center"}>
+                  <Grid
+                    item
+                    xs={12}
+                    md={2}
+                    sm={4}
+                    lg={2.5}
+                    textAlign={"center"}
+                  >
                     <Controller
                       name="DeliveredLater"
                       control={control}
@@ -3618,6 +3579,10 @@ export default function QuatationSO() {
                               onChange={(e) => {
                                 const checkedValue = e.target.checked;
                                 onChange(checkedValue);
+                                if (checkedValue === false) {
+                                  setValue("ShippingAmt", 0);
+                                  calculateData();
+                                }
                               }}
                             />
                           }
@@ -3649,20 +3614,15 @@ export default function QuatationSO() {
                           onChange={(e) => {
                             const checkedValue = e.target.checked;
                             onChange(checkedValue);
-                            if (checkedValue && watch("Approver") === "")
+                            if (checkedValue && watch("Approver") === "") {
                               setValue(
                                 "Approver",
                                 localStorage.getItem("UserName"),
                               );
+                            } else {
+                              setValue("Approver", "");
+                            }
                           }}
-                          // onChange={(e) => {
-                          //   field.onChange(e);
-                          //   if (e.target.checked && watch("Approver") === "")
-                          //     setValue(
-                          //       "Approver",
-                          //       localStorage.getItem("UserName"),
-                          //     );
-                          // }}
                         />
                       )}
                     />
@@ -3935,18 +3895,6 @@ export default function QuatationSO() {
                         <>
                           <Grid container lg={9} md={12} padding={2}>
                             <Grid item sm={5} md={6} lg={4} xs={12}>
-                              {/* <Controller
-                              name="CashPaid"
-                              control={control}
-                              render={({ field }) => (
-                                <InputTextField
-                                  label="CASH PAID"
-                                  {...field}
-                                  onChange={PaymentsCalculations}
-                                  type="Number"
-                                />
-                              )}
-                            /> */}
                               <SmallInputFields
                                 name="CashPaid"
                                 control={control}
@@ -3994,18 +3942,6 @@ export default function QuatationSO() {
                         <>
                           <Grid container padding={2}>
                             <Grid container item lg={6} xs={12} md={6} sm={6}>
-                              {/* <RadioButtonsField
-                                control={control}
-                                name="myRadioGroup"
-                                data={[
-                                  { value: "KNET", label: "KNET" },
-                                  { value: "MASTER", label: "MASTER" },
-                                  { value: "VISA", label: "VISA" },
-                                  { value: "MF", label: "MF" },
-                                  { value: "TABBY", label: "TABBY" },
-                                  { value: "TAMARA", label: "TAMARA" },
-                                ]}
-                              /> */}
                               <RadioButtonsField
                                 control={control}
                                 name="CreditCard"
@@ -4035,21 +3971,6 @@ export default function QuatationSO() {
                               </Grid>
 
                               <Grid item sm={12} md={6} lg={6} xs={12}>
-                                {/* <Controller
-                                  name="CreditSum"
-                                  control={control}
-                                  render={({ field }) => (
-                                    <SmallInputFields
-                                      label="CREDIT SUM"
-                                      type="Number"
-                                      onChange={(e) => {
-                                        field.onChange(e);
-                                        handleOnChangeCreditValue(e);
-                                      }}
-                                      {...field}
-                                    />
-                                  )}
-                                /> */}
                                 <SmallInputFields
                                   name="CreditSum"
                                   control={control}
@@ -4148,18 +4069,6 @@ export default function QuatationSO() {
                         <>
                           <Grid container padding={2}>
                             <Grid sm={12} md={6} lg={3} xs={12}>
-                              {/* <Controller
-                              name="TransferSum"
-                              control={control}
-                              render={({ field }) => (
-                                <InputTextField
-                                  label="TRANSFER SUM"
-                                  {...field}
-                                  onChange={PaymentsCalculations}
-                                  type="Number"
-                                />
-                              )}
-                            /> */}
                               <SmallInputFields
                                 name="TransferSum"
                                 control={control}
@@ -4358,8 +4267,7 @@ export default function QuatationSO() {
                 type="submit"
                 disabled={
                   (SaveUpdateName === "SAVE" && !perms.IsAdd) ||
-                  (SaveUpdateName === "UPDATE" && !perms.IsEdit) ||
-                  allFormData.Status === "0"
+                  (SaveUpdateName === "UPDATE" && !perms.IsEdit)
                 }
               >
                 {SaveUpdateName}
@@ -5403,7 +5311,6 @@ export default function QuatationSO() {
                           color="success"
                           style={{ fontSize: "14px", padding: "4px 10px" }}
                           variant="contained"
-                          // onClick={exportExcel}
                         >
                           <i className="fa fa-file-excel-o"></i> Export to Excel
                         </Button>

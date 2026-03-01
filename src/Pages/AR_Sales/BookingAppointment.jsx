@@ -136,6 +136,7 @@ export default function BinLocationMaster() {
       OrderSubType: data.OrderType,
       AppointType: data.OrderSubType,
       OrderDocEntry: data.DocEntry,
+      AppointDate: dayjs(),
       oLines: data.oLines.map((line) => ({
         ItemName: line.ItemName,
         ItemCode: line.ItemCode,
@@ -356,7 +357,10 @@ export default function BinLocationMaster() {
           CustomerName: values.CardName,
           ContactNo: values.PhoneNumber1,
           AppointmentNo: values.DocNum,
-          OrderSubType: values.OrderType,
+          AppointTimeFrom: values.AppointTimeFrom,
+          AppointTimeTo: values.AppointTimeTo,
+          OrderSubType: values.AppointType,
+          OrderType: values.OrderType,
           AppointType: values.AppointType,
           Vehicle: values.Vehicle,
           IsInward: values.IsInward,
@@ -572,11 +576,13 @@ export default function BinLocationMaster() {
       VehicleDocEntry: data.VehicleDocEntry,
       IsInward: data.IsInward,
       AppointStatus: data.AppointStatus,
-      Year: data.Year,
-      Make: data.Make,
-      Model: data.Model,
+
+      // 1990 - TOYOTA - LC100
+      Year: data.Year || "1990",
+      Make: data.Make || "TOYOTA",
+      Model: data.Model || "LC100",
       Series: "-1",
-      AppointTimeTo: data.AppointTimeTo,
+      // AppointTimeTo: data.AppointTimeTo,
       oLines: data.oLines.map((item) => ({
         UserId: UserId,
         CreatedBy: UserName,
@@ -622,7 +628,7 @@ export default function BinLocationMaster() {
               text: res.data.message,
               icon: "error",
               confirmButtonText: "Ok",
-              timer: 1000,
+              // timer: 1000,
             });
           }
         })
@@ -768,8 +774,8 @@ export default function BinLocationMaster() {
                 indicatorColor="primary"
                 textColor="inherit"
               >
-                <Tab value="1" label="Active" />
-                <Tab value="0" label="Inactive" />
+                <Tab value="1" label="OPEN" />
+                <Tab value="0" label="CLOSED" />
               </Tabs>
               <TabPanel
                 value={"1"}
@@ -1155,7 +1161,7 @@ export default function BinLocationMaster() {
                     <Controller
                       name="AppointmentNo"
                       control={control}
-                      rules={{ required: "Appointment No is Required" }}
+                      // rules={{ required: "Appointment No is Required" }}
                       render={({ field, fieldState: { error } }) => (
                         <InputTextField
                           label="APPOINTMENT NO"
@@ -1237,7 +1243,7 @@ export default function BinLocationMaster() {
                     <Controller
                       name="Vehicle"
                       control={control}
-                      rules={{ required: "Selected Vehicle Is Required" }}
+                      // rules={{ required: "Selected Vehicle Is Required" }}
                       render={({
                         field: { ref, ...fieldList },
                         fieldState: { error },
@@ -1247,7 +1253,7 @@ export default function BinLocationMaster() {
                           inputRef={ref}
                           label="SELECTED VEHICLE"
                           type="text"
-                          value={`${getValues("Year") || ""} - ${getValues("Make") || ""} - ${getValues("Model") || ""}`}
+                          // value={`${getValues("Year") || "1990"} - ${getValues("Make") || "TOYOTA"} - ${getValues("Model") || "LC100"}`}
                           readOnly={true}
                           error={!!error}
                           helperText={error ? error.message : null}
@@ -1477,7 +1483,8 @@ export default function BinLocationMaster() {
                 type="submit"
                 disabled={
                   (SaveUpdateName === "SAVE" && !perms.IsAdd) ||
-                  (SaveUpdateName !== "SAVE" && !perms.IsEdit)
+                  (SaveUpdateName !== "SAVE" && !perms.IsEdit) ||
+                  getValues("Status") === 0
                 }
                 // disabled={tab !== "1"}
               >

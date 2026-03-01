@@ -671,8 +671,139 @@ export default function InwardVehicle() {
     setDocEntry("");
   };
 
+  // const handleSubmitForm = async (data) => {
+  //   try {
+  //     if (!sigCanvas.current || sigCanvas.current.isEmpty()) {
+  //       Swal.fire({
+  //         text: "Please add Signature...",
+  //         icon: "warning",
+  //         toast: true,
+  //         showConfirmButton: false,
+  //         timer: 2000,
+  //         timerProgressBar: true,
+  //       });
+  //       return;
+  //     }
+
+  //     setapiloading(true);
+
+  //     const UserId = localStorage.getItem("UserId");
+  //     const CreatedBy = localStorage.getItem("UserName");
+  //     const signatureDataURL = sigCanvas.current.toDataURL().split(",")[1];
+
+  //     const obj = {
+  //       UserId: data.DocEntry ? (data.UserId ?? UserId) : UserId,
+  //       CreatedBy: data.DocEntry ? (data.CreatedBy ?? CreatedBy) : CreatedBy,
+  //       AppointmentNo: data.AppointmentNo,
+  //       VehInwardNo: data.VehInwardNo,
+  //       OrderNo: data.OrderNo,
+  //       VehInwardDate: dayjs(data.VehInwardDate).format("YYYY-MM-DD HH:mm:ss"),
+  //       RegistrationNo: String(data.RegistrationNo || ""),
+  //       InspectionRemark: data.InspectionRemark,
+  //       VehicleDocEntry: "0",
+  //       Mileage: String(data.Mileage || ""),
+  //       ChassisNo: String(data.ChassisNo || ""),
+  //       VehInwardTime: data.VehInwardTime
+  //         ? dayjs(data.VehInwardTime).format("HH:mm")
+  //         : "",
+  //       PhoneNumber1: data.PhoneNumber1,
+  //       CardName: data.CardName,
+  //       CardCode: data.CardCode,
+  //       JobWorkAt: data.JobWorkAt,
+  //       Year: data.Year,
+  //       Make: data.Make,
+  //       Model: data.Model,
+  //       JobWorkDetails: data.JobWorkDetails,
+  //       OrderType: data.OrderType,
+  //       OrderDocEntry: String(data.OrderDocEntry || ""),
+  //       JobCardNo: "",
+  //       ScheduleDate: "",
+  //       SignPath: data.SignPath,
+  //       SignPathByteArray: signatureDataURL,
+  //     };
+
+  //     if (SaveUpdateName === "Submit") {
+  //       const { data: res } = await apiClient.post(`/VehInward`, obj);
+
+  //       if (res.success) {
+  //         setOpenListData([]);
+  //         fetchOpenListData(0);
+  //         handleGetListClear();
+  //         ClearForm();
+
+  //         Swal.fire({
+  //           title: "Success!",
+  //           text: "Inward Vehicle Added",
+  //           icon: "success",
+  //           timer: 1500,
+  //           showConfirmButton: false,
+  //         });
+  //       } else {
+  //         throw new Error(res.message || "Failed to add vehicle.");
+  //       }
+  //     }
+
+  //     // ==============================
+  //     // 🔹 UPDATE
+  //     // ==============================
+  //     else if (SaveUpdateName === "Update") {
+  //       const confirm = await Swal.fire({
+  //         text: `Do you want to Update ${data.VehInwardNo}?`,
+  //         icon: "question",
+  //         showCancelButton: true,
+  //         confirmButtonText: "YES",
+  //         cancelButtonText: "No",
+  //       });
+
+  //       if (!confirm.isConfirmed) {
+  //         setapiloading(false);
+  //         return;
+  //       }
+
+  //       // ⚠️ Recommended: PUT for update
+  //       const { data: res } = await apiClient.put(
+  //         `/VehInward/${data.DocEntry}`,
+  //         obj,
+  //       );
+
+  //       if (res.success) {
+  //         setOpenListPage(0);
+  //         setOpenListData([]);
+  //         fetchOpenListData(0);
+  //         handleGetListClear();
+  //         ClearForm();
+
+  //         Swal.fire({
+  //           title: "Success!",
+  //           text: "Inward Vehicle Updated",
+  //           icon: "success",
+  //           timer: 1200,
+  //           showConfirmButton: false,
+  //         });
+  //       } else {
+  //         throw new Error(res.message || "Failed to update vehicle.");
+  //       }
+  //     }
+  //   } catch (error) {
+  //     console.error("Submit Error:", error);
+
+  //     Swal.fire({
+  //       title: "Error!",
+  //       text:
+  //         error?.response?.data?.message ||
+  //         error.message ||
+  //         "Something went wrong",
+  //       icon: "error",
+  //       confirmButtonText: "Ok",
+  //     });
+  //   } finally {
+  //     setapiloading(false);
+  //   }
+  // };
+
   const handleSubmitForm = async (data) => {
     try {
+      // 1. Signature Validation
       if (!sigCanvas.current || sigCanvas.current.isEmpty()) {
         Swal.fire({
           text: "Please add Signature...",
@@ -691,39 +822,46 @@ export default function InwardVehicle() {
       const CreatedBy = localStorage.getItem("UserName");
       const signatureDataURL = sigCanvas.current.toDataURL().split(",")[1];
 
+      // 2. Map the Object
       const obj = {
-        UserId: data.DocEntry ? (data.UserId ?? UserId) : UserId,
-        CreatedBy: data.DocEntry ? (data.CreatedBy ?? CreatedBy) : CreatedBy,
-        AppointmentNo: data.AppointmentNo,
-        VehInwardNo: data.VehInwardNo,
-        OrderNo: data.OrderNo,
-        VehInwardDate: dayjs(data.VehInwardDate).format("YYYY-MM-DD HH:mm:ss"),
-        RegistrationNo: String(data.RegistrationNo || ""),
-        InspectionRemark: data.InspectionRemark,
-        VehicleDocEntry: "0",
-        Mileage: String(data.Mileage || ""),
-        ChassisNo: String(data.ChassisNo || ""),
+        UserId: UserId,
+        CreatedBy: CreatedBy,
+        DocDate: dayjs(),
+        AppointmentNo: data.AppointmentNo || "",
+        VehInwardNo: data.VehInwardNo || "",
+        OrderNo: data.OrderNo || "",
+        VehInwardDate: data.VehInwardDate
+          ? dayjs(data.VehInwardDate).format("YYYY-MM-DD HH:mm:ss")
+          : null,
         VehInwardTime: data.VehInwardTime
           ? dayjs(data.VehInwardTime).format("HH:mm")
           : "",
-        PhoneNumber1: data.PhoneNumber1,
-        CardName: data.CardName,
-        CardCode: data.CardCode,
-        JobWorkAt: data.JobWorkAt,
-        Year: data.Year,
-        Make: data.Make,
-        Model: data.Model,
-        JobWorkDetails: data.JobWorkDetails,
-        OrderType: data.OrderType,
+        RegistrationNo: String(data.RegistrationNo || ""),
+        Mileage: String(data.Mileage || ""),
+        ChassisNo: String(data.ChassisNo || ""),
+        InspectionRemark: data.InspectionRemark || "",
+        PhoneNumber1: data.PhoneNumber1 || "",
+        CardName: data.CardName || "",
+        CardCode: data.CardCode || "",
+        JobWorkAt: data.JobWorkAt || "",
+        Year: data.Year || "",
+        Make: data.Make || "",
+        Model: data.Model || "",
+        JobWorkDetails: data.JobWorkDetails || "",
+        OrderType: data.OrderType || "",
         OrderDocEntry: String(data.OrderDocEntry || ""),
+        VehicleDocEntry: "0",
         JobCardNo: "",
         ScheduleDate: "",
-        SignPath: data.SignPath,
+
+        SignPath: "",
         SignPathByteArray: signatureDataURL,
       };
 
-      if (SaveUpdateName === "Submit") {
-        const { data: res } = await apiClient.post(`/VehInward`, obj);
+      // 3. Logic for SAVE (POST)
+      // Changed from "Submit" to "SAVE" to match your state default
+      if (SaveUpdateName === "SAVE") {
+        const { data: res } = await apiClient.post("/VehInward", obj);
 
         if (res.success) {
           setOpenListData([]);
@@ -743,9 +881,7 @@ export default function InwardVehicle() {
         }
       }
 
-      // ==============================
-      // 🔹 UPDATE
-      // ==============================
+      // 4. Logic for UPDATE (PUT)
       else if (SaveUpdateName === "Update") {
         const confirm = await Swal.fire({
           text: `Do you want to Update ${data.VehInwardNo}?`,
@@ -760,9 +896,8 @@ export default function InwardVehicle() {
           return;
         }
 
-        // ⚠️ Recommended: PUT for update
         const { data: res } = await apiClient.put(
-          `/VehInward/${data.DocEntry}`,
+          `/VehInward/${DocEntry}`, // Using the DocEntry state variable
           obj,
         );
 
@@ -786,7 +921,6 @@ export default function InwardVehicle() {
       }
     } catch (error) {
       console.error("Submit Error:", error);
-
       Swal.fire({
         title: "Error!",
         text:
@@ -800,7 +934,6 @@ export default function InwardVehicle() {
       setapiloading(false);
     }
   };
-
   return (
     <>
       <DynamicLoader open={apiloading} />

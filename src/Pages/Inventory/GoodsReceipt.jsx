@@ -1152,7 +1152,7 @@ export default function GoodsReceipt() {
                 (e.key === "Tab" && !e.shiftKey)
               ) {
                 e.preventDefault();
-                if (!openWHSCode  && params.row.readonlyRow!=="readonlyRow") {
+                if (!openWHSCode && params.row.readonlyRow !== "readonlyRow") {
                   setValue("selectedRowIndex", params.row.id);
                   setSelectedRowId(params.row.id);
                   OpenDailog1();
@@ -1221,7 +1221,10 @@ export default function GoodsReceipt() {
                 (e.key === "Tab" && !e.shiftKey)
               ) {
                 e.preventDefault();
-                if (BinQty !== params.row.Quantity  && params.row.readonlyRow!=="readonlyRow") {
+                if (
+                  BinQty !== params.row.Quantity &&
+                  params.row.readonlyRow !== "readonlyRow"
+                ) {
                   setValue("selectedRowIndex", params.row.id);
                   setBinLocData(params.row);
                   dispatch({ type: "OPEN", modal: "BinLocationOpen" });
@@ -1338,7 +1341,7 @@ export default function GoodsReceipt() {
                 (e.key === "Tab" && !e.shiftKey)
               ) {
                 e.preventDefault();
-                if (!openAcctCode  && params.row.readonlyRow!=="readonlyRow") {
+                if (!openAcctCode && params.row.readonlyRow !== "readonlyRow") {
                   setSelectedRowId(params.id);
                   OpenDailog2();
                 }
@@ -1408,7 +1411,7 @@ export default function GoodsReceipt() {
                 (e.key === "Tab" && !e.shiftKey)
               ) {
                 e.preventDefault();
-                if (!openUomCode  && params.row.readonlyRow!=="readonlyRow") {
+                if (!openUomCode && params.row.readonlyRow !== "readonlyRow") {
                   setSelectedRowId(params.row.id);
                   OpenDailog3();
                   if (!isDisabled) fetchGetUOMListData3(params.row.UomEntry2);
@@ -1560,7 +1563,10 @@ export default function GoodsReceipt() {
                   (e.key === "Tab" && !e.shiftKey)
                 ) {
                   e.preventDefault();
-                  if (InvQty !== savedQty  && params.row.readonlyRow!=="readonlyRow") {
+                  if (
+                    InvQty !== savedQty &&
+                    params.row.readonlyRow !== "readonlyRow"
+                  ) {
                     setValue("selectedRowIndex", params.row.id);
                     handleClick();
                   }
@@ -1886,7 +1892,7 @@ export default function GoodsReceipt() {
           TotalSumSy: String(item.TotalSumSy),
           AcctCode: String(item.AcctCode),
           Price: String(item.PriceBefDi),
-          Rate: String(DocRateLine),
+          Rate: "1",
           Currency: data.DocCur,
           StockSum: String(item.StockSum || "0"),
           StockSumSc: String(item.StockSumSc || "0"),
