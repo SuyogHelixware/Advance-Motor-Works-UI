@@ -763,6 +763,7 @@ export default function IssueMaterial() {
           onClick={() => {
             removeTableRow(params.row.ItemCode);
           }}
+          disabled={Disabled}
         >
           <RemoveCircleIcon sx={{ color: "red" }} />
         </IconButton>
