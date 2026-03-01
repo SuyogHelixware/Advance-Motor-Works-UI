@@ -24,7 +24,6 @@ import InfiniteScroll from "react-infinite-scroll-component";
 import { BeatLoader } from "react-spinners";
 
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
-import axios from "axios";
 import dayjs from "dayjs";
 import { useMemo } from "react";
 import Swal from "sweetalert2";
@@ -100,7 +99,6 @@ export default function IssueMaterial() {
   const [WMSStaff, setWMSStaff] = useState([]);
   const [loading, setLoading] = useState(false);
   const [oLines, setoLines] = useState([]);
-  const watchShowAge = getValues("JobWorkAt");
 
   useEffect(() => {
     getAllOpenList();
@@ -108,6 +106,7 @@ export default function IssueMaterial() {
     getListForCreate();
     getHW_WMSStaffList();
   }, []);
+
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
@@ -364,6 +363,12 @@ export default function IssueMaterial() {
     setGetListPage(page);
   };
 
+  useEffect(() => {
+    if (isDialogOpen === true) {
+      getListForCreate(0);
+    }
+  }, [isDialogOpen]);
+
   const onHandleSearchGetListForCreate = (event) => {
     const searchText = event.target.value;
     setGetListSearchData([]);
@@ -393,10 +398,12 @@ export default function IssueMaterial() {
 
   const openDialog = () => {
     setIsDialogOpen(true);
+    setsearchTextGetListForCreate([]);
   };
 
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
+    setsearchTextGetListForCreate([]);
   };
 
   const handleCardClick = () => {
@@ -661,29 +668,31 @@ export default function IssueMaterial() {
       width: 140,
       headerAlign: "center",
       renderCell: (params) => (
-        // <Tooltip title={params.row.ToBinSelected} arrow>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            height: "100%",
-            width: "100%",
-          }}
-        >
-          <InputTableSelectField
-            name="ToBin"
-            value={params.row.ToBin}
-            onChange={(e) => onChangeTableData(e, params.id)}
-            data={(Array.isArray(params.row.BinList) ? params.row.BinList : []).map(
-              (BinLocation) => ({
+        <Tooltip title={params.row.ToBin} arrow>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              height: "100%",
+              width: "100%",
+            }}
+          >
+            <InputTableSelectField
+              name="ToBin"
+              value={params.row.ToBin}
+              onChange={(e) => onChangeTableData(e, params.id)}
+              data={(Array.isArray(params.row.BinList)
+                ? params.row.BinList
+                : []
+              ).map((BinLocation) => ({
                 key: BinLocation.BinCode,
                 value: BinLocation.BinCode,
-              }),
-            )}
-          />
-        </Box>
-        // </Tooltip>
+              }))}
+              readOnly={Disabled}
+            />
+          </Box>
+        </Tooltip>
       ),
     },
     {
@@ -1486,17 +1495,23 @@ export default function IssueMaterial() {
                   </Grid>
                 </Grid>
 
-                <Grid container pb={3} pt={2}>
-                  <Grid item md={12} lg={12} xs={12}>
-                    <TextField
-                      fullWidth
-                      placeholder="Scan Barcode"
-                      autoFocus
-                      value={barcodeItem}
-                      onChange={handleBarcodeChange}
-                      disabled={!watch("RequestNo") || Disabled}
-                    />
-                  </Grid>
+                <Grid
+                  container
+                  sx={{
+                    overflow: "auto",
+                    width: "100%",
+                    mt: 3,
+                    mb: 3,
+                  }}
+                >
+                  <TextField
+                    fullWidth
+                    placeholder="Scan Barcode"
+                    autoFocus
+                    value={barcodeItem}
+                    onChange={handleBarcodeChange}
+                    disabled={!watch("RequestNo") || Disabled}
+                  />
                 </Grid>
 
                 <Grid
@@ -1507,6 +1522,8 @@ export default function IssueMaterial() {
                     maxHeight: 400,
                     minHeight: 150,
                     mt: "5px",
+                    pl: 1,
+                    pr: 1,
                   }}
                 >
                   <DataGrid
@@ -1578,7 +1595,7 @@ export default function IssueMaterial() {
                                 key: item.DocEntry,
                                 value: item.TechnicianName,
                               }))}
-                              // readOnly={!watch("RequestNo") || Disabled}
+                              readOnly={Disabled}
                               {...field}
                               error={!!error}
                               helperText={error?.message}

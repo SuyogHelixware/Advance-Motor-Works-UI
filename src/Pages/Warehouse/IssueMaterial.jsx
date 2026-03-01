@@ -362,6 +362,12 @@ export default function IssueMaterial() {
     setGetListPage(page);
   };
 
+  useEffect(() => {
+    if (isDialogOpen === true) {
+      getListForCreate(0);
+    }
+  }, [isDialogOpen]);
+
   const onHandleSearchGetListForCreate = (event) => {
     const searchText = event.target.value;
     setGetListSearchData([]);
@@ -391,10 +397,12 @@ export default function IssueMaterial() {
 
   const openDialog = () => {
     setIsDialogOpen(true);
+    setsearchTextGetListForCreate([]);
   };
 
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
+    setsearchTextGetListForCreate([]);
   };
 
   const handleCardClick = () => {
@@ -454,9 +462,6 @@ export default function IssueMaterial() {
 
   const onChangeTableData = (event, index) => {
     const { value, name } = event.target;
-
-    console.log("Row index:", index);
-    console.log("Selected value:", value);
 
     setoLines((prevLines) => {
       const updatedLines = [...prevLines];
@@ -583,20 +588,35 @@ export default function IssueMaterial() {
     {
       field: "BinList",
       headerName: "From Bin",
-      width: 130,
+      width: 140,
       sortable: false,
+      headerAlign: "center",
+      align: "center",
       renderCell: (params) => (
-        <InputTableSelectField
-          name="BinLocation"
-          value={params.row.BinLocation}
-          onChange={(e) => onChangeTableData(e, params.id)}
-          data={(params.value === undefined ? [] : params.value).map(
-            (BinLocation) => ({
-              key: BinLocation.BinCode,
-              value: BinLocation.BinCode,
-            }),
-          )}
-        />
+        <Tooltip title={params.row.BinLocation} arrow>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              height: "100%",
+              width: "100%",
+            }}
+          >
+            <InputTableSelectField
+              name="BinLocation"
+              value={params.row.BinLocation}
+              onChange={(e) => onChangeTableData(e, params.id)}
+              data={(params.value === undefined ? [] : params.value).map(
+                (BinLocation) => ({
+                  key: BinLocation.BinCode,
+                  value: BinLocation.BinCode,
+                }),
+              )}
+              readOnly={Disabled}
+            />
+          </Box>
+        </Tooltip>
       ),
     },
 
@@ -727,7 +747,7 @@ export default function IssueMaterial() {
       CardName: data.CardName,
       PhoneNumber1: data.PhoneNumber1,
       DocNum: data.DocNum,
-      DocDate: dayjs(data.DocDate).format("YYYY-MM-DD"),
+      DocDate: dayjs(),
       OrderNo: data.OrderNo,
       JobCardNo: "",
       IssueRemark: data.ReqRemarks,
@@ -871,7 +891,6 @@ export default function IssueMaterial() {
   };
 
   const onSelectRequest = (item) => {
-    console.log(item);
     reset({ ...item, IssuedBy: user.UserName, RequestNo: item.DocNum });
     setoLines(item.oLines);
     setIsDialogOpen(false);
@@ -1140,6 +1159,60 @@ export default function IssueMaterial() {
     window.print();
   };
 
+  const callPicklist = async () => {
+    if (!oLines || !oLines.length) return;
+
+    const MaterialData = getValues();
+
+    const obj = oLines.map((data) => ({
+      UserId: localStorage.getItem("UserId"),
+      CreatedBy: localStorage.getItem("UserName"),
+      RequestNo: MaterialData.RequestNo,
+      OrderNo: MaterialData.OrderNo,
+      OrderDocEntry: MaterialData.OrderDocEntry,
+      ItemCode: data.ItemCode,
+      ItemName: data.ItemName,
+      ReqQty: data.ReqQuantity,
+      FromWHS: data.WHSCode,
+      FromBin: data.FromBin,
+      Status: "1",
+    }));
+
+    console.log(obj);
+    // return;
+
+    try {
+      const res = await apiClient.post(`/PicklistPrint`, obj);
+
+      if (res?.data?.success) {
+        // printpicklist();
+        Swal.fire({
+          title: "Success",
+          text: "Success",
+          icon: "Success",
+          confirmButtonText: "Ok",
+        });
+      } else {
+        Swal.fire({
+          title: "Error!",
+          text: res?.data?.message || "Something went wrong",
+          icon: "warning",
+          confirmButtonText: "Ok",
+        });
+      }
+    } catch (error) {
+      Swal.fire({
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong",
+        icon: "warning",
+        confirmButtonText: "Ok",
+      });
+    }
+  };
+
   return (
     <>
       <SearchModel
@@ -1331,7 +1404,7 @@ export default function IssueMaterial() {
                           label="Request NO"
                           type="text"
                           readOnly={true}
-                          disabled={!!field.value}
+                          disabled={Disabled}
                           onClick={() => {
                             openDialog();
                           }}
@@ -1471,6 +1544,7 @@ export default function IssueMaterial() {
                       fullWidth
                       sx={{ maxWidth: 220 }}
                       disabled={!watch("RequestNo") || Disabled}
+                      onClick={callPicklist}
                     >
                       Print Picklist
                     </Button>
@@ -1499,17 +1573,23 @@ export default function IssueMaterial() {
                   </Grid>
                 </Grid>
 
-                <Grid container>
-                  <Grid item md={12} lg={12} xs={12} textAlign="center" m={2}>
-                    <TextField
-                      fullWidth
-                      placeholder="Scan Barcode"
-                      autoFocus
-                      value={barcodeItem}
-                      onChange={handleBarcodeChange}
-                      disabled={!watch("RequestNo") || Disabled}
-                    />
-                  </Grid>
+                <Grid
+                  container
+                  sx={{
+                    overflow: "auto",
+                    width: "100%",
+                    mt: 3,
+                    mb: 3,
+                  }}
+                >
+                  <TextField
+                    fullWidth
+                    placeholder="Scan Barcode"
+                    autoFocus
+                    value={barcodeItem}
+                    onChange={handleBarcodeChange}
+                    disabled={!watch("RequestNo") || Disabled}
+                  />
                 </Grid>
 
                 <Grid
@@ -1519,6 +1599,8 @@ export default function IssueMaterial() {
                     width: "100%",
                     height: 230,
                     mt: "5px",
+                    pl: 1,
+                    pr: 1,
                   }}
                 >
                   <DataGrid
@@ -1535,7 +1617,7 @@ export default function IssueMaterial() {
                   />
                 </Grid>
 
-                <Grid container>
+                <Grid container marginTop={3}>
                   <Grid
                     item
                     sm={6}

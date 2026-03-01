@@ -506,6 +506,7 @@ export function InputSelectdropDown(props) {
   );
 }
 export function InputTableSelectField(props) {
+  const { readOnly, disabled, inputProps } = props;
   return (
     <>
       <FormControl
@@ -535,6 +536,11 @@ export function InputTableSelectField(props) {
               fontSize: 11,
               fontWeight: "bold",
             },
+          }}
+          disabled={disabled}
+          inputProps={{
+            ...inputProps,
+            readOnly: readOnly,
           }}
         >
           {props.data.map((data) => (
