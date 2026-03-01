@@ -179,7 +179,16 @@ export function InputSelectFields(props) {
           disabled={props.disabled}
           readOnly={props.readOnly}
           size="small"
-          sx={{ width: "100%", maxWidth: 220 }}
+          sx={{
+            width: "100%",
+            maxWidth: 220,
+            textAlign: "left",
+            "& .MuiSelect-select": {
+              textAlign: "left",
+              display: "flex",
+              justifyContent: "flex-start",
+            },
+          }}
         >
           {props.data.map((data) => (
             <MenuItem key={data.key} value={data.key}>

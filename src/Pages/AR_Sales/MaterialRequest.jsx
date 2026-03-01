@@ -584,6 +584,7 @@ export default function MaterialRequest() {
 
       setHasMoreGetList(newData.length === 20);
     } catch (error) {
+      setHasMoreGetList(false);
       Swal.fire({
         text: error?.response?.data?.message || error.message,
         icon: "question",
@@ -617,6 +618,7 @@ export default function MaterialRequest() {
     setGetListSearching(true);
     setGetListPage(0);
     setGetListData([]);
+    setHasMoreGetList(true);
 
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);

@@ -35,6 +35,7 @@ import SearchInputField from "../Components/SearchInputField";
 import SearchModel from "../Components/SearchModel";
 import usePermissions from "../Components/usePermissions";
 import DynamicLoader from "../../Loaders/DynamicLoader";
+import { Loader } from "../Components/Loader";
 
 export default function InwardVehicle() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -47,13 +48,9 @@ export default function InwardVehicle() {
   const [searchmodelOpen, setSearchmodelOpen] = useState(false);
   const timeoutRef = useRef(null);
   const [DocEntry, setDocEntry] = useState("");
-  // const [PrintData, setPrintData] = useState([]);
-
-  // const [oldOpenData, setSelectData] = useState(null);
-  const [apiloading, setapiloading] = useState(false);
-  // let [ok, setok] = useState("OK");
   const [SaveUpdateName, setSaveUpdateName] = useState("SAVE");
   const perms = usePermissions(133);
+  const [loading, setLoading] = useState(false);
 
   const [openListData, setOpenListData] = useState([]);
   const [openListPage, setOpenListPage] = useState(0);
@@ -175,6 +172,8 @@ export default function InwardVehicle() {
     clearSignature();
 
     try {
+      setLoading(true);
+
       const filledValues = {
         ...selectedItem,
         OrderNo: selectedItem.OrderNo,
@@ -199,7 +198,9 @@ export default function InwardVehicle() {
       reset(filledValues);
       SearchModelClose();
     } catch (error) {
-      console.error("Error fetching ARInvoice:", error);
+      console.error("Error selecting business partner:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -688,7 +689,7 @@ export default function InwardVehicle() {
         return;
       }
 
-      setapiloading(true);
+      setLoading(true);
 
       const UserId = localStorage.getItem("UserId");
       const CreatedBy = localStorage.getItem("UserName");
@@ -753,7 +754,7 @@ export default function InwardVehicle() {
         });
 
         if (!confirm.isConfirmed) {
-          setapiloading(false);
+          setLoading(false);
           return;
         }
 
@@ -791,13 +792,13 @@ export default function InwardVehicle() {
         confirmButtonText: "Ok",
       });
     } finally {
-      setapiloading(false);
+      setLoading(false);
     }
   };
 
   return (
     <>
-      <DynamicLoader open={apiloading} />
+      <Loader open={loading} />
       <Grid
         container
         width="100%"

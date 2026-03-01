@@ -33,6 +33,7 @@ import {
 import SearchInputField from "../Components/SearchInputField";
 import SearchModel from "../Components/SearchModel";
 import usePermissions from "../Components/usePermissions";
+import { Loader } from "../Components/Loader";
 
 export default function InwardVehicle() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -45,8 +46,7 @@ export default function InwardVehicle() {
   const [searchmodelOpen, setSearchmodelOpen] = useState(false);
   const timeoutRef = useRef(null);
   const [DocEntry, setDocEntry] = useState("");
-
-  const [apiloading, setapiloading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [SaveUpdateName, setSaveUpdateName] = useState("SAVE");
   const perms = usePermissions(133);
   //=========================================open List State End================================================================
@@ -170,41 +170,56 @@ export default function InwardVehicle() {
 
   const onSelectBusinessPartner = (DocEntry) => {
     clearSignature();
-    const selectedItem = getListData.find((item) => item.DocEntry === DocEntry);
-    if (!selectedItem) return;
 
-    const fieldsToSet = {
-      OrderNo: selectedItem.OrderNo,
-      CardName: selectedItem.CardName,
-      CardCode: selectedItem.CardCode,
-      InvoiceNo: selectedItem.InvoiceNo,
-      AppointDate: selectedItem.AppointDate
-        ? dayjs(selectedItem.AppointDate)
-        : null,
-      AppointmentNo: selectedItem.DocEntry,
-      Vehicle: `${selectedItem.Year} - ${selectedItem.Make} - ${selectedItem.Model}`,
-      PhoneNumber1: selectedItem.PhoneNumber1,
-      OrderDocEntry: selectedItem.OrderDocEntry,
-      InspectionRemark: selectedItem.InspectionRemark,
-      JobWorkAt: selectedItem.JobWorkAt,
-      JobWorkDetails: selectedItem.JobRemarks,
-      VehInwardNo: selectedItem.VehInwardNo,
-      JobCardNo: selectedItem.JobCardNo,
-      SignPath: selectedItem.SignPath,
-      OrderType: selectedItem.OrderType,
-      Year: selectedItem.Year,
-      Make: selectedItem.Make,
-      Model: selectedItem.Model,
-    };
+    try {
+      setLoading(true);
 
-    Object.entries(fieldsToSet).forEach(([key, value]) => {
-      setValue(key, value, { shouldValidate: true });
-    });
+      const selectedItem = getListData.find(
+        (item) => item.DocEntry === DocEntry,
+      );
+      if (!selectedItem) {
+        setLoading(false);
+        return;
+      }
 
-    SearchModelClose();
+      const fieldsToSet = {
+        OrderNo: selectedItem.OrderNo,
+        CardName: selectedItem.CardName,
+        CardCode: selectedItem.CardCode,
+        InvoiceNo: selectedItem.InvoiceNo,
+        AppointDate: selectedItem.AppointDate
+          ? dayjs(selectedItem.AppointDate)
+          : null,
+        AppointmentNo: selectedItem.DocEntry,
+        Vehicle: `${selectedItem.Year} - ${selectedItem.Make} - ${selectedItem.Model}`,
+        PhoneNumber1: selectedItem.PhoneNumber1,
+        OrderDocEntry: selectedItem.OrderDocEntry,
+        InspectionRemark: selectedItem.InspectionRemark,
+        JobWorkAt: selectedItem.JobWorkAt,
+        JobWorkDetails: selectedItem.JobRemarks,
+        VehInwardNo: selectedItem.VehInwardNo,
+        JobCardNo: selectedItem.JobCardNo,
+        SignPath: selectedItem.SignPath,
+        OrderType: selectedItem.OrderType,
+        Year: selectedItem.Year,
+        Make: selectedItem.Make,
+        Model: selectedItem.Model,
+      };
+
+      Object.entries(fieldsToSet).forEach(([key, value]) => {
+        setValue(key, value, { shouldValidate: true });
+      });
+
+      SearchModelClose();
+    } catch (error) {
+      console.error("Error selecting business partner:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fetchAndSetData = async (DocEntry) => {
+    setLoading(true);
     try {
       if (!DocEntry) return;
 
@@ -240,11 +255,8 @@ export default function InwardVehicle() {
       }
     } catch (error) {
       console.error("Fetch Error Detail:", error);
-      Swal.fire({
-        text: "Failed to fetch vehicle details.",
-        icon: "error",
-        confirmButtonText: "OK",
-      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -597,25 +609,22 @@ export default function InwardVehicle() {
       if (data?.success) {
         const newData = data?.values || [];
 
+        setGetListData((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
         setHasMoreGetList(newData.length === 20);
 
         setGetListData((prev) =>
           pageNum === 0 ? newData : [...prev, ...newData],
         );
       } else {
-        Swal.fire({
-          text: data?.message || "No data found",
-          icon: "info",
-          confirmButtonText: "OK",
-        });
+        setHasMoreGetList(false);
       }
     } catch (error) {
-      // 🔥 Ignore cancel error
       if (error.name === "CanceledError" || error.code === "ERR_CANCELED") {
         return;
       }
-
-      console.error("API Error:", error);
+      setHasMoreGetList(false);
 
       Swal.fire({
         text: error?.response?.data?.message || error.message,
@@ -647,6 +656,7 @@ export default function InwardVehicle() {
     setGetListSearching(true);
     setGetListPage(0);
     setGetListData([]);
+    setHasMoreGetList(true);
 
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -669,6 +679,7 @@ export default function InwardVehicle() {
     reset(initial);
     setSaveUpdateName("SAVE");
     setDocEntry("");
+    setValue("Vehicle", "");
   };
 
   // const handleSubmitForm = async (data) => {
@@ -816,7 +827,7 @@ export default function InwardVehicle() {
         return;
       }
 
-      setapiloading(true);
+      setLoading(true);
 
       const UserId = localStorage.getItem("UserId");
       const CreatedBy = localStorage.getItem("UserName");
@@ -892,7 +903,7 @@ export default function InwardVehicle() {
         });
 
         if (!confirm.isConfirmed) {
-          setapiloading(false);
+          setLoading(false);
           return;
         }
 
@@ -931,12 +942,12 @@ export default function InwardVehicle() {
         confirmButtonText: "Ok",
       });
     } finally {
-      setapiloading(false);
+      setLoading(false);
     }
   };
   return (
     <>
-      <DynamicLoader open={apiloading} />
+      <Loader open={loading} />
       <Grid
         container
         width="100%"
@@ -1533,7 +1544,7 @@ export default function InwardVehicle() {
                 name={SaveUpdateName}
                 disabled={
                   (SaveUpdateName === "SAVE" && !perms.IsAdd) ||
-                  (SaveUpdateName === "UPDATE" && !perms.IsEdit) ||
+                  allFormData.Status === "1" ||
                   allFormData.Status === "0"
                 }
               >

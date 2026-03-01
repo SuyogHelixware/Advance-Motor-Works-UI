@@ -35,18 +35,17 @@ import CardComponent from "../Components/CardComponent";
 import apiClient from "../../services/apiClient";
 import {
   InputDatePickerField,
-  InputDatePickerFields,
   InputTextArea,
   InputTextAreaFields,
   InputTextField,
   InputTextFieldLarge,
   InputTextSearchButton,
-  InputTimePicker,
+  InputTimePicker
 } from "../Components/formComponents";
+import { Loader } from "../Components/Loader";
 import SearchInputField from "../Components/SearchInputField";
 import SearchModel from "../Components/SearchModel";
 import usePermissions from "../Components/usePermissions";
-import { Loader } from "../Components/Loader";
 
 export default function IssueMaterial() {
   const theme = useTheme();
@@ -1786,7 +1785,7 @@ export default function IssueMaterial() {
                           name="RequestDate"
                           control={control}
                           render={({ field }) => (
-                            <InputDatePickerFields
+                            <InputDatePickerField
                               label="REQ Date"
                               value={field.value}
                               {...field}

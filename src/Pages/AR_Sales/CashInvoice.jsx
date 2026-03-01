@@ -391,7 +391,7 @@ export default function CashInvoice() {
 
     try {
       const res = await apiClient.get(`/ARInvoice/${DocEntry}`);
-      const data = res.data.values[0];
+      const data = res.data.values;
 
       if (!data) {
         Swal.fire({
