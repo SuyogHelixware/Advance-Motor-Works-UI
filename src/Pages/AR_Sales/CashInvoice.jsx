@@ -46,6 +46,7 @@ import {
 import { Loader } from "../Components/Loader";
 import SearchInputField from "../Components/SearchInputField";
 import SearchModel from "../Components/SearchModel";
+import apiClient from "../../services/apiClient";
 
 const initialFormData = {
   DocEntry: "",
@@ -157,7 +158,6 @@ export default function CashInvoice() {
   const [loading, setLoading] = useState(false);
   const [processinv, setprocessinv] = useState(false);
 
-  const BASE_URL = "http://hwaceri5:8070/api";
   const columns = [
     {
       field: "ItemCode",
@@ -222,10 +222,10 @@ export default function CashInvoice() {
   }, []);
 
   const getAllOpenList = () => {
-    axios
+    apiClient
       .request({
         method: "get",
-        url: `${BASE_URL}/ARInvoice/search/0/1`,
+        url: `/ARInvoice?Page=0&Status=1`,
         headers: {
           "Content-Type": "application/json",
         },
@@ -242,78 +242,130 @@ export default function CashInvoice() {
       });
   };
 
-  const fetchMoreOpenListData = () => {
-    if (searchTextOpen === "") {
+  const fetchMoreOpenListData = async () => {
+    try {
       const page = openPage + 1;
-      axios
-        .request({
-          method: "get",
-          url: `${BASE_URL}/ARInvoice/search/${page}/1`,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        })
-        .then((response) => {
-          setOpenPosts((prevPosts) => [...prevPosts, ...response.data.values]);
-          setOpenPage(page);
-          if (response.data.values.length === 0) {
-            setHasMoreOpen(false);
-          }
-        })
-        .catch((error) => {
-          console.log(error);
-        });
-    } else {
-      const page = openPage + 1;
-      axios
-        .request({
-          method: "get",
-          url: `${BASE_URL}/ARInvoice/search/${searchTextOpen}/0/${page}`,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        })
-        .then((response) => {
-          setOpenSearchPosts((prevPosts) => [
-            ...prevPosts,
-            ...response.data.values,
-          ]);
-          setOpenPage(page);
-          if (response.data.values.length === 0) {
-            setHasMoreOpen(false);
-          }
-        })
-        .catch((error) => {
-          console.log(error);
-        });
+      const trimmedSearch = searchTextOpen?.trim() || "";
+      const cleanSearch = trimmedSearch
+        .replace(/[^a-zA-Z0-9 ]/g, "")
+        .replace(/\s+/g, " ");
+
+      let response;
+
+      if (cleanSearch === "") {
+        response = await apiClient.get(`/ARInvoice?Page=${page}&Status=1`);
+
+        setOpenPosts((prev) => [...prev, ...response.data.values]);
+      } else {
+        response = await apiClient.get(
+          `/ARInvoice?SearchText=${cleanSearch}&Status=1&Page=${page}`,
+        );
+
+        setOpenSearchPosts((prev) => [...prev, ...response.data.values]);
+      }
+
+      setOpenPage(page);
+
+      if (response.data.values.length === 0) {
+        setHasMoreOpen(false);
+      }
+    } catch (error) {
+      console.error("Fetch Open List Error:", error);
     }
+    // if (searchTextOpen === "") {
+    //   const page = openPage + 1;
+    //   apiClient
+    //     .request({
+    //       method: "get",
+    //       url: `/ARInvoice?Page=${page}&Status=1`,
+    //       headers: {
+    //         "Content-Type": "application/json",
+    //       },
+    //     })
+    //     .then((response) => {
+    //       setOpenPosts((prevPosts) => [...prevPosts, ...response.data.values]);
+    //       setOpenPage(page);
+    //       if (response.data.values.length === 0) {
+    //         setHasMoreOpen(false);
+    //       }
+    //     })
+    //     .catch((error) => {
+    //       console.log(error);
+    //     });
+    // } else {
+    //   const page = openPage + 1;
+    //   apiClient
+    //     .request({
+    //       method: "get",
+    //       url: `/ARInvoice?SearchText=${cleanSearch}&Status=1&Page=${page}`,
+    //       headers: {
+    //         "Content-Type": "application/json",
+    //       },
+    //     })
+    //     .then((response) => {
+    //       setOpenSearchPosts((prevPosts) => [
+    //         ...prevPosts,
+    //         ...response.data.values,
+    //       ]);
+    //       setOpenPage(page);
+    //       if (response.data.values.length === 0) {
+    //         setHasMoreOpen(false);
+    //       }
+    //     })
+    //     .catch((error) => {
+    //       console.log(error);
+    //     });
+    // }
   };
 
-  const onHandleSearchOpen = (event) => {
-    const searchText = event.target.value;
-    setOpenSearchPosts([]);
-    setSearchTextOpen(searchText);
-    setOpenPage(0);
-    if (searchText !== "") {
-      axios
-        .request({
-          method: "get",
-          url: `${BASE_URL}/ARInvoice/search/${searchText}/1/0`,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        })
-        .then((response) => {
-          setOpenSearchPosts(response.data.values);
+  const onHandleSearchOpen = async (event) => {
+    try {
+      const rawValue = event.target.value || "";
+      const cleanSearch = rawValue
+        .trim()
+        .replace(/[^a-zA-Z0-9 ]/g, "")
+        .replace(/\s+/g, " ");
+      setOpenSearchPosts([]);
+      setSearchTextOpen(cleanSearch);
+      setOpenPage(0);
 
-          if (response.data.values.length === 20) {
-            setHasMoreOpen(false);
-          }
-        })
-        .catch((error) => {
-          console.log(error);
-        });
+      if (!cleanSearch) return;
+
+      const response = await apiClient.get(
+        `/ARInvoice?SearchText=${cleanSearch}&Status=1&Page=0`,
+      );
+
+      setOpenSearchPosts(response.data.values);
+
+      if (response.data.values.length < 20) {
+        setHasMoreOpen(false);
+      } else {
+        setHasMoreOpen(true);
+      }
+    } catch (error) {
+      console.error("Search Open Error:", error);
     }
+
+    // if (searchText !== "") {
+    //   apiClient
+    //     .request({
+    //       method: "get",
+    //       url: `/ARInvoice?SearchText=${cleanSearch}&Status=1&Page=0`,
+    //       headers: {
+    //         "Content-Type": "application/json",
+    //       },
+    //     })
+    //     .then((response) => {
+    //       setOpenSearchPosts(response.data.values);
+
+    //       if (response.data.values.length === 20) {
+    //         setHasMoreOpen(false);
+    //       }
+    //     })
+    //     .catch((error) => {
+    //       console.log(error);
+    //     });
+    // }
   };
 
   const onClickClearOpenSearch = () => {
@@ -338,7 +390,7 @@ export default function CashInvoice() {
     setLoading(true);
 
     try {
-      const res = await axios.get(`${BASE_URL}/ARInvoice/${DocEntry}`);
+      const res = await apiClient.get(`/ARInvoice/${DocEntry}`);
       const data = res.data.values[0];
 
       if (!data) {
@@ -401,10 +453,10 @@ export default function CashInvoice() {
   };
 
   const getAllCloseList = () => {
-    axios
+    apiClient
       .request({
         method: "get",
-        url: `${BASE_URL}/ARInvoice/search/0/0`,
+        url: `/ARInvoice?Page=0&Status=0`,
         headers: {
           "Content-Type": "application/json",
         },
@@ -423,10 +475,10 @@ export default function CashInvoice() {
   const fetchMoreCloseListData = () => {
     if (searchTextClose === "") {
       const page = closePage + 1;
-      axios
+      apiClient
         .request({
           method: "get",
-          url: `${BASE_URL}/ARInvoice/search/${page}/0`,
+          url: `/ARInvoice?Page=/${page}&Status=0`,
           headers: {
             "Content-Type": "application/json",
           },
@@ -446,10 +498,10 @@ export default function CashInvoice() {
         });
     } else {
       const page = closePage + 1;
-      axios
+      apiClient
         .request({
           method: "get",
-          url: `${BASE_URL}/ARInvoice/search/${searchTextClose}/0/${page}`,
+          url: `/ARInvoice?SearchText=${searchTextClose}&Status=0&Page=${page}`,
           headers: {
             "Content-Type": "application/json",
           },
@@ -476,10 +528,10 @@ export default function CashInvoice() {
     setSearchTextClose(searchText);
     setClosePage(0);
     if (searchText !== "") {
-      axios
+      apiClient
         .request({
           method: "get",
-          url: `${BASE_URL}/ARInvoice/search/${searchText}/0/0`,
+          url: `/ARInvoice?SearchText=${searchText}&Status=0&Page=0`,
           headers: {
             "Content-Type": "application/json",
           },
@@ -519,7 +571,7 @@ export default function CashInvoice() {
     setLoading(true);
 
     try {
-      const res = await axios.get(`${BASE_URL}/ARInvoice/${DocEntry}`);
+      const res = await apiClient.get(`/ARInvoice/${DocEntry}`);
       const data = res.data.values[0];
 
       if (!data) {
@@ -582,14 +634,11 @@ export default function CashInvoice() {
   };
 
   const getListForCreate = () => {
-    fetchDataGetListForCreate(
-      `${BASE_URL}/ARInvoice/GetListForCreate/0`,
-      setGetListData,
-    );
+    fetchDataGetListForCreate(`/ARInvoice/CopyFrom?Page=0`, setGetListData);
   };
 
   const fetchDataGetListForCreate = (url, setData, append = false) => {
-    axios
+    apiClient
       .get(url, { headers: { "Content-Type": "application/json" } })
       .then((response) => {
         const values = response.data.values;
@@ -603,8 +652,8 @@ export default function CashInvoice() {
   const fetchMoreGetListForCreate = () => {
     const page = getListPage + 1;
     const url = searchTextGetListForCreate
-      ? `${BASE_URL}/ARInvoice/GetListForCreate/Search/${searchTextGetListForCreate}/${page}`
-      : `${BASE_URL}/ARInvoice/GetListForCreate/${page}`;
+      ? `/ARInvoice/CopyFrom?Search/${searchTextGetListForCreate}/${page}`
+      : `/ARInvoice/CopyFrom?${page}`;
     fetchDataGetListForCreate(
       url,
       searchTextGetListForCreate ? setGetListSearchData : setGetListData,
@@ -620,7 +669,7 @@ export default function CashInvoice() {
     setGetListPage(0);
     if (searchText) {
       fetchDataGetListForCreate(
-        `${BASE_URL}/ARInvoice/GetListForCreate/search/${searchText}/0`,
+        `/ARInvoice/GetListForCreate/search/${searchText}/0`,
         setGetListSearchData,
       );
     }
@@ -684,6 +733,7 @@ export default function CashInvoice() {
       CreatedBy: CreatedBy,
       SOUserId: UserId,
       SOCreatedBy: CreatedBy,
+      DocDate: dayjs(),
       OrderNo: data.Job_SO_DocEntry,
       OrderDocEntry: data.OrderDocEntry,
       ApprovalStatus: data.ApprovalStatus,
@@ -768,6 +818,7 @@ export default function CashInvoice() {
               {
                 UserId: UserId,
                 CreatedBy: CreatedBy,
+                ModifiedBy: CreatedBy,
                 TransferAccount: "1201022",
                 TransferAccountName: "Bank NBK 2008134452",
                 TransferReference: String(data.TransferReference),
@@ -837,7 +888,7 @@ export default function CashInvoice() {
     setLoading(true);
 
     try {
-      const res = await axios.post(`${BASE_URL}/ARInvoice`, obj);
+      const res = await apiClient.post(`/ARInvoice`, obj);
 
       if (res.data.success) {
         const resData = res.data.values;
