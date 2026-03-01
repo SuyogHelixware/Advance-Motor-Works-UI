@@ -963,7 +963,7 @@ export default function IssueMaterial() {
         ToBin: line.BinLocation,
         BinList: line.BinList,
       })) || [];
-      
+
     reset(filledValues);
     setoLines(mappedOLines);
     setValue("oLines", mappedOLines);

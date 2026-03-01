@@ -3648,7 +3648,7 @@ export default function BinLocationMaster() {
         LineNum: item.LineNum,
         ItemName: item.ItemName,
         AppointmentStatus: item.FTSQty >= item.IssueQty ? "1" : "0",
-        BookedQuantity: item.BookedQuantity,
+        BookedQuantity: item.Quantity,
         FTSQty: item.FTSQty,
       })),
     };

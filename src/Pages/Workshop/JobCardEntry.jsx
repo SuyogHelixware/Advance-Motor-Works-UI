@@ -308,9 +308,7 @@ export default function IssueMaterial() {
     defaultValues: initial,
   });
 
-  const {
-    setValue: setValueMdl,
-  } = useForm({});
+  const { setValue: setValueMdl } = useForm({});
 
   const allFormData = getValues();
 
@@ -699,8 +697,8 @@ export default function IssueMaterial() {
   const fetchGetListData = async (pageNum, searchTerm = "") => {
     try {
       const url = searchTerm
-        ? `/JobCard/GetListForCreate/Search/${searchTerm}/${pageNum}`
-        : `/JobCard/GetListForCreate/${pageNum}`;
+        ? `/JobCard/CopyFrom&SearchText=${searchTerm}&Page=${pageNum}`
+        : `/JobCard/CopyFrom?Page=${pageNum}`;
 
       const response = await apiClient.get(url);
 
