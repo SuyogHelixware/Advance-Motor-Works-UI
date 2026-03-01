@@ -42,12 +42,10 @@ import {
 } from "../Components/formComponents";
 import SearchInputField from "../Components/SearchInputField";
 import SearchModel from "../Components/SearchModel";
+import { Loader } from "../Components/Loader";
 
 export default function IssueMaterial() {
   const initialFormData = {
-    CardCode: "",
-    CardName: "",
-    PhoneNumber1: "",
     DocNum: "",
     OrderDocEntry: "",
     DocEntry: "",
@@ -59,7 +57,6 @@ export default function IssueMaterial() {
     OrderType: "",
     IssueNO: "",
     RegistrationNo: "",
-    VehInwardNo: "",
     JobWorkAt: "",
     InwardNo: "",
     ReqRemarks: "",
@@ -71,9 +68,10 @@ export default function IssueMaterial() {
     Status: "",
     RequestedBy: "",
   };
-  const { control, register, getValues, handleSubmit, reset, watch } = useForm({
-    defaultValues: initialFormData,
-  });
+  const { control, register, getValues, handleSubmit, reset, watch, setValue } =
+    useForm({
+      defaultValues: initialFormData,
+    });
   const theme = useTheme();
   const { user } = useAuth();
   const [openPosts, setOpenPosts] = useState([]);
@@ -100,6 +98,7 @@ export default function IssueMaterial() {
   const [WMSStaff, setWMSStaff] = useState([]);
   const [oLines, setoLines] = useState([]);
   const watchShowAge = getValues("JobWorkAt");
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     getAllOpenList();
@@ -335,12 +334,15 @@ export default function IssueMaterial() {
     apiClient
       .get(url, { headers: { "Content-Type": "application/json" } })
       .then((response) => {
-        const values = response.data.values;
+        const values = response.data.values ?? [];
         setData((prevData) => (append ? [...prevData, ...values] : values));
         if (values.length === 0 || values.length < 20)
           setHasMoreGetListForCreate(false);
       })
-      .catch((error) => console.log(error));
+      .catch((error) => {
+        console.log(error);
+        setHasMoreGetListForCreate(false);
+      });
   };
 
   const getListForCreate = () => {
@@ -373,11 +375,16 @@ export default function IssueMaterial() {
     setGetListSearchData([]);
     setsearchTextGetListForCreate(searchText);
     setGetListPage(0);
+    setHasMoreGetListForCreate(true);
+
     if (searchText) {
       fetchDataGetListForCreate(
         `/MatIssue/CopyFrom?SearchText=${searchText}&Page=0`,
         setGetListSearchData,
       );
+    } else {
+      setHasMoreGetListForCreate(false);
+      getListForCreate();
     }
   };
   const onClickClearGetListCreateSearch = () => {
@@ -417,23 +424,45 @@ export default function IssueMaterial() {
     settab(newvalue1);
   };
 
-  const setOldOpenListData = (DocEntry) => {
-    if (!DocEntry) {
-      return;
-    }
-    apiClient
-      .get(`/MatIssue?DocEntry=${DocEntry}`)
-      .then((response) => {
-        toggleSidebar();
-        const data = response.data.values;
+  const setOldOpenListData = async (DocEntry) => {
+    setLoading(true);
 
-        reset({
-          ...data,
-          ReqRemarks: data.IssueRemark,
-          RequestBy: data.RequestedBy,
+    try {
+      const res = await apiClient.get(`/MatIssue/${DocEntry}`);
+      const data = res.data.values;
+
+      if (!data) {
+        Swal.fire({
+          icon: "warning",
+          text: "Record not found",
         });
-        if (data.oLines) {
-          const obj = data.oLines.map((item) => ({
+        return;
+      }
+      if (res.data.success) {
+        const transformed = {
+          ...data,
+
+          JobCardNo: "",
+          RegistrationNo: data.RegistrationNo,
+          InwardNo: data.InwardNo,
+          VehInwardDocEntry: data.VehInwardDocEntry,
+          IssueNo: data.DocNum,
+          RequestDate: dayjs(data.RequestDate),
+          OrderNo: data.OrderNo,
+          OrderDocEntry: data.OrderDocEntry,
+          JobWorkAt: data.JobWorkAt,
+          JobWorkDetails: data.IssueRemark,
+          TotalItems: data.oLines?.length || 0,
+          RequestedBy: data.RequestedBy,
+          OrderType: data.OrderType,
+          InventoryTransferNumber: data.InventoryTransferNumber,
+          IssueBy: data.IssueBy,
+          HW_WMSStaff: data.HW_WMSStaff,
+          TechnicianName: data.TechnicianName,
+        };
+
+        const mappedOLines =
+          data.oLines.map((item) => ({
             ItemCode: item.ItemCode,
             ItemName: item.ItemName,
             WHSCode: item.FromWHS,
@@ -445,13 +474,21 @@ export default function IssueMaterial() {
             OpenQuantity: item.OpenQuantity,
             IssueQuantity: item.IssueQuantity,
             BinList: [{ BinCode: item.FromBin }],
-          }));
-          setoLines(obj);
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching data:", error);
+          })) || [];
+
+        reset(transformed);
+        setValue("DocNum", data.DocNum);
+        setoLines(mappedOLines);
+      }
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: error?.message || "Something went wrong",
       });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const ClearForm = () => {
@@ -460,17 +497,14 @@ export default function IssueMaterial() {
     handleClick();
   };
 
-  const onChangeTableData = (event, index) => {
+  const onChangeTableData = (event, itemCode) => {
     const { value, name } = event.target;
 
-    setoLines((prevLines) => {
-      const updatedLines = [...prevLines];
-      updatedLines[index] = {
-        ...updatedLines[index],
-        [name]: value,
-      };
-      return updatedLines;
-    });
+    setoLines((prevLines) =>
+      prevLines.map((line) =>
+        line.ItemCode === itemCode ? { ...line, [name]: value } : line,
+      ),
+    );
   };
 
   const handleBarcodeChange = (event) => {
@@ -538,16 +572,43 @@ export default function IssueMaterial() {
         const copyText = (e) => {
           e.stopPropagation();
 
-          navigator.clipboard.writeText(params.value).then(() => {
-            Swal.fire({
-              toast: true,
-              position: "top-end",
-              icon: "success",
-              title: "Item Code Copied",
-              showConfirmButton: false,
-              timer: 1200,
-            });
-          });
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard
+              .writeText(params.value)
+              .then(() => {
+                Swal.fire({
+                  toast: true,
+                  position: "top-end",
+                  icon: "success",
+                  title: "Item Code Copied",
+                  showConfirmButton: false,
+                  timer: 1200,
+                });
+              })
+              .catch((err) => {
+                console.error("Failed to copy: ", err);
+              });
+          } else {
+            // fallback for unsupported browsers
+            const textArea = document.createElement("textarea");
+            textArea.value = params.value;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+              document.execCommand("copy");
+              Swal.fire({
+                toast: true,
+                position: "top-end",
+                icon: "success",
+                title: "Item Code Copied",
+                showConfirmButton: false,
+                timer: 1200,
+              });
+            } catch (err) {
+              console.error("Fallback: copy failed", err);
+            }
+            document.body.removeChild(textArea);
+          }
         };
 
         return (
@@ -593,7 +654,7 @@ export default function IssueMaterial() {
       headerAlign: "center",
       align: "center",
       renderCell: (params) => (
-        <Tooltip title={params.row.BinLocation} arrow>
+        <Tooltip title={params.row.FromBin} arrow>
           <Box
             sx={{
               display: "flex",
@@ -604,9 +665,9 @@ export default function IssueMaterial() {
             }}
           >
             <InputTableSelectField
-              name="BinLocation"
-              value={params.row.BinLocation}
-              onChange={(e) => onChangeTableData(e, params.id)}
+              name="FromBin"
+              value={params.row.FromBin}
+              onChange={(e) => onChangeTableData(e, params.row.ItemCode)}
               data={(params.value === undefined ? [] : params.value).map(
                 (BinLocation) => ({
                   key: BinLocation.BinCode,
@@ -732,49 +793,47 @@ export default function IssueMaterial() {
     const payload = {
       UserId: user.UserId,
       CreatedBy: user.UserName,
-      ModifiedBy: user.UserName,
-      DocDate: dayjs(),
       RequestDate: data.RequestDate,
-      IssueDate: "",
-      RequestNo: data.RequestNo || "",
-      OrderType: data.OrderType,
-      RegistrationNo: data.RegistrationNo,
-      InvTransferNo: data.InvTransferNo,
-      InwardNo: data.VehInwardNo,
-      JobWorkAt: data.JobWorkAt,
-      OrderDocEntry: data.OrderDocEntry,
-      RequestedBy: data.RequestBy,
-      CardCode: data.CardCode,
-      CardName: data.CardName,
-      PhoneNumber1: data.PhoneNumber1,
-      DocNum: data.DocNum,
-      // DocDate: dayjs(data.DocDate).format("YYYY-MM-DD"),
+      IssueDate: data.IssueDate,
       OrderNo: data.OrderNo,
+      RequestNo: data.DocNum,
+      InwardNo: data.InwardNo,
       JobCardNo: "",
+      IssueRemark: data.JobWorkDetails,
+      RegistrationNo: data.RegistrationNo,
+      JobWorkAt: data.JobWorkAt,
+      OrderType: data.OrderType,
+      InvTransferNo: String(data.InvTransferNo || ""),
+      RequestedBy: data.RequestBy,
+      OrderDocEntry: data.OrderDocEntry,
+      DocDate: dayjs(),
+      Series: "-1",
+      IssuedBy: user.UserName,
+      IssueBy: user.UserName,
       IssueRemark: data.ReqRemarks,
-      IssuedBy: data.IssuedBy,
-      RequestDocEntry: data.DocEntry || "",
-      SAPDocNum: "",
-      SAPDocEntry: "",
+      RequestDocEntry: String(data.RequestDocEntry || ""),
+      SAPDocNum: String(data.SAPDocNum || ""),
+      SAPDocEntry: String(data.SAPDocEntry || ""),
       HW_WMSStaff: String(data.HW_WMSStaff),
 
-      oLines: oLines.map((row) => ({
+      oLines: data.oLines.map((element) => ({
         UserId: user.UserId,
         CreatedBy: user.UserName,
         ModifiedBy: user.UserName,
         RequestNo: data.RequestNo,
-        ItemCode: row.ItemCode,
-        ItemName: row.ItemName,
-        WHSCode: row.WHSCode,
-        FromBin: String(row.BinLocation) ?? "0",
+        ItemCode: element.ItemCode,
+        ItemName: element.ItemName,
+        WHSCode: element.WHSCode,
+        FromBin: element.FromBin,
         ToWHS: data.JobWorkAt === "CNC" ? "99" : "98",
-        ReqQuantity: row.ReqQuantity,
-        OpenQuantity: String(row.OpenQuantity - row.IssueQuantity),
-        IssueQuantity: String(row.IssueQuantity),
+        ReqQuantity: element.ReqQuantity,
+        OpenQuantity: String(element.OpenQuantity - element.IssueQuantity),
+        IssueQuantity: String(element.IssueQuantity),
         ReqLineRemarks: "",
         IssueLineRemarks: "",
       })),
     };
+
     const watchOlines = watch("oLines");
 
     if (!watchOlines || watchOlines.length === 0) {
@@ -825,17 +884,17 @@ export default function IssueMaterial() {
       });
       return;
     }
-    //  else if (bin > 0) {
-    //   Swal.fire({
-    //     // title: "Warning!",
-    //     text: "Please select bin locations for all items..",
-    //     icon: "warning",
-    //     toast: true,
-    //     timer: 1000,
-    //     showConfirmButton: false,
-    //   });
-    //   return;
-    // }
+     else if (bin > 0) {
+      Swal.fire({
+        // title: "Warning!",
+        text: "Please select bin locations for all items..",
+        icon: "warning",
+        toast: true,
+        timer: 1000,
+        showConfirmButton: false,
+      });
+      return;
+    }
     else if (!MaterialData.HW_WMSStaff) {
       Swal.fire({
         title: "Warning !",
@@ -847,17 +906,6 @@ export default function IssueMaterial() {
       });
       return;
     }
-    // } else if (CNC > 0 && MaterialData.JobWorkAt === "CNC") {
-    //   Swal.fire({
-    //     title: "Warning !",
-    //     text: "Issue qunatity should be same as open qunatity in CNC Order..",
-    //     icon: "warning",
-    //     toast: true,
-    //     timer: 1000,
-    //     showConfirmButton: false,
-    //   });
-    //   return;
-    // }
 
     try {
       const response = await apiClient.post(`/MatIssue`, payload);
@@ -892,9 +940,45 @@ export default function IssueMaterial() {
     }
   };
 
-  const onSelectRequest = (item) => {
-    reset({ ...item, IssuedBy: user.UserName, RequestNo: item.DocNum });
-    setoLines(item.oLines);
+  const onSelectRequest = (selectedItem) => {
+    // reset({ ...item, IssuedBy: user.UserName, RequestNo: item.DocNum });
+    // setoLines(item.oLines);
+    // setIsDialogOpen(false);
+
+    const filledValues = {
+      ...initialFormData,
+      ...selectedItem,
+      RegistrationNo: selectedItem.RegistrationNo,
+      InwardNo: selectedItem.VehInwardNo,
+      OrderNo: selectedItem.OrderNo,
+      RequestNo: selectedItem.DocNum,
+      JobWorkDetails: selectedItem.ReqRemarks.toUpperCase(),
+      RequestDate: selectedItem.RequestDate,
+      JobWorkAt: selectedItem.JobWorkAt.toUpperCase(),
+      OrderSubType: selectedItem.OrderSubType,
+      OrderType: selectedItem.OrderType,
+      RequestedBy: selectedItem.RequestBy,
+      InvTransferNo: "",
+      OrderDocEntry: selectedItem.OrderDocEntry,
+      RequestDocEntry: selectedItem.DocEntry,
+      IssueBy: localStorage.getItem("CreatedBy"),
+      HW_WMSStaff: selectedItem.HW_WMSStaff,
+    };
+    const mappedOLines =
+      selectedItem.oLines?.map((line) => ({
+        ItemCode: line.ItemCode,
+        ItemName: line.ItemName,
+        WHSCode: line.WHSCode,
+        AvailQty: line.AvailQty,
+        ReqQuantity: line.ReqQuantity,
+        OpenQuantity: line.OpenQuantity,
+        IssueQuantity: 0,
+        FromBin: line.BinLocation,
+        BinList: line.BinList,
+        ToWHS: selectedItem.JobWorkAt === "CNC" ? "99" : "98",
+      })) || [];
+    reset(filledValues);
+    setoLines(mappedOLines);
     setIsDialogOpen(false);
   };
 
@@ -1217,6 +1301,7 @@ export default function IssueMaterial() {
 
   return (
     <>
+      <Loader open={loading} />
       <SearchModel
         open={isDialogOpen}
         onClose={handleCloseDialog}
@@ -1228,11 +1313,6 @@ export default function IssueMaterial() {
           <>
             <InfiniteScroll
               style={{ textAlign: "center" }}
-              // dataLength={
-              //   getListData.length === 0
-              //     ? getListSearchData.length
-              //     : getListData.length
-              // }
               dataLength={
                 searchTextGetListForCreate === ""
                   ? getListData?.length || 0
@@ -1250,20 +1330,6 @@ export default function IssueMaterial() {
                 <Typography textAlign={"center"}>No More Records</Typography>
               }
             >
-              {/* {(getListSearchData.length === 0
-                ? getListData
-                : getListSearchData
-              ).map((item) => (
-                <CardComponent
-                  key={item.DocNum}
-                  title={item.DocNum}
-                  subtitle={item.CardName}
-                  description={item.PhoneNumber1}
-                  onClick={() => {
-                    onSelectRequest(item);
-                  }}
-                />
-              ))} */}
               {(getListSearchData && getListSearchData.length > 0
                 ? getListSearchData
                 : getListData || []
@@ -1399,7 +1465,7 @@ export default function IssueMaterial() {
                     style={{ textAlign: "center" }}
                   >
                     <Controller
-                      name="RequestNo"
+                      name="DocNum"
                       control={control}
                       render={({ field }) => (
                         <InputTextSearchButton
@@ -1709,7 +1775,7 @@ export default function IssueMaterial() {
                             key: item.DocEntry,
                             value: item.TechnicianName,
                           }))}
-                          readOnly={!watch("RequestNo") || Disabled}
+                          readOnly={!watch("DocNum") || Disabled}
                           {...field}
                           error={!!error}
                           helperText={error?.message}

@@ -336,12 +336,15 @@ export default function IssueMaterial() {
     apiClient
       .get(url, { headers: { "Content-Type": "application/json" } })
       .then((response) => {
-        const values = response.data.values;
+        const values = response.data.values ?? [];
         setData((prevData) => (append ? [...prevData, ...values] : values));
         if (values.length === 0 || values.length < 20)
           setHasMoreGetListForCreate(false);
       })
-      .catch((error) => console.log(error));
+      .catch((error) => {
+        console.log(error);
+        setHasMoreGetListForCreate(false);
+      });
   };
 
   const getListForCreate = () => {
@@ -374,11 +377,16 @@ export default function IssueMaterial() {
     setGetListSearchData([]);
     setsearchTextGetListForCreate(searchText);
     setGetListPage(0);
+    setHasMoreGetListForCreate(true);
+
     if (searchText) {
       fetchDataGetListForCreate(
         `/MatRtn/CopyFrom?SearchText=${searchText}&Page=0`,
         setGetListSearchData,
       );
+    } else {
+      setHasMoreGetListForCreate(false);
+      getListForCreate();
     }
   };
   const onClickClearGetListCreateSearch = () => {
@@ -438,7 +446,7 @@ export default function IssueMaterial() {
           ...data,
 
           JobCardNo: "",
-          SONo: data.OrderNo,
+          OrderNo: data.OrderNo,
           IssueDate: dayjs(data.IssueDate),
           ReturnNo: data.DocNum,
           RequestNo: data.RequestNo,
@@ -470,8 +478,6 @@ export default function IssueMaterial() {
         setValue("DocNum", data.DocNum);
         setoLines(mappedOLines);
         getHW_WMSStaffList(transformed.HW_WMSStaff);
-        // CloseMatIssueModal();
-        // getHW_WMSStaffList(transformed.HW_WMSStaff);
       }
     } catch (error) {
       Swal.fire({
@@ -490,20 +496,14 @@ export default function IssueMaterial() {
     handleClick();
   };
 
-  const onChangeTableData = (event, index) => {
+  const onChangeTableData = (event, itemCode) => {
     const { value, name } = event.target;
 
-    console.log("Row index:", index);
-    console.log("Selected value:", value);
-
-    setoLines((prevLines) => {
-      const updatedLines = [...prevLines];
-      updatedLines[index] = {
-        ...updatedLines[index],
-        [name]: value,
-      };
-      return updatedLines;
-    });
+    setoLines((prevLines) =>
+      prevLines.map((line) =>
+        line.ItemCode === itemCode ? { ...line, [name]: value } : line,
+      ),
+    );
   };
 
   const handleBarcodeChange = (event) => {
@@ -680,7 +680,7 @@ export default function IssueMaterial() {
             <InputTableSelectField
               name="ToBin"
               value={params.row.ToBin}
-              onChange={(e) => onChangeTableData(e, params.id)}
+              onChange={(e) => onChangeTableData(e, params.row.ItemCode)}
               data={(Array.isArray(params.row.BinList)
                 ? params.row.BinList
                 : []
@@ -786,8 +786,9 @@ export default function IssueMaterial() {
       CreatedBy: CreatedBy,
       ReturnNo: data.ReturnNo,
       ReturnDate: dayjs(data.ReturnDate).format("YYYY-MM-DD"),
-      OrderNo: data.SONo,
+      OrderNo: data.OrderNo,
       JobCardNo: "",
+      DocDate: dayjs(),
       ReturnRemarks: data.JobWorkAt,
       IssueNo: data.IssueNo,
       IssueDate: dayjs(data.IssueDate).format("YYYY-MM-DD"),
@@ -795,7 +796,7 @@ export default function IssueMaterial() {
       JobWorkAt: data.JobWorkAt,
       ReturnedBy: CreatedBy,
       IssuedBy: data.IssuedBy,
-      HW_WMSStaff: String(data.HW_WMSStaff),
+      HW_WMSStaff: data.HW_WMSStaff,
       OrderDocEntry: data.OrderDocEntry,
       RequestDocEntry: data.RequestDocEntry,
       IssueDocEntry: data.IssueDocEntry,
@@ -811,7 +812,7 @@ export default function IssueMaterial() {
         ItemCode: element.ItemCode,
         ItemName: element.ItemName,
         FromWHS: element.FromWHS,
-        ToBin: element.FromBin || "",
+        ToBin: element.FromBin,
         ToWHS: element.ToWHS,
         IssueQuantity: element.IssueQuantity,
         InHandQuantity: element.AvailQty,
@@ -876,7 +877,7 @@ export default function IssueMaterial() {
         showConfirmButton: false,
       });
       return;
-    } else if (!watch("TechnicianName")) {
+    } else if (!MaterialData.HW_WMSStaff) {
       Swal.fire({
         // title: "Warning !",
         text: "Please select Parts Picked by...",
@@ -888,13 +889,10 @@ export default function IssueMaterial() {
       return;
     }
 
-    console.log(payload);
-    return;
-
     setLoading(true);
 
     try {
-      const response = await apiClient.post(`/MatIssue`, payload);
+      const response = await apiClient.post(`/MatRtn`, payload);
 
       if (response.data.success) {
         setLoading(false);
@@ -934,7 +932,7 @@ export default function IssueMaterial() {
       ...initialFormData,
       ...selectedItem,
       JobCardNo: "",
-      SONo: selectedItem.OrderNo,
+      OrderNo: selectedItem.OrderNo,
       RequestDate: selectedItem.RequestDate,
       RequestNo: selectedItem.RequestNo,
       RegistrationNo: selectedItem.RegistrationNo,
@@ -965,8 +963,10 @@ export default function IssueMaterial() {
         ToBin: line.BinLocation,
         BinList: line.BinList,
       })) || [];
+      
     reset(filledValues);
     setoLines(mappedOLines);
+    setValue("oLines", mappedOLines);
     getHW_WMSStaffList(filledValues.HW_WMSStaff);
     setIsDialogOpen(false);
   };
