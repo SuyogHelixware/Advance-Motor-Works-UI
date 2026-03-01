@@ -3137,6 +3137,9 @@ import { LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import SearchModel from "../Components/SearchModel";
 
+const SHOP_OPEN = 8; // 8 AM
+const SHOP_CLOSE = 20; // 8 PM
+
 export default function BinLocationMaster() {
   const theme = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -3201,9 +3204,7 @@ export default function BinLocationMaster() {
     oLines: [],
   };
 
-  const InitialFld = {
-    CancelRemarks: "",
-  };
+  const InitialFld = { CancelRemarks: "" };
 
   const { control, handleSubmit, reset, getValues, setValue, watch } = useForm({
     defaultValues: initial,
@@ -3212,18 +3213,13 @@ export default function BinLocationMaster() {
   const {
     control: control1,
     handleSubmit: handleSubmit1,
-    reset: reset1,
     getValues: getValues1,
-    setValue: setValue1,
-    watch: watch1,
-  } = useForm({
-    defaultValues: InitialFld,
-  });
+  } = useForm({ defaultValues: InitialFld });
 
   const AllData = getValues();
   const oLines = useWatch({ control, name: "oLines" });
 
-  // ===== Parse time value safely into dayjs object =====
+  // ===== Helpers =====
   const parseTime = (val) => {
     if (!val) return null;
     if (dayjs.isDayjs(val) && val.isValid()) return val;
@@ -3233,7 +3229,6 @@ export default function BinLocationMaster() {
     return hhmm.isValid() ? hhmm : null;
   };
 
-  // ===== Format time value safely to HH:mm string for API =====
   const formatTime = (val) => {
     if (!val) return "";
     if (dayjs.isDayjs(val)) return val.format("HH:mm");
@@ -3334,7 +3329,7 @@ export default function BinLocationMaster() {
     fetchClosedListData(0);
   }, []);
 
-  // ===== Get (CopyFrom) List =====
+  // ===== CopyFrom List =====
   const fetchGetListData = async (pageNum = 0, searchTerm = "") => {
     try {
       const url = searchTerm
@@ -3383,10 +3378,10 @@ export default function BinLocationMaster() {
   };
 
   useEffect(() => {
-    if (searchmodelOpen === true) fetchGetListData(0);
+    if (searchmodelOpen) fetchGetListData(0);
   }, [searchmodelOpen]);
 
-  // ===== Select Business Partner (Copy From) =====
+  // ===== Select Order (Copy From) =====
   const onSelectBusinessPartner = async (OrderNo) => {
     const res = await apiClient.get(`/Appointment/CopyFrom?OrderNo=${OrderNo}`);
     const data = res.data.values[0];
@@ -3418,7 +3413,7 @@ export default function BinLocationMaster() {
     SearchModelClose();
   };
 
-  // ===== Load existing record — FIXED: single click, dayjs objects for time =====
+  // ===== Load Existing Record =====
   const setOldDataOPen = async (DocEntry) => {
     setSaveUpdateName("UPDATE");
     try {
@@ -3443,7 +3438,6 @@ export default function BinLocationMaster() {
           NoAutoAllc: "Y",
           ReceiveBin: "Y",
         });
-        // Open sidebar AFTER reset — one single state update, no double-open
         setSidebarOpen(true);
       } else {
         Swal.fire({
@@ -3464,14 +3458,13 @@ export default function BinLocationMaster() {
   };
 
   const handleTabChangeRight = (e, newvalue1) => settab(newvalue1);
-
   const gridSx = useMemo(() => dataGridSx(theme), [theme]);
 
   // ===== DataGrid Columns =====
   const columns = [
     { field: "ItemCode", headerName: "ITEM CODE", width: 150 },
     { field: "ItemName", headerName: "ITEM DESCRIPTION", width: 150 },
-    { field: "OrderQuantity", headerName: "ORDER QTY", width: 150 },
+    { field: "Quantity", headerName: "ORDER QTY", width: 150 },
     { field: "FTSQty", headerName: "FTS", width: 150 },
     {
       field: "Quantity",
@@ -3511,9 +3504,7 @@ export default function BinLocationMaster() {
             const rowIndex = params.api.getRowIndexRelativeToVisibleRows(
               params.id,
             );
-            const updatedLines = currentLines.filter(
-              (_, index) => index !== rowIndex,
-            );
+            const updatedLines = currentLines.filter((_, i) => i !== rowIndex);
             setValue("oLines", updatedLines, { shouldDirty: true });
           }}
         >
@@ -3523,7 +3514,7 @@ export default function BinLocationMaster() {
     },
   ];
 
-  // ===== Cancel Appointment Submit =====
+  // ===== Cancel Appointment =====
   const onSubmit1 = async (data) => {
     if (!data.CancelRemarks || data.CancelRemarks.trim() === "") {
       Swal.fire({
@@ -3539,7 +3530,7 @@ export default function BinLocationMaster() {
     const UserId = localStorage.getItem("UserId");
     const CreatedBy = localStorage.getItem("UserName");
     const obj = {
-      UserId: UserId,
+      UserId,
       CreatedBy: CreatedBy || "",
       CancelBy: CreatedBy || "",
       CancelRemarks: data.CancelRemarks,
@@ -3594,7 +3585,6 @@ export default function BinLocationMaster() {
       });
       return;
     }
-
     if (dayjs(data.AppointDate).day() === 5) {
       Swal.fire({
         text: "You can not book appointment on friday",
@@ -3606,7 +3596,6 @@ export default function BinLocationMaster() {
       });
       return;
     }
-
     if (!data.AppointTimeFrom) {
       Swal.fire({
         text: "Please Select Working Appointment Time",
@@ -3620,7 +3609,7 @@ export default function BinLocationMaster() {
     }
 
     const obj = {
-      UserId: UserId,
+      UserId,
       CreatedBy: UserName,
       ModifiedBy: UserName,
       DocDate: dayjs(),
@@ -3644,7 +3633,7 @@ export default function BinLocationMaster() {
       Model: data.Model || "LC100",
       Series: "-1",
       oLines: data.oLines.map((item) => ({
-        UserId: UserId,
+        UserId,
         CreatedBy: UserName,
         ModifiedBy: UserName,
         ItemCode: item.ItemCode,
@@ -3690,7 +3679,6 @@ export default function BinLocationMaster() {
           }
         })
         .catch((error) => {
-          console.error("Error Post time", error);
           Swal.fire({
             title: "Error!",
             text: "Something went wrong: " + error,
@@ -3753,40 +3741,33 @@ export default function BinLocationMaster() {
     }
   };
 
-  // ===== Watched date for auto-time (SAVE mode only) =====
+  // ===== Watched Date → Auto-set time (SAVE mode only) =====
   const watchedDate = watch("AppointDate");
+
+  // isToday: true when the selected appointment date is today
   const isToday = watchedDate && dayjs(watchedDate).isSame(dayjs(), "day");
 
   useEffect(() => {
-    // Skip auto-time when editing existing records — preserve loaded time values
+    // Do NOT overwrite time when editing an existing record
     if (SaveUpdateName === "UPDATE") return;
     if (!watchedDate) return;
 
-    const SHOP_OPEN = 8; // 8 AM
-    const SHOP_CLOSE = 20; // 8 PM
-
     const now = dayjs();
-    const selectedDate = dayjs(watchedDate);
-    const isTodaySelected = selectedDate.isSame(now, "day");
+    const isTodaySelected = dayjs(watchedDate).isSame(now, "day");
     let autoTime;
 
     if (isTodaySelected) {
-      // Round up to next 30-min boundary
+      // Round up to the next :00 or :30 slot
       const remainder = now.minute() % 30;
-      autoTime =
-        remainder === 0
-          ? now.second(0).millisecond(0)
-          : now
-              .add(30 - remainder, "minute")
-              .second(0)
-              .millisecond(0);
+      autoTime = (remainder === 0 ? now : now.add(30 - remainder, "minute"))
+        .second(0)
+        .millisecond(0);
 
-      // If before shop open, snap to 8:00
+      // Clamp to shop open
       if (autoTime.hour() < SHOP_OPEN) {
         autoTime = autoTime.hour(SHOP_OPEN).minute(0).second(0);
       }
-
-      // If at or past shop close, no valid slots left today
+      // No slots left today
       if (autoTime.hour() >= SHOP_CLOSE) {
         setValue("AppointTimeFrom", null, { shouldValidate: true });
         return;
@@ -3796,11 +3777,10 @@ export default function BinLocationMaster() {
       autoTime = dayjs().hour(SHOP_OPEN).minute(0).second(0);
     }
 
-    // Set as dayjs object so TimePicker displays correctly
     setValue("AppointTimeFrom", autoTime, { shouldValidate: true });
   }, [watchedDate, setValue, SaveUpdateName]);
 
-  // ===== Sidebar Content =====
+  // ===== Sidebar =====
   const sidebarContent = (
     <>
       <Grid
@@ -3850,13 +3830,7 @@ export default function BinLocationMaster() {
             theme.palette.mode === "light" ? "#F5F6FA" : "#080D2B",
         }}
       >
-        <Grid
-          item
-          md={12}
-          sm={12}
-          width={"100%"}
-          height={`calc(100% - ${50}px)`}
-        >
+        <Grid item md={12} sm={12} width={"100%"} height={`calc(100% - 50px)`}>
           <Box
             sx={{
               width: "100%",
@@ -3865,7 +3839,7 @@ export default function BinLocationMaster() {
               "& .MuiTabPanel-root, .MuiButtonBase-root.MuiTab-root": {
                 padding: 0,
               },
-              "& .MuiTabs-flexContainer ": { justifyContent: "space-around" },
+              "& .MuiTabs-flexContainer": { justifyContent: "space-around" },
             }}
           >
             <TabContext value={tab}>
@@ -3884,7 +3858,7 @@ export default function BinLocationMaster() {
                 value={"1"}
                 style={{
                   overflow: "auto",
-                  maxHeight: `calc(100% - ${15}px)`,
+                  maxHeight: "calc(100% - 15px)",
                   paddingLeft: 5,
                   paddingRight: 5,
                 }}
@@ -3939,7 +3913,7 @@ export default function BinLocationMaster() {
                 value={"0"}
                 style={{
                   overflow: "auto",
-                  maxHeight: `calc(100% - ${15}px)`,
+                  maxHeight: "calc(100% - 15px)",
                   paddingLeft: 5,
                   paddingRight: 5,
                 }}
@@ -3995,7 +3969,7 @@ export default function BinLocationMaster() {
     </>
   );
 
-  // ===== Main Render =====
+  // ===== Render =====
   return (
     <>
       <Grid
@@ -4021,7 +3995,7 @@ export default function BinLocationMaster() {
             left: 0,
             transition: "left 0.3s ease",
             zIndex: 1000,
-            display: { lg: "block", xs: `${sidebarOpen ? "block" : "none"}` },
+            display: { lg: "block", xs: sidebarOpen ? "block" : "none" },
           }}
         >
           {sidebarContent}
@@ -4038,7 +4012,7 @@ export default function BinLocationMaster() {
           lg={9}
           position="relative"
         >
-          {/* Hamburger for small screens */}
+          {/* Hamburger — small screens only */}
           <IconButton
             edge="start"
             color="inherit"
@@ -4049,7 +4023,7 @@ export default function BinLocationMaster() {
             <MenuIcon />
           </IconButton>
 
-          {/* Clear / New button */}
+          {/* New / Clear button */}
           <IconButton
             edge="start"
             color="inherit"
@@ -4078,7 +4052,7 @@ export default function BinLocationMaster() {
             </Typography>
           </Grid>
 
-          {/* Form Area */}
+          {/* Form Body */}
           <Grid
             container
             item
@@ -4250,7 +4224,7 @@ export default function BinLocationMaster() {
                     />
                   </Grid>
 
-                  {/* Order Sub Type */}
+                  {/* Order Type */}
                   <Grid item xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
                     <Controller
                       name="OrderSubType"
@@ -4352,16 +4326,14 @@ export default function BinLocationMaster() {
                           field: { onChange, value },
                           fieldState: { error },
                         }) => {
-                          const SHOP_OPEN = 8; // 8 AM
-                          const SHOP_CLOSE = 20; // 8 PM (20:00)
+                          const now = dayjs();
 
+                          // Normalize stored value → dayjs object for TimePicker
                           const parsedValue = value
                             ? dayjs.isDayjs(value)
                               ? value
                               : dayjs(value, "HH:mm")
                             : null;
-
-                          const now = dayjs();
 
                           return (
                             <TimePicker
@@ -4381,7 +4353,7 @@ export default function BinLocationMaster() {
                                 const minute = timeValue.minute();
 
                                 if (view === "hours") {
-                                  // Always block hours outside shop hours (8AM–8PM)
+                                  // Always: block hours outside 8 AM – 8 PM
                                   if (hour < SHOP_OPEN || hour > SHOP_CLOSE)
                                     return true;
                                   // TODAY ONLY: block hours that have already passed
@@ -4390,19 +4362,19 @@ export default function BinLocationMaster() {
                                 }
 
                                 if (view === "minutes") {
-                                  // Only allow :00 and :30 slots
+                                  // Always: only allow :00 and :30
                                   if (minute !== 0 && minute !== 30)
                                     return true;
-                                  // Block 20:30 — shop closes at 20:00 sharp
+                                  // Always: block 20:30 — shop closes at 20:00 sharp
                                   if (hour === SHOP_CLOSE && minute > 0)
                                     return true;
-                                  // TODAY ONLY: block minutes that have already passed in the current hour
-                                  if (
-                                    isToday &&
-                                    hour === now.hour() &&
-                                    minute <= now.minute()
-                                  ) {
-                                    return true;
+                                  // TODAY ONLY: disable any slot whose total minutes ≤ current time
+                                  // e.g. now=10:45 → 10:00(600)≤645✗  10:30(630)≤645✗  11:00(660)>645✓
+                                  if (isToday) {
+                                    const slotMins = hour * 60 + minute;
+                                    const nowMins =
+                                      now.hour() * 60 + now.minute();
+                                    if (slotMins <= nowMins) return true;
                                   }
                                   return false;
                                 }
@@ -4453,7 +4425,6 @@ export default function BinLocationMaster() {
 
                 <DialogContent>
                   <Grid container spacing={2}>
-                    {/* Appointment Number */}
                     <Grid item xs={12} textAlign={"center"}>
                       <Controller
                         name="AppointmentNo"
@@ -4473,8 +4444,6 @@ export default function BinLocationMaster() {
                         )}
                       />
                     </Grid>
-
-                    {/* Cancel Reason */}
                     <Grid item xs={12} textAlign={"center"}>
                       <Controller
                         name="CancelRemarks"
@@ -4515,7 +4484,7 @@ export default function BinLocationMaster() {
               </form>
             </Dialog>
 
-            {/* Bottom Action Buttons */}
+            {/* Bottom Buttons */}
             <Grid
               item
               px={1}
