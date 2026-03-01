@@ -9,7 +9,7 @@ import {
   IconButton,
   InputAdornment,
   TextField,
-  Typography
+  Typography,
 } from "@mui/material";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -41,12 +41,15 @@ const Login = () => {
         },
         data: JSON.stringify(data),
       });
-      console.log(response);
+
       if (response.data.success) {
+        const postdata = response.data.values;
         const accessToken = response.headers["authorization"];
         const refreshToken = response.headers["x-refresh-token"];
         localStorage.setItem("accessToken", accessToken);
         localStorage.setItem("refreshToken", refreshToken);
+        localStorage.setItem("UserName", postdata.UserName);
+        localStorage.setItem("UserId", postdata.UserId);
 
         // 👇 EXISTING user object
         const basicUser = response.data.values;

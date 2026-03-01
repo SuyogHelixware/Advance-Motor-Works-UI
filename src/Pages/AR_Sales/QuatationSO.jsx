@@ -140,7 +140,7 @@ export default function QuatationSO() {
   const [top20Loading, setTop20Loading] = useState(false);
   const top20CancelToken = useRef(null);
   const top20DebounceTimer = useRef(null);
-  const [SaveUpdateName, setSaveUpdateName] = useState("Submit");
+  const [SaveUpdateName, setSaveUpdateName] = useState("SAVE");
 
   const theme = useTheme();
   const BASE_URL = "http://hwaceri5:8070/api";
@@ -1439,7 +1439,7 @@ export default function QuatationSO() {
     const CreatedBy = localStorage.getItem("UserName");
     const obj = {
       UserId: "",
-      CreatedBy: localStorage.getItem("UserName"),
+      CreatedBy: CreatedBy,
       CardCode: data.CardCode,
 
       CreatedDate: dayjs(undefined).format("YYYY-MM-DD HH:mm:ss"),
@@ -1855,8 +1855,10 @@ export default function QuatationSO() {
     const CreatedBy = localStorage.getItem("UserName");
     const obj = {
       DocNum: data?.DocNum || null,
-      UserId: SaveUpdateName === "Update" ? data.UserId : String(UserId),
-      CreatedBy: SaveUpdateName === "Update" ? data.CreatedBy : CreatedBy,
+      // UserId: SaveUpdateName === "Update" ? data.UserId : String(UserId),
+      UserId: String(UserId),
+      CreatedBy: CreatedBy,
+      // CreatedBy: SaveUpdateName === "Update" ? data.CreatedBy : CreatedBy,
       DocDate: dayjs(data.DocDate).format("YYYY-MM-DD"),
       Status: data.Status === `OPEN` ? "1" : data.Status,
       JobRemarks: (data.JobRemarks ?? "").toUpperCase(),
@@ -2024,7 +2026,7 @@ export default function QuatationSO() {
         try {
           let res;
 
-          if (SaveUpdateName === "Submit") {
+          if (SaveUpdateName === "SAVE") {
             res = await apiClient.post(`/quotationSo`, obj);
           } else if (SaveUpdateName === "UPDATE") {
             res = await apiClient.put(`/quotationSo/${data.DocEntry}`, obj);

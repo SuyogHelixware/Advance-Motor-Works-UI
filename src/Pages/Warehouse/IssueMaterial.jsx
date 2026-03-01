@@ -733,6 +733,7 @@ export default function IssueMaterial() {
       UserId: user.UserId,
       CreatedBy: user.UserName,
       ModifiedBy: user.UserName,
+      DocDate: dayjs(),
       RequestDate: data.RequestDate,
       IssueDate: "",
       RequestNo: data.RequestNo || "",
@@ -747,7 +748,7 @@ export default function IssueMaterial() {
       CardName: data.CardName,
       PhoneNumber1: data.PhoneNumber1,
       DocNum: data.DocNum,
-      DocDate: dayjs(),
+      // DocDate: dayjs(data.DocDate).format("YYYY-MM-DD"),
       OrderNo: data.OrderNo,
       JobCardNo: "",
       IssueRemark: data.ReqRemarks,
@@ -845,17 +846,18 @@ export default function IssueMaterial() {
         showConfirmButton: false,
       });
       return;
-    } else if (CNC > 0 && MaterialData.JobWorkAt === "CNC") {
-      Swal.fire({
-        title: "Warning !",
-        text: "Issue qunatity should be same as open qunatity in CNC Order..",
-        icon: "warning",
-        toast: true,
-        timer: 1000,
-        showConfirmButton: false,
-      });
-      return;
     }
+    // } else if (CNC > 0 && MaterialData.JobWorkAt === "CNC") {
+    //   Swal.fire({
+    //     title: "Warning !",
+    //     text: "Issue qunatity should be same as open qunatity in CNC Order..",
+    //     icon: "warning",
+    //     toast: true,
+    //     timer: 1000,
+    //     showConfirmButton: false,
+    //   });
+    //   return;
+    // }
 
     try {
       const response = await apiClient.post(`/MatIssue`, payload);

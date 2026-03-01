@@ -453,7 +453,6 @@ export default function IssueMaterial() {
           SAPDocEntry: data.SAPDocEntry,
           HW_WMSStaff: data.HW_WMSStaff,
         };
-
         const mappedOLines =
           data.oLines.map((line) => ({
             ItemCode: line.ItemCode,
