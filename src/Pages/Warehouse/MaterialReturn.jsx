@@ -1,7 +1,7 @@
+import AddIcon from "@mui/icons-material/Add";
 import ClearIcon from "@mui/icons-material/Clear";
 import CloseIcon from "@mui/icons-material/Close";
 import MenuIcon from "@mui/icons-material/Menu";
-import RefreshIcon from "@mui/icons-material/Refresh";
 import RemoveCircleIcon from "@mui/icons-material/RemoveCircle";
 import { TabContext, TabPanel } from "@mui/lab";
 import {
@@ -18,61 +18,61 @@ import {
 import { useTheme } from "@mui/material/styles";
 import TextField from "@mui/material/TextField";
 import { DataGrid } from "@mui/x-data-grid";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { BeatLoader } from "react-spinners";
 
-import CardComponent from "../Components/CardComponent";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import dayjs from "dayjs";
+import { useMemo } from "react";
+import Swal from "sweetalert2";
+import useAuth from "../../Routing/AuthContext";
+import apiClient from "../../services/apiClient";
+import { dataGridSx } from "../../Styles/dataGridStyles";
+import CardComponent from "../Components/CardComponent";
 import {
   InputDatePickerField,
   InputSelectTextField,
   InputTableSelectField,
   InputTableTextField,
-  InputTextArea,
   InputTextField,
-  InputTextSearchField,
+  InputTextSearchButton,
 } from "../Components/formComponents";
+import { Loader } from "../Components/Loader";
 import SearchInputField from "../Components/SearchInputField";
 import SearchModel from "../Components/SearchModel";
-import useAuth from "../../Routing/AuthContext";
-import Swal from "sweetalert2";
-import dayjs from "dayjs";
-import apiClient from "../../services/apiClient";
-import { useMemo } from "react";
-import { dataGridSx } from "../../Styles/dataGridStyles";
 
 export default function IssueMaterial() {
   const initialFormData = {
-    CardCode: "",
-    CardName: "",
-    PhoneNumber1: "",
-    DocNum: "",
-    OrderDocEntry: "",
     DocEntry: "",
-    DocDate: dayjs(undefined),
-    OrderNo: "",
-    RequestNo: "",
-    IssueDate: dayjs(undefined),
-    RequestDate: dayjs(undefined),
-    OrderType: "",
-    IssueNO: "",
+    DocNum: "",
+    RequestDate: dayjs(new Date()),
+    IssueQuantity: "0",
+    JobCardNo: "",
     RegistrationNo: "",
-    VehInwardNo: "",
+    InwardNo: "",
+    VehInwardDocEntry: "",
+    RequestNo: "",
+    OrderNo: "",
     JobWorkAt: "",
-    ReqRemarks: "",
-    RequestBy: "",
-    InvTransferNo: "",
-    HW_WMSStaff: "",
-    IssuedBy: "",
-    Supplier: "",
-    Status: "",
+    JobWorkDetails: "",
+    TotalItems: "",
     RequestedBy: "",
+    TechnicianName: "",
+    // HW_WMSStaff: "",
+    IssueNo: "",
+    ReturnBy: "",
+    IssuedBy: "",
+    ReturnNo: "",
+    oLines: [],
   };
-  const { control, register, getValues, handleSubmit, reset, watch } = useForm({
-    defaultValues: initialFormData,
-  });
+
+  const { control, register, getValues, handleSubmit, reset, watch, setValue } =
+    useForm({
+      defaultValues: initialFormData,
+    });
+
   const theme = useTheme();
   const { user } = useAuth();
   const [openPosts, setOpenPosts] = useState([]);
@@ -97,15 +97,16 @@ export default function IssueMaterial() {
   const [Disabled, setDisabled] = useState(false);
   const [barcodeItem, setBarcodeItem] = useState("");
   const [WMSStaff, setWMSStaff] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [oLines, setoLines] = useState([]);
-  const watchShowAge = getValues("JobWorkAt");
 
   useEffect(() => {
     getAllOpenList();
     getAllCloseList();
     getListForCreate();
-    getAllWMSStaffList();
+    getHW_WMSStaffList();
   }, []);
+
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
@@ -114,7 +115,7 @@ export default function IssueMaterial() {
 
   const getAllOpenList = () => {
     apiClient
-      .get("/MatIssue?Page=0&Status=1")
+      .get(`/MatRtn?Page=0&Status=1`)
       .then((response) => {
         setOpenPosts(response.data.values);
 
@@ -129,7 +130,7 @@ export default function IssueMaterial() {
 
   const getAllCloseList = async () => {
     try {
-      const response = await apiClient.get("/MatIssue?Page=0&Status=0");
+      const response = await apiClient.get(`/MatRtn?Page=0&Status=0`);
 
       setClosedPosts(response.data.values);
 
@@ -152,12 +153,12 @@ export default function IssueMaterial() {
       let response;
 
       if (cleanSearch === "") {
-        response = await apiClient.get(`/MatIssue?Page=${page}&Status=1`);
+        response = await apiClient.get(`/MatRtn?Page=${page}&Status=1`);
 
         setOpenPosts((prev) => [...prev, ...response.data.values]);
       } else {
         response = await apiClient.get(
-          `/MatIssue?SearchText=${cleanSearch}&Status=1&Page=${page}`,
+          `/MatRtn?SearchText=${cleanSearch}&Status=1&Page=${page}`,
         );
 
         setOpenSearchPosts((prev) => [...prev, ...response.data.values]);
@@ -188,7 +189,7 @@ export default function IssueMaterial() {
       if (!cleanSearch) return;
 
       const response = await apiClient.get(
-        `/MatIssue?SearchText=${cleanSearch}&Status=1&Page=0`,
+        `/MatRtn?SearchText=${cleanSearch}&Status=1&Page=0`,
       );
 
       setOpenSearchPosts(response.data.values);
@@ -203,7 +204,7 @@ export default function IssueMaterial() {
     }
   };
 
-  const removeTableRow = (index) => {
+  const removeTableRow = (rowId) => {
     if (oLines.length === 1) {
       Swal.fire({
         text: "At least One Item Required",
@@ -214,8 +215,12 @@ export default function IssueMaterial() {
         timerProgressBar: true,
       });
     } else {
-      const updatedOLines = [...oLines];
-      updatedOLines.splice(index, 1);
+      // const updatedOLines = [...oLines];
+      // updatedOLines.splice(index, 1);
+      // setoLines(updatedOLines);
+      const updatedOLines = oLines.filter(
+        (row) => row.id !== rowId && row.ItemCode !== rowId,
+      );
       setoLines(updatedOLines);
     }
   };
@@ -253,7 +258,7 @@ export default function IssueMaterial() {
       if (!cleanSearch) return;
 
       const response = await apiClient.get(
-        `/MatIssue?SearchText=${cleanSearch}&Status=0&Page=0`,
+        `/MatRtn?SearchText=${cleanSearch}&Status=0&Page=0`,
       );
 
       setCloseSearchPosts(response.data.values);
@@ -273,7 +278,7 @@ export default function IssueMaterial() {
 
     if (searchTextClose === "") {
       apiClient
-        .get(`/MatIssue?Page=${page}&Status=0`)
+        .get(`/MatRtn?Page=/${page}&Status=0`)
         .then((response) => {
           setClosedPosts((prevPosts) => [
             ...prevPosts,
@@ -291,7 +296,7 @@ export default function IssueMaterial() {
         });
     } else {
       apiClient
-        .get(`/MatIssue?SearchText=${searchTextClose}&Status=0&Page=${page}`)
+        .get(`/MatRtn?SearchText=${searchTextClose}&Status=0&Page=${page}`)
         .then((response) => {
           setCloseSearchPosts((prevPosts) => [
             ...prevPosts,
@@ -340,14 +345,14 @@ export default function IssueMaterial() {
   };
 
   const getListForCreate = () => {
-    fetchDataGetListForCreate(`/MatIssue/CopyFrom?Page=0`, setGetListData);
+    fetchDataGetListForCreate(`/MatRtn/CopyFrom?Page=0`, setGetListData);
   };
   const fetchMoreGetListForCreate = () => {
     const page = getListPage + 1;
 
     const url = searchTextGetListForCreate
-      ? `/MatIssue/CopyFrom?SearchText=${searchTextGetListForCreate}&Page=${page}`
-      : `/MatIssue/CopyFrom?Page=${page}`;
+      ? `/MatRtn/CopyFrom?SearchText=${searchTextGetListForCreate}&Page=${page}`
+      : `/MatRtn/CopyFrom?Page=${page}`;
 
     fetchDataGetListForCreate(
       url,
@@ -358,6 +363,12 @@ export default function IssueMaterial() {
     setGetListPage(page);
   };
 
+  useEffect(() => {
+    if (isDialogOpen === true) {
+      getListForCreate(0);
+    }
+  }, [isDialogOpen]);
+
   const onHandleSearchGetListForCreate = (event) => {
     const searchText = event.target.value;
     setGetListSearchData([]);
@@ -365,7 +376,7 @@ export default function IssueMaterial() {
     setGetListPage(0);
     if (searchText) {
       fetchDataGetListForCreate(
-        `/MatIssue/CopyFrom?SearchText=${searchText}&Page=0`,
+        `/MatRtn/CopyFrom?SearchText=${searchText}&Page=0`,
         setGetListSearchData,
       );
     }
@@ -387,10 +398,12 @@ export default function IssueMaterial() {
 
   const openDialog = () => {
     setIsDialogOpen(true);
+    setsearchTextGetListForCreate([]);
   };
 
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
+    setsearchTextGetListForCreate([]);
   };
 
   const handleCardClick = () => {
@@ -405,41 +418,71 @@ export default function IssueMaterial() {
     settab(newvalue1);
   };
 
-  const setOldOpenListData = (DocEntry) => {
-    if (!DocEntry) {
-      return;
-    }
-    apiClient
-      .get(`/MatIssue?DocEntry=${DocEntry}`)
-      .then((response) => {
-        toggleSidebar();
-        const data = response.data.values;
+  const setOldOpenListData = async (DocEntry) => {
+    setLoading(true);
 
-        reset({
-          ...data,
-          ReqRemarks: data.IssueRemark,
-          RequestBy: data.RequestedBy,
+    try {
+      const res = await apiClient.get(`/MatRtn/${DocEntry}`);
+      const data = res.data.values;
+
+      if (!data) {
+        Swal.fire({
+          icon: "warning",
+          text: "Record not found",
         });
-        if (data.oLines) {
-          const obj = data.oLines.map((item) => ({
-            ItemCode: item.ItemCode,
-            ItemName: item.ItemName,
-            WHSCode: item.FromWHS,
-            FromBin: item.FromBin,
-            ToWHS: item.ToWHS,
-            BinLocation: item.FromBin,
-            AvailQty: item.AvailQty,
-            ReqQuantity: item.ReqQuantity,
-            OpenQuantity: item.OpenQuantity,
-            IssueQuantity: item.IssueQuantity,
-            BinList: [{ BinCode: item.FromBin }],
-          }));
-          setoLines(obj);
-        }
-      })
-      .catch((error) => {
-        console.error("Error fetching data:", error);
+        return;
+      }
+
+      if (res.data.success) {
+        const transformed = {
+          ...data,
+
+          JobCardNo: "",
+          SONo: data.OrderNo,
+          IssueDate: dayjs(data.IssueDate),
+          ReturnNo: data.DocNum,
+          RequestNo: data.RequestNo,
+          ReturnDate: dayjs(data.ReturnDate),
+          IssueNo: data.IssueNo,
+          JobWorkAt: data.JobWorkAt,
+          ReturnBy: data.ReturnedBy,
+          InventoryTransferNumber: data.InventoryTransferNumber,
+          IssuedBy: data.IssuedBy,
+          IssueDocEntry: data.IssueDocEntry,
+          SAPDocNum: data.SAPDocNum,
+          SAPDocEntry: data.SAPDocEntry,
+          HW_WMSStaff: data.HW_WMSStaff,
+        };
+
+        const mappedOLines =
+          data.oLines.map((line) => ({
+            ItemCode: line.ItemCode,
+            ItemName: line.ItemName,
+            FromWHS: line.FromWHS,
+            ToWHS: line.ToWHS,
+            ToBin: line.ToBin,
+            AvailQty: Number(line.InHandQuantity).toFixed(2),
+            IssueQuantity: Number(line.IssueQuantity).toFixed(2),
+            ReturnQuantity: line.ReturnQuantity,
+            BinList: [{ BinCode: line.ToBin }],
+          })) || [];
+
+        reset(transformed);
+        setValue("DocNum", data.DocNum);
+        setoLines(mappedOLines);
+        getHW_WMSStaffList(transformed.HW_WMSStaff);
+        // CloseMatIssueModal();
+        // getHW_WMSStaffList(transformed.HW_WMSStaff);
+      }
+    } catch (error) {
+      Swal.fire({
+        icon: "error",
+        title: "Oops...",
+        text: error?.message || "Something went wrong",
       });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const ClearForm = () => {
@@ -472,18 +515,31 @@ export default function IssueMaterial() {
     let itemFound = false;
 
     const updatedItems = oLines.map((item) => {
+      const formRows = structuredClone(getValues("oLines") || []);
       const itemCode = String(item.ItemCode || "").toUpperCase();
       const enteredCode = String(value).toUpperCase();
 
       if (itemCode === enteredCode) {
         itemFound = true;
 
-        const issueQty = parseFloat(item.IssueQuantity) || 0;
-        const openQty = parseFloat(item.OpenQuantity) || 0;
+        const maxReturnQty = parseFloat(item.IssueQuantity) || 0;
+        const currentReturnQty = parseFloat(item.ReturnQuantity) || 0;
 
-        if (issueQty + 1 > openQty) {
+        if (currentReturnQty < maxReturnQty) {
+          const newReturnQty = currentReturnQty + 1;
+
+          const updatedFormRows = [...formRows];
+          updatedFormRows[itemCode] = {
+            ...updatedFormRows[itemCode],
+            ReturnQuantity: newReturnQty,
+          };
+          setoLines(updatedFormRows, {
+            shouldValidate: true,
+            shouldDirty: true,
+          });
+        } else {
           Swal.fire({
-            text: "You Can't add More than Open Quantity",
+            text: "You can't return more than the issued quantity",
             icon: "warning",
             toast: true,
             showConfirmButton: false,
@@ -495,7 +551,7 @@ export default function IssueMaterial() {
 
         return {
           ...item,
-          IssueQuantity: (issueQty + 1).toFixed(3),
+          ReturnQuantity: maxReturnQty.toFixed(3),
         };
       }
 
@@ -508,7 +564,7 @@ export default function IssueMaterial() {
     }, 300);
   };
 
-  const getAllWMSStaffList = () => {
+  const getHW_WMSStaffList = () => {
     apiClient
       .get(`/Technician?HW_WMSStaff=Y`)
       .then((response) => {
@@ -520,32 +576,52 @@ export default function IssueMaterial() {
   };
 
   const columns = [
-    // {
-    //   field: "ItemCode",
-    //   headerName: "Item Code",
-    //   width: 130,
-    //   editable: false,
-    //   sortable: false,
-    // },
     {
       field: "ItemCode",
-      headerName: "Item Code",
+      headerName: "ITEM CODE",
       width: 160,
       sortable: false,
       renderCell: (params) => {
         const copyText = (e) => {
           e.stopPropagation();
 
-          navigator.clipboard.writeText(params.value).then(() => {
-            Swal.fire({
-              toast: true,
-              position: "top-end",
-              icon: "success",
-              title: "Item Code Copied",
-              showConfirmButton: false,
-              timer: 1200,
-            });
-          });
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard
+              .writeText(params.value)
+              .then(() => {
+                Swal.fire({
+                  toast: true,
+                  position: "top-end",
+                  icon: "success",
+                  title: "Item Code Copied",
+                  showConfirmButton: false,
+                  timer: 1200,
+                });
+              })
+              .catch((err) => {
+                console.error("Failed to copy: ", err);
+              });
+          } else {
+            // fallback for unsupported browsers
+            const textArea = document.createElement("textarea");
+            textArea.value = params.value;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+              document.execCommand("copy");
+              Swal.fire({
+                toast: true,
+                position: "top-end",
+                icon: "success",
+                title: "Item Code Copied",
+                showConfirmButton: false,
+                timer: 1200,
+              });
+            } catch (err) {
+              console.error("Fallback: copy failed", err);
+            }
+            document.body.removeChild(textArea);
+          }
         };
 
         return (
@@ -571,88 +647,79 @@ export default function IssueMaterial() {
     },
     {
       field: "ItemName",
-      headerName: "Item Description",
-      minWidth: 250,
-      editable: false,
-      sortable: false,
-      flex: 1,
+      headerName: "ITEM DESCRIPTION",
+      minWidth: 390,
     },
     {
-      field: "WHSCode",
+      field: "FromWHS",
       headerName: "From WHS",
       width: 100,
-      editable: false,
-      sortable: false,
       type: "number",
     },
     {
-      field: "BinList",
-      headerName: "From Bin",
-      width: 130,
-      editable: false,
-      sortable: false,
-      renderCell: (params) => (
-        <InputTableSelectField
-          name="BinLocation"
-          value={params.row.BinLocation}
-          onChange={(e) => onChangeTableData(e, params.id)}
-          data={(params.value === undefined ? [] : params.value).map(
-            (BinLocation) => ({
-              key: BinLocation.BinCode,
-              value: BinLocation.BinCode,
-            }),
-          )}
-        />
-      ),
-    },
-
-    {
       field: "ToWHS",
-      headerName: "To Whs	",
+      headerName: "TO WHS",
       width: 100,
-      editable: false,
-      sortable: false,
+      type: "number",
+    },
+    {
+      field: "ToBin",
+      headerName: "TO BIN",
+      width: 140,
+      headerAlign: "center",
       renderCell: (params) => (
-        <InputTableTextField
-          value={watchShowAge === "CNC" ? "99" : "98" || ""}
-        />
+        <Tooltip title={params.row.ToBin} arrow>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              height: "100%",
+              width: "100%",
+            }}
+          >
+            <InputTableSelectField
+              name="ToBin"
+              value={params.row.ToBin}
+              onChange={(e) => onChangeTableData(e, params.id)}
+              data={(Array.isArray(params.row.BinList)
+                ? params.row.BinList
+                : []
+              ).map((BinLocation) => ({
+                key: BinLocation.BinCode,
+                value: BinLocation.BinCode,
+              }))}
+              readOnly={Disabled}
+            />
+          </Box>
+        </Tooltip>
       ),
     },
     {
       field: "AvailQty",
-      headerName: "Avl Qty	",
-      width: 100,
-      editable: false,
-      sortable: false,
+      headerName: "IN-HAND QTY",
+      width: 130,
+      align: "right",
+      headerAlign: "right",
       renderCell: (params) => (
-        <InputTableTextField value={Number(params.value).toFixed(0) || ""} />
-      ),
-    },
-    {
-      field: "ReqQuantity",
-      headerName: "Req Qty",
-      width: 100,
-      editable: false,
-      sortable: false,
-      renderCell: (params) => (
-        <InputTableTextField value={Number(params.value).toFixed(0) || ""} />
-      ),
-    },
-    {
-      field: "OpenQuantity",
-      headerName: "Open Qty	",
-      width: 100,
-      editable: false,
-      sortable: false,
-      renderCell: (params) => (
-        <InputTableTextField value={Number(params.value).toFixed(0) || ""} />
+        <span>{Number(params.value).toFixed(0) || ""} </span>
       ),
     },
     {
       field: "IssueQuantity",
-      headerName: "Iss Qty",
+      headerName: "ISS QTY",
+      width: 100,
+      align: "right",
+      headerAlign: "right",
+      renderCell: (params) => (
+        <span> {Number(params.value).toFixed(0) || ""} </span>
+      ),
+    },
+    {
+      field: "ReturnQuantity",
+      headerName: "RTN QTY",
       width: 120,
-      sortable: false,
+      headerAlign: "center",
       renderCell: (params) => {
         return (
           <InputTableTextField
@@ -662,6 +729,7 @@ export default function IssueMaterial() {
                 <IconButton
                   size="small"
                   onClick={(e) => clareissueqty(e, params.row.ItemCode)}
+                  disabled={Disabled}
                 >
                   <ClearIcon fontSize="small" />
                 </IconButton>
@@ -673,26 +741,28 @@ export default function IssueMaterial() {
     },
     {
       field: "Action",
-      headerName: "Action	",
+      headerName: "Action",
       width: 100,
-      editable: true,
-      sortable: false,
+      align: "center",
+      headerAlign: "center",
       renderCell: (params) => (
         <IconButton
           onClick={() => {
-            removeTableRow(params.id);
+            removeTableRow(params.row.ItemCode);
           }}
+          disabled={Disabled}
         >
           <RemoveCircleIcon sx={{ color: "red" }} />
         </IconButton>
       ),
     },
   ];
+
   const clareissueqty = (event, itemCode) => {
     event.stopPropagation(); // Prevents row click events from firing
 
     Swal.fire({
-      text: "Do you want to clear Issue Quantity?",
+      text: "Do you want to clear Return Quantity?",
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Yes",
@@ -701,7 +771,7 @@ export default function IssueMaterial() {
       if (result.isConfirmed) {
         setoLines((prevLines) =>
           prevLines.map((line) =>
-            line.ItemCode === itemCode ? { ...line, IssueQuantity: 0 } : line,
+            line.ItemCode === itemCode ? { ...line, ReturnQuantity: 0 } : line,
           ),
         );
       }
@@ -709,51 +779,49 @@ export default function IssueMaterial() {
   };
 
   const handleSubmitForm = async (data) => {
-    const payload = {
-      UserId: user.UserId,
-      CreatedBy: user.UserName,
-      ModifiedBy: user.UserName,
-      RequestDate: data.RequestDate,
-      IssueDate: "",
-      RequestNo: data.RequestNo || "",
-      OrderType: data.OrderType,
-      RegistrationNo: data.RegistrationNo,
-      InvTransferNo: data.InvTransferNo,
-      InwardNo: data.VehInwardNo,
-      JobWorkAt: data.JobWorkAt,
-      OrderDocEntry: data.OrderDocEntry,
-      RequestedBy: data.RequestBy,
-      CardCode: data.CardCode,
-      CardName: data.CardName,
-      PhoneNumber1: data.PhoneNumber1,
-      DocNum: data.DocNum,
-      DocDate: dayjs(data.DocDate).format("YYYY-MM-DD"),
-      OrderNo: data.OrderNo,
-      JobCardNo: "",
-      IssueRemark: data.ReqRemarks,
-      IssuedBy: data.IssuedBy,
-      RequestDocEntry: data.DocEntry || "",
-      SAPDocNum: "",
-      SAPDocEntry: "",
-      HW_WMSStaff: String(data.HW_WMSStaff),
+    const UserId = localStorage.getItem("UserId");
+    const CreatedBy = localStorage.getItem("UserName");
 
-      oLines: oLines.map((row) => ({
-        UserId: user.UserId,
-        CreatedBy: user.UserName,
-        ModifiedBy: user.UserName,
-        RequestNo: data.RequestNo,
-        ItemCode: row.ItemCode,
-        ItemName: row.ItemName,
-        WHSCode: row.WHSCode,
-        FromBin: String(row.BinLocation) ?? "0",
-        ToWHS: data.JobWorkAt === "CNC" ? "99" : "98",
-        ReqQuantity: row.ReqQuantity,
-        OpenQuantity: String(row.OpenQuantity - row.IssueQuantity),
-        IssueQuantity: String(row.IssueQuantity),
-        ReqLineRemarks: "",
+    const payload = {
+      UserId: UserId,
+      CreatedBy: CreatedBy,
+      ReturnNo: data.ReturnNo,
+      ReturnDate: dayjs(data.ReturnDate).format("YYYY-MM-DD"),
+      OrderNo: data.SONo,
+      JobCardNo: "",
+      ReturnRemarks: data.JobWorkAt,
+      IssueNo: data.IssueNo,
+      IssueDate: dayjs(data.IssueDate).format("YYYY-MM-DD"),
+      RequestNo: data.RequestNo,
+      JobWorkAt: data.JobWorkAt,
+      ReturnedBy: CreatedBy,
+      IssuedBy: data.IssuedBy,
+      HW_WMSStaff: String(data.HW_WMSStaff),
+      OrderDocEntry: data.OrderDocEntry,
+      RequestDocEntry: data.RequestDocEntry,
+      IssueDocEntry: data.IssueDocEntry,
+      InvTransferNo: "",
+      SAPDocNum: data.SAPDocNum.toString() || "",
+      SAPDocEntry: data.SAPDocEntry.toString() || "",
+      oLines: data.oLines.map((element) => ({
+        UserId: UserId,
+        CreatedBy: CreatedBy,
+        Quantity: String(element.ReturnQuantity),
+        IssueNo: data.IssueNo,
+        ReturnNo: data.ReturnNo,
+        ItemCode: element.ItemCode,
+        ItemName: element.ItemName,
+        FromWHS: element.FromWHS,
+        ToBin: element.FromBin || "",
+        ToWHS: element.ToWHS,
+        IssueQuantity: element.IssueQuantity,
+        InHandQuantity: element.AvailQty,
+        ReturnQuantity: String(element.ReturnQuantity),
         IssueLineRemarks: "",
+        ReturnLineRemarks: "",
       })),
     };
+
     const watchOlines = watch("oLines");
 
     if (!watchOlines || watchOlines.length === 0) {
@@ -769,8 +837,9 @@ export default function IssueMaterial() {
     }
 
     const MaterialData = getValues();
+    console.log(MaterialData);
 
-    if (MaterialData.OrderNo === "" || MaterialData.OrderNo === undefined) {
+    if (MaterialData.RequestNo === "" || MaterialData.RequestNo === undefined) {
       Swal.fire({
         text: "Please select order...",
         icon: "warning",
@@ -781,22 +850,37 @@ export default function IssueMaterial() {
       });
       return;
     }
-    var issueQty = MaterialData.oLines.filter(
+    var returnQty = MaterialData.oLines.filter(
       (line) => line.IssueQuantity === 0,
     ).length;
+
     const bin = MaterialData.oLines.filter(
       (line) =>
-        line.FromBin === undefined ||
-        line.FromBin === null ||
-        line.FromBin === "",
+        line.ToBin === undefined || line.ToBin === null || line.ToBin === "",
     ).length;
-    const CNC = MaterialData.oLines.filter(
-      (line) => Number(line.OpenQuantity) !== Number(line.IssueQuantity),
-    ).length;
-    if (issueQty > 0) {
+
+    if (returnQty > 0) {
       Swal.fire({
-        // title: "Warning!",
-        text: "issue Quantity can not be zero",
+        text: "Return Quantity cannot be zero",
+        icon: "warning",
+        toast: true,
+        timer: 2000,
+        showConfirmButton: false,
+      });
+      return;
+    } else if (bin > 0) {
+      Swal.fire({
+        text: "Please select bin locations for all items..",
+        icon: "warning",
+        toast: true,
+        timer: 2000,
+        showConfirmButton: false,
+      });
+      return;
+    } else if (!watch("TechnicianName")) {
+      Swal.fire({
+        // title: "Warning !",
+        text: "Please select Parts Picked by...",
         icon: "warning",
         toast: true,
         timer: 2000,
@@ -804,43 +888,17 @@ export default function IssueMaterial() {
       });
       return;
     }
-    //  else if (bin > 0) {
-    //   Swal.fire({
-    //     // title: "Warning!",
-    //     text: "Please select bin locations for all items..",
-    //     icon: "warning",
-    //     toast: true,
-    //     timer: 1000,
-    //     showConfirmButton: false,
-    //   });
-    //   return;
-    // }
-    else if (!MaterialData.HW_WMSStaff) {
-      Swal.fire({
-        title: "Warning !",
-        text: "Please select Parts Delivered by...",
-        icon: "warning",
-        toast: true,
-        timer: 1000,
-        showConfirmButton: false,
-      });
-      return;
-    } else if (CNC > 0 && MaterialData.JobWorkAt === "CNC") {
-      Swal.fire({
-        title: "Warning !",
-        text: "Issue qunatity should be same as open qunatity in CNC Order..",
-        icon: "warning",
-        toast: true,
-        timer: 1000,
-        showConfirmButton: false,
-      });
-      return;
-    }
+
+    console.log(payload);
+    return;
+
+    setLoading(true);
 
     try {
       const response = await apiClient.post(`/MatIssue`, payload);
 
       if (response.data.success) {
+        setLoading(false);
         Swal.fire({
           title: "Success!",
           text: "Material Issued Successfully",
@@ -852,6 +910,7 @@ export default function IssueMaterial() {
         getAllCloseList();
         ClearForm();
       } else {
+        setLoading(false);
         Swal.fire({
           title: "Error!",
           text: response.data.message,
@@ -859,6 +918,7 @@ export default function IssueMaterial() {
         });
       }
     } catch (error) {
+      setLoading(false);
       Swal.fire({
         title: "Error!",
         text:
@@ -870,10 +930,45 @@ export default function IssueMaterial() {
     }
   };
 
-  const onSelectRequest = (item) => {
-    console.log(item);
-    reset({ ...item, IssuedBy: user.UserName, RequestNo: item.DocNum });
-    setoLines(item.oLines);
+  const onSelectRequest = (selectedItem) => {
+    const filledValues = {
+      ...initialFormData,
+      ...selectedItem,
+      JobCardNo: "",
+      SONo: selectedItem.OrderNo,
+      RequestDate: selectedItem.RequestDate,
+      RequestNo: selectedItem.RequestNo,
+      RegistrationNo: selectedItem.RegistrationNo,
+      JobWorkAt: selectedItem.JobWorkAt,
+      JobWorkDetails: selectedItem.ReqRemarks,
+      InwardNo: selectedItem.VehInwardNo,
+      IssueNo: selectedItem.DocNum,
+      IssuedBy: selectedItem.IssuedBy,
+      HW_WMSStaff: selectedItem.HW_WMSStaff,
+      OrderDocEntry: selectedItem.OrderDocEntry,
+      RequestDocEntry: selectedItem.RequestDocEntry,
+      IssueDocEntry: selectedItem.DocEntry,
+      ReturnDate: dayjs(selectedItem.ReturnDate).format("YYYY-MM-DD"),
+      ReturnBy: selectedItem.CreatedBy,
+    };
+    const mappedOLines =
+      selectedItem.oLines?.map((line) => ({
+        ItemCode: line.ItemCode,
+        ItemName: line.ItemName,
+        FromWHS: line.ToWHS,
+        FromBin: line.BinLocation,
+        ToWHS: line.FromWHS,
+        AvailQty: Number(line.AvailQty).toFixed(2),
+        ReqQuantity: line.ReqQuantity,
+        OpenQuantity: line.OpenQuantity,
+        IssueQuantity: Number(line.IssueQuantity).toFixed(2) || 0,
+        ReturnQuantity: 0,
+        ToBin: line.BinLocation,
+        BinList: line.BinList,
+      })) || [];
+    reset(filledValues);
+    setoLines(mappedOLines);
+    getHW_WMSStaffList(filledValues.HW_WMSStaff);
     setIsDialogOpen(false);
   };
 
@@ -988,11 +1083,6 @@ export default function IssueMaterial() {
                 </Grid>
                 <InfiniteScroll
                   style={{ textAlign: "center", justifyContent: "center" }}
-                  // dataLength={
-                  //   searchTextOpen === ""
-                  //     ? openPosts || [].length
-                  //     : openSearchPosts || [].length
-                  // }
                   dataLength={
                     searchTextOpen === ""
                       ? openPosts?.length || 0
@@ -1013,30 +1103,15 @@ export default function IssueMaterial() {
                   scrollableTarget="ListScroll"
                   endMessage={<Typography>No More Records</Typography>}
                 >
-                  {/* {(openSearchPosts || [].length === 0
-                    ? openPosts
-                    : openSearchPosts
-                  ).map((item) => (
-                    <CardComponent
-                      key={item.DocNum}
-                      title={item.CardName}
-                      subtitle={item.RequestNo}
-                      description={item.PhoneNumber1}
-                      onClick={() => {
-                        setOldOpenListData(item.DocEntry);
-                        handleCardClick(true);
-                      }}
-                    />
-                  ))} */}
                   {(openSearchPosts && openSearchPosts.length > 0
                     ? openSearchPosts
                     : openPosts || []
                   ).map((item) => (
                     <CardComponent
                       key={item.DocNum}
-                      title={item.CardName}
-                      subtitle={item.RequestNo}
-                      description={item.PhoneNumber1}
+                      title={item.IssueNo}
+                      subtitle={item.OrderNo}
+                      description={item.DocNum}
                       onClick={() => {
                         setOldOpenListData(item.DocEntry);
                         handleCardClick(true);
@@ -1076,11 +1151,6 @@ export default function IssueMaterial() {
                 </Grid>
                 <InfiniteScroll
                   style={{ textAlign: "center" }}
-                  // dataLength={
-                  //   searchTextClose === ""
-                  //     ? closedPosts.length
-                  //     : closeSearchPosts.length
-                  // }
                   dataLength={
                     searchTextClose === ""
                       ? closedPosts?.length || 0
@@ -1096,33 +1166,18 @@ export default function IssueMaterial() {
                   scrollableTarget="ListScrollClosed"
                   endMessage={<Typography>No More Records</Typography>}
                 >
-                  {/* {(closeSearchPosts.length === 0
-                    ? closedPosts
-                    : closeSearchPosts
-                  ).map((item) => (
-                    <CardComponent
-                      key={item.DocNum}
-                      title={item.CardName}
-                      subtitle={item.PhoneNumber1}
-                      description={item.RequestNo}
-                      onClick={() => {
-                        handleCardClick();
-                        setOldOpenListData(item.DocEntry);
-                      }}
-                    />
-                  ))} */}
                   {(closeSearchPosts && closeSearchPosts.length > 0
                     ? closeSearchPosts
                     : closedPosts || []
                   ).map((item) => (
                     <CardComponent
                       key={item.DocNum}
-                      title={item.CardName}
-                      subtitle={item.PhoneNumber1}
-                      description={item.RequestNo}
+                      title={item.IssueNo}
+                      subtitle={item.OrderNo}
+                      description={item.DocNum}
                       onClick={() => {
-                        handleCardClick();
                         setOldOpenListData(item.DocEntry);
+                        handleCardClick(true);
                       }}
                     />
                   ))}
@@ -1142,71 +1197,7 @@ export default function IssueMaterial() {
 
   return (
     <>
-      <SearchModel
-        open={isDialogOpen}
-        onClose={handleCloseDialog}
-        title="Select Request"
-        onChange={onHandleSearchGetListForCreate}
-        value={searchTextGetListForCreate}
-        onClickClear={triggerClearSearchTwice}
-        cardData={
-          <>
-            <InfiniteScroll
-              style={{ textAlign: "center" }}
-              // dataLength={
-              //   getListData.length === 0
-              //     ? getListSearchData.length
-              //     : getListData.length
-              // }
-              dataLength={
-                searchTextGetListForCreate === ""
-                  ? getListData?.length || 0
-                  : getListSearchData?.length || 0
-              }
-              next={fetchMoreGetListForCreate}
-              hasMore={hasMoreGetListForCreate}
-              loader={
-                <BeatLoader
-                  color={theme.palette.mode === "light" ? "black" : "white"}
-                />
-              }
-              scrollableTarget="getListForCreateScroll"
-              endMessage={
-                <Typography textAlign={"center"}>No More Records</Typography>
-              }
-            >
-              {/* {(getListSearchData.length === 0
-                ? getListData
-                : getListSearchData
-              ).map((item) => (
-                <CardComponent
-                  key={item.DocNum}
-                  title={item.DocNum}
-                  subtitle={item.CardName}
-                  description={item.PhoneNumber1}
-                  onClick={() => {
-                    onSelectRequest(item);
-                  }}
-                />
-              ))} */}
-              {(getListSearchData && getListSearchData.length > 0
-                ? getListSearchData
-                : getListData || []
-              ).map((item) => (
-                <CardComponent
-                  key={item.DocNum}
-                  title={item.DocNum}
-                  subtitle={item.CardName}
-                  description={item.PhoneNumber1}
-                  onClick={() => {
-                    onSelectRequest(item);
-                  }}
-                />
-              ))}
-            </InfiniteScroll>
-          </>
-        }
-      />
+      <Loader open={loading} />
       <Grid
         container
         width="100%"
@@ -1252,9 +1243,11 @@ export default function IssueMaterial() {
             aria-label="menu"
             onClick={toggleSidebar}
             sx={{
+              display: {
+                lg: "none",
+              },
               position: "absolute",
               left: "10px",
-              display: { lg: "none", xs: "block" },
             }}
           >
             <MenuIcon />
@@ -1271,7 +1264,7 @@ export default function IssueMaterial() {
               right: "10px",
             }}
           >
-            <RefreshIcon />
+            <AddIcon />
           </IconButton>
 
           <Grid
@@ -1307,6 +1300,7 @@ export default function IssueMaterial() {
               textTransform={"uppercase"}
             >
               <Box
+                component="form"
                 sx={{
                   "& .MuiTextField-root": { m: 1 },
                   width: "100%",
@@ -1314,233 +1308,190 @@ export default function IssueMaterial() {
                 noValidate
                 autoComplete="off"
               >
-                <Grid container>
-                  <Grid
-                    item
-                    sm={6}
-                    md={6}
-                    lg={4}
-                    xs={12}
-                    style={{ textAlign: "center" }}
-                  >
-                    <Controller
-                      name="RequestNo"
-                      control={control}
-                      render={({ field, fieldState: { error } }) => (
-                        <InputTextSearchField
-                          label="Request NO"
-                          type="text"
-                          onClick={() => {
-                            openDialog();
-                            ClearForm();
-                          }}
-                          {...field}
-                          error={!!error}
-                          helperText={error ? error.message : null}
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={4}>
+                    <Grid container direction="column">
+                      <Grid item textAlign="center">
+                        <Controller
+                          name="RequestNo"
+                          control={control}
+                          render={({ field }) => (
+                            <InputTextSearchButton
+                              label="Request NO"
+                              type="text"
+                              onClick={() => {
+                                openDialog();
+                              }}
+                              onChange={openDialog}
+                              readOnly={true}
+                              disabled={Disabled}
+                              {...field}
+                            />
+                          )}
                         />
-                      )}
-                    />
-                  </Grid>
-                  <Grid item sm={6} md={6} lg={4} xs={12} textAlign="center">
-                    <Controller
-                      name="OrderNo"
-                      control={control}
-                      rules={{
-                        required: "so No is required",
-                      }}
-                      render={({ field, fieldState: { error } }) => (
-                        <InputTextField
-                          label="SO NO"
-                          type="text"
-                          {...field}
-                          error={!!error}
-                          helperText={error ? error.message : null}
-                        />
-                      )}
-                    />
-                  </Grid>
-                  <Grid
-                    item
-                    sm={6}
-                    md={6}
-                    lg={4}
-                    xs={12}
-                    textAlign="center"
-                    key="request-date"
-                  >
-                    <Controller
-                      name="RequestDate"
-                      control={control}
-                      rules={{
-                        required: "REQUEST DATE is required",
-                      }}
-                      render={({ field, fieldState: { error } }) => (
-                        <InputDatePickerField
-                          redonly
-                          label="REQUEST DATE"
-                          name={field.name}
-                          value={field.value ? dayjs(field.value) : undefined}
-                          onChange={(date) =>
-                            field.onChange(date ? date.toISOString : undefined)
+
+                        <SearchModel
+                          open={isDialogOpen}
+                          onClose={handleCloseDialog}
+                          title="Select Issue Material"
+                          onChange={onHandleSearchGetListForCreate}
+                          value={searchTextGetListForCreate}
+                          onClickClear={triggerClearSearchTwice}
+                          cardData={
+                            <>
+                              <InfiniteScroll
+                                style={{ textAlign: "center" }}
+                                dataLength={
+                                  searchTextGetListForCreate === ""
+                                    ? getListData?.length || 0
+                                    : getListSearchData?.length || 0
+                                }
+                                next={fetchMoreGetListForCreate}
+                                hasMore={hasMoreGetListForCreate}
+                                loader={
+                                  <BeatLoader
+                                    color={
+                                      theme.palette.mode === "light"
+                                        ? "black"
+                                        : "white"
+                                    }
+                                  />
+                                }
+                                scrollableTarget="getListForCreateScroll"
+                                endMessage={
+                                  <Typography textAlign={"center"}>
+                                    No More Records
+                                  </Typography>
+                                }
+                              >
+                                {(getListSearchData &&
+                                getListSearchData.length > 0
+                                  ? getListSearchData
+                                  : getListData || []
+                                ).map((item) => (
+                                  <CardComponent
+                                    key={item.DocNum}
+                                    title={
+                                      item.DocNum +
+                                      " " +
+                                      (item.OrderNo ? "| " + item.OrderNo : "")
+                                    }
+                                    subtitle={item.PhoneNumber1}
+                                    description={item.CardName}
+                                    onClick={() => {
+                                      onSelectRequest(item);
+                                    }}
+                                  />
+                                ))}
+                              </InfiniteScroll>
+                            </>
                           }
-                          error={!!error}
-                          helperText={error ? error.message : null}
                         />
-                      )}
-                    />
+                      </Grid>
+
+                      <Grid item textAlign="center">
+                        <Controller
+                          name="IssueDate"
+                          control={control}
+                          render={({ field }) => (
+                            <InputDatePickerField
+                              readOnly={true}
+                              label="REQUEST DATE"
+                              name={field.name}
+                              value={
+                                field.value ? dayjs(field.value) : undefined
+                              }
+                            />
+                          )}
+                        />
+                      </Grid>
+
+                      <Grid item textAlign="center">
+                        <Controller
+                          name="ReturnNo"
+                          control={control}
+                          render={({ field }) => (
+                            <InputTextField
+                              label="RETURN No"
+                              type="text"
+                              {...field}
+                              readOnly={true}
+                            />
+                          )}
+                        />
+                      </Grid>
+                    </Grid>
                   </Grid>
 
-                  <Grid item sm={6} md={6} lg={4} xs={12} textAlign="center">
-                    <Controller
-                      name="IssueDate"
-                      control={control}
-                      rules={{
-                        required: "issue date is required",
-                      }}
-                      render={({ field, fieldState: { error } }) => (
-                        <InputDatePickerField
-                          readOnly
-                          label="Issue Date"
-                          name={field.name}
-                          value={field.value ? dayjs(field.value) : undefined}
-                          onChange={(date) =>
-                            field.onChange(date ? date.toISOString : undefined)
-                          }
-                          error={!!error}
-                          helperText={error ? error.message : null}
+                  <Grid item xs={12} md={4}>
+                    <Grid container direction="column">
+                      <Grid item textAlign="center">
+                        <Controller
+                          name="OrderNo"
+                          control={control}
+                          render={({ field }) => (
+                            <InputTextField
+                              label="SO NO"
+                              type="text"
+                              {...field}
+                              readOnly={true}
+                            />
+                          )}
                         />
-                      )}
-                    />
+                      </Grid>
+
+                      <Grid item textAlign="center">
+                        <Controller
+                          name="ReturnDate"
+                          control={control}
+                          render={({ field }) => (
+                            <InputDatePickerField
+                              readOnly={true}
+                              label="RETURN DATE"
+                              name={field.name}
+                              value={
+                                field.value ? dayjs(field.value) : undefined
+                              }
+                            />
+                          )}
+                        />
+                      </Grid>
+                    </Grid>
                   </Grid>
 
-                  <Grid item sm={6} md={6} lg={4} xs={12} textAlign="center">
-                    <Controller
-                      name="OrderType"
-                      rules={{
-                        required: "Order Type is required",
-                      }}
-                      control={control}
-                      render={({ field, fieldState: { error } }) => (
-                        <InputTextField
-                          label="Order Type"
-                          type="text"
-                          {...field}
-                          error={!!error}
-                          helperText={error ? error.message : null}
+                  <Grid item xs={12} md={4}>
+                    <Grid container direction="column">
+                      <Grid item textAlign="center">
+                        <Controller
+                          name="IssueNo"
+                          control={control}
+                          render={({ field }) => (
+                            <InputTextField
+                              label="Issue No"
+                              type="text"
+                              {...field}
+                              readOnly={true}
+                            />
+                          )}
                         />
-                      )}
-                    />
-                  </Grid>
-                  <Grid item sm={6} md={6} lg={4} xs={12} textAlign="center">
-                    <Controller
-                      name="1"
-                      control={control}
-                      // rules={{
-                      //   required: "issue no is required",
-                      // }}
-                      render={({ field, fieldState: { error } }) => (
-                        <InputTextField
-                          label="Issue No "
-                          type="text"
-                          {...field}
-                          error={!!error}
-                          helperText={error ? error.message : null}
-                        />
-                      )}
-                    />
-                  </Grid>
-                  <Grid item sm={6} md={6} lg={4} xs={12} textAlign="center">
-                    <Controller
-                      name="RegistrationNo"
-                      control={control}
-                      // rules={{
-                      //   required: "Registration No is required",
-                      // }}
-                      render={({ field, fieldState: { error } }) => (
-                        <InputTextField
-                          label="Registration No"
-                          type="text"
-                          {...field}
-                          error={!!error}
-                          helperText={error ? error.message : null}
-                        />
-                      )}
-                    />
-                  </Grid>
-                  <Grid item sm={6} md={6} lg={4} xs={12} textAlign="center">
-                    <Controller
-                      name="InwardNo"
-                      control={control}
-                      // rules={{
-                      //   required: "Inward No is required",
-                      // }}
-                      render={({ field, fieldState: { error } }) => (
-                        <InputTextField
-                          label="Inward No"
-                          type="text"
-                          {...field}
-                          error={!!error}
-                          helperText={error ? error.message : null}
-                        />
-                      )}
-                    />
-                  </Grid>
-                  <Grid item sm={6} md={6} lg={4} xs={12} textAlign="center">
-                    <Controller
-                      name="JobWorkAt"
-                      control={control}
-                      // rules={{
-                      //   required: "Job Work At is required",
-                      // }}
-                      render={({ field, fieldState: { error } }) => (
-                        <InputTextField
-                          label="Job Work At"
-                          type="text"
-                          {...register("JobWorkAt")}
-                          {...field}
-                          error={!!error}
-                          helperText={error ? error.message : null}
-                        />
-                      )}
-                    />
-                  </Grid>
-                  <Grid item sm={6} md={6} lg={4} xs={12} textAlign="center">
-                    <Button
-                      variant="contained"
-                      fullWidth
-                      sx={{ maxWidth: 220 }}
-                      disabled={Disabled}
-                    >
-                      {Disabled ? "Print Picklist" : "Print Picklist"}
-                    </Button>
-                  </Grid>
+                      </Grid>
 
-                  <Grid item sm={6} md={6} lg={4} xs={12} textAlign="center">
-                    <Controller
-                      name="ReqRemarks"
-                      control={control}
-                      render={({ field, fieldState: { error } }) => (
-                        <InputTextArea
-                          label="Job Work Details"
-                          type="text"
-                          {...field}
-                          error={!!error}
-                          helperText={error ? error.message : null}
+                      <Grid item textAlign="center">
+                        <Controller
+                          name="JobWorkAt"
+                          control={control}
+                          render={({ field }) => (
+                            <InputTextField
+                              label="Job Work At"
+                              type="text"
+                              {...register("JobWorkAt")}
+                              {...field}
+                              readOnly={true}
+                            />
+                          )}
                         />
-                      )}
-                    />
-                  </Grid>
-                </Grid>
-
-                <Grid container>
-                  <Grid item md={12} lg={12} xs={12} textAlign="center" m={2}>
-                    <TextField
-                      fullWidth
-                      placeholder="Search..."
-                      autoFocus
-                      value={barcodeItem}
-                      onChange={handleBarcodeChange}
-                    />
+                      </Grid>
+                    </Grid>
                   </Grid>
                 </Grid>
 
@@ -1549,8 +1500,30 @@ export default function IssueMaterial() {
                   sx={{
                     overflow: "auto",
                     width: "100%",
-                    height: 230,
+                    mt: 3,
+                    mb: 3,
+                  }}
+                >
+                  <TextField
+                    fullWidth
+                    placeholder="Scan Barcode"
+                    autoFocus
+                    value={barcodeItem}
+                    onChange={handleBarcodeChange}
+                    disabled={!watch("RequestNo") || Disabled}
+                  />
+                </Grid>
+
+                <Grid
+                  container
+                  sx={{
+                    overflow: "auto",
+                    width: "100%",
+                    maxHeight: 400,
+                    minHeight: 150,
                     mt: "5px",
+                    pl: 1,
+                    pr: 1,
                   }}
                 >
                   <DataGrid
@@ -1564,124 +1537,73 @@ export default function IssueMaterial() {
                     disableRowSelectionOnClick
                     autoHeight="false"
                     sx={gridSx}
-                    // sx={{
-                    //   backgroundColor:
-                    //     theme.palette.mode === "light" ? "#F5F6FA" : "#080D2B",
-                    //   "& .MuiDataGrid-cell": {
-                    //     border: "none",
-                    //   },
-                    //   "& .MuiDataGrid-cell:focus": {
-                    //     outline: "none",
-                    //   },
-                    // }}
                   />
                 </Grid>
 
-                <Grid container>
-                  <Grid
-                    item
-                    sm={6}
-                    md={6}
-                    lg={6}
-                    xs={12}
-                    textAlign="center"
-                    mt={1}
-                  >
-                    <Controller
-                      name="RequestBy"
-                      control={control}
-                      rules={{
-                        required: "Requested By is required",
-                      }}
-                      render={({ field, fieldState: { error } }) => (
-                        <InputTextField
-                          label="Requested By"
-                          type="text"
-                          {...field}
-                          error={!!error}
-                          helperText={error ? error.message : null}
+                <Grid container item mt={1} spacing={2} marginTop={3}>
+                  <Grid item xs={12} md={4}>
+                    <Grid container direction="column">
+                      <Grid item textAlign={"center"}>
+                        <Controller
+                          name="ReturnBy"
+                          control={control}
+                          render={({ field }) => (
+                            <InputTextField
+                              label="RETURN BY"
+                              type="text"
+                              {...field}
+                              readOnly={true}
+                            />
+                          )}
                         />
-                      )}
-                    />
-                  </Grid>
-                  <Grid
-                    item
-                    sm={6}
-                    md={6}
-                    lg={6}
-                    xs={12}
-                    textAlign="center"
-                    mt={1}
-                  >
-                    <Controller
-                      name="InvTransferNo"
-                      control={control}
-                      render={({ field, fieldState: { error } }) => (
-                        <InputTextField
-                          label="Inventory Transfer Number"
-                          type="text"
-                          {...field}
-                          error={!!error}
-                          helperText={error ? error.message : null}
-                        />
-                      )}
-                    />
-                  </Grid>
-                  <Grid
-                    item
-                    sm={6}
-                    md={6}
-                    lg={6}
-                    xs={12}
-                    textAlign="center"
-                    mt={1}
-                  >
-                    <Controller
-                      name="IssuedBy"
-                      control={control}
-                      rules={{
-                        required: "issue by is required",
-                      }}
-                      render={({ field, fieldState: { error } }) => (
-                        <InputTextField
-                          label="Issue By"
-                          type="text"
-                          {...field}
-                          error={!!error}
-                          helperText={error ? error.message : null}
-                        />
-                      )}
-                    />
+                      </Grid>
+                    </Grid>
                   </Grid>
 
-                  <Grid
-                    item
-                    sm={6}
-                    md={6}
-                    lg={6}
-                    xs={12}
-                    textAlign="center"
-                    mt={1}
-                  >
-                    <Controller
-                      name="HW_WMSStaff"
-                      control={control}
-                      rules={{
-                        required: "Parts Delivered By is required",
-                      }}
-                      render={({ field, fieldState: { error } }) => (
-                        <InputSelectTextField
-                          label="Parts Delivered By"
-                          data={(WMSStaff || []).map((item) => ({
-                            key: item.DocEntry,
-                            value: item.TechnicianName,
-                          }))}
-                          {...field}
-                          error={!!error}
-                          helperText={error?.message}
+                  <Grid item xs={12} md={4}>
+                    <Grid container direction="column">
+                      <Grid item textAlign={"center"}>
+                        <Controller
+                          name="IssuedBy"
+                          control={control}
+                          render={({ field }) => (
+                            <InputTextField
+                              label="ISSUE BY"
+                              type="text"
+                              {...field}
+                              readOnly={true}
+                            />
+                          )}
                         />
-                      )}
-                    />
+                      </Grid>
+                    </Grid>
+                  </Grid>
+
+                  <Grid item xs={12} md={4}>
+                    <Grid container direction="column">
+                      <Grid item textAlign={"center"}>
+                        <Controller
+                          name="HW_WMSStaff"
+                          control={control}
+                          rules={{
+                            required: "Parts Picked By is required",
+                          }}
+                          render={({ field, fieldState: { error } }) => (
+                            <InputSelectTextField
+                              label="PARTS PICKED BY"
+                              data={(WMSStaff || []).map((item) => ({
+                                key: item.DocEntry,
+                                value: item.TechnicianName,
+                              }))}
+                              readOnly={Disabled}
+                              {...field}
+                              error={!!error}
+                              helperText={error?.message}
+                            />
+                          )}
+                        />
+                      </Grid>
+                    </Grid>
                   </Grid>
                 </Grid>
               </Box>

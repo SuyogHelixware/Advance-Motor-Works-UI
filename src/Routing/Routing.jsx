@@ -182,6 +182,7 @@ import PreviewReport from "../Pages/Reports/PreviewReport.jsx";
 import EmailSetup from "../Pages/Admin/EmailSetup.jsx";
 import EmailTemplate from "../Pages/Setup/EmailTemplate.jsx";
 import AppointmentScreen from "../Pages/Workshop/AppointmentScreen.jsx";
+import Barcode from "../Pages/Warehouse/Barcode.jsx";
 const ProtectedRoute = ({ element }) => {
   const { user, companyData, companyLoading, companyNeedsSetup, companyError } =
     useAuth();
@@ -617,7 +618,7 @@ function Routing() {
             <Route path="" element={<WareHouse />} />
             <Route path="issue-material" element={<IssueMaterial />} />
             <Route path="material-return" element={<MaterialReturn />} />
-            {/* <Route path="barcode" element={<Barcode />} /> */}
+            <Route path="barcode" element={<Barcode />} />
           </Route>
 
           <Route

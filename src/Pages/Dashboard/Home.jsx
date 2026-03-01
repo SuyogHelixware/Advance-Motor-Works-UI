@@ -1078,7 +1078,7 @@ export default function Home() {
         </LocalizationProvider>
       </div>
 
-      {SALES_MANAGER && (
+      {/* {SALES_MANAGER && ( */}
         <>
           <div>
             <Card
@@ -1104,7 +1104,7 @@ export default function Home() {
           </div>
 
           <Grid container style={{ paddingRight: 0 }} spacing={2}>
-            {SALES_MANAGER && SALES_ANALYSIS_PARTS_ONLY_MTD && (
+            {/* {SALES_MANAGER && SALES_ANALYSIS_PARTS_ONLY_MTD && ( */}
               <Grid item lg={colWidth}>
                 <Card elevation={5} style={{ marginBottom: 15, height: 425 }}>
                   <CardHeader
@@ -1178,9 +1178,9 @@ export default function Home() {
                   </Box>
                 </Card>
               </Grid>
-            )}
+            {/* )} */}
 
-            {SALES_MANAGER && WORKSHOP_REVENUE_MTD_IN_KWD && (
+            {/* {SALES_MANAGER && WORKSHOP_REVENUE_MTD_IN_KWD && ( */}
               <Grid item lg={colWidth}>
                 <Card elevation={5} style={{ marginBottom: 15, height: 425 }}>
                   <CardHeader
@@ -1257,9 +1257,9 @@ export default function Home() {
                   </Box>
                 </Card>
               </Grid>
-            )}
+            {/* )} */}
 
-            {SALES_MANAGER && TARGET_VS_ACTUAL_PARTS_12MONTHS && (
+            {/* {SALES_MANAGER && TARGET_VS_ACTUAL_PARTS_12MONTHS && ( */}
               <Grid item lg={6}>
                 <Card elevation={5} style={{ marginBottom: 15, height: 425 }}>
                   <CardHeader
@@ -1307,9 +1307,9 @@ export default function Home() {
                   )}
                 </Card>
               </Grid>
-            )}
+            {/* )} */}
 
-            {SALES_MANAGER && TARGET_VS_ACTUAL_PARTS_12MONTHS && (
+            {/* {SALES_MANAGER && TARGET_VS_ACTUAL_PARTS_12MONTHS && ( */}
               <Grid item lg={6}>
                 <Card elevation={5} style={{ marginBottom: 15, height: 425 }}>
                   <CardHeader
@@ -1388,9 +1388,9 @@ export default function Home() {
                   </Box>
                 </Card>
               </Grid>
-            )}
+            {/* )} */}
 
-            {SALES_MANAGER && SALESMAN_WISE_SALES_MTD && (
+            {/* {SALES_MANAGER && SALESMAN_WISE_SALES_MTD && ( */}
               <Grid item lg={6}>
                 <Card elevation={5} style={{ marginBottom: 15, height: 425 }}>
                   <CardHeader
@@ -1438,9 +1438,9 @@ export default function Home() {
                   )}
                 </Card>
               </Grid>
-            )}
+            {/* )} */}
 
-            {SALES_MANAGER && TOP_20_PRODUCT_MTD && (
+            {/* {SALES_MANAGER && TOP_20_PRODUCT_MTD && ( */}
               <Grid item lg={6}>
                 <Card elevation={5} style={{ marginBottom: 15, height: 425 }}>
                   <CardHeader
@@ -1489,9 +1489,9 @@ export default function Home() {
                   )}
                 </Card>
               </Grid>
-            )}
+            {/* )} */}
 
-            {SALES_MANAGER && TOP_20_CUSTOMER_MTD_RETAIL && (
+            {/* {SALES_MANAGER && TOP_20_CUSTOMER_MTD_RETAIL && ( */}
               <Grid item lg={6}>
                 <Card elevation={5} style={{ marginBottom: 15, height: 425 }}>
                   <CardHeader
@@ -1539,12 +1539,12 @@ export default function Home() {
                   )}
                 </Card>
               </Grid>
-            )}
+            {/* )} */}
           </Grid>
         </>
-      )}
+      {/* )} */}
 
-      {Sales_DashBoard && (
+      {/* {Sales_DashBoard && ( */}
         <>
           <div>
             <Card
@@ -1571,7 +1571,7 @@ export default function Home() {
           </div>
 
           <Grid container style={{ paddingRight: 0 }} spacing={2}>
-            {Sales_DashBoard && Sales_OPEN_SALES_ORDERS && (
+            {/* {Sales_DashBoard && Sales_OPEN_SALES_ORDERS && ( */}
               <Grid item lg={12}>
                 <Card elevation={5} style={{ marginBottom: 15, height: 425 }}>
                   <CardHeader
@@ -1651,9 +1651,9 @@ export default function Home() {
                   </Box>
                 </Card>
               </Grid>
-            )}
+            {/* )} */}
 
-            {Sales_DashBoard && MONTHLY_SALE && (
+            {/* {Sales_DashBoard && MONTHLY_SALE && ( */}
               <Grid item lg={12}>
                 <Card elevation={5} style={{ marginBottom: 15, height: 425 }}>
                   <CardHeader
@@ -1750,12 +1750,12 @@ export default function Home() {
                   </Box>
                 </Card>
               </Grid>
-            )}
+            {/* )} */}
           </Grid>
         </>
-      )}
+      {/* )} */}
 
-      {WORKSHOP_DASHBOARD && (
+      {/* {WORKSHOP_DASHBOARD && ( */}
         <>
           <div>
             <Card
@@ -1782,7 +1782,7 @@ export default function Home() {
           </div>
 
           <Grid container style={{ paddingRight: 0 }} spacing={2}>
-            {WORKSHOP_DASHBOARD && TODAYS_SCHEDULED_APPOINTMENTS_FOR_INWARD && (
+            {/* {WORKSHOP_DASHBOARD && TODAYS_SCHEDULED_APPOINTMENTS_FOR_INWARD && ( */}
               <Grid item lg={12}>
                 <Card elevation={5} style={{ marginBottom: 15, height: 425 }}>
                   <CardHeader
@@ -1860,9 +1860,9 @@ export default function Home() {
                   </Box>
                 </Card>
               </Grid>
-            )}
+            {/* )} */}
 
-            {WORKSHOP_DASHBOARD && WORKSHOP_REVENUE_MTD_IN_KWD_WORKSHOP && (
+            {/* {WORKSHOP_DASHBOARD && WORKSHOP_REVENUE_MTD_IN_KWD_WORKSHOP && ( */}
               <Grid item lg={12}>
                 <Card elevation={5} style={{ marginBottom: 15, height: 425 }}>
                   <CardHeader
@@ -1939,12 +1939,12 @@ export default function Home() {
                   </Box>
                 </Card>
               </Grid>
-            )}
+            {/* )} */}
           </Grid>
         </>
-      )}
+       {/* )} */}
 
-      {WAREHOUSE_DASHBOARD && (
+      {/* {WAREHOUSE_DASHBOARD && ( */}
         <>
           <div>
             <Card
@@ -1971,7 +1971,7 @@ export default function Home() {
           </div>
 
           <Grid container style={{ paddingRight: 0 }} spacing={2}>
-            {WAREHOUSE_DASHBOARD && MATERIAL_REQUEST_LIST && (
+            {/* {WAREHOUSE_DASHBOARD && MATERIAL_REQUEST_LIST && ( */}
               <Grid item lg={12}>
                 <Card elevation={5} style={{ marginBottom: 15, height: 425 }}>
                   <CardHeader
@@ -2051,10 +2051,10 @@ export default function Home() {
                   </Box>
                 </Card>
               </Grid>
-            )}
+            {/* )} */}
           </Grid>
         </>
-      )}
+      {/* )} */}
     </Box>
   );
 }
