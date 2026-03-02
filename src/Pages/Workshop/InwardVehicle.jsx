@@ -192,7 +192,7 @@ export default function InwardVehicle() {
 
       SearchModelClose();
     } catch (error) {
-      console.error("Error selecting business partner:", error);
+      console.error("Error:", error);
     } finally {
       setLoading(false);
     }
@@ -202,7 +202,7 @@ export default function InwardVehicle() {
     if (!DocEntry) return;
     setLoading(true);
     try {
-      const res = await apiClient.get(`/VehInward?DocEntry=${DocEntry}`);
+      const res = await apiClient.get(`/VehInward/${DocEntry}`);
       const data = res.data.values;
 
       if (!data) {
@@ -275,11 +275,6 @@ export default function InwardVehicle() {
         setOpenListPage(pageNum);
       } else {
         setHasMoreOpen(false);
-        Swal.fire({
-          text: data?.message || "Something went wrong",
-          icon: "question",
-          confirmButtonText: "YES",
-        });
       }
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -343,11 +338,9 @@ export default function InwardVehicle() {
         });
       }
     } catch (error) {
-      console.error("Error fetching data:", error);
       setHasMoreClosed(false);
-
       Swal.fire({
-        text: error?.response?.data?.message || error.message || "Server error",
+        text: error?.response?.data?.message || "Server error",
         icon: "question",
         confirmButtonText: "YES",
       });
@@ -601,10 +594,6 @@ export default function InwardVehicle() {
           pageNum === 0 ? newData : [...prev, ...newData],
         );
         setHasMoreGetList(newData.length === 20);
-
-        setGetListData((prev) =>
-          pageNum === 0 ? newData : [...prev, ...newData],
-        );
       } else {
         setHasMoreGetList(false);
       }
@@ -613,12 +602,6 @@ export default function InwardVehicle() {
         return;
       }
       setHasMoreGetList(false);
-
-      Swal.fire({
-        text: error?.response?.data?.message || error.message,
-        icon: "error",
-        confirmButtonText: "OK",
-      });
     }
   };
 
@@ -732,11 +715,6 @@ export default function InwardVehicle() {
 
       if (res.data.success) {
         setLoading(false);
-        setOpenListData([]);
-        fetchOpenListData(0);
-        handleGetListClear();
-        ClearForm();
-
         Swal.fire({
           title: "Success!",
           text: "Vehicle Inward Successfully",
@@ -744,6 +722,10 @@ export default function InwardVehicle() {
           timer: 1500,
           showConfirmButton: false,
         });
+        setOpenListData([]);
+        fetchOpenListData(0);
+        handleGetListClear();
+        ClearForm();
       } else {
         setLoading(false);
         Swal.fire({

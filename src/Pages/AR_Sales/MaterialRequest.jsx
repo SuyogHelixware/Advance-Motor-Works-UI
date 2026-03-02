@@ -127,7 +127,7 @@ export default function MaterialRequest() {
       reset(filledValues);
       SearchModelClose();
     } catch (error) {
-      console.error("Error selecting business partner:", error);
+      console.error("Error:", error);
     } finally {
       setLoading(false);
     }
@@ -332,9 +332,7 @@ export default function MaterialRequest() {
 
       setHasMoreClosed(newData.length === 20);
     } catch (error) {
-      console.error("Error fetching data:", error);
       setHasMoreClosed(false);
-
       Swal.fire({
         text: error?.response?.data?.message || error.message,
         icon: "question",
@@ -695,11 +693,6 @@ export default function MaterialRequest() {
 
       if (res.data.success) {
         setLoading(false);
-        setOpenListData([]);
-        fetchOpenListData(0);
-        handleGetListClear();
-        ClearForm();
-
         Swal.fire({
           text: "Material Request Accepted",
           icon: "success",
@@ -707,6 +700,10 @@ export default function MaterialRequest() {
           showConfirmButton: false,
           timer: 1500,
         });
+        setOpenListData([]);
+        fetchOpenListData(0);
+        handleGetListClear();
+        ClearForm();
       } else {
         setLoading(false);
         Swal.fire({

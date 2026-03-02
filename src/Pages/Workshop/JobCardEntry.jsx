@@ -31,7 +31,6 @@ import Swal from "sweetalert2";
 import { dataGridSx } from "../../Styles/dataGridStyles";
 import AutoCompleteDropdown from "../Components/AutoCompleteDropdown";
 import CardComponent from "../Components/CardComponent";
-
 import apiClient from "../../services/apiClient";
 import {
   InputDatePickerField,
@@ -79,6 +78,7 @@ export default function IssueMaterial() {
   const [closedListSearching, setClosedListSearching] = useState(false);
   const perms = usePermissions(133);
   const [beforeCloseUpdateFlag, setBeforeCloseUpdateFlag] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const [openQCModal, setOpenQCModal] = useState(false);
   const [QcSaveUpdateName, setQcSaveUpdateName] = useState("SAVE");
@@ -89,6 +89,42 @@ export default function IssueMaterial() {
 
   const [allQCQuestions, setAllQCQuestions] = useState([]);
   const [QCoLines, setQCoLines] = useState([]);
+
+  const initial = {
+    CardName: "",
+    RequestDocNums: "",
+    PhoneNumber1: "",
+    JobCardNo: "",
+    OrderNo: "",
+    ReqNo: "",
+    RequestDate: dayjs(new Date()),
+    VehicleInwardNo: "",
+    VehInwardBy: "",
+    JobWorkAt: "",
+    RegistrationNo: "",
+    JobWorkDetails: "",
+    JobCardRemarks: "",
+    JobWorkBy: "",
+    BeforeLH: "",
+    BeforeRH: "",
+    TotalHeight: "",
+    AfterLH: "",
+    AfterRH: "",
+    VehInwardNo: "",
+    JobStartDate: dayjs(new Date()),
+    JobCloseDate: dayjs(new Date()),
+    JobCardTime: dayjs(),
+    OrderDocEntry: "",
+    oLines: [],
+  };
+
+  const { control, handleSubmit, reset, getValues, watch, setValue } = useForm({
+    defaultValues: initial,
+  });
+
+  const { setValue: setValueMdl } = useForm({});
+
+  const allFormData = getValues();
 
   const handleCheckboxChange = (index, field, checked) => {
     setQCoLines((prevLines) => {
@@ -137,8 +173,10 @@ export default function IssueMaterial() {
       width: 170,
       sortable: true,
       renderCell: (params) => {
-        const index = QCoLines.findIndex(
-          (r) => r.QCDocEntry === params.row.QCDocEntry,
+        const index = QCoLines.findIndex((r) =>
+          r.LineNum != null
+            ? r.LineNum === params.row.LineNum
+            : r.QCDocEntry === params.row.QCDocEntry,
         );
 
         return (
@@ -168,8 +206,10 @@ export default function IssueMaterial() {
       width: 330,
       sortable: false,
       renderCell: (params) => {
-        const index = QCoLines.findIndex(
-          (r) => r.QCDocEntry === params.row.QCDocEntry,
+        const index = QCoLines.findIndex((r) =>
+          r.LineNum != null
+            ? r.LineNum === params.row.LineNum
+            : r.QCDocEntry === params.row.QCDocEntry,
         );
 
         return (
@@ -191,70 +231,74 @@ export default function IssueMaterial() {
 
   const fetchAndSetData = async (DocEntry) => {
     try {
+      setLoading(true);
       const res = await apiClient.get(`/JobCard/${DocEntry}`);
 
       const data = res.data.values;
-      const transformed = {
-        ...data,
-        OrderNo: data.OrderNo,
-        CardName: data.CardName,
-        CardCode: data.CardCode,
-        // RequestDate: data.RequestDate,
-        RequestDate: data.RequestDate ? dayjs(data.RequestDate) : dayjs(),
-        ReqNo: data.RequestNo,
-        JobCardNo: data.JobCardNo,
-        VehInwardNo: data.VehInwardNo,
-        VehInwardBy: data.VehInwardBy,
-        JobWorkAt: data.JobWorkAt,
-        RegistrationNo: data.RegistrationNo,
-        OrderDocEntry: data.OrderDocEntry,
-        JobWorkDetails: data.JobRemarks,
-        PhoneNumber1: data.PhoneNumber1,
-        BeforeLH: data.BeforeLH,
-        BeforeRH: data.BeforeRH,
-        TotalHeight: data.TotalHeight,
-        AfterLH: data.AfterLH,
-        AfterRH: data.AfterRH,
-        JobRemarks: data.JobRemarks,
-        JobCardRemarks: data.JobCardRemarks,
-        JobWorkBy: data.CreatedBy,
-        JobCardTime: data.JobCardTime ? dayjs(data.JobCardTime) : dayjs(),
-        JobStartDate: data.JobStartDate ? dayjs(data.JobStartDate) : dayjs(),
-        JobCloseDate: data.JobCloseDate ? dayjs(data.JobCloseDate) : dayjs(),
-        oLines: data.oLines?.map((Job) => ({
-          ItemCode: Job.ItemCode,
-          ItemName: Job.ItemName,
-          WHSCode: Job.WHSCode,
-          ReqQuantity: Job.ItemQuantity,
-          JobWorkstationId: Number(Job.JobWorkstationId),
-          Technician: Number(Job.Technician),
-          LineJobStatus: Number(Job.LineJobStatus),
-        })),
-      };
 
-      // fetchTechnicianData();
-      // reset(transformed);
-      await Promise.all([fetchTechnicianData(), fetchJacks()]);
-      reset(transformed);
-      setSelectData(DocEntry);
-      setDocEntry(DocEntry);
-      setSaveUpdateName("UPDATE");
+      if (!data) {
+        Swal.fire({
+          icon: "warning",
+          text: "Record not found",
+        });
+        setLoading(false);
+        return;
+      }
+
+      if (res.data.success) {
+        const transformed = {
+          ...data,
+          OrderNo: data.OrderNo,
+          CardName: data.CardName,
+          CardCode: data.CardCode,
+          // RequestDate: data.RequestDate,
+          RequestDate: data.RequestDate ? dayjs(data.RequestDate) : dayjs(),
+          ReqNo: data.RequestNo,
+          JobCardNo: data.JobCardNo,
+          VehInwardNo: data.VehInwardNo,
+          VehInwardBy: data.VehInwardBy,
+          JobWorkAt: data.JobWorkAt,
+          RegistrationNo: data.RegistrationNo,
+          OrderDocEntry: data.OrderDocEntry,
+          JobWorkDetails: data.JobRemarks,
+          PhoneNumber1: data.PhoneNumber1,
+          BeforeLH: data.BeforeLH,
+          BeforeRH: data.BeforeRH,
+          TotalHeight: data.TotalHeight,
+          AfterLH: data.AfterLH,
+          AfterRH: data.AfterRH,
+          JobRemarks: data.JobRemarks,
+          JobCardRemarks: data.JobCardRemarks,
+          JobWorkBy: data.CreatedBy,
+          JobCardTime: data.JobCardTime ? dayjs(data.JobCardTime) : dayjs(),
+          JobStartDate: data.JobStartDate ? dayjs(data.JobStartDate) : dayjs(),
+          JobCloseDate: data.JobCloseDate ? dayjs(data.JobCloseDate) : dayjs(),
+          oLines: data.oLines?.map((Job) => ({
+            ItemCode: Job.ItemCode,
+            ItemName: Job.ItemName,
+            WHSCode: Job.WHSCode,
+            ReqQuantity: Job.ItemQuantity,
+            JobWorkstationId: Number(Job.JobWorkstationId),
+            Technician: Number(Job.Technician),
+            LineJobStatus: Number(Job.LineJobStatus),
+          })),
+        };
+        await Promise.all([fetchTechnicianData(), fetchJacks()]);
+        reset(transformed);
+        setSelectData(DocEntry);
+        setDocEntry(DocEntry);
+        setSaveUpdateName("UPDATE");
+      }
     } catch (error) {
-      console.error("Error fetching data:", error);
-
       Swal.fire({
-        text: error?.response?.data?.message || "Failed to fetch data.",
         icon: "error",
-        confirmButtonText: "OK",
+        title: "Oops...",
+        text: error.message || "Something went wrong",
       });
+    } finally {
+      setLoading(false);
     }
   };
-
-  const setOldOpenData = (DocEntry) => {
-    fetchAndSetData(DocEntry);
-  };
-
-  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleTabChangeRight = (e, newvalue1) => {
     settab(newvalue1);
@@ -266,50 +310,6 @@ export default function IssueMaterial() {
     setDocEntry("");
     setSelectData([]);
   };
-
-  const initial = {
-    CardName: "",
-    RequestDocNums: "",
-    PhoneNumber1: "",
-    JobCardNo: "",
-    OrderNo: "",
-    ReqNo: "",
-    RequestDate: dayjs(new Date()),
-    VehicleInwardNo: "",
-    VehInwardBy: "",
-    JobWorkAt: "",
-    RegistrationNo: "",
-    JobWorkDetails: "",
-    JobCardRemarks: "",
-    JobWorkBy: "",
-    BeforeLH: "",
-    BeforeRH: "",
-    TotalHeight: "",
-    AfterLH: "",
-    AfterRH: "",
-    VehInwardNo: "",
-    JobStartDate: dayjs(new Date()),
-    JobCloseDate: dayjs(new Date()),
-    JobCardTime: dayjs(),
-    OrderDocEntry: "",
-    oLines: [],
-  };
-
-  const {
-    control,
-    handleSubmit,
-    reset,
-    getValues,
-    watch,
-    setValue,
-    // formState: { errors },
-  } = useForm({
-    defaultValues: initial,
-  });
-
-  const { setValue: setValueMdl } = useForm({});
-
-  const allFormData = getValues();
 
   const signatureEditable =
     SaveUpdateName === "SAVE" || allFormData.Status === "1";
@@ -365,19 +365,39 @@ export default function IssueMaterial() {
       } else {
         const JQC = response.data.values[0];
         setQcSaveUpdateName("UPDATE");
-        const mappedLines = JQC.oLines.map((line) => ({
-          UserId: line.UserId,
-          CreatedBy: line.CreatedBy,
-          ModifiedBy: localStorage.getItem("UserName"),
-          Status: line.Status,
-          QCDocEntry: line.QCDocEntry,
-          Question: line.Question,
-          Inspected: line.Inspected === "1",
-          Notes: line.Notes || "",
-        }));
+        // const mappedLines = JQC.oLines.map((line) => ({
+        //   UserId: line.UserId,
+        //   CreatedBy: line.CreatedBy,
+        //   ModifiedBy: localStorage.getItem("UserName"),
+        //   Status: line.Status,
+        //   QCDocEntry: line.QCDocEntry,
+        //   LineNum: line.LineNum,
+        //   Question: line.Question,
+        //   Inspected: line.Inspected === "1",
+        //   Notes: line.Notes || "",
+        // }));
+        // Merge master questions with saved QC lines
+        const mappedLines = allQCQuestions.map((q) => {
+          const matched = JQC.oLines.find(
+            (line) => line.QCDocEntry === q.QCDocEntry,
+          );
+
+          return {
+            UserId: matched?.UserId || localStorage.getItem("UserId"),
+            CreatedBy: matched?.CreatedBy || localStorage.getItem("UserName"),
+            ModifiedBy: localStorage.getItem("UserName"),
+            Status: matched?.Status || "1",
+            QCDocEntry: q.QCDocEntry,
+            LineNum: matched?.LineNum ?? null,
+            Question: q.Question,
+            Inspected: matched ? matched.Inspected === "1" : false,
+            Notes: matched?.Notes || "",
+          };
+        });
 
         setQcMasterList({
           UserId: JQC.UserId,
+          DocEntry: JQC.DocEntry,
           CreatedBy: JQC.CreatedBy,
           ModifiedBy: JQC.ModifiedBy,
           Status: JQC.Status,
@@ -385,9 +405,9 @@ export default function IssueMaterial() {
           SignPath: JQC.SignPath,
           oLines: mappedLines,
         });
-        mappedLines.forEach((line, index) => {
-          setValueMdl(`Notes-${index}`, line.Notes ?? "");
-        });
+        // mappedLines.forEach((line, index) => {
+        //   setValueMdl(`Notes-${index}`, line.Notes ?? "");
+        // });
 
         setQCoLines(mappedLines);
 
@@ -696,7 +716,7 @@ export default function IssueMaterial() {
   const fetchGetListData = async (pageNum, searchTerm = "") => {
     try {
       const url = searchTerm
-        ? `/JobCard/CopyFrom&SearchText=${searchTerm}&Page=${pageNum}`
+        ? `/JobCard/CopyFrom?SearchText=${searchTerm}&Page=${pageNum}`
         : `/JobCard/CopyFrom?Page=${pageNum}`;
 
       const response = await apiClient.get(url);
@@ -705,20 +725,15 @@ export default function IssueMaterial() {
         const newData = response.data.values;
 
         setHasMoreGetList(newData.length === 20);
-
         setGetListData((prev) =>
           pageNum === 0 ? newData : [...prev, ...newData],
         );
       } else if (response.data.success === false) {
-        Swal.fire({
-          text: response.data.message,
-          icon: "question",
-          confirmButtonText: "YES",
-          showConfirmButton: true,
-        });
+        setHasMoreGetList(false);
       }
     } catch (error) {
       console.error(error);
+      setHasMoreGetList(false);
     }
   };
 
@@ -735,53 +750,36 @@ export default function IssueMaterial() {
 
   const OpenDailog = () => {
     setSearchmodelOpen(true);
+    setGetListQuery("");
   };
 
   const SearchModelClose = () => {
     setSearchmodelOpen(false);
+    setGetListQuery("");
   };
 
   const fetchOpenListData = async (pageNum, searchTerm = "") => {
     try {
-      // Build params dynamically
-      const params = {
-        Status: 1,
-        Page: pageNum,
-      };
+      const url = searchTerm
+        ? `/JobCard?SearchText=${searchTerm}&Status=1&Page=${pageNum}`
+        : `/JobCard?Status=1&Page=${pageNum}`;
 
-      // Only add SearchText if it exists
-      if (searchTerm && searchTerm.trim() !== "") {
-        params.SearchText = searchTerm.trim();
-      }
+      const { data } = await apiClient.get(url);
 
-      const response = await apiClient.get("/JobCard", { params });
-
-      if (response.data.success) {
-        const newData = response.data.values;
+      if (data?.success) {
+        const newData = data.values ?? [];
 
         setOpenListData((prev) =>
           pageNum === 0 ? newData : [...prev, ...newData],
         );
-
         const pageSize = 20;
         setHasMoreOpen(newData.length === pageSize);
         setOpenListPage(pageNum);
       } else {
         setHasMoreOpen(false);
-        Swal.fire({
-          text: response.data.message,
-          icon: "question",
-          confirmButtonText: "YES",
-        });
       }
     } catch (error) {
-      console.error("Error fetching data:", error);
       setHasMoreOpen(false);
-      Swal.fire({
-        text: error.message || error,
-        icon: "question",
-        confirmButtonText: "YES",
-      });
     }
   };
 
@@ -836,47 +834,51 @@ export default function IssueMaterial() {
     setSidebarOpen(!sidebarOpen);
   };
 
-  const onSelectBusinessPartner = (DocEntry) => {
-    const selectedItem = getListData.find((item) => item.DocEntry === DocEntry);
-    if (!selectedItem) return;
+  const onSelectBusinessPartner = (selectedItem) => {
+    try {
+      setLoading(true);
 
-    const fieldsToSet = {
-      OrderNo: selectedItem.OrderNo,
-      CardName: selectedItem.CardName,
-      CardCode: selectedItem.CardCode,
-      RequestDate: selectedItem.RequestDate
-        ? dayjs(selectedItem.RequestDate)
-        : dayjs(),
-      ReqNo: selectedItem.DocNum,
-      JobCardNo: "",
-      VehInwardNo: selectedItem.VehInwardNo,
-      RequestDocNums: selectedItem.RequestDocNums,
-      VehInwardBy: selectedItem.VehInwardBy,
-      JobWorkAt: selectedItem.JobWorkAt,
-      RegistrationNo: selectedItem.RegistrationNo,
-      OrderDocEntry: selectedItem.OrderDocEntry,
-      JobWorkDetails: selectedItem.ReqRemarks.toUpperCase(),
-      PhoneNumber1: selectedItem.PhoneNumber1,
-      BeforeLH: "",
-      BeforeRH: "",
-      TotalHeight: "",
-      AfterLH: "",
-      AfterRH: "",
-      oLines: selectedItem.oLines?.map((Job) => ({
-        ItemCode: Job.ItemCode,
-        ItemName: Job.ItemName,
-        ReqQuantity: Job.ReqQuantity,
-        WHSCode: Job.WHSCode,
-        LineJobStatus: {},
-        JobWorkstationId: {},
-      })),
-    };
+      const filledValues = {
+        ...initial,
+        ...selectedItem,
+        OrderNo: selectedItem.OrderNo,
+        CardName: selectedItem.CardName,
+        CardCode: selectedItem.CardCode,
+        RequestDate: selectedItem.RequestDate
+          ? dayjs(selectedItem.RequestDate)
+          : dayjs(),
+        ReqNo: selectedItem.DocNum,
+        JobCardNo: "",
+        VehInwardNo: selectedItem.VehInwardNo,
+        RequestDocNums: selectedItem.RequestDocNums,
+        VehInwardBy: selectedItem.VehInwardBy,
+        JobWorkAt: selectedItem.JobWorkAt,
+        RegistrationNo: selectedItem.RegistrationNo,
+        OrderDocEntry: selectedItem.OrderDocEntry,
+        JobWorkDetails: selectedItem.ReqRemarks.toUpperCase(),
+        PhoneNumber1: selectedItem.PhoneNumber1,
+        BeforeLH: "",
+        BeforeRH: "",
+        TotalHeight: "",
+        AfterLH: "",
+        AfterRH: "",
+        oLines: selectedItem.oLines?.map((Job) => ({
+          ItemCode: Job.ItemCode,
+          ItemName: Job.ItemName,
+          ReqQuantity: Job.ReqQuantity,
+          WHSCode: Job.WHSCode,
+          LineJobStatus: {},
+          JobWorkstationId: {},
+        })),
+      };
 
-    Object.entries(fieldsToSet).forEach(([key, value]) => {
-      setValue(key, value, { shouldValidate: true });
-    });
-
-    SearchModelClose();
+      reset(filledValues);
+      SearchModelClose();
+    } catch (error) {
+      console.error("Error:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const fetchMoreOpenListData = () => {
@@ -884,7 +886,6 @@ export default function IssueMaterial() {
     setOpenListPage((prev) => prev + 1);
   };
 
-  // Initial fetch
   useEffect(() => {
     fetchOpenListData(0);
   }, []);
@@ -892,8 +893,8 @@ export default function IssueMaterial() {
   const fetchClosedListData = async (pageNum, searchTerm = "") => {
     try {
       let url = searchTerm
-        ? `/JobCard/search/${searchTerm}/0/${pageNum}`
-        : `/JobCard/pages/${pageNum}/0`;
+        ? `/JobCard?SearchText=${searchTerm}&Status=0&Page=${pageNum}`
+        : `/JobCard?Status=0&Page=${pageNum}`;
 
       const response = await apiClient.get(url);
 
@@ -912,7 +913,6 @@ export default function IssueMaterial() {
         });
       }
     } catch (error) {
-      console.error("Error fetching data:", error);
       setHasMoreClosed(false);
       Swal.fire({
         text: error.message || error,
@@ -1127,7 +1127,7 @@ export default function IssueMaterial() {
                           searchResult={query}
                           isSelected={oldOpenData === item.DocEntry}
                           onClick={() =>
-                            setOldOpenData(
+                            fetchAndSetData(
                               item.DocEntry,
                               item.CardCode,
                               item.OrderNo,
@@ -1251,11 +1251,7 @@ export default function IssueMaterial() {
         const res = await apiClient.post(`/jobcard`, obj);
 
         if (res.data.success) {
-          setOpenListData([]);
-          fetchOpenListData(0);
-          handleGetListClear();
-          ClearForm();
-
+          setLoading(false);
           Swal.fire({
             text: "Job Card Added",
             icon: "success",
@@ -1263,6 +1259,11 @@ export default function IssueMaterial() {
             showConfirmButton: false,
             timer: 1500,
           });
+
+          setOpenListData([]);
+          fetchOpenListData(0);
+          handleGetListClear();
+          ClearForm();
         } else {
           setLoading(false);
           Swal.fire({
@@ -1298,11 +1299,7 @@ export default function IssueMaterial() {
           const res = await apiClient.put(`/jobcard/${data.DocEntry}`, obj);
 
           if (res.data.success) {
-            setOpenListPage(0);
-            setOpenListData([]);
-            fetchOpenListData(0);
-            handleGetListClear();
-            ClearForm();
+            setLoading(false);
             Swal.fire({
               title: "Success!",
               text: "Job Card Updated",
@@ -1310,6 +1307,11 @@ export default function IssueMaterial() {
               confirmButtonText: "Ok",
               timer: 1000,
             });
+            setOpenListPage(0);
+            setOpenListData([]);
+            fetchOpenListData(0);
+            handleGetListClear();
+            ClearForm();
           } else {
             setLoading(false);
             Swal.fire({
@@ -1376,6 +1378,7 @@ export default function IssueMaterial() {
       oLines: QCoLines.map((line) => ({
         ...line,
         QCDocEntry: String(line.QCDocEntry),
+        ...(line.LineNum != null && { LineNum: line.LineNum }),
         Status: String(line.Status),
         Inspected: line.Inspected ? "1" : "0",
         Notes: line.Notes || "",
@@ -1479,6 +1482,8 @@ export default function IssueMaterial() {
           setLoading(false);
           setOpenListData([]);
           fetchOpenListData(0);
+          setClosedListData([]);
+          fetchClosedListData(0);
           handleGetListClear();
           Swal.fire({
             title: "Success!",
@@ -1682,7 +1687,6 @@ export default function IssueMaterial() {
                               >
                                 {getListData.map((item, index) => (
                                   <CardComponent
-                                    // key={index}
                                     key={item.DocEntry}
                                     title={item.OrderNo}
                                     subtitle={item.PhoneNumber1}
@@ -1692,7 +1696,7 @@ export default function IssueMaterial() {
                                       allFormData.CardCode === item.CardCode
                                     }
                                     onClick={() => {
-                                      onSelectBusinessPartner(item.DocEntry);
+                                      onSelectBusinessPartner(item);
                                     }}
                                   />
                                 ))}
@@ -2107,7 +2111,7 @@ export default function IssueMaterial() {
                   <Box sx={{ height: 450, width: "100%" }}>
                     <DataGrid
                       className="datagrid-style"
-                      getRowId={(row) => Math.random()}
+                      getRowId={(row) => row.LineNum ?? row.QCDocEntry}
                       rows={QCoLines}
                       columns={QCitemsTable}
                       columnHeaderHeight={35}
@@ -2204,7 +2208,9 @@ export default function IssueMaterial() {
                   variant="contained"
                   color="primary"
                   disabled={
-                    allFormData.Status === "0" || SaveUpdateName === "SAVE"
+                    allFormData.Status === "0" ||
+                    SaveUpdateName === "SAVE" ||
+                    allFormData.OrderNo === ""
                   }
                   name={QcSaveUpdateName}
                   onClick={onSubmitQC}
