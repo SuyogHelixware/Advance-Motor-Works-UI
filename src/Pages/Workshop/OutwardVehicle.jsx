@@ -24,18 +24,14 @@ import apiClient from "../../services/apiClient";
 import CardComponent from "../Components/CardComponent";
 import {
   InputDatePickerField,
-  InputDatePickerFields,
   InputFields,
   InputTextArea,
-  InputTextAreaFields,
   InputTextSearchButton,
-  InputTimePicker,
 } from "../Components/formComponents";
+import { Loader } from "../Components/Loader";
 import SearchInputField from "../Components/SearchInputField";
 import SearchModel from "../Components/SearchModel";
 import usePermissions from "../Components/usePermissions";
-import DynamicLoader from "../../Loaders/DynamicLoader";
-import { Loader } from "../Components/Loader";
 
 export default function InwardVehicle() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -99,19 +95,10 @@ export default function InwardVehicle() {
     VehOutwardTime: dayjs(),
     OrderDocEntry: "",
     SignPath: "",
+    VehInwardNo: "",
   };
 
-  const {
-    control,
-    handleSubmit,
-    reset,
-    getValues,
-    setValue,
-    watch,
-    // clearErrors,
-    // setError,
-    // formState: { errors },
-  } = useForm({
+  const { control, handleSubmit, reset, getValues, watch } = useForm({
     defaultValues: initial,
   });
 
@@ -144,11 +131,9 @@ export default function InwardVehicle() {
     const signPathByteArray = watch("SignPathByteArray");
 
     if (sigCanvas.current) {
-      // Always clear the canvas first
       sigCanvas.current.clear();
       setIsSigned(false);
 
-      // Then load new signature if exists
       if (signPathByteArray) {
         const timer = setTimeout(() => {
           sigCanvas.current.fromDataURL(
@@ -205,46 +190,59 @@ export default function InwardVehicle() {
   };
 
   const fetchAndSetData = async (DocEntry) => {
+    if (!DocEntry) return;
+    setLoading(true);
     try {
-      if (!DocEntry) return;
+      const res = await apiClient.get(`/VehOutward?DocEntry=${DocEntry}`);
+      const data = res.data.values;
 
-      const response = await apiClient.get(`/VehOutward?DocEntry=${DocEntry}`);
-      const data = response?.data;
-
-      // Fixed: The API returns 'values' as an object, not an array
-      if (data && data.success && data.values) {
-        const item = data.values;
-
-        // Use reset to map the API object to the form controllers
-        reset({
-          ...item,
-          // Ensure date is parsed correctly for the DatePicker
-          VehInwardDate: item.VehInwardDate
-            ? dayjs(item.VehInwardDate)
-            : dayjs(),
-
-          // Map the correct time field from the API to your form field
-          // If the API provides VehOutwardTime, use it; otherwise fallback
-          VehInwardTime: item.VehInwardTime
-            ? dayjs(item.VehInwardTime)
-            : dayjs(),
-
-          // Ensure the combined display field 'Vehicle' is populated
-          Vehicle:
-            item.Vehicle ||
-            `${item.Year || ""} - ${item.Make || ""} - ${item.Model || ""}`,
+      if (!data) {
+        Swal.fire({
+          icon: "warning",
+          text: "Record not found",
         });
+        setLoading(false);
+        return;
+      }
 
+      if (res.data.success) {
+        const transformed = {
+          ...data,
+          OrderNo: data.OrderNo,
+          CardName: data.CardName,
+          PhoneNumber1: data.PhoneNumber1,
+          InvoiceNo: data.InvoiceNo,
+          RegistrationNo: data.RegistrationNo,
+          JobWorkAt: data.JobWorkAt,
+          JobWorkDetails: data.JobWorkDetails,
+          VehInwardNo: data.VehInwardNo,
+          VehInwardDate: data.VehInwardDate
+            ? dayjs(data.VehInwardDate)
+            : dayjs(),
+          VehInwardTime: data.VehInwardTime
+            ? dayjs(data.VehInwardTime)
+            : dayjs(),
+          JobCardNo: data.JobCardNo,
+          OutwardNo: data.DocNum,
+          VehOutwardDate: dayjs(data.VehOutwardDate).format("YYYY-MM-DD"),
+          VehOutwardTime: data.VehOutwardTime
+            ? dayjs(data.VehOutwardTime, "HH:mm")
+            : null,
+          SignPath: data.SignPath,
+          SignPathByteArray: data.SignPath,
+        };
+        reset(transformed);
         setDocEntry(DocEntry);
         setSaveUpdateName("Update");
       }
     } catch (error) {
-      console.error("Fetch Error Detail:", error);
       Swal.fire({
-        text: "Failed to fetch vehicle details.",
         icon: "error",
-        confirmButtonText: "OK",
+        title: "Oops...",
+        text: error.message || "Something went wrong",
       });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -277,12 +275,6 @@ export default function InwardVehicle() {
     } catch (error) {
       console.error("Error fetching data:", error);
       setHasMoreOpen(false);
-
-      Swal.fire({
-        text: error?.response?.data?.message || error.message || "Server error",
-        icon: "question",
-        confirmButtonText: "YES",
-      });
     }
   };
 
@@ -290,7 +282,7 @@ export default function InwardVehicle() {
     setOpenListQuery(res);
     setOpenListSearching(true);
     setOpenListPage(0);
-    setOpenListData([]); // Clear current data
+    setOpenListData([]);
 
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
@@ -298,7 +290,6 @@ export default function InwardVehicle() {
     timeoutRef.current = setTimeout(() => {
       fetchOpenListData(0, res);
     }, 600);
-    // Fetch with search query
   };
 
   // Clear search
@@ -359,7 +350,7 @@ export default function InwardVehicle() {
     setClosedListQuery(res);
     setClosedListSearching(true);
     setClosedListPage(0);
-    setClosedListData([]); // Clear current data
+    setClosedListData([]);
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
@@ -640,9 +631,11 @@ export default function InwardVehicle() {
 
   const OpenDailog = () => {
     setSearchmodelOpen(true);
+    setGetListQuery("");
   };
   const SearchModelClose = () => {
     setSearchmodelOpen(false);
+    setGetListQuery("");
   };
 
   const handleGetListSearch = (res) => {
@@ -676,123 +669,82 @@ export default function InwardVehicle() {
   };
 
   const handleSubmitForm = async (data) => {
+    if (!sigCanvas.current || sigCanvas.current.isEmpty()) {
+      Swal.fire({
+        text: "Please add Signature...",
+        icon: "warning",
+        toast: true,
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return;
+    }
+
+    const UserId = localStorage.getItem("UserId");
+    const CreatedBy = localStorage.getItem("UserName");
+    const signatureDataURL = sigCanvas.current.toDataURL().split(",")[1];
+
+    const obj = {
+      UserId: UserId,
+      CreatedBy: CreatedBy,
+      OrderNo: data.OrderNo,
+      DocDate: dayjs(),
+      CardName: data.CardName,
+      CardCode: data.CardCode,
+      PhoneNumber1: data.PhoneNumber1,
+      InvoiceNo: data.InvoiceNo,
+      RegistrationNo: data.RegistrationNo,
+      JobWorkAt: data.JobWorkAt,
+      JobWorkDetails: data.JobWorkDetails,
+      VehInwardNo: data.VehInwardNo,
+      VehInwardDate: data.VehInwardDate,
+      VehInwardTime: data.VehInwardTime,
+      JobCardNo: data.JobCardNo,
+      OrderDocEntry: String(data.OrderDocEntry),
+      VehOutwardDate: dayjs(new Date()).format("YYYY:MM:DD"),
+      VehOutwardTime: dayjs(new Date()).format("HH:mm"),
+      VehOutwardRemarks: "",
+      SignPath: signatureDataURL,
+    };
+
+    setLoading(true);
+
     try {
-      if (!sigCanvas.current || sigCanvas.current.isEmpty()) {
+      const res = await apiClient.post(`/VehOutward`, obj);
+
+      if (res.data.success) {
+        setLoading(false);
+        setOpenListData([]);
+        fetchOpenListData(0);
+        handleGetListClear();
+        ClearForm();
+
         Swal.fire({
-          text: "Please add Signature...",
-          icon: "warning",
-          toast: true,
+          title: "Success!",
+          text: "Vehicle Outward Successfully",
+          icon: "success",
+          timer: 1500,
           showConfirmButton: false,
-          timer: 2000,
-          timerProgressBar: true,
         });
-        return;
-      }
-
-      setLoading(true);
-
-      const UserId = localStorage.getItem("UserId");
-      const CreatedBy = localStorage.getItem("UserName");
-      const signatureDataURL = sigCanvas.current.toDataURL().split(",")[1];
-
-      const obj = {
-        DocEntry: DocEntry || "",
-        UserId: UserId,
-        CreatedBy: CreatedBy,
-        AppointmentNo: data.AppointmentNo,
-        VehInwardNo: data.VehInwardNo,
-        OrderNo: data.OrderNo,
-        VehInwardDate: dayjs(data.VehInwardDate).format("YYYY-MM-DD HH:mm:ss"),
-        RegistrationNo: String(data.RegistrationNo || ""),
-        InspectionRemark: data.InspectionRemark,
-        VehicleDocEntry: "0",
-        Mileage: String(data.Mileage || ""),
-        ChassisNo: String(data.ChassisNo || ""),
-        VehInwardTime: data.VehInwardTime
-          ? dayjs(data.VehInwardTime).format("HH:mm")
-          : "",
-        PhoneNumber1: data.PhoneNumber1,
-        CardName: data.CardName,
-        CardCode: data.CardCode,
-        JobWorkAt: data.JobWorkAt,
-        Year: data.Year,
-        Make: data.Make,
-        Model: data.Model,
-        JobWorkDetails: data.JobWorkDetails,
-        OrderType: data.OrderType,
-        OrderDocEntry: String(data.OrderDocEntry || ""),
-        SignPathByteArray: signatureDataURL,
-      };
-
-      if (SaveUpdateName === "SAVE") {
-        const { data: res } = await apiClient.post(`/VehOutward`, obj);
-
-        if (res.success) {
-          setOpenListData([]);
-          fetchOpenListData(0);
-          handleGetListClear();
-          ClearForm();
-
-          Swal.fire({
-            title: "Success!",
-            text: "Outward Vehicle Added Successfully",
-            icon: "success",
-            timer: 1500,
-            showConfirmButton: false,
-          });
-        } else {
-          throw new Error(res.message || "Failed to add vehicle.");
-        }
-      } else if (SaveUpdateName === "Update") {
-        // PUT for updates
-        const confirm = await Swal.fire({
-          text: `Do you want to Update ${data.DocNum || "this record"}?`,
-          icon: "question",
-          showCancelButton: true,
-          confirmButtonText: "YES",
-          cancelButtonText: "No",
+      } else {
+        setLoading(false);
+        Swal.fire({
+          title: "Error!",
+          text: res.data.message,
+          icon: "warning",
+          confirmButtonText: "Ok",
         });
-
-        if (!confirm.isConfirmed) {
-          setLoading(false);
-          return;
-        }
-
-        const { data: res } = await apiClient.put(
-          `/VehOutward/${DocEntry}`,
-          obj,
-        );
-
-        if (res.success) {
-          setOpenListPage(0);
-          setOpenListData([]);
-          fetchOpenListData(0);
-          ClearForm();
-
-          Swal.fire({
-            title: "Success!",
-            text: "Outward Vehicle Updated",
-            icon: "success",
-            timer: 1200,
-            showConfirmButton: false,
-          });
-        } else {
-          throw new Error(res.message || "Failed to update vehicle.");
-        }
       }
     } catch (error) {
-      console.error("Submit Error:", error);
+      setLoading(false);
+
       Swal.fire({
         title: "Error!",
-        text:
-          error?.response?.data?.message ||
-          error.message ||
-          "Something went wrong",
-        icon: "error",
+        text: error,
+        icon: "warning",
         confirmButtonText: "Ok",
       });
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -807,8 +759,6 @@ export default function InwardVehicle() {
         component={"form"}
         onSubmit={handleSubmit(handleSubmitForm)}
       >
-        {/* Sidebar for larger screens */}
-
         <Grid
           container
           item
@@ -828,8 +778,6 @@ export default function InwardVehicle() {
         >
           {sidebarContent}
         </Grid>
-
-        {/* User Creation Form Grid */}
 
         <Grid
           container
@@ -1369,8 +1317,9 @@ export default function InwardVehicle() {
                 name={SaveUpdateName}
                 disabled={
                   (SaveUpdateName === "SAVE" && !perms.IsAdd) ||
-                  (SaveUpdateName === "UPDATE" && !perms.IsEdit) ||
-                  allFormData.Status === "0"
+                  allFormData.Status === "1" ||
+                  allFormData.Status === "0" ||
+                  allFormData.OrderNo === ""
                 }
               >
                 SAVE
