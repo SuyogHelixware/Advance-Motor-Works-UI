@@ -786,6 +786,7 @@ export default function CashInvoice() {
         LineFittingCharge: invData.Fitting,
         LineTotalAmount: invData.Amount,
         ItemName: invData.ItemName,
+        Currency: "KWD",
         TaxCode: "",
         TaxPer: "0",
         TaxAmt: "0",
