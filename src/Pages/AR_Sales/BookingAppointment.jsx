@@ -310,6 +310,8 @@ export default function BinLocationMaster() {
           Quantity: Number(line.Quantity).toFixed(3),
           IssueQty: Number(line.Quantity).toFixed(3),
           AppointmentStatus: line.AppointmentStatus,
+          OrderQuantity: Number(line.Quantity).toFixed(3),
+          Status: line.Status,
           BookedQuantity: line.BookedQuantity,
           FTSQty: line.FTSQty,
           LineFittingTime: line.LineFittingTime,
@@ -351,6 +353,20 @@ export default function BinLocationMaster() {
           Status: values.Status === "1",
           NoAutoAllc: "Y",
           ReceiveBin: "Y",
+          oLines: values.oLines.map((line) => ({
+            ItemName: line.ItemName,
+            ItemCode: line.ItemCode,
+            WHSCode: line.WHSCode,
+            Quantity: Number(line.Quantity).toFixed(3),
+            IssueQty: Number(line.Quantity).toFixed(3),
+            AppointmentStatus: line.AppointmentStatus,
+            OrderQuantity: Number(line.Quantity).toFixed(3),
+            Status: line.Status,
+            BookedQuantity: line.BookedQuantity,
+            FTSQty: line.FTSQty,
+            LineFittingTime: line.LineFittingTime,
+            LineNum: line.LineNum,
+          })),
         });
         setSidebarOpen(true);
       } else {
@@ -388,7 +404,14 @@ export default function BinLocationMaster() {
     { field: "ItemCode", headerName: "ITEM CODE", width: 150 },
     { field: "ItemName", headerName: "ITEM DESCRIPTION", width: 350 },
     {
-      field: "Quantity",
+      field: "WHSCode",
+      headerName: "WHSCODE",
+      width: 150,
+      headerAlign: "center",
+      align: "center",
+    },
+    {
+      field: "OrderQuantity",
       headerName: "ORDER QTY",
       width: 150,
       headerAlign: "center",
@@ -409,11 +432,19 @@ export default function BinLocationMaster() {
       type: "number",
       editable: true,
     },
+    // {
+    //   field: "Status",
+    //   headerName: "STATUS",
+    //   width: 120,
+    //   type: "number",
+    // },
     {
       field: "Status",
       headerName: "STATUS",
       width: 120,
-      type: "number",
+      renderCell: (params) => (
+        <span>{params.row.Status === "1" ? "NOT BOOKED" : "BOOKED"}</span>
+      ),
     },
     {
       field: "BookedQuantity",
@@ -433,7 +464,8 @@ export default function BinLocationMaster() {
         const isClosed =
           currentStatus === "0" ||
           currentStatus === 0 ||
-          currentStatus === false;
+          currentStatus === false ||
+          SaveUpdateName === "UPDATE";
 
         return (
           <IconButton

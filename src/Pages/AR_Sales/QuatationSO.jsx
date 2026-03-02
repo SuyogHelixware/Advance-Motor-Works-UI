@@ -1297,6 +1297,7 @@ export default function QuatationSO() {
     setValue("oCCPay", updatedList);
 
     PaymentsCalculations();
+    reset("CreditCard");
     setValue("CreditCard", "");
     setValue("CreditCardNumber", "");
     setValue("VoucherNum", "");

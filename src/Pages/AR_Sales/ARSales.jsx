@@ -1,5 +1,4 @@
 import { Grid, Paper, Typography } from "@mui/material";
-import React from "react";
 import TileComponent from "../Components/TileComponent";
 export default function ARSales() {
   const Cards_sales = [
@@ -51,6 +50,12 @@ export default function ARSales() {
       Name: "Customer Sales History",
       Count: 0,
       ReDirect: "customer-sales-history",
+    },
+    {
+      id: "122",
+      Name: "Sales Credit Note",
+      Count: 0,
+      ReDirect: "Sales-credit-note",
     },
   ];
 
