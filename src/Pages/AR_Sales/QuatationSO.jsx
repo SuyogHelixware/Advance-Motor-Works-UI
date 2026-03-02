@@ -410,7 +410,7 @@ export default function QuatationSO() {
   const fetchGetListData = async (pageNum, searchTerm = "") => {
     try {
       const url = searchTerm
-        ? `/BPV2?Status=1&CardType=C&GroupCode=0&Limit=${pageNum}&SearchText=${searchTerm}`
+        ? `/BPV2?Status=1&CardType=C&Limit=${pageNum}&SearchText=${searchTerm}`
         : // : `/BPV2?Status=1&CardType=C&GroupCode=0&Page=${pageNum}`;
           `/BPV2/V2/Pages/1/${pageNum}/20`;
 
@@ -729,7 +729,7 @@ export default function QuatationSO() {
       setModalLoading(true);
 
       const res = await apiClient.get(
-        `/BPV2?Status=1&CardType=S&Page=0&GroupCode=0&Limit=200`,
+        `/BPV2?Status=1&CardType=S&Page=0&Limit=200`,
       );
 
       const data = res?.data;
@@ -1297,7 +1297,6 @@ export default function QuatationSO() {
     setValue("oCCPay", updatedList);
 
     PaymentsCalculations();
-    reset("CreditCard");
     setValue("CreditCard", "");
     setValue("CreditCardNumber", "");
     setValue("VoucherNum", "");
@@ -1509,7 +1508,6 @@ export default function QuatationSO() {
       Country: "",
       CreditCard: "",
       DflAccount: "",
-      Series: "6",
       HousBnkAct: "",
       HousBnkBrn: "",
       HousBnkCry: "",
@@ -1561,143 +1559,6 @@ export default function QuatationSO() {
       oCPLines: [],
       oBPBankAccLines: [],
     };
-
-    // CardName: (data?.CardName ?? "").toString().toUpperCase(),
-    // PhoneNumber1: data.PhoneNumber1,
-    // DocDate: dayjs(),
-    // ModifiedBy: CreatedBy,
-    // UserId: UserId,
-    // DocDate: "2026-02-28 16:48:42",
-    // DocNum: "25-064",
-    // CreatedBy: CreatedBy,
-    // Status: "1",
-    // CardCode: "25-064",
-    // CardName: "25-064",
-    // CardType: "V",
-    // CardFName: "",
-    // Currency: "INR",
-    // LicTradNum: "",
-    // GroupCode: "19",
-    // PhoneNumber1: "",
-    // PhoneNumber2: "",
-    // Cellular: "",
-    // Fax: "",
-    // Email: "",
-    // validFor: "1",
-    // frozenFor: "0",
-    // ValidComm: "",
-    // Remarks: "",
-    // FreeTexts: "",
-    // BankCountr: "",
-    // ShipType: "35",
-    // Balance: "0",
-    // ChecksBal: "0",
-    // DNotesBal: "0",
-    // OrdersBal: "0",
-    // DNoteBalFC: "0",
-    // OrderBalFC: "0",
-    // DNoteBalSy: "0",
-
-    // OrderBalSy: "0",
-
-    // BalanceSys: "0",
-
-    // BalanceFC: "0",
-
-    // ValidFrom: "01/01/1900 00:00:00",
-
-    // ValidTo: "01/01/2099 00:00:00",
-
-    // FrozenFrom: "01/01/1900 00:00:00",
-
-    // FrozenTo: "01/01/1900 00:00:00",
-
-    // GroupNum: "1050",
-
-    // IntrstRate: "0",
-
-    // ListNum: "1291",
-
-    // Discount: "0",
-
-    // CreditLine: "0",
-
-    // DebtLine: "0",
-
-    // DunTerm: "0",
-
-    // AutoPost: "1",
-
-    // DflIBAN: "",
-
-    // HldCode: "0",
-
-    // SlpCode: "",
-    // BankCode: "",
-    // BankName: "",
-    // DflSwift: "",
-    // AttcEntry: "",
-    // CardValid: "",
-    // CrCardNum: "0",
-    // DflBranch: "",
-    // HouseBank: "0",
-    // HsBnkIBAN: "",
-    // OwnerCode: "",
-    // AvrageLate: "",
-    // Country: "",
-    // CreditCard: "",
-    // DflAccount: "",
-    // Series: "6",
-    // HousBnkAct: "",
-    // HousBnkBrn: "",
-    // HousBnkCry: "",
-    // HsBnkSwift: "",
-    // OwnerIdNum: "",
-    // BankCtlKey: "",
-    // ContactPerson: "",
-    // MandateID: "",
-    // DiscRel: "",
-    // SignDate: "2026-02-28",
-    // CntctPrsn: "",
-    // DfltBilled: "0",
-    // DfltShiped: "0",
-    // FatherCard: "",
-    // FatherType: "",
-    // DebPayAcct: "203000",
-    // DpmClear: "",
-    // DpmIntAct: "",
-    // DpmDppAct: "203000",
-    // DpmOpnDebAct: "140060",
-    // TaxId0: "",
-    // TaxId1: "",
-    // TaxId2: "",
-    // TaxId3: "",
-    // TaxId4: "",
-    // TaxId5: "",
-    // TaxId6: "",
-    // TaxId7: "",
-    // TaxId8: "",
-    // TaxId9: "",
-    // TaxId10: "",
-    // TaxId11: "",
-    // TaxId13: "",
-    // WTLiable: "0",
-    // CrtfcateNO: "",
-    // ExpireDate: "",
-    // NINum: "",
-    // TypWTReprt: "",
-    // WTTaxCat: "",
-    // SurOver: "0",
-    // Remark1: "",
-    // ConCerti: "",
-    // ThreshOver: "0",
-    // VendTID: "",
-    // WTaxCodesAllowed: "",
-    // UseShpdGd: "0",
-    // AccCritria: "",
-    // oLines: [],
-    // oCPLines: [],
-    // oBPBankAccLines: [],
 
     try {
       const response = await apiClient.post(`/BPV2/V2`, obj);
@@ -2054,10 +1915,10 @@ export default function QuatationSO() {
               icon: "success",
               text:
                 allFormData.AdvancePayment < 50
-                  ? `Quotation ${SaveUpdateName} Successfully`
-                  : `Order ${SaveUpdateName} Successfully`,
+                  ? `Quotation Save Successfully`
+                  : `Order Update Successfully`,
               confirmButtonText: "Ok",
-              timer: 1000,
+              timer: 1500,
             });
           } else {
             setModalLoading(false);

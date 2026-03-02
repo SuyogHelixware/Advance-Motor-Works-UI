@@ -34,6 +34,7 @@ import { dataGridSx } from "../../Styles/dataGridStyles";
 import CardComponent from "../Components/CardComponent";
 import {
   InputDatePickerField,
+  InputFields,
   InputSearchSelectTextField,
   InputTextArea,
   InputTextField,
@@ -757,7 +758,7 @@ export default function CashInvoice() {
       RegistrationNo: data.RegistrationNo,
       VehInwardNo: data.VehInwardNo,
       VehInwardDate: data.VehInwardDate,
-      VehInwardTime: dayjs(data.VehInwardTime).format("HH:mm"),
+      VehInwardTime: data.VehInwardTime,
       Email: data.Email,
       TotalPartsValue: data.TotalPartsValue,
       RoundingAmt: data.RoundingAmt,
@@ -1571,13 +1572,30 @@ export default function CashInvoice() {
                       </Grid>
 
                       <Grid item textAlign={"center"}>
-                        <Controller
+                        {/* <Controller
                           name="VehInwardTime"
                           control={control}
                           render={({ field }) => (
                             <InputTimePicker
                               {...field}
                               label="INWARD TIME"
+                              readOnly={true}
+                            />
+                          )}
+                        /> */}
+
+                        <Controller
+                          name="VehInwardTime"
+                          control={control}
+                          render={({ field }) => (
+                            <InputFields
+                              {...field}
+                              label="INWARD TIME"
+                              value={
+                                field.value
+                                  ? dayjs(field.value).format("HH:mm")
+                                  : ""
+                              }
                               readOnly={true}
                             />
                           )}
