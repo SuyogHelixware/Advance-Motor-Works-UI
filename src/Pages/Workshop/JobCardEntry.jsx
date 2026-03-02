@@ -40,7 +40,7 @@ import {
   InputTextField,
   InputTextFieldLarge,
   InputTextSearchButton,
-  InputTimePicker
+  InputTimePicker,
 } from "../Components/formComponents";
 import { Loader } from "../Components/Loader";
 import SearchInputField from "../Components/SearchInputField";
@@ -850,6 +850,7 @@ export default function IssueMaterial() {
       ReqNo: selectedItem.DocNum,
       JobCardNo: "",
       VehInwardNo: selectedItem.VehInwardNo,
+      RequestDocNums: selectedItem.RequestDocNums,
       VehInwardBy: selectedItem.VehInwardBy,
       JobWorkAt: selectedItem.JobWorkAt,
       RegistrationNo: selectedItem.RegistrationNo,

@@ -539,6 +539,7 @@ function Routing() {
               path="customer-sales-history"
               element={<CustomerSalesHistory />}
             />
+            <Route path="Sales-credit-note" element={<SalesCreditNote />} />
           </Route>
 
           <Route
