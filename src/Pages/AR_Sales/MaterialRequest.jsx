@@ -14,11 +14,8 @@ import {
   useTheme,
 } from "@mui/material";
 import { useEffect, useMemo, useRef, useState } from "react";
-
 import SearchInputField from "../Components/SearchInputField";
-
 import MenuIcon from "@mui/icons-material/Menu";
-
 import { DataGrid } from "@mui/x-data-grid";
 import dayjs from "dayjs";
 import { Controller, useForm, useWatch } from "react-hook-form";
@@ -34,6 +31,7 @@ import {
   InputTextArea,
   InputTextSearchButton,
 } from "../Components/formComponents";
+import { Loader } from "../Components/Loader";
 import SearchModel from "../Components/SearchModel";
 import usePermissions from "../Components/usePermissions";
 
@@ -48,8 +46,7 @@ export default function MaterialRequest() {
   const [searchmodelOpen, setSearchmodelOpen] = useState(false);
   const timeoutRef = useRef(null);
   const [DocEntry, setDocEntry] = useState("");
-
-  const [apiloading, setapiloading] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const [SaveUpdateName, setSaveUpdateName] = useState("SAVE");
   const perms = usePermissions(133);
@@ -86,15 +83,7 @@ export default function MaterialRequest() {
     oLines: [],
   };
 
-  const {
-    control,
-    handleSubmit,
-    reset,
-    getValues,
-    setValue,
-    watch,
-    formState: { errors },
-  } = useForm({
+  const { control, handleSubmit, reset, getValues, setValue, watch } = useForm({
     defaultValues: initial,
   });
 
@@ -113,79 +102,87 @@ export default function MaterialRequest() {
 
   const oLines = useWatch({ control, name: "oLines" });
 
-  const onSelectBusinessPartner = (DocEntry) => {
-    const selectedBP = getListData.find((item) => item.DocEntry === DocEntry);
-    if (!selectedBP) return;
-
-    reset({
-      ...selectedBP,
-      RequestDate: dayjs(),
-      VehInwardNo: selectedBP.DocNum,
-      JobRemarks: selectedBP.JobWorkDetails,
-      VehInwardDocEntry: selectedBP.DocEntry,
-      TotalItems: selectedBP?.oLines?.length || 0,
-      oLines: (selectedBP.oLines || []).map((item, index) => ({
-        ItemCode: item.ItemCode,
-        ItemName: item.ItemName,
-        IssueQuantity: "0",
-        WHSCode: item.WHSCode,
-        AvailQty: item.AvailQty,
-        AppointmentQty: item.Quantity,
-        ReqQuantity: item.Quantity,
-      })),
-    });
-
-    SearchModelClose();
-  };
-
-  const fetchAndSetData = async (DocEntry) => {
+  const onSelectBusinessPartner = (selectedItem) => {
     try {
-      const res = await apiClient.get("/MatReq", {
-        params: { DocEntry },
-      });
+      setLoading(true);
 
-      const item = res.data?.values;
-
-      const transformed = {
-        JobCardNo: item.JobCardNo,
-        RegistrationNo: item.RegistrationNo,
-        VehInwardNo: item.VehInwardNo,
-        VehInwardDocEntry: item.VehInwardDocEntry,
-        RequestNo: item.DocNum,
-        RequestDate: item.RequestDate ? dayjs(item.RequestDate) : dayjs(),
-        OrderNo: item.OrderNo,
-        OrderDocEntry: item.OrderDocEntry,
-        JobWorkAt: item.JobWorkAt,
-        JobRemarks: item.ReqRemarks,
-        TotalItems: item.oLines?.length || 0,
-        RequestedBy: item.RequestBy,
-        oLines: (item.oLines || []).map((line) => ({
-          ItemCode: line.ItemCode,
-          ItemName: line.ItemName,
-          WHSCode: line.WHSCode,
-          AvailQty: line.AvailQty,
-          ReqQuantity: line.ReqQuantity,
-          AppointmentQty: line.AppointmentQty,
-          IssueQuantity: line.IssueQuantity,
+      const filledValues = {
+        ...initial,
+        ...selectedItem,
+        RequestDate: dayjs(),
+        VehInwardNo: selectedItem.DocNum,
+        JobRemarks: selectedItem.JobWorkDetails,
+        VehInwardDocEntry: selectedItem.DocEntry,
+        TotalItems: selectedItem?.oLines?.length || 0,
+        oLines: (selectedItem.oLines || []).map((item, index) => ({
+          ItemCode: item.ItemCode,
+          ItemName: item.ItemName,
+          IssueQuantity: "0",
+          WHSCode: item.WHSCode,
+          AvailQty: item.AvailQty,
+          AppointmentQty: item.Quantity,
+          ReqQuantity: item.Quantity,
         })),
       };
-
-      reset(transformed);
-      setDocEntry(DocEntry);
-      setSaveUpdateName("UPDATE");
+      reset(filledValues);
+      SearchModelClose();
     } catch (error) {
-      console.error("Error fetching data:", error);
-
-      Swal.fire({
-        text: error?.response?.data?.message || "Failed to fetch data.",
-        icon: "error",
-        confirmButtonText: "OK",
-      });
+      console.error("Error selecting business partner:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const setOldOpenData = (DocEntry) => {
-    fetchAndSetData(DocEntry);
+  const fetchAndSetData = async (DocEntry) => {
+    setLoading(true);
+    try {
+      const res = await apiClient.get(`/MatReq/${DocEntry}`);
+      const data = res.data.values;
+
+      if (!data) {
+        Swal.fire({
+          icon: "warning",
+          text: "Record not found",
+        });
+        setLoading(false);
+        return;
+      }
+
+      if (res.data.success) {
+        const transformed = {
+          ...data,
+          JobCardNo: "",
+          RegistrationNo: data.RegistrationNo,
+          DocNum: data.VehInwardNo,
+          VehInwardDocEntry: data.VehInwardDocEntry,
+          RequestNo: data.DocNum,
+          RequestDate: data.RequestDate ? dayjs(data.RequestDate) : dayjs(),
+          OrderNo: data.OrderNo,
+          OrderDocEntry: data.OrderDocEntry,
+          JobWorkAt: data.JobWorkAt,
+          JobWorkDetails: data.ReqRemarks,
+          TotalItems: data.oLines.length,
+          RequestedBy: data.RequestBy,
+          oLines: data.oLines.map((line) => ({
+            ItemCode: line.ItemCode,
+            ItemName: line.ItemName,
+            WHSCode: line.WHSCode,
+            AvailQty: line.AvailQty,
+            ReqQuantity: line.ReqQuantity,
+            AppointmentQty: line.AppointmentQty,
+            IssueQuantity: line.IssueQuantity,
+          })),
+        };
+
+        reset(transformed);
+        setDocEntry(DocEntry);
+        setSaveUpdateName("UPDATE");
+      }
+    } catch (error) {
+      console.error("Fetch Error Detail:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const columns = [
@@ -224,6 +221,7 @@ export default function MaterialRequest() {
       width: 120,
       align: "right",
       headerAlign: "right",
+      renderCell: (params) => <span> {Number(params.value)}</span>,
     },
     {
       field: "IssueQuantity",
@@ -231,6 +229,7 @@ export default function MaterialRequest() {
       width: 120,
       align: "right",
       headerAlign: "right",
+      renderCell: (params) => <span> {Number(params.value)}</span>,
     },
     {
       field: "AppointmentQty",
@@ -238,6 +237,7 @@ export default function MaterialRequest() {
       width: 150,
       align: "right",
       headerAlign: "right",
+      renderCell: (params) => <span> {Number(params.value)}</span>,
     },
     {
       field: "ReqQuantity",
@@ -245,6 +245,7 @@ export default function MaterialRequest() {
       width: 130,
       align: "right",
       headerAlign: "right",
+      renderCell: (params) => <span> {Number(params.value ?? 0)}</span>,
     },
   ];
 
@@ -379,7 +380,7 @@ export default function MaterialRequest() {
   const tabData = [
     {
       value: "0",
-      label: "ACTIVE",
+      label: "OPEN",
       data: openListData,
       query: openListquery,
       hasMore: hasMoreOpen,
@@ -389,7 +390,7 @@ export default function MaterialRequest() {
     },
     {
       value: "1",
-      label: "INACTIVE",
+      label: "CLOSED",
       data: closedListData,
       query: closedListquery,
       hasMore: hasMoreClosed,
@@ -548,7 +549,7 @@ export default function MaterialRequest() {
                           searchResult={query}
                           isSelected={watch("DocEntry") === item.DocEntry}
                           onClick={() =>
-                            setOldOpenData(
+                            fetchAndSetData(
                               item.DocEntry,
                               item.CardCode,
                               item.OrderNo,
@@ -687,12 +688,13 @@ export default function MaterialRequest() {
       })),
     };
 
-    setapiloading(true);
+    setLoading(true);
 
     try {
       const res = await apiClient.post("/MatReq", obj);
 
-      if (res.data?.success) {
+      if (res.data.success) {
+        setLoading(false);
         setOpenListData([]);
         fetchOpenListData(0);
         handleGetListClear();
@@ -706,27 +708,28 @@ export default function MaterialRequest() {
           timer: 1500,
         });
       } else {
+        setLoading(false);
         Swal.fire({
           title: "Error!",
-          text: res.data?.message || "Something went wrong",
+          text: res.data?.message,
           icon: "warning",
           confirmButtonText: "Ok",
         });
       }
     } catch (error) {
+      setLoading(false);
       Swal.fire({
         title: "Error!",
         text: error.message || "Something went wrong",
         icon: "warning",
         confirmButtonText: "Ok",
       });
-    } finally {
-      setapiloading(false);
     }
   };
 
   return (
     <>
+      <Loader open={loading} />
       <Grid
         container
         width="100%"
@@ -895,7 +898,6 @@ export default function MaterialRequest() {
                               >
                                 {getListData.map((item, index) => (
                                   <CardComponent
-                                    // key={index}
                                     key={item.DocEntry}
                                     title={item.CardCode}
                                     subtitle={item.CardName}
@@ -905,7 +907,7 @@ export default function MaterialRequest() {
                                       allFormData.CardCode === item.CardCode
                                     }
                                     onClick={() => {
-                                      onSelectBusinessPartner(item.DocEntry);
+                                      onSelectBusinessPartner(item);
                                     }}
                                   />
                                 ))}
@@ -1048,7 +1050,7 @@ export default function MaterialRequest() {
                         ml: 1,
                         mr: 1,
                         maxHeight: 400,
-                        minHeight:150,
+                        minHeight: 150,
                         overflow: "auto",
                       }}
                     >

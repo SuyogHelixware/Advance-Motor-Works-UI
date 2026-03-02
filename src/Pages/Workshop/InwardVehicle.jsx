@@ -20,7 +20,6 @@ import InfiniteScroll from "react-infinite-scroll-component";
 import SignatureCanvas from "react-signature-canvas";
 import { BeatLoader } from "react-spinners";
 import Swal from "sweetalert2";
-import DynamicLoader from "../../Loaders/DynamicLoader";
 import apiClient from "../../services/apiClient";
 import CardComponent from "../Components/CardComponent";
 import {
@@ -28,12 +27,11 @@ import {
   InputFields,
   InputTextArea,
   InputTextSearchButton,
-  InputTimePicker,
 } from "../Components/formComponents";
+import { Loader } from "../Components/Loader";
 import SearchInputField from "../Components/SearchInputField";
 import SearchModel from "../Components/SearchModel";
 import usePermissions from "../Components/usePermissions";
-import { Loader } from "../Components/Loader";
 
 export default function InwardVehicle() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -103,17 +101,7 @@ export default function InwardVehicle() {
     InspectionRemark: "",
   };
 
-  const {
-    control,
-    handleSubmit,
-    reset,
-    getValues,
-    setValue,
-    watch,
-    // clearErrors,
-    // setError,
-    // formState: { errors },
-  } = useForm({
+  const { control, handleSubmit, reset, getValues, setValue, watch } = useForm({
     defaultValues: initial,
   });
 
@@ -168,21 +156,15 @@ export default function InwardVehicle() {
     }
   }, [SaveUpdateName]);
 
-  const onSelectBusinessPartner = (DocEntry) => {
+  const onSelectBusinessPartner = (selectedItem) => {
     clearSignature();
 
     try {
       setLoading(true);
 
-      const selectedItem = getListData.find(
-        (item) => item.DocEntry === DocEntry,
-      );
-      if (!selectedItem) {
-        setLoading(false);
-        return;
-      }
+      const filledValues = {
+        ...selectedItem,
 
-      const fieldsToSet = {
         OrderNo: selectedItem.OrderNo,
         CardName: selectedItem.CardName,
         CardCode: selectedItem.CardCode,
@@ -206,9 +188,7 @@ export default function InwardVehicle() {
         Model: selectedItem.Model,
       };
 
-      Object.entries(fieldsToSet).forEach(([key, value]) => {
-        setValue(key, value, { shouldValidate: true });
-      });
+      reset(filledValues);
 
       SearchModelClose();
     } catch (error) {
@@ -219,37 +199,52 @@ export default function InwardVehicle() {
   };
 
   const fetchAndSetData = async (DocEntry) => {
+    if (!DocEntry) return;
     setLoading(true);
     try {
-      if (!DocEntry) return;
+      const res = await apiClient.get(`/VehInward?DocEntry=${DocEntry}`);
+      const data = res.data.values;
 
-      const response = await apiClient.get(`/VehInward?DocEntry=${DocEntry}`);
-      const data = response?.data;
-
-      if (data && data.success && data.values) {
-        const item = data.values;
-
-        reset({
-          ...item,
-
-          VehInwardDate: item.DocDate ? dayjs(item.DocDate) : dayjs(),
-          // VehInwardTime: item.VehInwardTime
-          //   ? dayjs(item.VehInwardTime)
-          //   : dayjs(),
-          VehInwardTime: item.VehInwardTime
-            ? dayjs(item.VehInwardTime, "HH:mm")
-            : null,
-          AppointDate: item.DocDate ? dayjs(item.DocDate) : dayjs(),
-          VehInwardNo: item.DocNum,
-          JobCardNo: item.JobCardNo,
-          InspectionRemark: item.InspectionRemark,
-          Vehicle:
-            item.Vehicle ||
-            `${item.Year || ""} - ${item.Make || ""} - ${item.Model || ""}`,
-
-          JobWorkDetails: item.JobWorkDetails || "",
+      if (!data) {
+        Swal.fire({
+          icon: "warning",
+          text: "Record not found",
         });
+        setLoading(false);
+        return;
+      }
 
+      if (res.data.success) {
+        const transformed = {
+          ...data,
+          OrderNo: data.OrderNo,
+          CardName: data.CardName,
+          PhoneNumber1: data.PhoneNumber1,
+          JobWorkAt: data.JobWorkAt,
+          JobWorkDetails: data.JobWorkDetails,
+          VehInwardNo: data.DocNum,
+          AppointDate: data.DocDate ? dayjs(data.DocDate) : dayjs(),
+          AppointmentNo: data.AppointmentNo,
+          VehInwardDate: data.DocDate ? dayjs(data.DocDate) : dayjs(),
+          VehInwardTime: data.VehInwardTime
+            ? dayjs(data.VehInwardTime, "HH:mm")
+            : null,
+          Mileage: data.Mileage,
+          ChassisNo: data.ChassisNo,
+          RegistrationNo: data.RegistrationNo,
+          InspectionRemark: data.InspectionRemark,
+          JobCardNo: data.JobCardNo,
+          Vehicle:
+            data.Vehicle ||
+            `${data.Year || ""} - ${data.Make || ""} - ${data.Model || ""}`,
+          SignPath: data.SignPath,
+          SignPathByteArray: data.SignPathByteArray,
+          OrderType: data.OrderType,
+          Year: data.Year,
+          Make: data.Make,
+          Model: data.Model,
+        };
+        reset(transformed);
         setDocEntry(DocEntry);
         setSaveUpdateName("Update");
       }
@@ -289,12 +284,6 @@ export default function InwardVehicle() {
     } catch (error) {
       console.error("Error fetching data:", error);
       setHasMoreOpen(false);
-
-      Swal.fire({
-        text: error?.response?.data?.message || error.message || "Server error",
-        icon: "question",
-        confirmButtonText: "YES",
-      });
     }
   };
 
@@ -564,7 +553,6 @@ export default function InwardVehicle() {
                           subtitle={item.PhoneNumber1}
                           description={item.CardName}
                           searchResult={query}
-                          // isSelected={watch("DocEntry") === item.DocEntry}
                           onClick={() => fetchAndSetData(item.DocEntry)}
                         />
                       ))}
@@ -646,9 +634,11 @@ export default function InwardVehicle() {
 
   const OpenDailog = () => {
     setSearchmodelOpen(true);
+    setGetListQuery("");
   };
   const SearchModelClose = () => {
     setSearchmodelOpen(false);
+    setGetListQuery("");
   };
 
   const handleGetListSearch = (res) => {
@@ -680,271 +670,100 @@ export default function InwardVehicle() {
     setSaveUpdateName("SAVE");
     setDocEntry("");
     setValue("Vehicle", "");
+    clearSignature();
   };
-
-  // const handleSubmitForm = async (data) => {
-  //   try {
-  //     if (!sigCanvas.current || sigCanvas.current.isEmpty()) {
-  //       Swal.fire({
-  //         text: "Please add Signature...",
-  //         icon: "warning",
-  //         toast: true,
-  //         showConfirmButton: false,
-  //         timer: 2000,
-  //         timerProgressBar: true,
-  //       });
-  //       return;
-  //     }
-
-  //     setapiloading(true);
-
-  //     const UserId = localStorage.getItem("UserId");
-  //     const CreatedBy = localStorage.getItem("UserName");
-  //     const signatureDataURL = sigCanvas.current.toDataURL().split(",")[1];
-
-  //     const obj = {
-  //       UserId: data.DocEntry ? (data.UserId ?? UserId) : UserId,
-  //       CreatedBy: data.DocEntry ? (data.CreatedBy ?? CreatedBy) : CreatedBy,
-  //       AppointmentNo: data.AppointmentNo,
-  //       VehInwardNo: data.VehInwardNo,
-  //       OrderNo: data.OrderNo,
-  //       VehInwardDate: dayjs(data.VehInwardDate).format("YYYY-MM-DD HH:mm:ss"),
-  //       RegistrationNo: String(data.RegistrationNo || ""),
-  //       InspectionRemark: data.InspectionRemark,
-  //       VehicleDocEntry: "0",
-  //       Mileage: String(data.Mileage || ""),
-  //       ChassisNo: String(data.ChassisNo || ""),
-  //       VehInwardTime: data.VehInwardTime
-  //         ? dayjs(data.VehInwardTime).format("HH:mm")
-  //         : "",
-  //       PhoneNumber1: data.PhoneNumber1,
-  //       CardName: data.CardName,
-  //       CardCode: data.CardCode,
-  //       JobWorkAt: data.JobWorkAt,
-  //       Year: data.Year,
-  //       Make: data.Make,
-  //       Model: data.Model,
-  //       JobWorkDetails: data.JobWorkDetails,
-  //       OrderType: data.OrderType,
-  //       OrderDocEntry: String(data.OrderDocEntry || ""),
-  //       JobCardNo: "",
-  //       ScheduleDate: "",
-  //       SignPath: data.SignPath,
-  //       SignPathByteArray: signatureDataURL,
-  //     };
-
-  //     if (SaveUpdateName === "Submit") {
-  //       const { data: res } = await apiClient.post(`/VehInward`, obj);
-
-  //       if (res.success) {
-  //         setOpenListData([]);
-  //         fetchOpenListData(0);
-  //         handleGetListClear();
-  //         ClearForm();
-
-  //         Swal.fire({
-  //           title: "Success!",
-  //           text: "Inward Vehicle Added",
-  //           icon: "success",
-  //           timer: 1500,
-  //           showConfirmButton: false,
-  //         });
-  //       } else {
-  //         throw new Error(res.message || "Failed to add vehicle.");
-  //       }
-  //     }
-
-  //     // ==============================
-  //     // 🔹 UPDATE
-  //     // ==============================
-  //     else if (SaveUpdateName === "Update") {
-  //       const confirm = await Swal.fire({
-  //         text: `Do you want to Update ${data.VehInwardNo}?`,
-  //         icon: "question",
-  //         showCancelButton: true,
-  //         confirmButtonText: "YES",
-  //         cancelButtonText: "No",
-  //       });
-
-  //       if (!confirm.isConfirmed) {
-  //         setapiloading(false);
-  //         return;
-  //       }
-
-  //       // ⚠️ Recommended: PUT for update
-  //       const { data: res } = await apiClient.put(
-  //         `/VehInward/${data.DocEntry}`,
-  //         obj,
-  //       );
-
-  //       if (res.success) {
-  //         setOpenListPage(0);
-  //         setOpenListData([]);
-  //         fetchOpenListData(0);
-  //         handleGetListClear();
-  //         ClearForm();
-
-  //         Swal.fire({
-  //           title: "Success!",
-  //           text: "Inward Vehicle Updated",
-  //           icon: "success",
-  //           timer: 1200,
-  //           showConfirmButton: false,
-  //         });
-  //       } else {
-  //         throw new Error(res.message || "Failed to update vehicle.");
-  //       }
-  //     }
-  //   } catch (error) {
-  //     console.error("Submit Error:", error);
-
-  //     Swal.fire({
-  //       title: "Error!",
-  //       text:
-  //         error?.response?.data?.message ||
-  //         error.message ||
-  //         "Something went wrong",
-  //       icon: "error",
-  //       confirmButtonText: "Ok",
-  //     });
-  //   } finally {
-  //     setapiloading(false);
-  //   }
-  // };
 
   const handleSubmitForm = async (data) => {
+    if (!sigCanvas.current || sigCanvas.current.isEmpty()) {
+      Swal.fire({
+        text: "Please add Signature...",
+        icon: "warning",
+        toast: true,
+        showConfirmButton: false,
+        timer: 2000,
+        timerProgressBar: true,
+      });
+      return;
+    }
+
+    const UserId = localStorage.getItem("UserId");
+    const CreatedBy = localStorage.getItem("UserName");
+    const signatureDataURL = sigCanvas.current.toDataURL().split(",")[1];
+
+    const obj = {
+      UserId: UserId,
+      CreatedBy: CreatedBy,
+      DocDate: dayjs(),
+      AppointmentNo: data.AppointmentNo || "",
+      VehInwardNo: data.VehInwardNo || "",
+      OrderNo: data.OrderNo || "",
+      VehInwardDate: data.VehInwardDate
+        ? dayjs(data.VehInwardDate).format("YYYY-MM-DD HH:mm:ss")
+        : null,
+      VehInwardTime: data.VehInwardTime
+        ? dayjs(data.VehInwardTime).format("HH:mm")
+        : "",
+      RegistrationNo: String(data.RegistrationNo || ""),
+      Mileage: String(data.Mileage || ""),
+      ChassisNo: String(data.ChassisNo || ""),
+      InspectionRemark: data.InspectionRemark || "",
+      PhoneNumber1: data.PhoneNumber1 || "",
+      CardName: data.CardName || "",
+      CardCode: data.CardCode || "",
+      JobWorkAt: data.JobWorkAt || "",
+      Year: data.Year || "",
+      Make: data.Make || "",
+      Model: data.Model || "",
+      JobWorkDetails: data.JobWorkDetails || "",
+      OrderType: data.OrderType || "",
+      OrderDocEntry: String(data.OrderDocEntry || ""),
+      VehicleDocEntry: "0",
+      JobCardNo: "",
+      ScheduleDate: "",
+
+      SignPath: "",
+      SignPathByteArray: signatureDataURL,
+    };
+
+    setLoading(true);
+
     try {
-      // 1. Signature Validation
-      if (!sigCanvas.current || sigCanvas.current.isEmpty()) {
+      const res = await apiClient.post(`/VehInward`, obj);
+
+      if (res.data.success) {
+        setLoading(false);
+        setOpenListData([]);
+        fetchOpenListData(0);
+        handleGetListClear();
+        ClearForm();
+
         Swal.fire({
-          text: "Please add Signature...",
-          icon: "warning",
-          toast: true,
+          title: "Success!",
+          text: "Vehicle Inward Successfully",
+          icon: "success",
+          timer: 1500,
           showConfirmButton: false,
-          timer: 2000,
-          timerProgressBar: true,
         });
-        return;
-      }
-
-      setLoading(true);
-
-      const UserId = localStorage.getItem("UserId");
-      const CreatedBy = localStorage.getItem("UserName");
-      const signatureDataURL = sigCanvas.current.toDataURL().split(",")[1];
-
-      // 2. Map the Object
-      const obj = {
-        UserId: UserId,
-        CreatedBy: CreatedBy,
-        DocDate: dayjs(),
-        AppointmentNo: data.AppointmentNo || "",
-        VehInwardNo: data.VehInwardNo || "",
-        OrderNo: data.OrderNo || "",
-        VehInwardDate: data.VehInwardDate
-          ? dayjs(data.VehInwardDate).format("YYYY-MM-DD HH:mm:ss")
-          : null,
-        VehInwardTime: data.VehInwardTime
-          ? dayjs(data.VehInwardTime).format("HH:mm")
-          : "",
-        RegistrationNo: String(data.RegistrationNo || ""),
-        Mileage: String(data.Mileage || ""),
-        ChassisNo: String(data.ChassisNo || ""),
-        InspectionRemark: data.InspectionRemark || "",
-        PhoneNumber1: data.PhoneNumber1 || "",
-        CardName: data.CardName || "",
-        CardCode: data.CardCode || "",
-        JobWorkAt: data.JobWorkAt || "",
-        Year: data.Year || "",
-        Make: data.Make || "",
-        Model: data.Model || "",
-        JobWorkDetails: data.JobWorkDetails || "",
-        OrderType: data.OrderType || "",
-        OrderDocEntry: String(data.OrderDocEntry || ""),
-        VehicleDocEntry: "0",
-        JobCardNo: "",
-        ScheduleDate: "",
-
-        SignPath: "",
-        SignPathByteArray: signatureDataURL,
-      };
-
-      // 3. Logic for SAVE (POST)
-      // Changed from "Submit" to "SAVE" to match your state default
-      if (SaveUpdateName === "SAVE") {
-        const { data: res } = await apiClient.post("/VehInward", obj);
-
-        if (res.success) {
-          setOpenListData([]);
-          fetchOpenListData(0);
-          handleGetListClear();
-          ClearForm();
-
-          Swal.fire({
-            title: "Success!",
-            text: "Inward Vehicle Added",
-            icon: "success",
-            timer: 1500,
-            showConfirmButton: false,
-          });
-        } else {
-          throw new Error(res.message || "Failed to add vehicle.");
-        }
-      }
-
-      // 4. Logic for UPDATE (PUT)
-      else if (SaveUpdateName === "Update") {
-        const confirm = await Swal.fire({
-          text: `Do you want to Update ${data.VehInwardNo}?`,
-          icon: "question",
-          showCancelButton: true,
-          confirmButtonText: "YES",
-          cancelButtonText: "No",
+      } else {
+        setLoading(false);
+        Swal.fire({
+          title: "Error!",
+          text: res.data.message,
+          icon: "warning",
+          confirmButtonText: "Ok",
         });
-
-        if (!confirm.isConfirmed) {
-          setLoading(false);
-          return;
-        }
-
-        const { data: res } = await apiClient.put(
-          `/VehInward/${DocEntry}`, // Using the DocEntry state variable
-          obj,
-        );
-
-        if (res.success) {
-          setOpenListPage(0);
-          setOpenListData([]);
-          fetchOpenListData(0);
-          handleGetListClear();
-          ClearForm();
-
-          Swal.fire({
-            title: "Success!",
-            text: "Inward Vehicle Updated",
-            icon: "success",
-            timer: 1200,
-            showConfirmButton: false,
-          });
-        } else {
-          throw new Error(res.message || "Failed to update vehicle.");
-        }
       }
     } catch (error) {
-      console.error("Submit Error:", error);
+      setLoading(false);
       Swal.fire({
         title: "Error!",
-        text:
-          error?.response?.data?.message ||
-          error.message ||
-          "Something went wrong",
-        icon: "error",
+        text: error,
+        icon: "warning",
         confirmButtonText: "Ok",
       });
-    } finally {
-      setLoading(false);
     }
   };
+
   return (
     <>
       <Loader open={loading} />
@@ -956,8 +775,6 @@ export default function InwardVehicle() {
         component={"form"}
         onSubmit={handleSubmit(handleSubmitForm)}
       >
-        {/* Sidebar for larger screens */}
-
         <Grid
           container
           item
@@ -978,8 +795,6 @@ export default function InwardVehicle() {
           {sidebarContent}
         </Grid>
 
-        {/* User Creation Form Grid */}
-
         <Grid
           container
           item
@@ -988,11 +803,8 @@ export default function InwardVehicle() {
           sm={12}
           md={12}
           lg={9}
-          // component="form"
           position="relative"
         >
-          {/* Hamburger Menu for smaller screens */}
-
           <IconButton
             edge="start"
             color="inherit"
@@ -1001,12 +813,8 @@ export default function InwardVehicle() {
             sx={{
               display: {
                 lg: "none",
-              }, // Show only on smaller screens
-
+              },
               position: "absolute",
-
-              // top: "10px",
-
               left: "10px",
             }}
           >
@@ -1122,7 +930,6 @@ export default function InwardVehicle() {
                               >
                                 {getListData.map((item, index) => (
                                   <CardComponent
-                                    // key={index}
                                     key={item.DocEntry}
                                     title={item.OrderNo}
                                     subtitle={item.PhoneNumber1}
@@ -1132,7 +939,7 @@ export default function InwardVehicle() {
                                       allFormData.CardCode === item.CardCode
                                     }
                                     onClick={() => {
-                                      onSelectBusinessPartner(item.DocEntry);
+                                      onSelectBusinessPartner(item);
                                     }}
                                   />
                                 ))}
@@ -1540,7 +1347,6 @@ export default function InwardVehicle() {
             <Grid
               item
               px={1}
-              // md={12}
               xs={12}
               style={{
                 display: "flex",
@@ -1557,7 +1363,8 @@ export default function InwardVehicle() {
                 disabled={
                   (SaveUpdateName === "SAVE" && !perms.IsAdd) ||
                   allFormData.Status === "1" ||
-                  allFormData.Status === "0"
+                  allFormData.Status === "0" ||
+                  allFormData.OrderNo === ""
                 }
               >
                 {SaveUpdateName}
