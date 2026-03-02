@@ -28,6 +28,7 @@ import {
 import SearchModel from "../Components/SearchModel";
 import { Loader } from "../Components/Loader";
 import dayjs from "dayjs";
+import apiClient from "../../services/apiClient";
 
 export default function CustomerSalesHistory() {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -61,7 +62,7 @@ export default function CustomerSalesHistory() {
 
   const allFormData = getValues();
 
-  const BASE_URL = "http://hwaceri5:8070/api";
+  // const BASE_URL = "http://hwaceri5:8070/api";
 
   const theme = useTheme();
   const gridSx = useMemo(() => dataGridSx(theme), [theme]);
@@ -180,10 +181,10 @@ export default function CustomerSalesHistory() {
       const encodedSearch = encodeURIComponent(searchTerm.trim());
 
       const url = encodedSearch
-        ? `${BASE_URL}/BP?Status=1&CardType=C&SearchText=${encodedSearch}&Page=${pageNum}`
-        : `${BASE_URL}/BP?Status=1&CardType=C&Page=${pageNum}`;
+        ? `/BPV2?Status=1&CardType=C&SearchText=${encodedSearch}&Page=${pageNum}`
+        : `/BPV2?Status=1&CardType=C&Page=${pageNum}`;
 
-      const { data } = await axios.get(url, {
+      const { data } = await apiClient.get(url, {
         signal: controller.signal,
       });
 
@@ -274,7 +275,7 @@ export default function CustomerSalesHistory() {
     setLoading(true);
     try {
       const { CardCode } = selectedItem;
-      const res = await axios.get(`${BASE_URL}/BPSalesHistory/${CardCode}`);
+      const res = await apiClient.get(`/BPSalesHistory/${CardCode}`);
 
       if (res.data.success && Array.isArray(res.data.values)) {
         const formattedData = res.data.values.map((item) => ({

@@ -143,7 +143,6 @@ export default function QuatationSO() {
   const [SaveUpdateName, setSaveUpdateName] = useState("SAVE");
 
   const theme = useTheme();
-  const BASE_URL = "http://hwaceri5:8070/api";
   const checkedRowsRef = useRef([]);
 
   const initial = {
@@ -790,10 +789,10 @@ export default function QuatationSO() {
 
     setModalLoading(true);
 
-    axios
+    apiClient
       .request({
         method: "get",
-        url: `${BASE_URL}/DynamicSearch/itemsdata/${ItemCode}`,
+        url: `/DynamicSearch/itemsdata/${ItemCode}`,
         headers: {
           "Content-Type": "application/json",
         },
@@ -835,7 +834,7 @@ export default function QuatationSO() {
     const url = `/DynamicSearch/QuotSO/itemsdata/GRN/${selectedRow.ItemCode}/${GRNPage}`;
 
     try {
-      const response = await axios.get(`${BASE_URL}${url}`);
+      const response = await apiClient.get(`${url}`);
 
       const newData = response.data.values || [];
 
@@ -869,7 +868,7 @@ export default function QuatationSO() {
     const url = `/DynamicSearch/QuotSO/itemsdata/ARInvoice/${selectedRow.ItemCode}/${ARInvoicePage}`;
 
     try {
-      const response = await axios.get(`${BASE_URL}${url}`);
+      const response = await apiClient.get(`${url}`);
 
       const newData = response.data.values || [];
 
@@ -913,7 +912,7 @@ export default function QuatationSO() {
     const url = `/DynamicSearch/QuotSO/itemsdata/OpenSo/${selectedRow.ItemCode}/${OpenSOPage}`;
 
     try {
-      const response = await axios.get(`${BASE_URL}${url}`);
+      const response = await apiClient.get(`${url}`);
 
       const newData = response.data.values || [];
 
