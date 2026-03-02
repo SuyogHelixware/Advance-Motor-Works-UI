@@ -1270,7 +1270,10 @@ export default function InwardVehicle() {
                           rules={{ required: "Veh Mileage is required" }}
                           render={({ field, fieldState: { error } }) => (
                             <InputFields
-                              readOnly={allFormData.Status === "0"}
+                              readOnly={
+                                allFormData.Status === "0" ||
+                                allFormData.Status === "1"
+                              }
                               {...field}
                               error={!!error}
                               helperText={error ? error.message : null}
@@ -1287,7 +1290,10 @@ export default function InwardVehicle() {
                           rules={{ required: "Chassis No is required" }}
                           render={({ field, fieldState: { error } }) => (
                             <InputFields
-                              readOnly={allFormData.Status === "0"}
+                              readOnly={
+                                allFormData.Status === "0" ||
+                                allFormData.Status === "1"
+                              }
                               {...field}
                               error={!!error}
                               helperText={error ? error.message : null}
@@ -1306,7 +1312,10 @@ export default function InwardVehicle() {
                           }}
                           render={({ field, fieldState: { error } }) => (
                             <InputFields
-                              readOnly={allFormData.Status === "0"}
+                              readOnly={
+                                allFormData.Status === "0" ||
+                                allFormData.Status === "1"
+                              }
                               {...field}
                               error={!!error}
                               helperText={error ? error.message : null}
@@ -1332,7 +1341,10 @@ export default function InwardVehicle() {
                               }}
                               render={({ field, fieldState: { error } }) => (
                                 <InputTextArea
-                                  readOnly={allFormData.Status === "0"}
+                                  readOnly={
+                                    allFormData.Status === "0" ||
+                                    allFormData.Status === "1"
+                                  }
                                   {...field}
                                   error={!!error}
                                   helperText={error ? error.message : null}
