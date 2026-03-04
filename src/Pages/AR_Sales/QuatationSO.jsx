@@ -9,7 +9,6 @@ import RemoveCircleIcon from "@mui/icons-material/RemoveCircle";
 import RequestQuoteIcon from "@mui/icons-material/RequestQuote";
 import SearchIcon from "@mui/icons-material/Search";
 import TextSnippetIcon from "@mui/icons-material/TextSnippet";
-import DeleteIcon from "@mui/icons-material/Delete";
 
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 import {
@@ -39,7 +38,6 @@ import {
   TableHead,
   TableRow,
   Tabs,
-  TextField,
   Toolbar,
   Tooltip,
   Typography,
@@ -72,7 +70,6 @@ import {
   RadioButtonsField,
   SmallInputFields,
   SmallInputTextField,
-  TableNumberInput,
 } from "../Components/formComponents";
 import { PhoneNumber } from "../Components/PhoneNumber";
 import SearchInputField from "../Components/SearchInputField";
@@ -87,15 +84,14 @@ export default function QuatationSO() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [tab, settab] = useState("0");
   const [open, setOpen] = useState(false);
-  const [phone, setPhone] = useState("");
+
   const [tabValue, setTabValue] = useState(0);
   const [openModal, setOpenModal] = React.useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [bankData, setBankData] = useState([]);
   const [selectedRow, setSelectedRow] = useState(null);
   const [images, setImages] = useState([]);
-  const [oldOpenData, setSelectData] = useState(null);
-
+  // const [oldOpenData, setSelectData] = useState(null);
   const [GRN, setGrn] = useState([]);
   const [GRNPage, setGRNPage] = useState(1);
   const [hasMoreGRN, setHasMoreGRN] = useState(true);
@@ -114,7 +110,7 @@ export default function QuatationSO() {
   const [filteredList, setFilteredList] = useState([]);
   const [ModalLoading, setModalLoading] = useState(false);
   const [Suppliers, setSuppliers] = useState([]);
-  const [storedFittingCharges, setStoredFittingCharges] = useState([]);
+  // const [storedFittingCharges, setStoredFittingCharges] = useState([]);
 
   const [getListData, setGetListData] = useState([]);
   const [getListquery, setGetListQuery] = useState("");
@@ -128,16 +124,12 @@ export default function QuatationSO() {
   const [hasMoreOpen, setHasMoreOpen] = useState(true);
   const [openListquery, setOpenListQuery] = useState("");
   const [openListSearching, setOpenListSearching] = useState(false);
-
   const [closedListData, setClosedListData] = useState([]);
   const [closedListPage, setClosedListPage] = useState(0);
   const [hasMoreClosed, setHasMoreClosed] = useState(true);
   const [closedListquery, setClosedListQuery] = useState("");
   const [closedListSearching, setClosedListSearching] = useState(false);
-  const [Discapprovreq, setDiscapprovReq] = useState("");
-  const [DocEntry, setDocEntry] = useState("");
   const [top20ItemsList, settop20ItemsList] = useState([]);
-  const [top20Loading, setTop20Loading] = useState(false);
   const top20CancelToken = useRef(null);
   const top20DebounceTimer = useRef(null);
   const [SaveUpdateName, setSaveUpdateName] = useState("SAVE");
@@ -218,7 +210,6 @@ export default function QuatationSO() {
     Model: "",
     CashPaid: 0,
     BaseRefId: "",
-    // BaseRef: (LeadId ?? "LEAD") || null,
     CreditSum: 0,
     TransferSum: 0,
     oLines: [],
@@ -268,7 +259,7 @@ export default function QuatationSO() {
     getValues,
     setValue,
     watch,
-    formState: { errors },
+    // formState: { errors },
   } = useForm({
     defaultValues: initial,
     shouldFocusError: false,
@@ -278,10 +269,10 @@ export default function QuatationSO() {
     control: controlMdl,
     handleSubmit: handleSubmitMdl,
     reset: resetMdl,
-    getValues: getValuesMdl,
+    // getValues: getValuesMdl,
     setValue: setValueMdl,
-    watch: watchMdl,
-    formState: { errors: errorsMdl },
+    // watch: watchMdl,
+    // formState: { errors: errorsMdl },
   } = useForm({
     defaultValues: initialCustCreation,
     shouldFocusError: false,
@@ -291,16 +282,16 @@ export default function QuatationSO() {
     control: controlMdl1,
     handleSubmit: handleSubmitMdl1,
     reset: resetMdl1,
-    getValues: getValuesMdl1,
-    setValue: setValueMdl1,
-    watch: watchMdl1,
-    formState: { errors: errorsMdl1 },
+    // getValues: getValuesMdl1,
+    // setValue: setValueMdl1,
+    // watch: watchMdl1,
+    // formState: { errors: errorsMdl1 },
   } = useForm({
     defaultValues: initialItemSearch,
     shouldFocusError: false,
   });
 
-  const allFormData = getValues();
+  // const allFormData = getValues();
   const perms = usePermissions(133);
 
   const CreditCardList = [
@@ -330,7 +321,7 @@ export default function QuatationSO() {
   };
 
   const gettop20Items = useCallback((searchText = "") => {
-    setTop20Loading(true);
+    // setTop20Loading(true);
 
     if (top20DebounceTimer.current) {
       clearTimeout(top20DebounceTimer.current);
@@ -372,8 +363,8 @@ export default function QuatationSO() {
               text: error.message || "Error fetching top 20 items",
             });
           }
-        })
-        .finally(() => setTop20Loading(false));
+        });
+      // .finally(() => setTop20Loading(false));
     }, 500);
   }, []);
 
@@ -497,12 +488,12 @@ export default function QuatationSO() {
         oCCPay: [],
         BankPay: [],
         oCashPay: [],
-        Status:
-          data.Status === "1" && data.InvoiceStatus === "1"
-            ? "OPEN | P-INVOICE"
-            : data.Status === "0"
-              ? "CLOSE"
-              : "OPEN",
+        // Status:
+        //   data.Status === "1" && data.InvoiceStatus === "1"
+        //     ? "OPEN | P-INVOICE"
+        //     : data.Status === "0"
+        //       ? "CLOSE"
+        //       : "OPEN",
 
         DesiredDiscAmt: Number(data?.DesiredDiscAmt || 0).toFixed(3),
         SpecialDiscAmt: Number(data?.SpecialDiscAmt || 0).toFixed(3),
@@ -544,7 +535,6 @@ export default function QuatationSO() {
       });
 
       // reset(transformed);
-      setDocEntry(DocEntry);
       setSaveUpdateName("UPDATE");
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -1361,19 +1351,19 @@ export default function QuatationSO() {
 
       checkedRows.forEach((r) => (r.disabled = true));
 
-      setStoredFittingCharges((prev) => {
-        const newData = checkedRows.map((row) => ({
-          ItemCode: row.ItemCode,
-          FittingCharge: row.OriginalFittingCharge ?? row.FittingCharge,
-        }));
-        const merged = [...prev];
-        newData.forEach((n) => {
-          const idx = merged.findIndex((m) => m.ItemCode === n.ItemCode);
-          if (idx >= 0) merged[idx] = n;
-          else merged.push(n);
-        });
-        return merged;
-      });
+      // setStoredFittingCharges((prev) => {
+      //   const newData = checkedRows.map((row) => ({
+      //     ItemCode: row.ItemCode,
+      //     FittingCharge: row.OriginalFittingCharge ?? row.FittingCharge,
+      //   }));
+      //   const merged = [...prev];
+      //   newData.forEach((n) => {
+      //     const idx = merged.findIndex((m) => m.ItemCode === n.ItemCode);
+      //     if (idx >= 0) merged[idx] = n;
+      //     else merged.push(n);
+      //   });
+      //   return merged;
+      // });
 
       const processedItems = checkedRows.flatMap((row) => {
         const hasChildren = Array.isArray(row.oLines) && row.oLines.length > 0;
@@ -1437,7 +1427,7 @@ export default function QuatationSO() {
     const UserId = localStorage.getItem("UserId");
     const CreatedBy = localStorage.getItem("UserName");
     const obj = {
-      UserId: "",
+      UserId: UserId,
       CreatedBy: CreatedBy,
       CardCode: data.CardCode,
 
@@ -1448,18 +1438,14 @@ export default function QuatationSO() {
       DocDate: dayjs(),
       PhoneNumber2: "",
       Email: data.Email,
-      Remarks: "",
       CardType: "C",
       GroupCode: data.GroupCode === true ? "102" : "100",
       Status: "1",
-      CardCode: "25-064",
       Series: "-1",
       Currency: "INR",
       LicTradNum: "",
-      PhoneNumber2: "",
       Cellular: "",
       Fax: "",
-      Email: "",
       validFor: "1",
       frozenFor: "0",
       ValidComm: "",
@@ -1903,8 +1889,6 @@ export default function QuatationSO() {
           }
 
           if (res.data.success) {
-            const data = res.data.values;
-
             fetchOpenListData();
             fetchClosedListData();
             reset(initial);
@@ -1986,9 +1970,6 @@ export default function QuatationSO() {
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
-  function hadlesubmit(e) {
-    e.preventDefault();
-  }
 
   const gridSx = useMemo(() => dataGridSx(theme), [theme]);
 
@@ -2091,21 +2072,21 @@ export default function QuatationSO() {
       IssueQuantity: item.IssueQuantity,
     };
 
-    setStoredFittingCharges((prev) => {
-      const merged = [...prev];
-      const idx = merged.findIndex((m) => m.ItemCode === item.ItemCode);
-      if (idx >= 0)
-        merged[idx] = {
-          ItemCode: item.ItemCode,
-          FittingCharge: realFittingCharge,
-        };
-      else
-        merged.push({
-          ItemCode: item.ItemCode,
-          FittingCharge: realFittingCharge,
-        });
-      return merged;
-    });
+    // setStoredFittingCharges((prev) => {
+    //   const merged = [...prev];
+    //   const idx = merged.findIndex((m) => m.ItemCode === item.ItemCode);
+    //   if (idx >= 0)
+    //     merged[idx] = {
+    //       ItemCode: item.ItemCode,
+    //       FittingCharge: realFittingCharge,
+    //     };
+    //   else
+    //     merged.push({
+    //       ItemCode: item.ItemCode,
+    //       FittingCharge: realFittingCharge,
+    //     });
+    //   return merged;
+    // });
 
     const updatedOLines = [...currentOLines, newLine];
     setValue("oLines", updatedOLines);
@@ -2138,7 +2119,6 @@ export default function QuatationSO() {
   };
 
   const oLines = useWatch({ control, name: "oLines" });
-  const oCCPay = useWatch({ control, name: "oCCPay" });
   const [selectionModel, setSelectionModel] = useState([]);
 
   const handleRowDelete = (itemCode) => {
@@ -2232,14 +2212,7 @@ export default function QuatationSO() {
       align: "right",
       headerAlign: "right",
     },
-    // {
-    //   field: "LineFittingCharge",
-    //   headerName: "FITTING",
-    //   width: 100,
-    //   align: "right",
-    //   headerAlign: "right",
-    //   editable: true,
-    // },
+
     {
       field: "LineFittingCharge",
       headerName: "FITTING",
@@ -2333,12 +2306,7 @@ export default function QuatationSO() {
       align: "right",
       headerAlign: "right",
     },
-    // {
-    //   field: "UAE_TO_KWT",
-    //   headerName: "INTRANS",
-    //   width: 100,
-    //   editable: true,
-    // },
+
     {
       field: "OH_KWT",
       headerName: "OH-KWT",
@@ -2400,11 +2368,6 @@ export default function QuatationSO() {
 
     const currentLines = getValues("oLines") || [];
 
-    // const updatedRows = currentLines.map((row) =>
-    //   row.ItemCode === newRow.ItemCode
-    //     ? { ...row, Amount: amount.toFixed(3) }
-    //     : row,
-    // );
     const updatedRows = currentLines.map((row) =>
       row.ItemCode === newRow.ItemCode
         ? {
@@ -2591,7 +2554,7 @@ export default function QuatationSO() {
                           subtitle={item.PhoneNumber1}
                           description={item.CardName}
                           searchResult={query}
-                          isSelected={oldOpenData === item.DocEntry}
+                          // isSelected={oldOpenData === item.DocEntry}
                           onClick={() =>
                             fetchAndSetData(
                               item.DocEntry,
@@ -2614,7 +2577,6 @@ export default function QuatationSO() {
 
   const ClearFormData = () => {
     reset(initial);
-    setDocEntry("");
     setBankData([]);
     setSaveUpdateName("SAVE");
     setSelectionModel([]);
@@ -3950,10 +3912,6 @@ export default function QuatationSO() {
                                     label="TRANSFER REF NO"
                                     type="text"
                                     {...field}
-                                    // onChange={(e) => {
-                                    //   field.onChange(e);
-                                    //   handleOnChangeCreditValue(e);
-                                    // }}
                                   />
                                 )}
                               />

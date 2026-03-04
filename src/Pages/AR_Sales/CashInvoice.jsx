@@ -23,7 +23,6 @@ import {
   useTheme,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
-import axios from "axios";
 import dayjs from "dayjs";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
@@ -39,7 +38,6 @@ import {
   InputTextArea,
   InputTextField,
   InputTextSearchButton,
-  InputTimePicker,
   RadioButtonsField,
   SmallInputSearchSelectTextField,
   SmallInputTextField,
@@ -208,7 +206,7 @@ export default function CashInvoice() {
     control,
     handleSubmit,
     reset,
-    formState: { errors },
+    // formState: { errors },
     getValues,
     setValue,
     watch,
@@ -273,50 +271,6 @@ export default function CashInvoice() {
     } catch (error) {
       console.error("Fetch Open List Error:", error);
     }
-    // if (searchTextOpen === "") {
-    //   const page = openPage + 1;
-    //   apiClient
-    //     .request({
-    //       method: "get",
-    //       url: `/ARInvoice?Page=${page}&Status=1`,
-    //       headers: {
-    //         "Content-Type": "application/json",
-    //       },
-    //     })
-    //     .then((response) => {
-    //       setOpenPosts((prevPosts) => [...prevPosts, ...response.data.values]);
-    //       setOpenPage(page);
-    //       if (response.data.values.length === 0) {
-    //         setHasMoreOpen(false);
-    //       }
-    //     })
-    //     .catch((error) => {
-    //       console.log(error);
-    //     });
-    // } else {
-    //   const page = openPage + 1;
-    //   apiClient
-    //     .request({
-    //       method: "get",
-    //       url: `/ARInvoice?SearchText=${cleanSearch}&Status=1&Page=${page}`,
-    //       headers: {
-    //         "Content-Type": "application/json",
-    //       },
-    //     })
-    //     .then((response) => {
-    //       setOpenSearchPosts((prevPosts) => [
-    //         ...prevPosts,
-    //         ...response.data.values,
-    //       ]);
-    //       setOpenPage(page);
-    //       if (response.data.values.length === 0) {
-    //         setHasMoreOpen(false);
-    //       }
-    //     })
-    //     .catch((error) => {
-    //       console.log(error);
-    //     });
-    // }
   };
 
   const onHandleSearchOpen = async (event) => {
@@ -346,27 +300,6 @@ export default function CashInvoice() {
     } catch (error) {
       console.error("Search Open Error:", error);
     }
-
-    // if (searchText !== "") {
-    //   apiClient
-    //     .request({
-    //       method: "get",
-    //       url: `/ARInvoice?SearchText=${cleanSearch}&Status=1&Page=0`,
-    //       headers: {
-    //         "Content-Type": "application/json",
-    //       },
-    //     })
-    //     .then((response) => {
-    //       setOpenSearchPosts(response.data.values);
-
-    //       if (response.data.values.length === 20) {
-    //         setHasMoreOpen(false);
-    //       }
-    //     })
-    //     .catch((error) => {
-    //       console.log(error);
-    //     });
-    // }
   };
 
   const onClickClearOpenSearch = () => {
@@ -893,9 +826,10 @@ export default function CashInvoice() {
       const res = await apiClient.post(`/ARInvoice`, obj);
 
       if (res.data.success) {
-        const resData = res.data.values;
         setLoading(false);
         ClearFormData();
+        getAllOpenList();
+        getAllCloseList();
 
         Swal.fire({
           toast: true,
@@ -962,7 +896,7 @@ export default function CashInvoice() {
   ];
 
   const oLines = useWatch({ control, name: "oLines" });
-  const oCCPay = useWatch({ control, name: "oCCPay" });
+
   const selectedCard = useWatch({ control, name: "CreditCard" });
 
   const PaymentCalc = () => {
