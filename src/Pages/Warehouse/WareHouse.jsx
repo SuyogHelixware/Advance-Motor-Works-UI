@@ -1,27 +1,35 @@
 import { Grid, Paper, Typography } from "@mui/material";
 import TileComponent from "../Components/TileComponent";
+import useAuth from "../../Routing/AuthContext";
 export default function WareHouse() {
-  const Cards_sales = [
+  const Cards_warehouse = [
     {
-      id: "1",
+      id: "367",
       Name: "Issue Material",
       Count: 20,
       ReDirect: "issue-material",
     },
     {
-      id: "2",
+      id: "368",
       Name: "Material Return",
       Count: 20,
       ReDirect: "material-return",
     },
 
     {
-      id: "3",
+      id: "369",
       Name: "BarCode Print",
       Count: 20,
       ReDirect: "BarCode",
     },
   ];
+
+  const { user } = useAuth();
+  const allowedMenuIds = user.SubMenus.flatMap((menu) => menu.MenuId);
+
+  const PermissionCard = Cards_warehouse.filter((card) =>
+    allowedMenuIds.includes(Number(card.id)),
+  );
 
   return (
     <>
@@ -57,7 +65,7 @@ export default function WareHouse() {
       </Grid>
 
       <Grid container spacing={2} padding={2} columnGap={5} rowGap={4}>
-        {Cards_sales.map((data, index) => (
+        {PermissionCard.map((data, index) => (
           <Grid item key={index} xs={12} sm={4} md={3} lg={2}>
             <TileComponent
               cardName={data.Name}

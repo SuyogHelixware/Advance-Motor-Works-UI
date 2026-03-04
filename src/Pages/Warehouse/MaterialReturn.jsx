@@ -42,6 +42,7 @@ import {
 import { Loader } from "../Components/Loader";
 import SearchInputField from "../Components/SearchInputField";
 import SearchModel from "../Components/SearchModel";
+import usePermissions from "../Components/usePermissions";
 
 export default function IssueMaterial() {
   const initialFormData = {
@@ -75,6 +76,7 @@ export default function IssueMaterial() {
 
   const theme = useTheme();
   const { user } = useAuth();
+  const perms = usePermissions(368);
   const [openPosts, setOpenPosts] = useState([]);
   const [openSearchPosts, setOpenSearchPosts] = useState([]);
   const [closeSearchPosts, setCloseSearchPosts] = useState([]);
@@ -99,6 +101,7 @@ export default function IssueMaterial() {
   const [WMSStaff, setWMSStaff] = useState([]);
   const [loading, setLoading] = useState(false);
   const [oLines, setoLines] = useState([]);
+  const [SaveUpdateName, setSaveUpdateName] = useState("SAVE");
 
   useEffect(() => {
     getAllOpenList();
@@ -472,6 +475,7 @@ export default function IssueMaterial() {
           })) || [];
 
         reset(transformed);
+        setSaveUpdateName("SAVE");
         setValue("DocNum", data.DocNum);
         setoLines(mappedOLines);
         getHW_WMSStaffList(transformed.HW_WMSStaff);
@@ -489,6 +493,7 @@ export default function IssueMaterial() {
 
   const ClearForm = () => {
     reset(initialFormData);
+    setSaveUpdateName("SAVE");
     setoLines([]);
     handleClick();
   };
@@ -1622,9 +1627,14 @@ export default function IssueMaterial() {
                 sx={{ color: "white" }}
                 color="success"
                 type="submit"
-                disabled={Disabled}
+                name={SaveUpdateName}
+                disabled={
+                  (SaveUpdateName === "SAVE" && !perms.IsAdd) ||
+                  !watch("RequestNo") ||
+                  Disabled            
+                }
               >
-                {Disabled ? "Save" : "Save"}
+                {SaveUpdateName}
               </Button>
               <Button onClick={handlePrint} variant="contained" color="primary">
                 PRINT

@@ -41,6 +41,7 @@ import {
 import { Loader } from "../Components/Loader";
 import SearchInputField from "../Components/SearchInputField";
 import SearchModel from "../Components/SearchModel";
+import usePermissions from "../Components/usePermissions";
 
 export default function IssueMaterial() {
   const initialFormData = {
@@ -72,6 +73,7 @@ export default function IssueMaterial() {
     });
   const theme = useTheme();
   const { user } = useAuth();
+  const perms = usePermissions(367);
   const [openPosts, setOpenPosts] = useState([]);
   const [openSearchPosts, setOpenSearchPosts] = useState([]);
   const [closeSearchPosts, setCloseSearchPosts] = useState([]);
@@ -97,6 +99,7 @@ export default function IssueMaterial() {
   const [oLines, setoLines] = useState([]);
   const watchShowAge = getValues("JobWorkAt");
   const [loading, setLoading] = useState(false);
+  const [SaveUpdateName, setSaveUpdateName] = useState("SAVE");
 
   useEffect(() => {
     getAllOpenList();
@@ -473,6 +476,7 @@ export default function IssueMaterial() {
           })) || [];
 
         reset(transformed);
+        setSaveUpdateName("SAVE");
         setValue("DocNum", data.DocNum);
         setoLines(mappedOLines);
       }
@@ -489,6 +493,7 @@ export default function IssueMaterial() {
 
   const ClearForm = () => {
     reset(initialFormData);
+    setSaveUpdateName("SAVE");
     setoLines([]);
     handleClick();
   };
@@ -1748,9 +1753,14 @@ export default function IssueMaterial() {
                 sx={{ color: "white" }}
                 color="success"
                 type="submit"
-                disabled={!watch("RequestNo") || Disabled}
+                name={SaveUpdateName}
+                disabled={
+                  (SaveUpdateName === "SAVE" && !perms.IsAdd) ||
+                  !watch("DocNum") ||
+                  Disabled            
+                }
               >
-                Save
+                {SaveUpdateName}
               </Button>
               <Button onClick={handlePrint} variant="contained" color="primary">
                 PRINT

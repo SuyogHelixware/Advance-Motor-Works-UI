@@ -46,7 +46,7 @@ export default function InwardVehicle() {
   const [DocEntry, setDocEntry] = useState("");
   const [loading, setLoading] = useState(false);
   const [SaveUpdateName, setSaveUpdateName] = useState("SAVE");
-  const perms = usePermissions(133);
+  const perms = usePermissions(363);
   //=========================================open List State End================================================================
   const [openListData, setOpenListData] = useState([]);
   const [openListPage, setOpenListPage] = useState(0);

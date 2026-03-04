@@ -994,41 +994,47 @@ export default function Dashboard({ logout }) {
                 )}
               </IconButton>
             </DrawerHeader>
-            <Divider />{" "}
+            <Divider />
             <Box sx={{ flexGrow: 1, overflowY: "auto" }}>
-              <List>
-                <Link
-                  to="home"
-                  style={{
-                    textDecoration: "none",
-                    color: theme.palette.text.primary,
-                  }}
-                >
-                  <ListItem disablePadding sx={{ display: "block" }}>
-                    <ListItemButton
-                      sx={{
-                        height: 30,
-                        justifyContent: open ? "initial" : "center",
-                        px: 0.5,
+              {allowedParentIds.includes(1) ? (
+                <>
+                  <List>
+                    <Link
+                      to="home"
+                      style={{
+                        textDecoration: "none",
+                        color: theme.palette.text.primary,
                       }}
                     >
-                      <ListItemIcon
-                        sx={{
-                          minWidth: 0,
-                          mr: open ? 3 : "auto",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <DashboardIcon />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={"DASHBOARD"}
-                        sx={{ opacity: open ? 1 : 0, color: "black" }}
-                      />
-                    </ListItemButton>
-                  </ListItem>
-                </Link>
-              </List>
+                      <ListItem disablePadding sx={{ display: "block" }}>
+                        <ListItemButton
+                          sx={{
+                            height: 30,
+                            justifyContent: open ? "initial" : "center",
+                            px: 0.5,
+                          }}
+                        >
+                          <ListItemIcon
+                            sx={{
+                              minWidth: 0,
+                              mr: open ? 3 : "auto",
+                              justifyContent: "center",
+                            }}
+                          >
+                            <DashboardIcon />
+                          </ListItemIcon>
+                          <ListItemText
+                            primary={"DASHBOARD"}
+                            sx={{ opacity: open ? 1 : 0, color: "black" }}
+                          />
+                        </ListItemButton>
+                      </ListItem>
+                    </Link>
+                  </List>
+                </>
+              ) : (
+                ""
+              )}
 
               {allowedParentIds.includes(13) ? (
                 <>
@@ -1456,39 +1462,43 @@ export default function Dashboard({ logout }) {
               )} */}
               {/* ------------------------- */}
 
-              <List>
-                <Link
-                  to="workshop"
-                  style={{
-                    textDecoration: "none",
-                    color: theme.palette.text.primary,
-                  }}
-                >
-                  <ListItem disablePadding sx={{ display: "block" }}>
-                    <ListItemButton
-                      sx={{
-                        height: 30,
-                        justifyContent: open ? "initial" : "center",
-                        px: 0.5,
-                      }}
-                    >
-                      <ListItemIcon
+              {allowedParentIds.includes(21) ? (
+                <List>
+                  <Link
+                    to="workshop"
+                    style={{
+                      textDecoration: "none",
+                      color: theme.palette.text.primary,
+                    }}
+                  >
+                    <ListItem disablePadding sx={{ display: "block" }}>
+                      <ListItemButton
                         sx={{
-                          minWidth: 0,
-                          mr: open ? 3 : "auto",
-                          justifyContent: "center",
+                          height: 30,
+                          justifyContent: open ? "initial" : "center",
+                          px: 0.5,
                         }}
                       >
-                        <HandymanOutlinedIcon />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={"WORKSHOP"}
-                        sx={{ opacity: open ? 1 : 0, color: "black" }}
-                      />
-                    </ListItemButton>
-                  </ListItem>
-                </Link>
-              </List>
+                        <ListItemIcon
+                          sx={{
+                            minWidth: 0,
+                            mr: open ? 3 : "auto",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <HandymanOutlinedIcon />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={"WORKSHOP"}
+                          sx={{ opacity: open ? 1 : 0, color: "black" }}
+                        />
+                      </ListItemButton>
+                    </ListItem>
+                  </Link>
+                </List>
+              ) : (
+                ""
+              )}
 
               {/* {allowedParentIds.includes(10) ? (
                 <List>
@@ -1529,40 +1539,45 @@ export default function Dashboard({ logout }) {
                 ""
               )} */}
 
-              <List>
-                <Link
-                  to="warehouse"
-                  style={{
-                    textDecoration: "none",
-                    color: theme.palette.text.primary,
-                    display: allowedParentIds.includes(13) ? "" : "none",
-                  }}
-                >
-                  <ListItem disablePadding sx={{ display: "block" }}>
-                    <ListItemButton
-                      sx={{
-                        height: 30,
-                        justifyContent: open ? "initial" : "center",
-                        px: 0.5,
-                      }}
-                    >
-                      <ListItemIcon
+              {allowedParentIds.includes(22) ? (
+                <List>
+                  <Link
+                    to="warehouse"
+                    style={{
+                      textDecoration: "none",
+                      color: theme.palette.text.primary,
+                      display: allowedParentIds.includes(13) ? "" : "none",
+                    }}
+                  >
+                    <ListItem disablePadding sx={{ display: "block" }}>
+                      <ListItemButton
                         sx={{
-                          minWidth: 0,
-                          mr: open ? 3 : "auto",
-                          justifyContent: "center",
+                          height: 30,
+                          justifyContent: open ? "initial" : "center",
+                          px: 0.5,
                         }}
                       >
-                        <WarehouseIcon />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={"WAREHOUSE"}
-                        sx={{ opacity: open ? 1 : 0, color: "black" }}
-                      />
-                    </ListItemButton>
-                  </ListItem>
-                </Link>
-              </List>
+                        <ListItemIcon
+                          sx={{
+                            minWidth: 0,
+                            mr: open ? 3 : "auto",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <WarehouseIcon />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary={"WAREHOUSE"}
+                          sx={{ opacity: open ? 1 : 0, color: "black" }}
+                        />
+                      </ListItemButton>
+                    </ListItem>
+                  </Link>
+                </List>
+              ) : (
+                ""
+              )}
+
               {allowedParentIds.includes(12) ? (
                 <List>
                   <Link

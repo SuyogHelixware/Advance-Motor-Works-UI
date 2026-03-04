@@ -13,22 +13,21 @@ import {
   useTheme,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
-import axios from "axios";
+import dayjs from "dayjs";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { BeatLoader } from "react-spinners";
 import Swal from "sweetalert2";
+import apiClient from "../../services/apiClient";
 import { dataGridSx } from "../../Styles/dataGridStyles";
 import CardComponent from "../Components/CardComponent";
 import {
   InputFields,
   InputTextSearchButton,
 } from "../Components/formComponents";
-import SearchModel from "../Components/SearchModel";
 import { Loader } from "../Components/Loader";
-import dayjs from "dayjs";
-import apiClient from "../../services/apiClient";
+import SearchModel from "../Components/SearchModel";
 
 export default function CustomerSalesHistory() {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -55,7 +54,7 @@ export default function CustomerSalesHistory() {
     control,
     reset,
     getValues,
-    formState: { errors },
+    // formState: { errors },
   } = useForm({
     defaultValues: initial,
   });

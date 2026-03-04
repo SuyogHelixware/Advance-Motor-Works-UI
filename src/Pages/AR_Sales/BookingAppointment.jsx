@@ -1,5 +1,8 @@
-import CloseIcon from "@mui/icons-material/Close";
 import AddIcon from "@mui/icons-material/Add";
+import CloseIcon from "@mui/icons-material/Close";
+import DeleteIcon from "@mui/icons-material/Delete";
+import MenuIcon from "@mui/icons-material/Menu";
+import { TabContext, TabPanel } from "@mui/lab";
 import {
   Box,
   Button,
@@ -10,38 +13,35 @@ import {
   Divider,
   Grid,
   IconButton,
+  Tab,
+  Tabs,
   Typography,
   useTheme,
 } from "@mui/material";
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import MenuIcon from "@mui/icons-material/Menu";
-import { Controller, useForm, useWatch } from "react-hook-form";
-import {
-  InputTextField,
-  SelectedDatePickerField,
-} from "../Components/formComponents";
-import SearchInputField from "../Components/SearchInputField";
-import DeleteIcon from "@mui/icons-material/Delete";
-import { Tab, Tabs } from "@mui/material";
-import { TabContext, TabPanel } from "@mui/lab";
+import { DataGrid } from "@mui/x-data-grid";
+import { LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { BeatLoader } from "react-spinners";
 import Swal from "sweetalert2";
-import useAuth from "../../Routing/AuthContext";
 import apiClient from "../../services/apiClient";
-import { DataGrid } from "@mui/x-data-grid";
+import { dataGridSx } from "../../Styles/dataGridStyles";
+import CardComponent from "../Components/CardComponent";
 import {
   InputSelectFields,
   InputTextSearchButton,
 } from "../Components/FormComponentMaster";
-import CardComponent from "../Components/CardComponent";
-import usePermissions from "../Components/usePermissions";
-import { dataGridSx } from "../../Styles/dataGridStyles";
-import { LocalizationProvider, TimePicker } from "@mui/x-date-pickers";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import SearchModel from "../Components/SearchModel";
+import {
+  InputTextField,
+  SelectedDatePickerField,
+} from "../Components/formComponents";
 import { Loader } from "../Components/Loader";
+import SearchInputField from "../Components/SearchInputField";
+import SearchModel from "../Components/SearchModel";
+import usePermissions from "../Components/usePermissions";
 
 const SHOP_OPEN = 8; // 8 AM
 const SHOP_CLOSE = 20; // 8 PM
@@ -78,11 +78,16 @@ export default function BinLocationMaster() {
 
   const handleClose = () => setOpen(false);
   const handleOpen = () => setOpen(true);
-  const OpenDailog = () => setSearchmodelOpen(true);
-  const SearchModelClose = () => setSearchmodelOpen(false);
+  const OpenDailog = () => {
+    setSearchmodelOpen(true);
+    setGetListQuery("");
+  };
+  const SearchModelClose = () => {
+    setSearchmodelOpen(false);
+    setGetListQuery("");
+  };
 
   const timeoutRef = useRef(null);
-  const { user } = useAuth();
   const perms = usePermissions(64);
 
   // ===== Initial Form Values =====
@@ -120,7 +125,7 @@ export default function BinLocationMaster() {
   const {
     control: control1,
     handleSubmit: handleSubmit1,
-    getValues: getValues1,
+    // getValues: getValues1,
   } = useForm({ defaultValues: InitialFld });
 
   const AllData = getValues();
@@ -349,7 +354,7 @@ export default function BinLocationMaster() {
           AppointType: values.AppointType,
           Vehicle: values.Vehicle,
           IsInward: values.IsInward,
-          oLines: values.oLines,
+          // oLines: values.oLines,
           Status: values.Status === "1",
           NoAutoAllc: "Y",
           ReceiveBin: "Y",
@@ -1494,7 +1499,8 @@ export default function BinLocationMaster() {
                 disabled={
                   (SaveUpdateName === "SAVE" && !perms.IsAdd) ||
                   (SaveUpdateName !== "SAVE" && !perms.IsEdit) ||
-                  isClosed
+                  isClosed ||
+                  watch("OrderNo") === ""
                 }
               >
                 {SaveUpdateName}

@@ -1,33 +1,40 @@
 import { Grid, Paper, Typography } from "@mui/material";
-import React from "react";
+import useAuth from "../../Routing/AuthContext";
 import TileComponent from "../Components/TileComponent";
 export default function WorkShop() {
-  const Cards_sales = [
+  const { user } = useAuth();
+  const Cards_workshop = [
     {
-      id: "1",
+      id: "363",
       Name: "Inward Vehicle",
       Count: 20,
       ReDirect: "inward-vehicle",
     },
     {
-      id: "2",
+      id: "364",
       Name: "Job Card",
       Count: 20,
       ReDirect: "job-card",
     },
     {
-      id: "3",
+      id: "365",
       Name: "OutWard Vehicle",
       Count: 20,
       ReDirect: "outward-vehicle",
     },
     {
-      id: "4",
+      id: "366",
       Name: "Appointment Screen",
       Count: 20,
       ReDirect: "/daily-appointments",
     },
   ];
+
+  const allowedMenuIds = user.SubMenus.flatMap((menu) => menu.MenuId);
+
+  const PermissionCard = Cards_workshop.filter((card) =>
+    allowedMenuIds.includes(Number(card.id)),
+  );
 
   return (
     <>
@@ -63,7 +70,7 @@ export default function WorkShop() {
       </Grid>
 
       <Grid container spacing={2} padding={2} columnGap={5} rowGap={4}>
-        {Cards_sales.map((data, index) => (
+        {PermissionCard.map((data, index) => (
           <Grid item key={index} xs={12} sm={4} md={3} lg={2}>
             <TileComponent
               cardName={data.Name}

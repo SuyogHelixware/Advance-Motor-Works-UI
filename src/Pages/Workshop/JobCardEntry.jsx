@@ -76,7 +76,7 @@ export default function IssueMaterial() {
   const [hasMoreClosed, setHasMoreClosed] = useState(true);
   const [closedListquery, setClosedListQuery] = useState("");
   const [closedListSearching, setClosedListSearching] = useState(false);
-  const perms = usePermissions(133);
+  const perms = usePermissions(364);
   const [beforeCloseUpdateFlag, setBeforeCloseUpdateFlag] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -2054,7 +2054,7 @@ export default function IssueMaterial() {
                 disabled={
                   (SaveUpdateName === "SAVE" && !perms.IsAdd) ||
                   (SaveUpdateName === "UPDATE" && !perms.IsEdit) ||
-                  allFormData.Status === "0"
+                  allFormData.Status === "0" || watch("OrderNo") === ""
                 }
               >
                 {SaveUpdateName}
@@ -2064,7 +2064,8 @@ export default function IssueMaterial() {
                 variant="contained"
                 color="primary"
                 disabled={
-                  SaveUpdateName === "SAVE" || allFormData.Status === "0"
+                  SaveUpdateName === "SAVE" || allFormData.Status === "0" ||
+                  (SaveUpdateName === "UPDATE" && !perms.IsEdit)
                 }
                 onClick={closeJobCard}
               >

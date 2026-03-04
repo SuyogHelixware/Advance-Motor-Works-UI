@@ -45,7 +45,7 @@ export default function InwardVehicle() {
   const timeoutRef = useRef(null);
   const [DocEntry, setDocEntry] = useState("");
   const [SaveUpdateName, setSaveUpdateName] = useState("SAVE");
-  const perms = usePermissions(133);
+  const perms = usePermissions(365);
   const [loading, setLoading] = useState(false);
 
   const [openListData, setOpenListData] = useState([]);
