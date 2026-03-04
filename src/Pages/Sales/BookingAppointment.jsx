@@ -46,7 +46,7 @@ import usePermissions from "../Components/usePermissions";
 const SHOP_OPEN = 8; // 8 AM
 const SHOP_CLOSE = 20; // 8 PM
 
-export default function BinLocationMaster() {
+export default function BookingAppointment() {
   const theme = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tab, settab] = useState("1");
@@ -88,7 +88,7 @@ export default function BinLocationMaster() {
   };
 
   const timeoutRef = useRef(null);
-  const perms = usePermissions(64);
+  const perms = usePermissions(357);
 
   // ===== Initial Form Values =====
   const initial = {
@@ -1500,7 +1500,7 @@ export default function BinLocationMaster() {
                   (SaveUpdateName === "SAVE" && !perms.IsAdd) ||
                   (SaveUpdateName !== "SAVE" && !perms.IsEdit) ||
                   isClosed ||
-                  watch("OrderNo") === ""
+                  watch("IsInward")
                 }
               >
                 {SaveUpdateName}
@@ -1511,12 +1511,13 @@ export default function BinLocationMaster() {
                 sx={{ color: "white" }}
                 color="error"
                 type="button"
+                onClick={handleOpen}
                 disabled={
                   SaveUpdateName === "SAVE" ||
-                  watch("IsInward") !== "" ||
-                  isClosed
+                  isClosed ||
+                  watch("IsInward") ||
+                  watch("AppointmentNo")
                 }
-                onClick={handleOpen}
               >
                 CANCEL APPOINTMENT
               </Button>

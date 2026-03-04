@@ -1236,44 +1236,9 @@ export default function Dashboard({ logout }) {
                 ""
               )}
               {allowedParentIds.includes(8) ? (
-                // <List>
-                //   <Link
-                //     to="Sales"
-                //     style={{
-                //       textDecoration: "none",
-                //       color: theme.palette.text.primary,
-                //       display: allowedParentIds.includes(8) ? "" : "none",
-                //     }}
-                //   >
-                //     <ListItem disablePadding sx={{ display: "block" }}>
-                //       <ListItemButton
-                //         sx={{
-                //           height: 30,
-                //           justifyContent: open ? "initial" : "center",
-                //           px: 0.5,
-                //         }}
-                //       >
-                //         <ListItemIcon
-                //           sx={{
-                //             minWidth: 0,
-                //             mr: open ? 3 : "auto",
-                //             justifyContent: "center",
-                //           }}
-                //         >
-                //           <ProductionQuantityLimitsIcon />
-                //         </ListItemIcon>
-                //         <ListItemText
-                //           primary={"SALES"}
-                //           sx={{ opacity: open ? 1 : 0, color: "black" }}
-                //         />
-                //       </ListItemButton>
-                //     </ListItem>
-                //   </Link>
-                // </List>
-
                 <List>
                   <Link
-                    to="ARsales"
+                    to="Sales"
                     style={{
                       textDecoration: "none",
                       color: theme.palette.text.primary,

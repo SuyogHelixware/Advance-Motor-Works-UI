@@ -17,15 +17,6 @@ import PurchaseOrder from "../Pages/APPurchese/PurchaseOrder .jsx";
 import PurchaseQuotation from "../Pages/APPurchese/PurchaseQuotation.jsx";
 import PurchaseQuotationRFQ from "../Pages/APPurchese/PurchaseQuotationRFQ.jsx";
 
-import ARSales from "../Pages/AR_Sales/ARSales.jsx";
-import AdditionalPayment from "../Pages/AR_Sales/AdditionalPayment.jsx";
-import BookingAppointment from "../Pages/AR_Sales/BookingAppointment.jsx";
-import CashInvoice from "../Pages/AR_Sales/CashInvoice.jsx";
-import CustomerSalesHistory from "../Pages/AR_Sales/CustomerSalesHistory.jsx";
-import DynamicSearch from "../Pages/AR_Sales/DynamicSearch";
-import MaterialRequest from "../Pages/AR_Sales/MaterialRequest.jsx";
-import OrderCancellation from "../Pages/AR_Sales/OrderCancellation.jsx";
-import QuatationSO from "../Pages/AR_Sales/QuatationSO";
 import Admin from "../Pages/Admin/Admin";
 import IntegrationDetails from "../Pages/Admin/IntegrationDetails";
 import IntergrationErrorLog from "../Pages/Admin/IntergrationErrorLog";
@@ -105,14 +96,14 @@ import SAPBDMSalesReport from "../Pages/SAPReports/SAPBDMSalesReport.jsx";
 import SAPCustomerSalesHistory from "../Pages/SAPReports/SAPCustomerSalesHistory.jsx";
 import SAPB1Reports from "../Pages/SAPReports/SAPReports.jsx";
 import SalesAnalysisByItem from "../Pages/SAPReports/SalesAnalysisByItem.jsx";
-import Sales from "../Pages/Sales/Sales.jsx";
-import SalesCreditNote from "../Pages/Sales/SalesCreditNote.jsx";
-import SalesDelivery from "../Pages/Sales/SalesDelivery.jsx";
-import SalesDownPayment from "../Pages/Sales/SalesDownPayment.jsx";
-import SalesInvoice from "../Pages/Sales/SalesInvoice.jsx";
-import SalesOrder from "../Pages/Sales/SalesOrder.jsx";
-import SalesQuotation from "../Pages/Sales/SalesQuotation.jsx";
-import SalesReturn from "../Pages/Sales/SalesReturn.jsx";
+// import Sales from "../Pages/Sales_Old/Sales.jsx";
+// import SalesCreditNote from "../Pages/Sales_Old/SalesCreditNote.jsx";
+// import SalesDelivery from "../Pages/Sales_Old/SalesDelivery.js";
+// import SalesDownPayment from "../Pages/Sales_Old/SalesDownPayment.js";
+// import SalesInvoice from "../Pages/Sales_Old/SalesInvoice.js";
+// import SalesOrder from "../Pages/Sales_Old/SalesOrder.jsx";
+// import SalesQuotation from "../Pages/Sales_Old/SalesQuotation.js";
+// import SalesReturn from "../Pages/Sales_Old/SalesReturn.jsx";
 import BPOpeningBalance from "../Pages/Finance/BPOpeningBalance.jsx";
 import Banks from "../Pages/Setup/Banks.jsx";
 import Batch from "../Pages/Setup/Batch.jsx";
@@ -176,13 +167,22 @@ import ReportAndLayout from "../Pages/Setup/ReportAndLayout.jsx";
 import GLOpeningBalance from "../Pages/Finance/GLOpeningBalance.jsx";
 import EmployeeMaster from "../Pages/HR/EmployeeMaster.jsx";
 import HR from "../Pages/HR/HR.jsx";
-import SalesQuotationRFQ from "../Pages/Sales/SalesQuotationRFQ.jsx";
+// import SalesQuotationRFQ from "../Pages/Sales_Old/SalesQuotationRFQ.js";
 import QueryGenerator from "../Pages/Reports/QueryGenerator.jsx";
 import PreviewReport from "../Pages/Reports/PreviewReport.jsx";
 import EmailSetup from "../Pages/Admin/EmailSetup.jsx";
 import EmailTemplate from "../Pages/Setup/EmailTemplate.jsx";
 import AppointmentScreen from "../Pages/Workshop/AppointmentScreen.jsx";
 import Barcode from "../Pages/Warehouse/Barcode.jsx";
+import SalesCreditNote from "../Pages/Sales/SalesCreditNote.jsx";
+import Sales from "../Pages/Sales/Sales.jsx";
+import QuatationSO from "../Pages/Sales/QuatationSO.jsx";
+import OrderCancellation from "../Pages/Sales/OrderCancellation.jsx";
+import CustomerSalesHistory from "../Pages/Sales/CustomerSalesHistory.jsx";
+import DynamicSearch from "../Pages/Sales/DynamicSearch.jsx";
+import MaterialRequest from "../Pages/Sales/MaterialRequest.jsx";
+import BookingAppointment from "../Pages/Sales/BookingAppointment.jsx";
+import CashInvoice from "../Pages/Sales/CashInvoice.jsx";
 const ProtectedRoute = ({ element }) => {
   const { user, companyData, companyLoading, companyNeedsSetup, companyError } =
     useAuth();
@@ -517,17 +517,17 @@ function Routing() {
           </Route>
           {/* ---------------------- */}
           <Route
-            path="ARsales"
+            path="Sales"
             element={
               <>
                 <Outlet />
               </>
             }
           >
-            <Route path="" element={<ARSales />} />
+            <Route path="" element={<Sales />} />
             <Route path="dynamic-search" element={<DynamicSearch />} />
             <Route path="quotation" element={<QuatationSO />} />
-            <Route path="Additional-Payment" element={<AdditionalPayment />} />
+            {/* <Route path="Additional-Payment" element={<AdditionalPayment />} /> */}
             <Route
               path="booking-appointment"
               element={<BookingAppointment />}
@@ -542,7 +542,7 @@ function Routing() {
             <Route path="Sales-credit-note" element={<SalesCreditNote />} />
           </Route>
 
-          <Route
+          {/* <Route
             path="Sales"
             element={
               <>
@@ -558,7 +558,7 @@ function Routing() {
             <Route path="Sales-credit-note" element={<SalesCreditNote />} />
             <Route path="Sales-Down-Payment" element={<SalesDownPayment />} />
             <Route path="Sales-Return" element={<SalesReturn />} />
-          </Route>
+          </Route> */}
 
           <Route
             path="Purchase"
