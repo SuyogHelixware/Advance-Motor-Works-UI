@@ -429,7 +429,7 @@ export default function DynamicSearch() {
   }, []);
 
   const onSubmit = (data) => {
-    fetchFormData(data); 
+    fetchFormData(data);
   };
 
   // const onSubmit = async (data) => {

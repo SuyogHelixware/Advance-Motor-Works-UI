@@ -3,20 +3,20 @@ import TileComponent from "../Components/TileComponent";
 export default function WareHouse() {
   const Cards_sales = [
     {
-      id: "1",
+      id: "367",
       Name: "Issue Material",
       Count: 20,
       ReDirect: "issue-material",
     },
     {
-      id: "2",
+      id: "368",
       Name: "Material Return",
       Count: 20,
       ReDirect: "material-return",
     },
 
     {
-      id: "3",
+      id: "369",
       Name: "BarCode Print",
       Count: 20,
       ReDirect: "BarCode",

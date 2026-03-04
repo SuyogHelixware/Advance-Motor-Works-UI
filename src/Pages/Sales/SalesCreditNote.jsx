@@ -76,7 +76,10 @@ import ExchangeLineRateCopyform from "../Components/ExchangeLineRateCopyform";
 import LogisticAddress from "../Components/LogisticAddress";
 import PrintMenu from "../Components/PrintMenu";
 import SearchInputField from "../Components/SearchInputField";
-import SearchModel, { CopyFromSearchModel, SearchBPModel } from "../Components/SearchModel";
+import SearchModel, {
+  CopyFromSearchModel,
+  SearchBPModel,
+} from "../Components/SearchModel";
 import SerialIntake from "../Components/SerialIntake";
 import SerialOutCopyForm from "../Components/SerialOutCopyForm";
 import TableGridFrieght from "../Components/TableGridFrieght";
@@ -1608,7 +1611,6 @@ export default function SalesCreditNote() {
     setValue("FinncPriod", DocSeries[0]?.FinncPriod ?? "");
     setValue("PIndicator", DocSeries[0]?.Indicator ?? "");
     setCheckedItems({});
- 
   };
 
   //* =============================CAlCulation Logic=============================
@@ -5235,9 +5237,9 @@ export default function SalesCreditNote() {
 
   // Initial fetch
   useEffect(() => {
-       if(searchmodelOpen===true){
-    fetchGetListData(0); 
-     }
+    if (searchmodelOpen === true) {
+      fetchGetListData(0);
+    }
   }, [searchmodelOpen]);
 
   //! =================CANCEL LIST================================
@@ -5533,7 +5535,7 @@ export default function SalesCreditNote() {
   // };
 
   // ------------Get API RowLevel And Drop Down Fields------------------------------
- 
+
   const CardCode = getValues("CardCode");
   const baseType = watch("baseType");
   const {
@@ -5544,14 +5546,13 @@ export default function SalesCreditNote() {
     onClear: handleGetListClearCopyFrom,
     fetchMore: fetchMoreGetListCopyFrom,
   } = useCopyFromList({
-    BasePoint:"/ARCreditmemoV2",
+    BasePoint: "/ARCreditmemoV2",
     open: openDialog,
     CardCode,
     baseType,
     type,
   });
 
- 
   const { DocSeries } = useDocumentSeries(
     "14",
     docDate,
@@ -8215,7 +8216,6 @@ export default function SalesCreditNote() {
                       setCheckedItems({});
                       setOlines([]);
                       setoExpLines([]);
-
                     }}
                   />
                 )}
@@ -8837,7 +8837,7 @@ export default function SalesCreditNote() {
                       open={searchmodelOpen}
                       onClose={SearchModelClose}
                       onCancel={SearchModelClose}
-                          title="Select CUSTOMER/Supplier"
+                      title="Select CUSTOMER/Supplier"
                       onChange={(e) => handleGetListSearch(e.target.value)}
                       value={getListquery}
                       onClickClear={handleGetListClear}

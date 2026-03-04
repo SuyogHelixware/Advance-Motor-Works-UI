@@ -1430,7 +1430,6 @@ export default function QuatationSO() {
       UserId: UserId,
       CreatedBy: CreatedBy,
       CardCode: data.CardCode,
-
       CreatedDate: dayjs(undefined).format("YYYY-MM-DD HH:mm:ss"),
       ModifiedDate: dayjs(undefined).format("YYYY-MM-DD HH:mm:ss"),
       CardName: (data?.CardName ?? "").toString().toUpperCase(),
