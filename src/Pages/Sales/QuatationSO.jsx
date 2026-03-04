@@ -395,6 +395,7 @@ export default function QuatationSO() {
     } catch (error) {
       console.error("Error fetching ARInvoice:", error);
     }
+    handleClose();
   };
 
   const fetchGetListData = async (pageNum, searchTerm = "") => {
@@ -1422,6 +1423,18 @@ export default function QuatationSO() {
       console.error(" handleSave error:", err);
     }
   };
+  const getbyidBPV2 = async (DocEntry) => {
+    try {
+      const res = await apiClient.get(`/BPV2?DocEntry=${DocEntry}`);
+
+      if (res?.data?.success) {
+        const data = res.data.values[0];
+        onSelectBusinessPartner(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch BPV2:", error);
+    }
+  };
 
   const onSubmitCustmoreModal = async (data) => {
     const UserId = localStorage.getItem("UserId");
@@ -1547,11 +1560,8 @@ export default function QuatationSO() {
     try {
       const response = await apiClient.post(`/BPV2/V2`, obj);
       if (response.data && response.data.success) {
-        handleClose();
-        onSelectBusinessPartner(obj);
-
-        const data = response.data;
-        console.log("object", data);
+        const data = response.data.ID;
+        getbyidBPV2(data);
 
         Swal.fire({
           text: "Customer Created Successfully",
