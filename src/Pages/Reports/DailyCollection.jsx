@@ -8,6 +8,7 @@ import {
   IconButton,
   Menu,
   MenuItem,
+  Paper,
   Table,
   TableBody,
   TableCell,
@@ -19,42 +20,60 @@ import { DataGrid } from "@mui/x-data-grid";
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
-import React, { useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { dataGridSx } from "../../Styles/dataGridStyles";
 import { InputDatePickerFields } from "../Components/formComponents";
+import { useTheme } from "@mui/material/styles";
+import apiClient from "../../services/apiClient";
 
-const columns = [
-  { field: "OrderNo", headerName: "SORDER", width: 120 },
+const tablePartsales = [
+  {
+    field: "srNo",
+    headerName: "SR.NO",
+    width: 60,
+    align: "center",
+    headerAlign: "center",
+    sortable: false,
+    renderCell: (params) => params.api.getSortedRowIds().indexOf(params.id) + 1,
+  },
+  { field: "OrderNo", headerName: "SO NO", width: 120 },
   {
     field: "InvoiceNo",
-    headerName: "INVOICE",
-    width: 100,
+    headerName: "INV NO",
+    width: 110,
   },
   {
     field: "RCTNO",
-    headerName: "RECEIPT",
-    width: 100,
+    headerName: "RECEIPT NO",
+    width: 120,
   },
-  { field: "DP", headerName: "DP", width: 100 },
+  { field: "DP", headerName: "DP" },
   {
     field: "CardName",
-    headerName: "CUSTOMER",
-    width: 120,
+    headerName: "CUSTOMER NAME",
+    width: 400,
     flex: 1,
   },
   {
     field: "PhoneNumber1",
-    headerName: "PHONE",
-    width: 100,
+    headerName: "CONTACT NO",
+    width: 170,
   },
   {
     field: "PAYMethod",
-    headerName: "METHOD",
-    width: 120,
+    headerName: "PYMNT MODE",
+    width: 150,
   },
   {
-    field: "partsAmt",
+    field: "Amount",
     headerName: "PARTS AMT",
-    width: 120,
+    width: 150,
+    headerAlign: "right",
+    align: "right",
+    renderCell: (params) =>
+      params.row.Amount === ""
+        ? ""
+        : Number.parseFloat(params.row.Amount).toFixed(2),
   },
 ];
 
@@ -66,39 +85,54 @@ const rows = [
   { id: 5, lastName: "Targaryen", firstName: "Daenerys", age: null },
 ];
 
-const columns1 = [
-  { field: "OrderNo", headerName: "SORDER", width: 120 },
+const tablePartservice = [
+  {
+    field: "srNo",
+    headerName: "SR.NO",
+    width: 60,
+    align: "center",
+    headerAlign: "center",
+    sortable: false,
+    renderCell: (params) => params.api.getSortedRowIds().indexOf(params.id) + 1,
+  },
+  { field: "OrderNo", headerName: "SO NO", width: 120 },
   {
     field: "InvoiceNo",
-    headerName: "INVOICE",
-    width: 100,
+    headerName: "INV NO",
+    width: 110,
   },
   {
     field: "RCTNO",
-    headerName: "RECEIPT",
-    width: 100,
+    headerName: "RECEIPT NO",
+    width: 120,
   },
-  { field: "DP", headerName: "DP", width: 100 },
+  { field: "DP", headerName: "DP" },
   {
     field: "CardName",
-    headerName: "CUSTOMER",
-    width: 120,
+    headerName: "CUSTOMER NAME",
+    width: 400,
     flex: 1,
   },
   {
     field: "PhoneNumber1",
-    headerName: "PHONE",
-    width: 120,
+    headerName: "CONTACT NO",
+    width: 170,
   },
   {
     field: "PAYMethod",
-    headerName: "METHOD",
-    width: 100,
+    headerName: "PYMNT MODE",
+    width: 150,
   },
   {
-    field: "serviceamt",
-    headerName: "SERVICE AMT",
-    width: 120,
+    field: "Amount",
+    headerName: "PARTS AMT",
+    width: 150,
+    headerAlign: "right",
+    align: "right",
+    renderCell: (params) =>
+      params.row.Amount === ""
+        ? ""
+        : Number.parseFloat(params.row.Amount).toFixed(2),
   },
 ];
 
@@ -112,6 +146,86 @@ const rows1 = [
 
 export default function DailyCollection() {
   const [anchorEl, setAnchorEl] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const pageRef = useRef(0);
+  const hasMoreRef = useRef(true);
+  const loadingRef = useRef(false);
+  const triggeredPages = useRef(new Set());
+  const [partsTableData, setPartsTableData] = useState([]);
+  const [serviceTableData, setServiceTableData] = useState([]);
+  const [totalsTableData, setTotalsTableData] = useState([]);
+  const [partsTableDataTotal, setPartsTableDataTotal] = useState("0.00"); // for footer
+  const [ServiceTableDataTotal, setServiceTableDataTotal] = useState("0.00"); // for footer
+  const [selectedDate, setSelectedDate] = useState(new Date());
+
+  const Totalcolumns = [
+    { field: "label", headerName: "PAYMENT METHOD", width: 280 },
+    {
+      field: "Amount",
+      headerName: "AMOUNT",
+      width: 280,
+      headerAlign: "right",
+      align: "right",
+    },
+  ];
+
+  const transformTotalsData = (totals) => {
+    return [
+      { label: "CASH", value: totals.CashTotal },
+      { label: "KNET", value: totals.KNetTotal },
+      { label: "BANK", value: totals.BankTotal },
+      { label: "MY FATOORAH", value: totals.MFTotal },
+      { label: "TABBY", value: totals.TabbyTotal },
+      { label: "TAMARA", value: totals.TamaraTotal },
+      { label: "TALY", value: totals.TalyTotal },
+      { label: "TOTAL", value: totals.ColletionTotal, bold: true },
+    ];
+  };
+
+  const getAllCashCollectionList = useCallback(async (date) => {
+    setLoading(true);
+    try {
+      const formattedDate = dayjs(date || new Date()).format("YYYY-MM-DD");
+      const res = await apiClient.get(
+        `/Reports/DailyCollection/${formattedDate}`,
+      );
+
+      const values = res.data.values;
+
+      // Extract parts collection
+      const partsDataObj =
+        values.find((v) => v.ColletionType === "PARTS") || {};
+      const partsData = partsDataObj.ColletionValues || [];
+      const partsTotal = partsDataObj.Total || "0.00";
+
+      // Extract service collection
+      const serviceDataObj =
+        values.find((v) => v.ColletionType === "SERVICE") || {};
+      const serviceData = serviceDataObj.ColletionValues || [];
+      const serviceTotal = serviceDataObj.Total || "0.00";
+
+      // Extract totals object for the totals DataTable
+      const totalsRaw =
+        values.find((v) => v.ColletionTotal !== undefined) || {};
+      const totalsData = transformTotalsData(totalsRaw);
+
+      setPartsTableData(partsData);
+      setPartsTableDataTotal(partsTotal);
+      setServiceTableData(serviceData);
+      setServiceTableDataTotal(serviceTotal);
+      setTotalsTableData(totalsData);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  /* eslint-disable react-hooks/exhaustive-deps */
+  useEffect(() => {
+    const today = new Date();
+    getAllCashCollectionList(today);
+  }, []);
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
@@ -122,6 +236,9 @@ export default function DailyCollection() {
   };
 
   const open = Boolean(anchorEl);
+
+  const theme = useTheme();
+  const gridSx = useMemo(() => dataGridSx(theme), [theme]);
 
   return (
     <>
@@ -157,7 +274,6 @@ export default function DailyCollection() {
             alignContent={"center"}
             borderBottom={"1px solid silver"}
             sx={{
-              // bgcolor: "gainsboro",
               width: "100%",
               height: "40px",
               textAlign: "center",
@@ -175,7 +291,7 @@ export default function DailyCollection() {
             py={2}
             columnGap={2}
             rowGap={2}
-            sx={{}}
+            sx={{ borderBottom: "1px solid #ccc" }}
           >
             <Box
               width={"100%"}
@@ -192,15 +308,16 @@ export default function DailyCollection() {
                 width={"100%"}
                 display={"flex"}
                 flexDirection={"row"}
-                justifyContent={"center"}
+                justifyContent={"flex-end"}
                 alignContent={"center"}
                 alignItems={"center"}
+                paddingRight={5}
               >
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
                   <InputDatePickerFields
                     label="DATE"
                     value={dayjs(undefined)}
-                  ></InputDatePickerFields>
+                  />
                 </LocalizationProvider>
                 <Button
                   variant="contained"
@@ -223,596 +340,156 @@ export default function DailyCollection() {
             item
             xs={12}
             md={12}
-            mt={3}
+            p={2}
             height={`calc(100%-100px)`}
             position={"sticky"}
           >
-            <Typography
-              textAlign={"center"}
-              width={"100%"}
-              fontSize={"15px"}
-              color={"gray"}
-            >
-              <b>COLLECTION [PARTS SALES]</b>
-            </Typography>
-
-            <Grid
-              item
-              lg={12}
-              md={12}
-              xs={12}
-              spacing={2}
-              justifyContent={"center"}
-              width={"100%"}
-              overflow={"scroll"}
-              sx={{ overflow: "hidden" }}
-            >
-              <Button
-                sx={{ fontSize: "13px" }}
-                variant="outlined"
-                startIcon={<SaveAltOutlinedIcon />}
-                onClick={handleClick}
-              >
-                EXPORT
-              </Button>
-              <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
-                <MenuItem onClick={handleClose}>Download as CSV</MenuItem>
-                <MenuItem onClick={handleClose}>Print</MenuItem>
-              </Menu>
-              <DataGrid
-                columns={columns}
-                rows={rows}
-                columnHeaderHeight={35}
-                hideFooter
-                rowHeight={45}
-                initialState={{
-                  pagination: {
-                    paginationModel: {
-                      pageSize: rows.length,
-                    },
-                  },
-                }}
-              />
-            </Grid>
-
-            <Typography
-              textAlign={"center"}
-              width={"100%"}
-              fontSize={"15px"}
-              color={"gray"}
-              mt={5}
-            >
-              <b>COLLECTION [SERVICE]</b>
-            </Typography>
-
-            <Grid
-              item
-              lg={12}
-              md={12}
-              xs={12}
-              spacing={2}
-              justifyContent={"center"}
-              width={"100%"}
-              overflow={"scroll"}
-              sx={{ overflow: "hidden" }}
-            >
-              <Button
-                sx={{ fontSize: "13px" }}
-                variant="outlined"
-                startIcon={<SaveAltOutlinedIcon />}
-                onClick={handleClick}
-              >
-                EXPORT
-              </Button>
-              <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
-                <MenuItem onClick={handleClose}>Download as CSV</MenuItem>
-                <MenuItem onClick={handleClose}>Print</MenuItem>
-              </Menu>
-              <DataGrid
-                columns={columns1}
-                rows={rows1}
-                columnHeaderHeight={35}
-                hideFooter
-                rowHeight={45}
-                initialState={{
-                  pagination: {
-                    paginationModel: {
-                      pageSize: rows1.length,
-                    },
-                  },
-                }}
-              />
-            </Grid>
-
-            <Grid container item width={"100%"} pt={5} my={3}>
-              <Grid container item width={"70%"}></Grid>
+            <Paper elevation={5} sx={{ borderRadius: 2, marginBottom: 2 }}>
               <Grid
                 container
-                item
-                alignContent={"end"}
-                alignItems={"end"}
-                alignSelf={"end"}
-                width={"30%"}
+                alignItems="center"
+                justifyContent="space-between"
+                borderBottom="1px solid #ccc"
               >
-                <TableContainer>
-                  <Table
-                    sx={{ minWidth: 200 }}
-                    aria-label="simple table"
-                    size="small"
-                  >
-                    <TableBody>
-                      <TableRow>
-                        <TableCell
-                          className="rowHeight"
-                          sx={{ textAlign: "left", fontSize: "13px" }}
-                        >
-                          CASH
-                        </TableCell>
-                        <TableCell
-                          sx={{ fontSize: "13px" }}
-                          align="right"
-                          className="rowHeight"
-                        >
-                          0.00
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell
-                          className="rowHeight"
-                          sx={{ textAlign: "left", fontSize: "13px" }}
-                        >
-                          KNET
-                        </TableCell>
-                        <TableCell
-                          sx={{ fontSize: "13px" }}
-                          align="right"
-                          className="rowHeight"
-                        >
-                          0.00
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell
-                          className="rowHeight"
-                          sx={{ textAlign: "left", fontSize: "13px" }}
-                        >
-                          BANK
-                        </TableCell>
-                        <TableCell
-                          sx={{ fontSize: "13px" }}
-                          align="right"
-                          className="rowHeight"
-                        >
-                          0.00{" "}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell
-                          className="rowHeight"
-                          sx={{ textAlign: "left", fontSize: "13px" }}
-                        >
-                          MY FATOORAH
-                        </TableCell>
-                        <TableCell
-                          sx={{ fontSize: "13px" }}
-                          align="right"
-                          className="rowHeight"
-                        >
-                          0.00{" "}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell
-                          className="rowHeight"
-                          sx={{ textAlign: "left", fontSize: "13px" }}
-                        >
-                          TABBY
-                        </TableCell>
-                        <TableCell
-                          sx={{ fontSize: "13px" }}
-                          align="right"
-                          className="rowHeight"
-                        >
-                          0.00{" "}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell
-                          className="rowHeight"
-                          sx={{ textAlign: "left", fontSize: "13px" }}
-                        >
-                          TAMARA
-                        </TableCell>
-                        <TableCell
-                          sx={{ fontSize: "13px" }}
-                          align="right"
-                          className="rowHeight"
-                        >
-                          0.00{" "}
-                        </TableCell>
-                      </TableRow>
-                      <TableRow>
-                        <TableCell
-                          className="rowHeight"
-                          sx={{
-                            fontWeight: "bold",
-                            textAlign: "left",
-                            fontSize: "13px",
-                          }}
-                        >
-                          TOTAL
-                        </TableCell>
-                        <TableCell
-                          align="right"
-                          className="rowHeight"
-                          sx={{ fontWeight: "bold", fontSize: "13px" }}
-                        >
-                          0.00{" "}
-                        </TableCell>
-                      </TableRow>
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                <Typography fontSize="15px" color="gray" p={3}>
+                  <b>COLLECTION [PARTS SALES]</b>
+                </Typography>
+
+                <Button
+                  sx={{ fontSize: "13px", marginRight: 3 }}
+                  variant="outlined"
+                  startIcon={<SaveAltOutlinedIcon />}
+                  onClick={handleClick}
+                >
+                  EXPORT
+                </Button>
+                <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
+                  <MenuItem onClick={handleClose}>Download as CSV</MenuItem>
+                  <MenuItem onClick={handleClose}>Print</MenuItem>
+                </Menu>
               </Grid>
+
+              <Grid
+                item
+                lg={12}
+                p={2}
+                width={"100%"}
+                maxHeight={400}
+                minHeight={150}
+                overflow={"scroll"}
+                sx={{ overflow: "hidden" }}
+              >
+                <DataGrid
+                  columns={tablePartsales}
+                  rows={partsTableData}
+                  getRowId={(row) => row.RCTNO}
+                  columnHeaderHeight={35}
+                  hideFooter
+                  rowHeight={45}
+                  initialState={{
+                    pagination: {
+                      paginationModel: {
+                        pageSize: rows.length,
+                      },
+                    },
+                  }}
+                  autoHeight="false"
+                  sx={gridSx}
+                />
+              </Grid>
+            </Paper>
+
+            <Paper elevation={5} sx={{ borderRadius: 2, marginBottom: 2 }}>
+              <Grid
+                container
+                alignItems="center"
+                justifyContent="space-between"
+                borderBottom="1px solid #ccc"
+              >
+                <Typography fontSize="15px" color="gray" p={3}>
+                  <b>COLLECTION [SERVICE]</b>
+                </Typography>
+
+                <Button
+                  sx={{ fontSize: "13px", marginRight: 3 }}
+                  variant="outlined"
+                  startIcon={<SaveAltOutlinedIcon />}
+                  onClick={handleClick}
+                >
+                  EXPORT
+                </Button>
+                <Menu anchorEl={anchorEl} open={open} onClose={handleClose}>
+                  <MenuItem onClick={handleClose}>Download as CSV</MenuItem>
+                  <MenuItem onClick={handleClose}>Print</MenuItem>
+                </Menu>
+              </Grid>
+
+              <Grid
+                item
+                lg={12}
+                p={2}
+                width={"100%"}
+                maxHeight={400}
+                minHeight={150}
+                overflow={"scroll"}
+                sx={{ overflow: "hidden" }}
+              >
+                <DataGrid
+                  columns={tablePartservice}
+                  rows={rows1}
+                  columnHeaderHeight={35}
+                  hideFooter
+                  rowHeight={45}
+                  initialState={{
+                    pagination: {
+                      paginationModel: {
+                        pageSize: rows1.length,
+                      },
+                    },
+                  }}
+                  autoHeight="false"
+                  sx={gridSx}
+                />
+              </Grid>
+            </Paper>
+
+            <Grid container item justifyContent="flex-end" my={3}>
+              <Paper
+                elevation={5}
+                sx={{ borderRadius: 2, width: "100%", maxWidth: "600px" }}
+              >
+                <Grid
+                  item
+                  lg={12}
+                  p={2}
+                  width={"100%"}
+                  maxHeight={400}
+                  minHeight={150}
+                  overflow={"scroll"}
+                  sx={{ overflow: "hidden" }}
+                >
+                  <DataGrid
+                    columns={Totalcolumns}
+                    rows={rows1}
+                    columnHeaderHeight={35}
+                    hideFooter
+                    rowHeight={45}
+                    initialState={{
+                      pagination: {
+                        paginationModel: {
+                          pageSize: rows1.length,
+                        },
+                      },
+                    }}
+                    autoHeight="false"
+                    sx={gridSx}
+                  />
+                </Grid>
+              </Paper>
             </Grid>
           </Grid>
         </Grid>
       </Grid>
-
-      {/* <Grid container width={"100%"} spacing={2} height="calc(100vh - 110px)">
-        <Grid
-          container
-          item
-          width="100%"
-          height="100%"
-          xs={12}
-          md={12}
-          lg={12}
-          component="form"
-          position="relative"
-        >
-          <IconButton
-            edge="start"
-            color="inherit"
-            aria-label="menu"
-            sx={{
-              display: {},
-              position: "absolute",
-              right: "10px",
-            }}
-          >
-            <RefreshIcon />
-          </IconButton>
-
-          <Grid
-            item
-            width={"100%"}
-            py={0.5}
-            alignItems={"center"}
-            border={"1px solid silver"}
-            borderBottom={"none"}
-          >
-            <Typography
-              textAlign={"center"}
-              alignContent={"center"}
-              height={"100%"}
-            >
-              Daily Collection
-            </Typography>
-          </Grid>
-
-          <Grid
-            container
-            item
-            width={"100%"}
-            height={"100%"}
-            border={"1px silver solid"}
-          >
-            <Grid
-              container
-              item
-              padding={1}
-              md={12}
-              xs={12}
-              height="calc(100% - 40px)"
-              // overflow={"scroll"}
-              sx={{ overflowX: "scroll" }}
-              position={"relative"}
-            >
-              <Box
-                component="form"
-                sx={{
-                  "& .MuiTextField-root": { m: 1 },
-                }}
-                noValidate
-                autoComplete="off"
-              >
-                <Grid container>
-                  <Grid
-                    item
-                    width={"100%"}
-                    display={"flex"}
-                    flexDirection={"row"}
-                    justifyContent={"center"}
-                    alignContent={"center"}
-                    alignItems={"center"}
-                  >
-                    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                      <InputDatePickerFields
-                        label="DATE"
-                        value={dayjs(undefined)}
-                      ></InputDatePickerFields>
-                    </LocalizationProvider>
-                    <Button
-                      variant="contained"
-                      size="small"
-                      sx={{
-                        height: "40px",
-                        alignItems: "center",
-                        alignContent: "center",
-                        alignSelf: "center",
-                      }}
-                      startIcon={<PrintIcon />}
-                    >
-                      Print
-                    </Button>
-                  </Grid>
-                  <Grid
-                    item
-                    xs={12}
-                    md={12}
-                    mt={3}
-                    height={`calc(100%-100px)`}
-                    position={"sticky"}
-                  >
-                    <Typography
-                      textAlign={"center"}
-                      width={"100%"}
-                      fontSize={"15px"}
-                      color={"gray"}
-                    >
-                      <b>COLLECTION [PARTS SALES]</b>
-                    </Typography>
-
-                    <Grid
-                      item
-                      lg={12}
-                      md={12}
-                      xs={12}
-                      spacing={2}
-                      justifyContent={"center"}
-                      width={"100%"}
-                      // overflow={"scroll"}
-                      sx={{ overflowX: "scroll" }}
-                    >
-                      <Button
-                        sx={{ fontSize: "13px" }}
-                        variant="outlined"
-                        startIcon={<SaveAltOutlinedIcon />}
-                      >
-                        EXPORT
-                      </Button>
-                      <DataGrid
-                        columns={columns}
-                        rows={rows}
-                        columnHeaderHeight={35}
-                        hideFooter
-                        rowHeight={45}
-                        initialState={{
-                          pagination: {
-                            paginationModel: {
-                              pageSize: rows.length,
-                            },
-                          },
-                        }}
-                      />
-                    </Grid>
-
-                    <Typography
-                      textAlign={"center"}
-                      width={"100%"}
-                      fontSize={"15px"}
-                      color={"gray"}
-                      mt={5}
-                    >
-                      <b>COLLECTION [SERVICE]</b>
-                    </Typography>
-
-                    <Grid
-                      item
-                      lg={12}
-                      md={12}
-                      xs={12}
-                      spacing={2}
-                      justifyContent={"center"}
-                      width={"100%"}
-                      // overflowx={"scroll"}
-                      sx={{ overflowX: "scroll" }}
-                    >
-                      <Button
-                        sx={{ fontSize: "13px" }}
-                        variant="outlined"
-                        startIcon={<SaveAltOutlinedIcon />}
-                      >
-                        EXPORT
-                      </Button>
-                      <DataGrid
-                        columns={columns1}
-                        rows={rows1}
-                        columnHeaderHeight={35}
-                        hideFooter
-                        rowHeight={45}
-                        initialState={{
-                          pagination: {
-                            paginationModel: {
-                              pageSize: rows1.length,
-                            },
-                          },
-                        }}
-                      />
-                    </Grid>
-
-                    <Grid container item width={"100%"} pt={5} my={3}>
-                      <Grid container item width={"70%"}></Grid>
-                      <Grid
-                        container
-                        item
-                        alignContent={"end"}
-                        alignItems={"end"}
-                        alignSelf={"end"}
-                        width={"30%"}
-                      >
-                        <TableContainer>
-                          <Table
-                            sx={{ minWidth: 200 }}
-                            aria-label="simple table"
-                            size="small"
-                          >
-                            <TableBody>
-                              <TableRow>
-                                <TableCell
-                                  className="rowHeight"
-                                  sx={{ textAlign: "left", fontSize: "13px" }}
-                                >
-                                  CASH
-                                </TableCell>
-                                <TableCell
-                                  sx={{ fontSize: "13px" }}
-                                  align="right"
-                                  className="rowHeight"
-                                >
-                                  0.00
-                                </TableCell>
-                              </TableRow>
-                              <TableRow>
-                                <TableCell
-                                  className="rowHeight"
-                                  sx={{ textAlign: "left", fontSize: "13px" }}
-                                >
-                                  KNET
-                                </TableCell>
-                                <TableCell
-                                  sx={{ fontSize: "13px" }}
-                                  align="right"
-                                  className="rowHeight"
-                                >
-                                  0.00
-                                </TableCell>
-                              </TableRow>
-                              <TableRow>
-                                <TableCell
-                                  className="rowHeight"
-                                  sx={{ textAlign: "left", fontSize: "13px" }}
-                                >
-                                  BANK
-                                </TableCell>
-                                <TableCell
-                                  sx={{ fontSize: "13px" }}
-                                  align="right"
-                                  className="rowHeight"
-                                >
-                                  0.00{" "}
-                                </TableCell>
-                              </TableRow>
-                              <TableRow>
-                                <TableCell
-                                  className="rowHeight"
-                                  sx={{ textAlign: "left", fontSize: "13px" }}
-                                >
-                                  MY FATOORAH
-                                </TableCell>
-                                <TableCell
-                                  sx={{ fontSize: "13px" }}
-                                  align="right"
-                                  className="rowHeight"
-                                >
-                                  0.00{" "}
-                                </TableCell>
-                              </TableRow>
-                              <TableRow>
-                                <TableCell
-                                  className="rowHeight"
-                                  sx={{ textAlign: "left", fontSize: "13px" }}
-                                >
-                                  TABBY
-                                </TableCell>
-                                <TableCell
-                                  sx={{ fontSize: "13px" }}
-                                  align="right"
-                                  className="rowHeight"
-                                >
-                                  0.00{" "}
-                                </TableCell>
-                              </TableRow>
-                              <TableRow>
-                                <TableCell
-                                  className="rowHeight"
-                                  sx={{ textAlign: "left", fontSize: "13px" }}
-                                >
-                                  TAMARA
-                                </TableCell>
-                                <TableCell
-                                  sx={{ fontSize: "13px" }}
-                                  align="right"
-                                  className="rowHeight"
-                                >
-                                  0.00{" "}
-                                </TableCell>
-                              </TableRow>
-                              <TableRow>
-                                <TableCell
-                                  className="rowHeight"
-                                  sx={{
-                                    fontWeight: "bold",
-                                    textAlign: "left",
-                                    fontSize: "13px",
-                                  }}
-                                >
-                                  TOTAL
-                                </TableCell>
-                                <TableCell
-                                  align="right"
-                                  className="rowHeight"
-                                  sx={{ fontWeight: "bold", fontSize: "13px" }}
-                                >
-                                  0.00{" "}
-                                </TableCell>
-                              </TableRow>
-                            </TableBody>
-                          </Table>
-                        </TableContainer>
-                      </Grid>
-                    </Grid>
-                  </Grid>
-                </Grid>
-              </Box>
-            </Grid>
-
-            <Grid
-              item
-              px={1}
-              xs={12}
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "end",
-                position: "sticky",
-                bottom: "0px",
-              }}
-            >
-              <Button variant="contained" color="success">
-                SAVE
-              </Button>
-
-              <Button variant="contained" disabled color="error">
-                DELETE
-              </Button>
-            </Grid>
-
-
-          </Grid>
-        </Grid>
-      </Grid> */}
     </>
   );
 }
