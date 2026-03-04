@@ -4,13 +4,12 @@ import SystemUpdateAltIcon from "@mui/icons-material/SystemUpdateAlt";
 import {
   Box,
   Button,
-  Drawer,
   Grid,
   IconButton,
   Paper,
   Tooltip,
   Typography,
-  useTheme,
+  useTheme
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import dayjs from "dayjs";
@@ -60,8 +59,6 @@ export default function CustomerSalesHistory() {
   });
 
   const allFormData = getValues();
-
-  // const BASE_URL = "http://hwaceri5:8070/api";
 
   const theme = useTheme();
   const gridSx = useMemo(() => dataGridSx(theme), [theme]);
@@ -559,19 +556,6 @@ export default function CustomerSalesHistory() {
           </Grid>
         </Grid>
       </Grid>
-
-      <Drawer
-        anchor="left"
-        open={drawerOpen}
-        onClose={toggleDrawer}
-        sx={{
-          display: { lg: "none" }, // Show only on smaller screens
-          "& .MuiDrawer-paper": {
-            top: "70px", // Adjust this value as needed
-            width: "80vw",
-          },
-        }}
-      ></Drawer>
     </>
   );
 }

@@ -49,7 +49,7 @@ export default function MaterialRequest() {
   const [loading, setLoading] = useState(false);
 
   const [SaveUpdateName, setSaveUpdateName] = useState("SAVE");
-  const perms = usePermissions(133);
+  const perms = usePermissions(358);
   //=========================================open List State End================================================================
   const [openListData, setOpenListData] = useState([]);
   const [openListPage, setOpenListPage] = useState(0);
@@ -1135,7 +1135,6 @@ export default function MaterialRequest() {
             <Grid
               item
               px={1}
-              // md={12}
               xs={12}
               style={{
                 display: "flex",
@@ -1152,7 +1151,7 @@ export default function MaterialRequest() {
                 disabled={
                   SaveUpdateName === "UPDATE" ||
                   (SaveUpdateName === "SAVE" && !perms.IsAdd) ||
-                  (SaveUpdateName !== "SAVE" && !perms.IsEdit) ||
+                  watch("VehInwardNo") === "" ||
                   allFormData.Status === "Closed"
                 }
               >

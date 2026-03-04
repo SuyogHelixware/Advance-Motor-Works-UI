@@ -58,8 +58,8 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { BeatLoader } from "react-spinners";
 import Swal from "sweetalert2";
+import { useCopyFromList } from "../../Hooks/useCopyFromList";
 import { useItemServiceList } from "../../Hooks/useItemServiceList";
-import DynamicLoader from "../../Loaders/DynamicLoader";
 import useAuth from "../../Routing/AuthContext";
 import { dataGridSx } from "../../Styles/dataGridStyles";
 import apiClient from "../../services/apiClient";
@@ -73,6 +73,7 @@ import CardCopyFrom from "../Components/CardCopyFrom";
 import DataGriCellModelClick from "../Components/DataGridCellModelClick";
 import DataGridModal from "../Components/DataGridModal";
 import ExchangeLineRateCopyform from "../Components/ExchangeLineRateCopyform";
+import { Loader } from "../Components/Loader";
 import LogisticAddress from "../Components/LogisticAddress";
 import PrintMenu from "../Components/PrintMenu";
 import SearchInputField from "../Components/SearchInputField";
@@ -106,7 +107,6 @@ import { validateTaxSelection } from "../Components/validateTaxSelection";
 import { Base64FileinNewTab } from "../FileUpload/EditFilePreview";
 import { openFileinNewTab } from "../FileUpload/filePreview";
 import { useFileUpload } from "../FileUpload/useFileUpload";
-import { useCopyFromList } from "../../Hooks/useCopyFromList";
 const TaxColumn = [
   {
     id: 1,
@@ -468,9 +468,7 @@ function reducer(state, action) {
 export default function SalesCreditNote() {
   const theme = useTheme();
   const { user, warehouseData, companyData } = useAuth();
-  const [apiloading, setapiloading] = useState(false);
-
-  const perms = usePermissions(122);
+  const perms = usePermissions(362);
   const [state, dispatch] = useReducer(reducer, initialState);
   const timeoutRef = useRef(null);
   const [tabvalue, settabvalue] = useState(0);
@@ -501,7 +499,7 @@ export default function SalesCreditNote() {
   const [openShipTo, setOpenShipTo] = useState(false);
   const [RollBackoExpLines, setRollBackoExpLines] = useState([]);
   const dispatchRedux = useDispatch();
-  const { data, loading } = useSelector((state) => state.exchange);
+  const { data } = useSelector((state) => state.exchange);
   const navigate = useNavigate();
   const [AllDataCopyRateLine, setAllDataCopyRateLine] = useState([]);
 
@@ -4222,172 +4220,173 @@ export default function SalesCreditNote() {
     }
   };
 
-  const handleChange = (e, row) => {
-    const { name, value } = e.target;
-    setok("UPDATE");
-    const quantity = selectedRowsSales.map((item) => item.Quantity);
-    const updatedLines = getValues("oLines").map((data, index) => {
-      if (row.id !== index) return data;
-      const updatedData = { ...data, [name]: value };
-      const originalQuantity = quantity[index];
-      if (parseFloat(updatedData.BaseType) >= 1) {
-        if (
-          name === "Quantity" &&
-          parseFloat(value) > parseFloat(originalQuantity)
-        ) {
-          return data;
-        }
-      }
-      if (allFormData.DocEntry) {
-        if (name === "Quantity") {
-          updatedData.OpenQuantity =
-            parseFloat(updatedData.Quantity) -
-            parseFloat(data.Quantity) +
-            parseFloat(data.OpenQuantity);
-        }
-      } else {
-        if (name === "Quantity") {
-          updatedData.OpenQuantity = value;
-          updatedData.Quantity = Math.min(Math.max(value, 0));
-          updatedData.InvQty = value * updatedData.NumPerMsr;
-        }
-      }
-      if (name === "PriceBefDi") {
-        updatedData.PriceBefDi = Math.min(Math.max(value, 0));
-        updatedData.Currency = currency;
-        const Rate = companyData.MainCurncy === currency ? "1" : DocRate;
-        updatedData.Rate = Rate;
-      }
-      if (name === "DiscPrcnt") {
-        updatedData.DiscPrcnt = Math.min(Math.max(value, 0), 100);
-      }
+  // const handleChange = (e, row) => {
+  //   const { name, value } = e.target;
+  //   setok("UPDATE");
+  //   const quantity = selectedRowsSales.map((item) => item.Quantity);
+  //   const updatedLines = getValues("oLines").map((data, index) => {
+  //     if (row.id !== index) return data;
+  //     const updatedData = { ...data, [name]: value };
+  //     const originalQuantity = quantity[index];
+  //     if (parseFloat(updatedData.BaseType) >= 1) {
+  //       if (
+  //         name === "Quantity" &&
+  //         parseFloat(value) > parseFloat(originalQuantity)
+  //       ) {
+  //         return data;
+  //       }
+  //     }
+  //     if (allFormData.DocEntry) {
+  //       if (name === "Quantity") {
+  //         updatedData.OpenQuantity =
+  //           parseFloat(updatedData.Quantity) -
+  //           parseFloat(data.Quantity) +
+  //           parseFloat(data.OpenQuantity);
+  //       }
+  //     } else {
+  //       if (name === "Quantity") {
+  //         updatedData.OpenQuantity = value;
+  //         updatedData.Quantity = Math.min(Math.max(value, 0));
+  //         updatedData.InvQty = value * updatedData.NumPerMsr;
+  //       }
+  //     }
+  //     if (name === "PriceBefDi") {
+  //       updatedData.PriceBefDi = Math.min(Math.max(value, 0));
+  //       updatedData.Currency = currency;
+  //       const Rate = companyData.MainCurncy === currency ? "1" : DocRate;
+  //       updatedData.Rate = Rate;
+  //     }
+  //     if (name === "DiscPrcnt") {
+  //       updatedData.DiscPrcnt = Math.min(Math.max(value, 0), 100);
+  //     }
 
-      if (updatedData.PostTax === "Y") {
-        if (name === "AssblValue") {
-          updatedData.AssblValue = Math.min(Math.max(value, 0));
-        }
-      } else {
-        updatedData.AssblValue = data.AssblValue;
-      }
-      const CalcLines = CalCulation(
-        updatedData.Quantity,
-        updatedData.PriceBefDi,
-        updatedData.DiscPrcnt,
-        updatedData.Rate,
-      );
-      updatedData.Price = CalcLines.discountedPrice;
-      updatedData.INMPrice = CalcLines.discountedPrice;
-      switch (curSource) {
-        case "L":
-          updatedData.LineTotal =
-            companyData.MainCurncy === updatedData.Currency
-              ? CalcLines.LineTotal
-              : CalcLines.LineTotal * updatedData.Rate;
-          updatedData.TotalFrgn =
-            currency === updatedData.Currency
-              ? CalcLines.TotalFrgn
-              : ValueFormatter(updatedData.LineTotal / DocRate);
-          updatedData.TotalSumSy = ValueFormatter(
-            updatedData.LineTotal / SysRate,
-          );
-          break;
-        case "S":
-          if (companyData.SysCurrncy === updatedData.Currency) {
-            updatedData.TotalSumSy = CalcLines.TotalSumSy;
-            updatedData.LineTotal = ValueFormatter(
-              updatedData.TotalSumSy * updatedData.Rate,
-            );
-            updatedData.TotalFrgn = ValueFormatter(
-              updatedData.LineTotal / DocRate,
-            );
-          } else {
-            updatedData.LineTotal =
-              updatedData.Price * updatedData.Quantity * updatedData.Rate;
-            updatedData.TotalSumSy = updatedData.LineTotal / SysRate;
-            updatedData.TotalFrgn = ValueFormatter(
-              updatedData.LineTotal / DocRate,
-            );
-          }
-          break;
-        case "C":
-          if (currency === companyData.MainCurncy) {
-            if (type === "S") {
-              updatedData.TotalFrgn = ValueFormatter(0);
-              updatedData.LineTotal = CalcLines.LineTotal;
-              updatedData.TotalSumSy = ValueFormatter(
-                updatedData.LineTotal / SysRate,
-              );
-            } else {
-              updatedData.TotalFrgn = ValueFormatter(0);
-              updatedData.LineTotal =
-                currency === updatedData.Currency
-                  ? CalcLines.LineTotal
-                  : CalcLines.LineTotal * updatedData.Rate;
-              updatedData.TotalSumSy = ValueFormatter(
-                updatedData.LineTotal / SysRate,
-              );
-            }
-          } else {
-            const TotalFrgn =
-              currency === data.Currency
-                ? (updatedData.Price * updatedData.Rate) / DocRate
-                : (updatedData.Price *
-                    updatedData.Quantity *
-                    updatedData.Rate) /
-                  DocRate;
-            updatedData.TotalFrgn =
-              currency === data.Currency
-                ? ValueFormatter(CalcLines.TotalFrgn)
-                : TotalFrgn;
-            updatedData.LineTotal = ValueFormatter(
-              updatedData.TotalFrgn * DocRate,
-            );
-            updatedData.TotalSumSy = ValueFormatter(
-              updatedData.LineTotal / SysRate,
-            );
-          }
-          break;
-        default:
-          console.log("ff");
-      }
+  //     if (updatedData.PostTax === "Y") {
+  //       if (name === "AssblValue") {
+  //         updatedData.AssblValue = Math.min(Math.max(value, 0));
+  //       }
+  //     } else {
+  //       updatedData.AssblValue = data.AssblValue;
+  //     }
+  //     const CalcLines = CalCulation(
+  //       updatedData.Quantity,
+  //       updatedData.PriceBefDi,
+  //       updatedData.DiscPrcnt,
+  //       updatedData.Rate,
+  //     );
+  //     updatedData.Price = CalcLines.discountedPrice;
+  //     updatedData.INMPrice = CalcLines.discountedPrice;
+  //     switch (curSource) {
+  //       case "L":
+  //         updatedData.LineTotal =
+  //           companyData.MainCurncy === updatedData.Currency
+  //             ? CalcLines.LineTotal
+  //             : CalcLines.LineTotal * updatedData.Rate;
+  //         updatedData.TotalFrgn =
+  //           currency === updatedData.Currency
+  //             ? CalcLines.TotalFrgn
+  //             : ValueFormatter(updatedData.LineTotal / DocRate);
+  //         updatedData.TotalSumSy = ValueFormatter(
+  //           updatedData.LineTotal / SysRate,
+  //         );
+  //         break;
+  //       case "S":
+  //         if (companyData.SysCurrncy === updatedData.Currency) {
+  //           updatedData.TotalSumSy = CalcLines.TotalSumSy;
+  //           updatedData.LineTotal = ValueFormatter(
+  //             updatedData.TotalSumSy * updatedData.Rate,
+  //           );
+  //           updatedData.TotalFrgn = ValueFormatter(
+  //             updatedData.LineTotal / DocRate,
+  //           );
+  //         } else {
+  //           updatedData.LineTotal =
+  //             updatedData.Price * updatedData.Quantity * updatedData.Rate;
+  //           updatedData.TotalSumSy = updatedData.LineTotal / SysRate;
+  //           updatedData.TotalFrgn = ValueFormatter(
+  //             updatedData.LineTotal / DocRate,
+  //           );
+  //         }
+  //         break;
+  //       case "C":
+  //         if (currency === companyData.MainCurncy) {
+  //           if (type === "S") {
+  //             updatedData.TotalFrgn = ValueFormatter(0);
+  //             updatedData.LineTotal = CalcLines.LineTotal;
+  //             updatedData.TotalSumSy = ValueFormatter(
+  //               updatedData.LineTotal / SysRate,
+  //             );
+  //           } else {
+  //             updatedData.TotalFrgn = ValueFormatter(0);
+  //             updatedData.LineTotal =
+  //               currency === updatedData.Currency
+  //                 ? CalcLines.LineTotal
+  //                 : CalcLines.LineTotal * updatedData.Rate;
+  //             updatedData.TotalSumSy = ValueFormatter(
+  //               updatedData.LineTotal / SysRate,
+  //             );
+  //           }
+  //         } else {
+  //           const TotalFrgn =
+  //             currency === data.Currency
+  //               ? (updatedData.Price * updatedData.Rate) / DocRate
+  //               : (updatedData.Price *
+  //                   updatedData.Quantity *
+  //                   updatedData.Rate) /
+  //                 DocRate;
+  //           updatedData.TotalFrgn =
+  //             currency === data.Currency
+  //               ? ValueFormatter(CalcLines.TotalFrgn)
+  //               : TotalFrgn;
+  //           updatedData.LineTotal = ValueFormatter(
+  //             updatedData.TotalFrgn * DocRate,
+  //           );
+  //           updatedData.TotalSumSy = ValueFormatter(
+  //             updatedData.LineTotal / SysRate,
+  //           );
+  //         }
+  //         break;
+  //       default:
+  //         console.log("ff");
+  //     }
 
-      if (name === "TaxCode") {
-        updatedData.TaxCode = "";
-        updatedData.VatGroup = "";
-      }
-      const taxLines = taxCalculation(
-        updatedData.LineTotal,
-        updatedData.AssblValue,
-        row.DocTotal,
-        updatedData.PriceBefDi,
-        updatedData.Quantity,
-        updatedData.TaxCode,
-      );
-      updatedData.oTaxLines = taxLines.oTaxLines;
-      updatedData.VatPrcnt = taxLines.VatPrcnt;
-      updatedData.InvQty = updatedData.NumPerMsr * updatedData.Quantity;
-      updatedData.OpenInvQty = updatedData.InvQty;
-      updatedData.VatSum = taxLines.VatSum;
-      updatedData.VatSumSy = taxLines.VatSumSy;
-      updatedData.VatSumFrgn = taxLines.VatSumFrgn;
-      let PriceAfVAT =
-        updatedData.Price + updatedData.Price * (updatedData.VatPrcnt / 100);
-      updatedData.PriceAfVAT = ValueFormatter(PriceAfVAT);
-      return updatedData;
-    });
+  //     if (name === "TaxCode") {
+  //       updatedData.TaxCode = "";
+  //       updatedData.VatGroup = "";
+  //     }
+  //     const taxLines = taxCalculation(
+  //       updatedData.LineTotal,
+  //       updatedData.AssblValue,
+  //       row.DocTotal,
+  //       updatedData.PriceBefDi,
+  //       updatedData.Quantity,
+  //       updatedData.TaxCode,
+  //     );
+  //     updatedData.oTaxLines = taxLines.oTaxLines;
+  //     updatedData.VatPrcnt = taxLines.VatPrcnt;
+  //     updatedData.InvQty = updatedData.NumPerMsr * updatedData.Quantity;
+  //     updatedData.OpenInvQty = updatedData.InvQty;
+  //     updatedData.VatSum = taxLines.VatSum;
+  //     updatedData.VatSumSy = taxLines.VatSumSy;
+  //     updatedData.VatSumFrgn = taxLines.VatSumFrgn;
+  //     let PriceAfVAT =
+  //       updatedData.Price + updatedData.Price * (updatedData.VatPrcnt / 100);
+  //     updatedData.PriceAfVAT = ValueFormatter(PriceAfVAT);
+  //     return updatedData;
+  //   });
 
-    reset({
-      ...allFormData,
-      oLines: updatedLines,
-      AssblValue: getValues("AssblValue"),
-      NumAtCard: getValues("NumAtCard"),
-      Comments: getValues("Comments"),
-      DiscSum: getValues("DiscSum"),
-      DiscPrcnt: getValues("DiscPrcnt"),
-    });
-    // recalculateHeaderDiscount();
-    calculateDiscountAmt(discPercent);
-  };
+  //   reset({
+  //     ...allFormData,
+  //     oLines: updatedLines,
+  //     AssblValue: getValues("AssblValue"),
+  //     NumAtCard: getValues("NumAtCard"),
+  //     Comments: getValues("Comments"),
+  //     DiscSum: getValues("DiscSum"),
+  //     DiscPrcnt: getValues("DiscPrcnt"),
+  //   });
+  //   // recalculateHeaderDiscount();
+  //   calculateDiscountAmt(discPercent);
+  // };
+
   const handleCellKeyDown = (params, event) => {
     const api = apiRef.current;
     if (!api) return;
@@ -4866,7 +4865,7 @@ export default function SalesCreditNote() {
 
   const setOldOpenData = async (DocEntry, CardCode, CntctCode) => {
     setok("");
-    setapiloading(true);
+    setIsLoading(true);
     try {
       await setbusinessPartner(CardCode, CntctCode);
       if ((isDirty && getValues("CardCode")) || "UPDATE" === ok) {
@@ -4879,6 +4878,7 @@ export default function SalesCreditNote() {
           showDenyButton: true,
         }).then((Data) => {
           if (!Data.isConfirmed) {
+            setIsLoading(false);
             return;
           }
           setSelectData(DocEntry);
@@ -4898,7 +4898,7 @@ export default function SalesCreditNote() {
         icon: "error",
         confirmButtonText: "OK",
       }).finally(() => {
-        setapiloading(false);
+        setIsLoading(false);
         console.log("false");
       });
     }
@@ -5089,7 +5089,7 @@ export default function SalesCreditNote() {
         console.error("Error fetching or processing data:", error);
       })
       .finally(() => {
-        setapiloading(false);
+        setIsLoading(false);
         console.log("false");
       });
   };
@@ -7915,9 +7915,7 @@ export default function SalesCreditNote() {
 
   return (
     <>
-      {/* ------------Items Column(Search Item)------------ */}
-      {/* {apiloading && <Loader open={apiloading} />} */}
-      <DynamicLoader open={apiloading} />
+      <Loader open={isLoading} />
 
       <DataGridModal
         open={open}

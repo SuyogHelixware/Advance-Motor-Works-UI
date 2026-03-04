@@ -122,8 +122,6 @@ export default function IssueMaterial() {
     defaultValues: initial,
   });
 
-  const { setValue: setValueMdl } = useForm({});
-
   const allFormData = getValues();
 
   const handleCheckboxChange = (index, field, checked) => {

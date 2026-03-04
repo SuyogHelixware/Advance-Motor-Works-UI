@@ -107,7 +107,6 @@
 // }
 
 import { Grid, Paper, Typography } from "@mui/material";
-import { useSelector } from "react-redux";
 import { useLocation } from "react-router-dom";
 import { useCounterPolling } from "../../Hooks/useCounterPolling";
 import useAuth from "../../Routing/AuthContext";
@@ -119,7 +118,7 @@ export default function Sales() {
   const location = useLocation();
   // useCounterPolling("Purchase")
   useCounterPolling("Purchase", location.key);
-  const counters = useSelector((state) => state.counter.Counterdata);
+  // const counters = useSelector((state) => state.counter.Counterdata);
 
   // useEffect(() => {
   //   dispatch(fetchCounter("Purchase"));

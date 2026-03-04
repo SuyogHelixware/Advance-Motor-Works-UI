@@ -7,9 +7,9 @@ import MailIcon from "@mui/icons-material/Mail";
 import ManageAccountsOutlinedIcon from "@mui/icons-material/ManageAccountsOutlined";
 import MenuIcon from "@mui/icons-material/Menu";
 import ModeNightIcon from "@mui/icons-material/ModeNight";
-import PrecisionManufacturingIcon from "@mui/icons-material/PrecisionManufacturing";
+// import PrecisionManufacturingIcon from "@mui/icons-material/PrecisionManufacturing";
 // import MonetizationOnOutlinedIcon from "@mui/icons-material/MonetizationOnOutlined";
-import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+// import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import CloseIcon from "@mui/icons-material/Close";
 import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
 import WarehouseIcon from "@mui/icons-material/Warehouse";
@@ -20,7 +20,7 @@ import {
   Person as PersonIcon,
   Phone as PhoneIcon,
 } from "@mui/icons-material";
-import AssuredWorkloadIcon from "@mui/icons-material/AssuredWorkload";
+// import AssuredWorkloadIcon from "@mui/icons-material/AssuredWorkload";
 import HandymanOutlinedIcon from "@mui/icons-material/HandymanOutlined";
 import InventoryIcon from "@mui/icons-material/Inventory";
 import MoreIcon from "@mui/icons-material/MoreVert";

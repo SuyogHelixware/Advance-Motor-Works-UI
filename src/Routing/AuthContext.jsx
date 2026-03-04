@@ -1,7 +1,6 @@
-import axios from "axios";
-import React, { createContext, useContext, useEffect, useState } from "react";
-import apiClient from "../services/apiClient";
+import { createContext, useContext, useEffect, useState } from "react";
 import Swal from "sweetalert2";
+import apiClient from "../services/apiClient";
 
 const AuthContext = createContext();
 

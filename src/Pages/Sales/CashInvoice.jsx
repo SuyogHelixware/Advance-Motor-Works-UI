@@ -29,6 +29,7 @@ import { Controller, useForm, useWatch } from "react-hook-form";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { BeatLoader } from "react-spinners";
 import Swal from "sweetalert2";
+import apiClient from "../../services/apiClient";
 import { dataGridSx } from "../../Styles/dataGridStyles";
 import CardComponent from "../Components/CardComponent";
 import {
@@ -45,7 +46,7 @@ import {
 import { Loader } from "../Components/Loader";
 import SearchInputField from "../Components/SearchInputField";
 import SearchModel from "../Components/SearchModel";
-import apiClient from "../../services/apiClient";
+import usePermissions from "../Components/usePermissions";
 
 const initialFormData = {
   DocEntry: "",
@@ -125,6 +126,7 @@ export default function CashInvoice() {
   const [tab, settab] = useState("1");
   const [isDialogOpen, setisDialogOpen] = useState(false);
   const theme = useTheme();
+  const perms = usePermissions(359);
 
   // Model API Bind
   const [searchTextGetListForCreate, setsearchTextGetListForCreate] =
@@ -506,7 +508,7 @@ export default function CashInvoice() {
 
     try {
       const res = await apiClient.get(`/ARInvoice/${DocEntry}`);
-      const data = res.data.values[0];
+      const data = res.data.values;
 
       if (!data) {
         Swal.fire({
@@ -827,10 +829,6 @@ export default function CashInvoice() {
 
       if (res.data.success) {
         setLoading(false);
-        ClearFormData();
-        getAllOpenList();
-        getAllCloseList();
-
         Swal.fire({
           toast: true,
           position: "center",
@@ -839,6 +837,9 @@ export default function CashInvoice() {
           showConfirmButton: false,
           timer: 1500,
         });
+        ClearFormData();
+        getAllOpenList();
+        getAllCloseList();
       } else {
         setLoading(false);
         Swal.fire({
@@ -897,7 +898,7 @@ export default function CashInvoice() {
 
   const oLines = useWatch({ control, name: "oLines" });
 
-  const selectedCard = useWatch({ control, name: "CreditCard" });
+  // const selectedCard = useWatch({ control, name: "CreditCard" });
 
   const PaymentCalc = () => {
     const allFormData = getValues();
@@ -1006,6 +1007,7 @@ export default function CashInvoice() {
       nextInput?.focus();
     }
   };
+  const [radioKey, setRadioKey] = useState(0);
 
   const handleOnCreditCardAdd = () => {
     const values = getValues();
@@ -1074,6 +1076,7 @@ export default function CashInvoice() {
     setValue("oCCPay", updatedList);
 
     PaymentCalc();
+    setRadioKey((k) => k + 1);
     setValue("CreditCard", "");
     setValue("CreditCardNumber", "");
     setValue("VoucherNum", "");
@@ -2021,12 +2024,13 @@ export default function CashInvoice() {
                                 >
                                   <RadioButtonsField
                                     control={control}
+                                    key={radioKey}
                                     name="CreditCard"
                                     data={CreditCardList.map((card) => ({
                                       value: card.Name,
                                       label: card.Name,
                                     }))}
-                                    value={selectedCard}
+                                    // value={selectedCard}
                                   />
 
                                   <Grid item sm={12} md={6} lg={6} xs={12}>
@@ -2325,7 +2329,11 @@ export default function CashInvoice() {
                 variant="contained"
                 color="success"
                 type="submit"
-                disabled={processinv === false}
+                disabled={
+                  (processinv && !perms.IsAdd) ||
+                  processinv === false || 
+                  watch("Job_SO_DocEntry") === ""
+                }
               >
                 PROCESS INVOICE
               </Button>

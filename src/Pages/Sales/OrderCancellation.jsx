@@ -1,7 +1,6 @@
 import AddIcon from "@mui/icons-material/Add";
 import MenuIcon from "@mui/icons-material/Menu";
 import { useEffect, useMemo, useRef, useState } from "react";
-
 import CloseIcon from "@mui/icons-material/Close";
 import {
   Box,
@@ -32,6 +31,7 @@ import {
 import { Loader } from "../Components/Loader";
 import SearchInputField from "../Components/SearchInputField";
 import SearchModel from "../Components/SearchModel";
+import usePermissions from "../Components/usePermissions";
 export default function OrderCancellation() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -44,6 +44,7 @@ export default function OrderCancellation() {
   const abortControllerRef = useRef(null);
   const timeoutRef = useRef(null);
   const [searchText, setSearchText] = useState("");
+  const perms = usePermissions(360);
 
   const [card, setCard] = useState([]);
   const [filteredCard, setFilteredCard] = useState([]);
@@ -90,7 +91,7 @@ export default function OrderCancellation() {
     watch,
     getValues,
     handleSubmit,
-    formState: { errors },
+    // formState: { errors },
   } = useForm({
     defaultValues: initial,
   });
@@ -302,7 +303,7 @@ export default function OrderCancellation() {
         icon: "error",
         confirmButtonText: "OK",
       });
-    } 
+    }
   };
 
   const fetchMoreGetListData = () => {
@@ -1218,7 +1219,11 @@ export default function OrderCancellation() {
                 sx={{ color: "white" }}
                 color="success"
                 type="submit"
-                disabled={!processCancelSo || watch("OrderNo") === ""}
+                disabled={
+                  (processCancelSo && !perms.IsAdd) ||
+                  !processCancelSo ||
+                  watch("OrderNo") === ""
+                }
               >
                 CANCEL SALES ORDER
               </Button>

@@ -292,7 +292,7 @@ export default function QuatationSO() {
   });
 
   // const allFormData = getValues();
-  const perms = usePermissions(133);
+  const perms = usePermissions(356);
 
   const CreditCardList = [
     { Name: "KNET", AccountCode: "1201024" },
@@ -3093,7 +3093,11 @@ export default function QuatationSO() {
                             mb: 2,
                           }}
                           onClick={handleClickModel}
-                          disabled={!watch("CardCode") || watch("ServiceOrder")}
+                          disabled={
+                            !watch("CardCode") ||
+                            watch("ServiceOrder") ||
+                            watch("Status") === "0"
+                          }
                         >
                           Search Item
                         </Button>
@@ -3692,6 +3696,9 @@ export default function QuatationSO() {
                           variant="contained"
                           color="primary"
                           onClick={CalDesiredDiscountBtn}
+                          disabled={
+                            watch("CardCode") === "" || watch("Status") === "0"
+                          }
                         >
                           CALC DISC
                         </Button>
@@ -4087,7 +4094,9 @@ export default function QuatationSO() {
                 type="submit"
                 disabled={
                   (SaveUpdateName === "SAVE" && !perms.IsAdd) ||
-                  (SaveUpdateName === "UPDATE" && !perms.IsEdit)
+                  (SaveUpdateName === "UPDATE" && !perms.IsEdit) ||
+                  watch("CardCode") === "" ||
+                  watch("Status") === "0"
                 }
               >
                 {SaveUpdateName}
