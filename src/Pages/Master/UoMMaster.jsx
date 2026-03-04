@@ -57,7 +57,7 @@ export default function UoMMaster() {
   const removeEmojis = (str) =>
     str.replace(
       /([\u2700-\u27BF]|[\uE000-\uF8FF]|[\uD83C-\uDBFF\uDC00-\uDFFF]+|[\u2011-\u26FF]|[\uFE00-\uFE0F])/g,
-      ""
+      "",
     );
   useEffect(() => {
     fetchOpenListData(0);
@@ -66,39 +66,39 @@ export default function UoMMaster() {
     // getListForCreate();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-const GetLengthWidth = async () => {
-  try {
-    setLoading(true);
+  const GetLengthWidth = async () => {
+    try {
+      setLoading(true);
 
-    const res = await apiClient.get(`/LengthandWidth/Pages/1/0`);
-    const values = res?.data?.values || [];
+      const res = await apiClient.get(`/LengthandWidth/Pages/1/0`);
+      const values = res?.data?.values || [];
 
-    setVolumeUnits(values);
+      setVolumeUnits(values);
 
-    // 🔍 Find meter unit
-    const meterUnit = values.find(
-      (unit) => unit?.UnitName?.toLowerCase() === "meter"
-    );
+      // 🔍 Find meter unit
+      const meterUnit = values.find(
+        (unit) => unit?.UnitName?.toLowerCase() === "meter",
+      );
 
-    // ✅ Set default form value if found
-    if (meterUnit?.DocEntry) {
-      setValue("VolUnit", meterUnit.DocEntry.toString());
+      // ✅ Set default form value if found
+      if (meterUnit?.DocEntry) {
+        setValue("VolUnit", meterUnit.DocEntry.toString());
+      }
+    } catch (error) {
+      console.error("Failed to fetch Length & Width data:", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text:
+          error.response?.data?.message ||
+          "Failed to load Length & Width units.",
+        confirmButtonColor: "#d33",
+      });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Failed to fetch Length & Width data:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text:
-        error.response?.data?.message ||
-        "Failed to load Length & Width units.",
-      confirmButtonColor: "#d33",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   // =======================Get all cards List ===========================
 
@@ -156,47 +156,46 @@ const GetLengthWidth = async () => {
       });
     }
   };
-const setUomListData = async (DocEntry) => {
-  if (!DocEntry) return;
+  const setUomListData = async (DocEntry) => {
+    if (!DocEntry) return;
 
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const res = await apiClient.get(`/UnitofMeasure/${DocEntry}`);
-    const data = res?.data?.values;
+      const res = await apiClient.get(`/UnitofMeasure/${DocEntry}`);
+      const data = res?.data?.values;
 
-    if (!data) {
+      if (!data) {
+        Swal.fire({
+          icon: "warning",
+          title: "No Data",
+          text: "Unit of Measure data not found.",
+          confirmButtonColor: "#d33",
+        });
+        return;
+      }
+
+      toggleDrawer();
+      reset(data);
+
+      setSaveUpdateName("UPDATE");
+      setDocEntry(DocEntry);
+      setSelectedData(DocEntry);
+    } catch (error) {
+      console.error("Error fetching UOM data:", error);
+
       Swal.fire({
-        icon: "warning",
-        title: "No Data",
-        text: "Unit of Measure data not found.",
+        icon: "error",
+        title: "Error",
+        text:
+          error.response?.data?.message ||
+          "Failed to fetch Unit of Measure data.",
         confirmButtonColor: "#d33",
       });
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    toggleDrawer();
-    reset(data);
-
-    setSaveUpdateName("UPDATE");
-    setDocEntry(DocEntry);
-    setSelectedData(DocEntry);
-  } catch (error) {
-    console.error("Error fetching UOM data:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text:
-        error.response?.data?.message ||
-        "Failed to fetch Unit of Measure data.",
-      confirmButtonColor: "#d33",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   // ===================== Pagination =====================
   const handleOpenListSearch = (res) => {
@@ -227,50 +226,48 @@ const setUomListData = async (DocEntry) => {
     fetchOpenListData(openListPage + 1, openListSearching ? openListquery : "");
     setOpenListPage((prev) => prev + 1);
   };
-const fetchOpenListData = async (pageNum, searchTerm = "") => {
-  try {
-    setLoading(true);
+  const fetchOpenListData = async (pageNum, searchTerm = "") => {
+    try {
+      setLoading(true);
 
-    const url = searchTerm
-      ? `/UnitofMeasure/Search/${searchTerm}/1/${pageNum}/20`
-      : `/UnitofMeasure/Pages/1/${pageNum}/20`;
+      const url = searchTerm
+        ? `/UnitofMeasure/Search/${searchTerm}/1/${pageNum}/20`
+        : `/UnitofMeasure/Pages/1/${pageNum}/20`;
 
-    const response = await apiClient.get(url);
-    const data = response?.data;
+      const response = await apiClient.get(url);
+      const data = response?.data;
 
-    if (data?.success) {
-      const newData = data.values || [];
+      if (data?.success) {
+        const newData = data.values || [];
 
-      setHasMoreOpen(newData.length === 20);
+        setHasMoreOpen(newData.length === 20);
 
-      setOpenListData((prev) =>
-        pageNum === 0 ? newData : [...prev, ...newData]
-      );
-    } else {
+        setOpenListData((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+      } else {
+        Swal.fire({
+          icon: "warning",
+          title: "Warning",
+          text: data?.message || "Failed to load Unit of Measure list.",
+          confirmButtonColor: "#d33",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching UOM list:", error);
+
       Swal.fire({
-        icon: "warning",
-        title: "Warning",
-        text: data?.message || "Failed to load Unit of Measure list.",
+        icon: "error",
+        title: "Error",
+        text:
+          error.response?.data?.message ||
+          "Something went wrong while fetching Unit of Measure list.",
         confirmButtonColor: "#d33",
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching UOM list:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text:
-        error.response?.data?.message ||
-        "Something went wrong while fetching Unit of Measure list.",
-      confirmButtonColor: "#d33",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
-
+  };
 
   const [formData, setFormData] = useState({
     UomCode: "",
@@ -294,41 +291,88 @@ const fetchOpenListData = async (pageNum, searchTerm = "") => {
 
   // ===================== Post and Update =====================
 
-const handleSubmitForm = async (data) => {
-  const obj = {
-    DocEntry: data.DocEntry || "",
-    UserId: user.UserId,
-    CreatedBy: user.UserName,
-    CreatedDate: dayjs().format("YYYY/MM/DD"),
-    ModifiedBy: user.UserName,
-    ModifiedDate: dayjs().format("YYYY/MM/DD"),
-    Status: "1",
-    UomCode: data.UomCode || "",
-    UomName: data.UomName || "",
-    Length1: String(data.Length1 || "0"),
-    Volume: String(data.Volume || "0"),
-    VolUnit: String(data.VolUnit),
-    Width1: String(data.Width1 || "0"),
-    Height1: String(data.Height1 || "0"),
-    Weight1: String(data.Weight1 || "0"),
-  };
+  const handleSubmitForm = async (data) => {
+    const obj = {
+      DocEntry: data.DocEntry || "",
+      UserId: user.UserId,
+      CreatedBy: user.UserName,
+      CreatedDate: dayjs().format("YYYY/MM/DD"),
+      ModifiedBy: user.UserName,
+      ModifiedDate: dayjs().format("YYYY/MM/DD"),
+      Status: "1",
+      UomCode: data.UomCode || "",
+      UomName: data.UomName || "",
+      Length1: String(data.Length1 || "0"),
+      Volume: String(data.Volume || "0"),
+      VolUnit: String(data.VolUnit),
+      Width1: String(data.Width1 || "0"),
+      Height1: String(data.Height1 || "0"),
+      Weight1: String(data.Weight1 || "0"),
+    };
 
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    /* ================= SAVE ================= */
-    if (SaveUpdateName === "SAVE") {
-      if (!Array.isArray(openListData)) return;
+      /* ================= SAVE ================= */
+      if (SaveUpdateName === "SAVE") {
+        if (!Array.isArray(openListData)) return;
 
-      const normalize = (str) => str.replace(/\s+/g, "").toLowerCase();
+        const normalize = (str) => str.replace(/\s+/g, "").toLowerCase();
 
-      const isExisting = openListData.some(
-        (item) => normalize(item.UomCode) === normalize(data.UomCode)
-      );
+        const isExisting = openListData.some(
+          (item) => normalize(item.UomCode) === normalize(data.UomCode),
+        );
 
-      if (isExisting) {
+        if (isExisting) {
+          Swal.fire({
+            text: "UOM Code already Exist!",
+            icon: "info",
+            toast: true,
+            showConfirmButton: false,
+            timer: 1500,
+          });
+          return;
+        }
+
+        const response = await apiClient.post(`/UnitofMeasure`, obj);
+
+        if (response.data?.success) {
+          clearFormData();
+          setOpenListPage(0);
+          setOpenListData([]);
+          fetchOpenListData(0);
+
+          Swal.fire({
+            title: "Success!",
+            text: "UoM Added",
+            icon: "success",
+            confirmButtonText: "Ok",
+            timer: 1000,
+          });
+        } else {
+          Swal.fire({
+            title: "Error!",
+            text: response.data?.message || "Failed to add UoM",
+            icon: "warning",
+            confirmButtonText: "Ok",
+          });
+        }
+        return;
+      }
+
+      /* ================= UPDATE ================= */
+      const confirmation = await Swal.fire({
+        text: `Do You Want to Update ?`,
+        icon: "question",
+        confirmButtonText: "YES",
+        cancelButtonText: "No",
+        showConfirmButton: true,
+        showDenyButton: true,
+      });
+
+      if (!confirmation.isConfirmed) {
         Swal.fire({
-          text: "UOM Code already Exist!",
+          text: "UoM Not Updated",
           icon: "info",
           toast: true,
           showConfirmButton: false,
@@ -337,7 +381,10 @@ const handleSubmitForm = async (data) => {
         return;
       }
 
-      const response = await apiClient.post(`/UnitofMeasure`, obj);
+      const response = await apiClient.put(
+        `/UnitofMeasure/${obj.DocEntry}`,
+        obj,
+      );
 
       if (response.data?.success) {
         clearFormData();
@@ -347,7 +394,7 @@ const handleSubmitForm = async (data) => {
 
         Swal.fire({
           title: "Success!",
-          text: "UoM Added",
+          text: "UOM Updated",
           icon: "success",
           confirmButtonText: "Ok",
           timer: 1000,
@@ -355,17 +402,30 @@ const handleSubmitForm = async (data) => {
       } else {
         Swal.fire({
           title: "Error!",
-          text: response.data?.message || "Failed to add UoM",
+          text: response.data?.message || "Failed to update UoM",
           icon: "warning",
           confirmButtonText: "Ok",
         });
       }
-      return;
+    } catch (error) {
+      Swal.fire({
+        title: "Error!",
+        text:
+          error.response?.data?.message ||
+          "Something went wrong. Please try again.",
+        icon: "error",
+        confirmButtonText: "Ok",
+      });
+    } finally {
+      setLoading(false);
     }
+  };
 
-    /* ================= UPDATE ================= */
+  // ===================== Delete =====================
+
+  const handleOnDelete = async () => {
     const confirmation = await Swal.fire({
-      text: `Do You Want to Update ?`,
+      text: "Do You Want to Delete ?",
       icon: "question",
       confirmButtonText: "YES",
       cancelButtonText: "No",
@@ -375,7 +435,7 @@ const handleSubmitForm = async (data) => {
 
     if (!confirmation.isConfirmed) {
       Swal.fire({
-        text: "UoM Not Updated",
+        text: "UoM Not Deleted",
         icon: "info",
         toast: true,
         showConfirmButton: false,
@@ -384,112 +444,47 @@ const handleSubmitForm = async (data) => {
       return;
     }
 
-    const response = await apiClient.put(
-      `/UnitofMeasure/${obj.DocEntry}`,
-      obj
-    );
+    try {
+      setLoading(true);
 
-    if (response.data?.success) {
-      clearFormData();
-      setOpenListPage(0);
-      setOpenListData([]);
-      fetchOpenListData(0);
+      const response = await apiClient.delete(`/UnitofMeasure/${DocEntry}`);
 
+      if (response.data?.success === true) {
+        clearFormData();
+        setOpenListPage(0);
+        setOpenListData([]);
+        fetchOpenListData(0);
+
+        Swal.fire({
+          text: "UoM Deleted",
+          icon: "success",
+          toast: true,
+          showConfirmButton: false,
+          timer: 1000,
+        });
+      } else {
+        Swal.fire({
+          text: response.data?.message || "Delete failed",
+          icon: "info",
+          toast: true,
+          showConfirmButton: false,
+          timer: 1500,
+        });
+      }
+    } catch (error) {
       Swal.fire({
-        title: "Success!",
-        text: "UOM Updated",
-        icon: "success",
-        confirmButtonText: "Ok",
-        timer: 1000,
-      });
-    } else {
-      Swal.fire({
-        title: "Error!",
-        text: response.data?.message || "Failed to update UoM",
-        icon: "warning",
-        confirmButtonText: "Ok",
-      });
-    }
-  } catch (error) {
-    Swal.fire({
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        "Something went wrong. Please try again.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-  // ===================== Delete =====================
-
-const handleOnDelete = async () => {
-  const confirmation = await Swal.fire({
-    text: "Do You Want to Delete ?",
-    icon: "question",
-    confirmButtonText: "YES",
-    cancelButtonText: "No",
-    showConfirmButton: true,
-    showDenyButton: true,
-  });
-
-  if (!confirmation.isConfirmed) {
-    Swal.fire({
-      text: "UoM Not Deleted",
-      icon: "info",
-      toast: true,
-      showConfirmButton: false,
-      timer: 1500,
-    });
-    return;
-  }
-
-  try {
-    setLoading(true);
-
-    const response = await apiClient.delete(`/UnitofMeasure/${DocEntry}`);
-
-    if (response.data?.success === true) {
-      clearFormData();
-      setOpenListPage(0);
-      setOpenListData([]);
-      fetchOpenListData(0);
-
-      Swal.fire({
-        text: "UoM Deleted",
-        icon: "success",
-        toast: true,
-        showConfirmButton: false,
-        timer: 1000,
-      });
-    } else {
-      Swal.fire({
-        text: response.data?.message || "Delete failed",
-        icon: "info",
+        text:
+          error.response?.data?.message ||
+          "Something went wrong while deleting",
+        icon: "error",
         toast: true,
         showConfirmButton: false,
         timer: 1500,
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    Swal.fire({
-      text:
-        error.response?.data?.message ||
-        "Something went wrong while deleting",
-      icon: "error",
-      toast: true,
-      showConfirmButton: false,
-      timer: 1500,
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const sidebarContent = (
     <>
@@ -603,8 +598,8 @@ const handleOnDelete = async () => {
 
   return (
     <>
-          {loading && <Loader open={loading} />}
-    
+      {loading && <Loader open={loading} />}
+
       <Grid
         container
         width={"100%"}

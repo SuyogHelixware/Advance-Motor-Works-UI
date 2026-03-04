@@ -106,48 +106,47 @@ export default function ServiceCategories() {
     setOpenListPage((prev) => prev + 1);
   };
 
-const fetchOpenListData = async (pageNum, searchTerm = "") => {
-  try {
-    setLoading(true);
+  const fetchOpenListData = async (pageNum, searchTerm = "") => {
+    try {
+      setLoading(true);
 
-    const url = searchTerm
-      ? `/ServiceCategories/search/${searchTerm}/1/${pageNum}/20`
-      : `/ServiceCategories/pages/1/${pageNum}/20`;
+      const url = searchTerm
+        ? `/ServiceCategories/search/${searchTerm}/1/${pageNum}/20`
+        : `/ServiceCategories/pages/1/${pageNum}/20`;
 
-    const response = await apiClient.get(url);
+      const response = await apiClient.get(url);
 
-    if (response.data.success) {
-      const newData = response.data.values || [];
+      if (response.data.success) {
+        const newData = response.data.values || [];
 
-      setHasMoreOpen(newData.length === 20);
+        setHasMoreOpen(newData.length === 20);
 
-      setOpenListData((prev) =>
-        pageNum === 0 ? newData : [...prev, ...newData]
-      );
-    } else {
+        setOpenListData((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+      } else {
+        await Swal.fire({
+          title: "Error!",
+          text: response.data.message || "Failed to fetch Service Categories",
+          icon: "warning",
+          confirmButtonText: "Ok",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching Service Categories:", error);
+
       await Swal.fire({
         title: "Error!",
-        text: response.data.message || "Failed to fetch Service Categories",
-        icon: "warning",
+        text:
+          error.response?.data?.message ||
+          "An error occurred while fetching Service Categories.",
+        icon: "error",
         confirmButtonText: "Ok",
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching Service Categories:", error);
-
-    await Swal.fire({
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        "An error occurred while fetching Service Categories.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   //=======================================Inactive list data==========================================
   const handleCloseListSearch = (res) => {
@@ -179,7 +178,7 @@ const fetchOpenListData = async (pageNum, searchTerm = "") => {
   const fetchMoreCloseListData = () => {
     fetchCloseListData(
       CloseListPage + 1,
-      CloseListSearching ? CloseListquery : ""
+      CloseListSearching ? CloseListquery : "",
     );
     setCloseListPage((prev) => prev + 1);
   };
@@ -208,7 +207,7 @@ const fetchOpenListData = async (pageNum, searchTerm = "") => {
         setHasMoreClose(newData.length === 20);
 
         setCloseListData((prev) =>
-          pageNum === 0 ? newData : [...prev, ...newData]
+          pageNum === 0 ? newData : [...prev, ...newData],
         );
       }
     } catch (error) {
@@ -218,7 +217,7 @@ const fetchOpenListData = async (pageNum, searchTerm = "") => {
   const removeEmojis = (str) =>
     str.replace(
       /([\u2700-\u27BF]|[\uE000-\uF8FF]|[\uD83C-\uDBFF\uDC00-\uDFFF]+|[\u2011-\u26FF]|[\uFE00-\uFE0F])/g,
-      ""
+      "",
     );
   //========================set specific cards data ===============
   const setOldOpenData = async (DocEntry, CardCode, CntctCode) => {
@@ -255,49 +254,47 @@ const fetchOpenListData = async (pageNum, searchTerm = "") => {
       });
     }
   };
-const setServiceCategoriesDataList = async (DocEntry) => {
-  if (!DocEntry) return;
+  const setServiceCategoriesDataList = async (DocEntry) => {
+    if (!DocEntry) return;
 
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const response = await apiClient.get(`/ServiceCategories/${DocEntry}`);
+      const response = await apiClient.get(`/ServiceCategories/${DocEntry}`);
 
-    if (response.data.success) {
-      toggleDrawer();
+      if (response.data.success) {
+        toggleDrawer();
 
-      const data = response.data.values;
-      reset(data);
+        const data = response.data.values;
+        reset(data);
 
-      setSaveUpdateName("UPDATE");
-      setDocEntry(DocEntry);
-      setSelectedData(DocEntry);
-    } else {
+        setSaveUpdateName("UPDATE");
+        setDocEntry(DocEntry);
+        setSelectedData(DocEntry);
+      } else {
+        await Swal.fire({
+          title: "Error!",
+          text:
+            response.data.message || "Unable to fetch Service Category data.",
+          icon: "warning",
+          confirmButtonText: "Ok",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching Service Category data:", error);
+
       await Swal.fire({
         title: "Error!",
         text:
-          response.data.message ||
-          "Unable to fetch Service Category data.",
-        icon: "warning",
+          error.response?.data?.message ||
+          "An error occurred while fetching Service Category data.",
+        icon: "error",
         confirmButtonText: "Ok",
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching Service Category data:", error);
-
-    await Swal.fire({
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        "An error occurred while fetching Service Category data.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const clearFormData = () => {
     reset(initial);
@@ -312,121 +309,31 @@ const setServiceCategoriesDataList = async (DocEntry) => {
   const { isDirty } = useFormState({ control });
 
   //======================Delete API===================
- const handleOnDelete = async () => {
-  const result = await Swal.fire({
-    text: "Do You Want Delete ?",
-    icon: "question",
-    confirmButtonText: "YES",
-    cancelButtonText: "No",
-    showConfirmButton: true,
-    showDenyButton: true,
-  });
-
-  if (!result.isConfirmed) {
-    Swal.fire({
-      text: "Service Category Not Deleted",
-      icon: "info",
-      toast: true,
-      showConfirmButton: false,
-      timer: 1500,
+  const handleOnDelete = async () => {
+    const result = await Swal.fire({
+      text: "Do You Want Delete ?",
+      icon: "question",
+      confirmButtonText: "YES",
+      cancelButtonText: "No",
+      showConfirmButton: true,
+      showDenyButton: true,
     });
-    return;
-  }
 
-  try {
-    setLoading(true);
-
-    const resp = await apiClient.delete(
-      `/ServiceCategories/${DocEntry}`
-    );
-
-    if (resp.data.success) {
-      clearFormData();
-
-      setOpenListPage(0);
-      setCloseListPage(0);
-      setOpenListData([]);
-      setCloseListData([]);
-
-      fetchOpenListData(0);
-      fetchCloseListData(0);
-
+    if (!result.isConfirmed) {
       Swal.fire({
-        text: "Service Category Deleted",
-        icon: "success",
+        text: "Service Category Not Deleted",
+        icon: "info",
         toast: true,
         showConfirmButton: false,
-        timer: 1000, // ✅ timer only for success
+        timer: 1500,
       });
-    } else {
-      await Swal.fire({
-        title: "Error!",
-        text:
-          resp.data.message ||
-          "Service Category could not be deleted.",
-        icon: "warning",
-        confirmButtonText: "Ok", // ❌ no timer
-      });
+      return;
     }
-  } catch (error) {
-    console.error("Error deleting service category:", error);
 
-    await Swal.fire({
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        "An error occurred while deleting Service Category.",
-      icon: "error",
-      confirmButtonText: "Ok", // ❌ no timer
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-  //======================PUT and POST API===================
-  const StatusValue = watch("Status");
-
- const handleSubmitForm = async (data) => {
-  const obj = {
-    DocEntry: String(data.DocEntry || ""),
-    UserId: user.UserId,
-    CreatedBy: user.UserName || "",
-    CreatedDate: dayjs().format("YYYY/MM/DD"),
-    ModifiedBy: user.UserName || "",
-    ModifiedDate: dayjs().format("YYYY/MM/DD"),
-    Status: StatusValue === "1" ? "1" : "0",
-    ServiceCtg: String(data.ServiceCtg),
-    Descrip: String(data.Descrip),
-  };
-
-  const normalizeString = (str) =>
-    str.replace(/\s+/g, "").toLowerCase();
-
-  try {
-    /* ================= SAVE ================= */
-    if (SaveUpdateName === "SAVE") {
-      // 🔍 Duplicate check before API
-      if (Array.isArray(openListData)) {
-        const isExisting = openListData.some(
-          (item) =>
-            normalizeString(item.ServiceCtg) ===
-            normalizeString(data.ServiceCtg)
-        );
-
-        if (isExisting) {
-          await Swal.fire({
-            text: "Service Category Already Exists!",
-            icon: "info",
-            confirmButtonText: "Ok",
-          });
-          return;
-        }
-      }
-
+    try {
       setLoading(true);
-      const resp = await apiClient.post(`/ServiceCategories`, obj);
+
+      const resp = await apiClient.delete(`/ServiceCategories/${DocEntry}`);
 
       if (resp.data.success) {
         clearFormData();
@@ -438,100 +345,180 @@ const setServiceCategoriesDataList = async (DocEntry) => {
 
         fetchOpenListData(0);
         fetchCloseListData(0);
-        reset();
 
         Swal.fire({
-          title: "Success!",
-          text: "Service Category Added",
+          text: "Service Category Deleted",
           icon: "success",
-          confirmButtonText: "Ok",
-          timer: 1000, // ✅ timer only for success
-        });
-      } else {
-        await Swal.fire({
-          title: "Error!",
-          text:
-            resp.data.message ||
-            "Service Category could not be added.",
-          icon: "warning",
-          confirmButtonText: "Ok",
-        });
-      }
-
-    /* ================= UPDATE ================= */
-    } else {
-      const result = await Swal.fire({
-        text: "Do You Want to Update?",
-        icon: "question",
-        confirmButtonText: "YES",
-        cancelButtonText: "No",
-        showConfirmButton: true,
-        showDenyButton: true,
-      });
-
-      if (!result.isConfirmed) {
-        Swal.fire({
-          text: "Service Category Not Updated",
-          icon: "info",
           toast: true,
           showConfirmButton: false,
-          timer: 1500,
-        });
-        return;
-      }
-
-      setLoading(true);
-      const response = await apiClient.put(
-        `/ServiceCategories/${data.DocEntry}`,
-        obj
-      );
-
-      if (response.data.success) {
-        clearFormData();
-
-        setOpenListPage(0);
-        setCloseListPage(0);
-        setOpenListData([]);
-        setCloseListData([]);
-
-        fetchOpenListData(0);
-        fetchCloseListData(0);
-        reset();
-
-        Swal.fire({
-          title: "Success!",
-          text: "Service Category Updated",
-          icon: "success",
-          confirmButtonText: "Ok",
           timer: 1000, // ✅ timer only for success
         });
       } else {
         await Swal.fire({
           title: "Error!",
-          text:
-            response.data.message ||
-            "Service Category could not be updated.",
+          text: resp.data.message || "Service Category could not be deleted.",
           icon: "warning",
-          confirmButtonText: "Ok",
+          confirmButtonText: "Ok", // ❌ no timer
         });
       }
+    } catch (error) {
+      console.error("Error deleting service category:", error);
+
+      await Swal.fire({
+        title: "Error!",
+        text:
+          error.response?.data?.message ||
+          "An error occurred while deleting Service Category.",
+        icon: "error",
+        confirmButtonText: "Ok", // ❌ no timer
+      });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error submitting Service Category:", error);
+  };
 
-    await Swal.fire({
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        "Something went wrong. Please try again.",
-      icon: "error",
-      confirmButtonText: "Ok", // ❌ no timer
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  //======================PUT and POST API===================
+  const StatusValue = watch("Status");
 
+  const handleSubmitForm = async (data) => {
+    const obj = {
+      DocEntry: String(data.DocEntry || ""),
+      UserId: user.UserId,
+      CreatedBy: user.UserName || "",
+      CreatedDate: dayjs().format("YYYY/MM/DD"),
+      ModifiedBy: user.UserName || "",
+      ModifiedDate: dayjs().format("YYYY/MM/DD"),
+      Status: StatusValue === "1" ? "1" : "0",
+      ServiceCtg: String(data.ServiceCtg),
+      Descrip: String(data.Descrip),
+    };
+
+    const normalizeString = (str) => str.replace(/\s+/g, "").toLowerCase();
+
+    try {
+      /* ================= SAVE ================= */
+      if (SaveUpdateName === "SAVE") {
+        // 🔍 Duplicate check before API
+        if (Array.isArray(openListData)) {
+          const isExisting = openListData.some(
+            (item) =>
+              normalizeString(item.ServiceCtg) ===
+              normalizeString(data.ServiceCtg),
+          );
+
+          if (isExisting) {
+            await Swal.fire({
+              text: "Service Category Already Exists!",
+              icon: "info",
+              confirmButtonText: "Ok",
+            });
+            return;
+          }
+        }
+
+        setLoading(true);
+        const resp = await apiClient.post(`/ServiceCategories`, obj);
+
+        if (resp.data.success) {
+          clearFormData();
+
+          setOpenListPage(0);
+          setCloseListPage(0);
+          setOpenListData([]);
+          setCloseListData([]);
+
+          fetchOpenListData(0);
+          fetchCloseListData(0);
+          reset();
+
+          Swal.fire({
+            title: "Success!",
+            text: "Service Category Added",
+            icon: "success",
+            confirmButtonText: "Ok",
+            timer: 1000, // ✅ timer only for success
+          });
+        } else {
+          await Swal.fire({
+            title: "Error!",
+            text: resp.data.message || "Service Category could not be added.",
+            icon: "warning",
+            confirmButtonText: "Ok",
+          });
+        }
+
+        /* ================= UPDATE ================= */
+      } else {
+        const result = await Swal.fire({
+          text: "Do You Want to Update?",
+          icon: "question",
+          confirmButtonText: "YES",
+          cancelButtonText: "No",
+          showConfirmButton: true,
+          showDenyButton: true,
+        });
+
+        if (!result.isConfirmed) {
+          Swal.fire({
+            text: "Service Category Not Updated",
+            icon: "info",
+            toast: true,
+            showConfirmButton: false,
+            timer: 1500,
+          });
+          return;
+        }
+
+        setLoading(true);
+        const response = await apiClient.put(
+          `/ServiceCategories/${data.DocEntry}`,
+          obj,
+        );
+
+        if (response.data.success) {
+          clearFormData();
+
+          setOpenListPage(0);
+          setCloseListPage(0);
+          setOpenListData([]);
+          setCloseListData([]);
+
+          fetchOpenListData(0);
+          fetchCloseListData(0);
+          reset();
+
+          Swal.fire({
+            title: "Success!",
+            text: "Service Category Updated",
+            icon: "success",
+            confirmButtonText: "Ok",
+            timer: 1000, // ✅ timer only for success
+          });
+        } else {
+          await Swal.fire({
+            title: "Error!",
+            text:
+              response.data.message || "Service Category could not be updated.",
+            icon: "warning",
+            confirmButtonText: "Ok",
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error submitting Service Category:", error);
+
+      await Swal.fire({
+        title: "Error!",
+        text:
+          error.response?.data?.message ||
+          "Something went wrong. Please try again.",
+        icon: "error",
+        confirmButtonText: "Ok", // ❌ no timer
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const sidebarContent = (
     <>

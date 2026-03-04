@@ -150,55 +150,54 @@ export default function UserCreation() {
     setOpenListPage((prev) => prev + 1);
   };
 
- const PAGE_SIZE = 20;
+  const PAGE_SIZE = 20;
 
-const fetchOpenListData = async (pageNum, searchTerm = "") => {
-  setLoading(true);
+  const fetchOpenListData = async (pageNum, searchTerm = "") => {
+    setLoading(true);
 
-  try {
-    const url = searchTerm
-      ? `/Users/Search/${searchTerm}/1/${pageNum}/${PAGE_SIZE}`
-      : `/Users/Pages/1/${pageNum}/${PAGE_SIZE}`;
+    try {
+      const url = searchTerm
+        ? `/Users/Search/${searchTerm}/1/${pageNum}/${PAGE_SIZE}`
+        : `/Users/Pages/1/${pageNum}/${PAGE_SIZE}`;
 
-    const response = await apiClient.get(url);
-    const { success, values = [], message } = response?.data || {};
+      const response = await apiClient.get(url);
+      const { success, values = [], message } = response?.data || {};
 
-    if (!success) {
+      if (!success) {
+        Swal.fire({
+          text: message || "Failed to fetch users",
+          icon: "warning",
+          toast: true,
+          showConfirmButton: false,
+          timer: 2000,
+        });
+        return;
+      }
+
+      setHasMoreOpen(values.length === PAGE_SIZE);
+
+      setOpenListData((prev) =>
+        pageNum === 0 ? values : [...prev, ...values],
+      );
+    } catch (error) {
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Error fetching users";
+
+      console.error("Error fetching users:", error);
+
       Swal.fire({
-        text: message || "Failed to fetch users",
-        icon: "warning",
+        text: errorMessage,
+        icon: "error",
         toast: true,
         showConfirmButton: false,
         timer: 2000,
       });
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    setHasMoreOpen(values.length === PAGE_SIZE);
-
-    setOpenListData((prev) =>
-      pageNum === 0 ? values : [...prev, ...values]
-    );
-  } catch (error) {
-    const errorMessage =
-      error?.response?.data?.message ||
-      error?.message ||
-      "Error fetching users";
-
-    console.error("Error fetching users:", error);
-
-    Swal.fire({
-      text: errorMessage,
-      icon: "error",
-      toast: true,
-      showConfirmButton: false,
-      timer: 2000,
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   //=======================================Inactive list data==========================================
   const handleCloseListSearch = (res) => {
@@ -230,162 +229,159 @@ const fetchOpenListData = async (pageNum, searchTerm = "") => {
   const fetchMoreCloseListData = () => {
     fetchCloseListData(
       CloseListPage + 1,
-      CloseListSearching ? CloseListquery : ""
+      CloseListSearching ? CloseListquery : "",
     );
     setCloseListPage((prev) => prev + 1);
   };
 
+  const fetchCloseListData = async (pageNum, searchTerm = "") => {
+    setLoading(true);
 
-const fetchCloseListData = async (pageNum, searchTerm = "") => {
-  setLoading(true);
+    try {
+      const url = searchTerm
+        ? `/Users/Search/${searchTerm}/0/${pageNum}/${PAGE_SIZE}`
+        : `/Users/Pages/0/${pageNum}/${PAGE_SIZE}`;
 
-  try {
-    const url = searchTerm
-      ? `/Users/Search/${searchTerm}/0/${pageNum}/${PAGE_SIZE}`
-      : `/Users/Pages/0/${pageNum}/${PAGE_SIZE}`;
+      const response = await apiClient.get(url);
+      const { success, values = [], message } = response?.data || {};
 
-    const response = await apiClient.get(url);
-    const { success, values = [], message } = response?.data || {};
+      if (!success) {
+        Swal.fire({
+          text: message || "Failed to fetch closed users",
+          icon: "warning",
+          toast: true,
+          showConfirmButton: false,
+          timer: 2000,
+        });
+        return;
+      }
 
-    if (!success) {
+      setHasMoreClose(values.length === PAGE_SIZE);
+
+      setCloseListData((prev) =>
+        pageNum === 0 ? values : [...prev, ...values],
+      );
+    } catch (error) {
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Error fetching closed users";
+
+      console.error("Error fetching closed users:", error);
+
       Swal.fire({
-        text: message || "Failed to fetch closed users",
-        icon: "warning",
+        text: errorMessage,
+        icon: "error",
         toast: true,
         showConfirmButton: false,
         timer: 2000,
       });
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    setHasMoreClose(values.length === PAGE_SIZE);
-
-    setCloseListData((prev) =>
-      pageNum === 0 ? values : [...prev, ...values]
-    );
-  } catch (error) {
-    const errorMessage =
-      error?.response?.data?.message ||
-      error?.message ||
-      "Error fetching closed users";
-
-    console.error("Error fetching closed users:", error);
-
-    Swal.fire({
-      text: errorMessage,
-      icon: "error",
-      toast: true,
-      showConfirmButton: false,
-      timer: 2000,
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   //========================== handle sales employee change=======================
   const handleSalesEmpChange = (e) => {
     setSelectedSalesEmp(e.target.value); // Set selected sales employee based on user input
   };
 
- const getSalesEmpList = async () => {
-  setLoading(true);
+  const getSalesEmpList = async () => {
+    setLoading(true);
 
-  try {
-    const response = await apiClient.get(`/SalesEmp/all`, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    try {
+      const response = await apiClient.get(`/SalesEmp/all`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-    const { success, values = [], message } = response?.data || {};
+      const { success, values = [], message } = response?.data || {};
 
-    if (!success) {
+      if (!success) {
+        Swal.fire({
+          title: "Error!",
+          text: message || "Unable to fetch Sales Employee data.",
+          icon: "error",
+        });
+        return;
+      }
+
+      const formattedData = values.map((item) => ({
+        key: item.DocEntry,
+        value: item.SlpName,
+      }));
+
+      setSalesEmpData(formattedData);
+    } catch (error) {
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Unable to fetch the Sales Employee data. Please try again later.";
+
+      console.error("Error fetching sales employee data:", error);
+
       Swal.fire({
         title: "Error!",
-        text: message || "Unable to fetch Sales Employee data.",
+        text: errorMessage,
         icon: "error",
+        confirmButtonText: "OK",
       });
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    const formattedData = values.map((item) => ({
-      key: item.DocEntry,
-      value: item.SlpName,
-    }));
-
-    setSalesEmpData(formattedData);
-  } catch (error) {
-    const errorMessage =
-      error?.response?.data?.message ||
-      error?.message ||
-      "Unable to fetch the Sales Employee data. Please try again later.";
-
-    console.error("Error fetching sales employee data:", error);
-
-    Swal.fire({
-      title: "Error!",
-      text: errorMessage,
-      icon: "error",
-      confirmButtonText: "OK",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   //========================== Handle Role Change =======================
   const handleRoleDataChange = (e) => {
     setSelectedRole(e.target.value); // Set selected role based on user input
   };
 
- const getRoleDataList = async () => {
-  setLoading(true);
+  const getRoleDataList = async () => {
+    setLoading(true);
 
-  try {
-    const response = await apiClient.get(`/RoleMapping/All`, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    try {
+      const response = await apiClient.get(`/RoleMapping/All`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-    const { success, values = [], message } = response?.data || {};
+      const { success, values = [], message } = response?.data || {};
 
-    if (!success) {
+      if (!success) {
+        Swal.fire({
+          title: "Error!",
+          text: message || "Unable to fetch role data.",
+          icon: "error",
+        });
+        return;
+      }
+
+      const formattedData = values.map((item) => ({
+        key: item.RoleId,
+        value: item.RoleName,
+      }));
+
+      setRoleData(formattedData);
+    } catch (error) {
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Unable to fetch the Role data. Please try again later.";
+
+      console.error("Error fetching role data:", error);
+
       Swal.fire({
         title: "Error!",
-        text: message || "Unable to fetch role data.",
+        text: errorMessage,
         icon: "error",
+        confirmButtonText: "OK",
       });
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    const formattedData = values.map((item) => ({
-      key: item.RoleId,
-      value: item.RoleName,
-    }));
-
-    setRoleData(formattedData);
-  } catch (error) {
-    const errorMessage =
-      error?.response?.data?.message ||
-      error?.message ||
-      "Unable to fetch the Role data. Please try again later.";
-
-    console.error("Error fetching role data:", error);
-
-    Swal.fire({
-      title: "Error!",
-      text: errorMessage,
-      icon: "error",
-      confirmButtonText: "OK",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   useEffect(() => {
     getRoleDataList();
@@ -396,48 +392,47 @@ const fetchCloseListData = async (pageNum, searchTerm = "") => {
   }, []);
 
   //========================set specific cards data ===============
- const setUserCreationDataList = async (DocEntry) => {
-  if (!DocEntry) return;
+  const setUserCreationDataList = async (DocEntry) => {
+    if (!DocEntry) return;
 
-  setLoading(true);
+    setLoading(true);
 
-  try {
-    const response = await apiClient.get(`/Users/${DocEntry}`);
-    const { success, values: data, message } = response?.data || {};
+    try {
+      const response = await apiClient.get(`/Users/${DocEntry}`);
+      const { success, values: data, message } = response?.data || {};
 
-    if (!success || !data) {
+      if (!success || !data) {
+        Swal.fire({
+          title: "Error!",
+          text: message || "Unable to fetch user data.",
+          icon: "error",
+        });
+        return;
+      }
+
+      toggleDrawer();
+      reset(data);
+      setSaveUpdateName("UPDATE");
+      setDocEntry(DocEntry);
+      setSelectedData(DocEntry);
+    } catch (error) {
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Unable to fetch user data. Please try again later.";
+
+      console.error("Error fetching user data:", error);
+
       Swal.fire({
         title: "Error!",
-        text: message || "Unable to fetch user data.",
+        text: errorMessage,
         icon: "error",
+        confirmButtonText: "OK",
       });
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    toggleDrawer();
-    reset(data);
-    setSaveUpdateName("UPDATE");
-    setDocEntry(DocEntry);
-    setSelectedData(DocEntry);
-  } catch (error) {
-    const errorMessage =
-      error?.response?.data?.message ||
-      error?.message ||
-      "Unable to fetch user data. Please try again later.";
-
-    console.error("Error fetching user data:", error);
-
-    Swal.fire({
-      title: "Error!",
-      text: errorMessage,
-      icon: "error",
-      confirmButtonText: "OK",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const clearFormData = () => {
     reset(initial);
@@ -452,188 +447,188 @@ const fetchCloseListData = async (pageNum, searchTerm = "") => {
 
   //======================Delete API===================
   const handleOnDelete = async () => {
-  const result = await Swal.fire({
-    text: "Do You Want Delete?",
-    icon: "question",
-    showConfirmButton: true,
-    showDenyButton: true,
-    confirmButtonText: "YES",
-    cancelButtonText: "No",
-  });
-
-  if (!result.isConfirmed) {
-    Swal.fire({
-      text: "User Not Deleted",
-      icon: "info",
-      toast: true,
-      showConfirmButton: false,
-      timer: 1500,
+    const result = await Swal.fire({
+      text: "Do You Want Delete?",
+      icon: "question",
+      showConfirmButton: true,
+      showDenyButton: true,
+      confirmButtonText: "YES",
+      cancelButtonText: "No",
     });
-    return;
-  }
 
-  setLoading(true);
-
-  try {
-    const resp = await apiClient.delete(`/Users/${DocEntry}`);
-    const { success, message } = resp?.data || {};
-
-    if (!success) {
+    if (!result.isConfirmed) {
       Swal.fire({
-        text: message || "User is not deleted",
+        text: "User Not Deleted",
         icon: "info",
         toast: true,
         showConfirmButton: false,
-        timer: 3500,
+        timer: 1500,
       });
       return;
     }
 
-    // ✅ Refresh lists
-    clearFormData();
-    setOpenListPage(0);
-    setCloseListPage(0);
-    setCloseListData([]);
-    setOpenListData([]);
-    fetchOpenListData(0);
-    fetchCloseListData(0);
+    setLoading(true);
 
-    Swal.fire({
-      text: "User Deleted",
-      icon: "success",
-      toast: true,
-      showConfirmButton: false,
-      timer: 1500,
-    });
-  } catch (error) {
-    const errorMessage =
-      error?.response?.data?.message ||
-      error?.message ||
-      "User is not deleted";
+    try {
+      const resp = await apiClient.delete(`/Users/${DocEntry}`);
+      const { success, message } = resp?.data || {};
 
-    console.error("Error deleting user:", error);
+      if (!success) {
+        Swal.fire({
+          text: message || "User is not deleted",
+          icon: "info",
+          toast: true,
+          showConfirmButton: false,
+          timer: 3500,
+        });
+        return;
+      }
 
-    Swal.fire({
-      title: "Error!",
-      text: errorMessage,
-      icon: "warning",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+      // ✅ Refresh lists
+      clearFormData();
+      setOpenListPage(0);
+      setCloseListPage(0);
+      setCloseListData([]);
+      setOpenListData([]);
+      fetchOpenListData(0);
+      fetchCloseListData(0);
 
-  //==========================================Add, Update, Delete Department =======================
- const handleDepartmentDelete = async (data) => {
-  if (!data?.DocEntry) return;
+      Swal.fire({
+        text: "User Deleted",
+        icon: "success",
+        toast: true,
+        showConfirmButton: false,
+        timer: 1500,
+      });
+    } catch (error) {
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "User is not deleted";
 
-  const result = await Swal.fire({
-    text: `Do You Want to Delete "${data.Name}" ?`,
-    icon: "question",
-    showConfirmButton: true,
-    showDenyButton: true,
-    confirmButtonText: "YES",
-    cancelButtonText: "No",
-  });
+      console.error("Error deleting user:", error);
 
-  if (!result.isConfirmed) {
-    Swal.fire({
-      text: "Department Not Deleted",
-      icon: "info",
-      toast: true,
-      showConfirmButton: false,
-      timer: 1500,
-    });
-    return;
-  }
-
-  setLoading(true);
-
-  try {
-    const response = await apiClient.delete(`/Department/${data.DocEntry}`);
-    const { success, message } = response?.data || {};
-
-    if (!success) {
       Swal.fire({
         title: "Error!",
-        text: message || "Failed to delete department.",
+        text: errorMessage,
         icon: "warning",
         confirmButtonText: "Ok",
       });
-      return;
+    } finally {
+      setLoading(false);
     }
+  };
 
-    fetchData();
+  //==========================================Add, Update, Delete Department =======================
+  const handleDepartmentDelete = async (data) => {
+    if (!data?.DocEntry) return;
 
-    Swal.fire({
-      title: "Success!",
-      text: "Department Deleted",
-      icon: "success",
-      confirmButtonText: "Ok",
-      timer: 1500,
+    const result = await Swal.fire({
+      text: `Do You Want to Delete "${data.Name}" ?`,
+      icon: "question",
+      showConfirmButton: true,
+      showDenyButton: true,
+      confirmButtonText: "YES",
+      cancelButtonText: "No",
     });
-  } catch (error) {
-    const errorMessage =
-      error?.response?.data?.message ||
-      error?.message ||
-      "Something went wrong";
 
-    console.error("Error deleting department:", error);
-
-    Swal.fire({
-      title: "Error!",
-      text: errorMessage,
-      icon: "warning",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
-const handleEdit = async (row) => {
-  if (!row?.DocEntry) return;
-
-  setLoading(true);
-
-  try {
-    const res = await apiClient.get(`/Department/${row.DocEntry}`);
-    const { success, values, message } = res?.data || {};
-
-    if (!success || !values) {
+    if (!result.isConfirmed) {
       Swal.fire({
-        title: "Error!",
-        text: message || "Failed to fetch department details.",
-        icon: "warning",
+        text: "Department Not Deleted",
+        icon: "info",
+        toast: true,
+        showConfirmButton: false,
+        timer: 1500,
       });
       return;
     }
 
-    const { DocEntry, Name } = values;
+    setLoading(true);
 
-    // ✅ Set form field
-    setValueIndic("Name", Name || "");
+    try {
+      const response = await apiClient.delete(`/Department/${data.DocEntry}`);
+      const { success, message } = response?.data || {};
 
-    // ✅ Store DocEntry for update
-    setSelectedDepartmentRowId(DocEntry);
-  } catch (error) {
-    const errorMessage =
-      error?.response?.data?.message ||
-      error?.message ||
-      "Failed to fetch department details.";
+      if (!success) {
+        Swal.fire({
+          title: "Error!",
+          text: message || "Failed to delete department.",
+          icon: "warning",
+          confirmButtonText: "Ok",
+        });
+        return;
+      }
 
-    console.error("Error fetching department:", error);
+      fetchData();
 
-    Swal.fire({
-      title: "Error!",
-      text: errorMessage,
-      icon: "error",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+      Swal.fire({
+        title: "Success!",
+        text: "Department Deleted",
+        icon: "success",
+        confirmButtonText: "Ok",
+        timer: 1500,
+      });
+    } catch (error) {
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Something went wrong";
+
+      console.error("Error deleting department:", error);
+
+      Swal.fire({
+        title: "Error!",
+        text: errorMessage,
+        icon: "warning",
+        confirmButtonText: "Ok",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleEdit = async (row) => {
+    if (!row?.DocEntry) return;
+
+    setLoading(true);
+
+    try {
+      const res = await apiClient.get(`/Department/${row.DocEntry}`);
+      const { success, values, message } = res?.data || {};
+
+      if (!success || !values) {
+        Swal.fire({
+          title: "Error!",
+          text: message || "Failed to fetch department details.",
+          icon: "warning",
+        });
+        return;
+      }
+
+      const { DocEntry, Name } = values;
+
+      // ✅ Set form field
+      setValueIndic("Name", Name || "");
+
+      // ✅ Store DocEntry for update
+      setSelectedDepartmentRowId(DocEntry);
+    } catch (error) {
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to fetch department details.";
+
+      console.error("Error fetching department:", error);
+
+      Swal.fire({
+        title: "Error!",
+        text: errorMessage,
+        icon: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const columns = [
     { field: "id", headerName: "ID", width: 100 },
@@ -699,212 +694,211 @@ const handleEdit = async (row) => {
   });
   const HandlePDepartmentOpen = () => setopenDepartment(true);
   const handleClose = () => setopenDepartment(false);
- const fetchData = async () => {
-  setLoading(true);
+  const fetchData = async () => {
+    setLoading(true);
 
-  try {
-    const res = await apiClient.get(`/Department/All`);
-    const { success, values = [], message } = res?.data || {};
+    try {
+      const res = await apiClient.get(`/Department/All`);
+      const { success, values = [], message } = res?.data || {};
 
-    if (!success) {
-      Swal.fire({
-        title: "Error!",
-        text: message || "Failed to fetch departments.",
-        icon: "warning",
-        confirmButtonText: "Ok",
-      });
-      return;
-    }
+      if (!success) {
+        Swal.fire({
+          title: "Error!",
+          text: message || "Failed to fetch departments.",
+          icon: "warning",
+          confirmButtonText: "Ok",
+        });
+        return;
+      }
 
-    setDepartmentList(values);
-    // resetDepartment(values); // if needed
-  } catch (error) {
-    const errorMessage =
-      error?.response?.data?.message ||
-      error?.message ||
-      "Failed to fetch department data.";
-
-    console.error("Error fetching departments:", error);
-
-    Swal.fire({
-      title: "Error!",
-      text: errorMessage,
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
-const handleAddOrUpdate = async (data) => {
-  setLoading(true);
-
-  const isUpdate = Boolean(selectedDepartmentRowId);
-
-  const payload = {
-    DocEntry: data.DocEntry || "",
-    UserId: user.UserId,
-    CreatedBy: user.UserName,
-    CreatedDate: dayjs().format("YYYY-MM-DD"),
-    ModifiedBy: isUpdate ? user.UserName : "",
-    ModifiedDate: isUpdate ? dayjs().format("YYYY-MM-DD") : "",
-    Status: "1",
-    Code: data.Code || "0",
-    Name: data.Name || "",
-    Remarks: data.Remarks || "",
-  };
-
-  try {
-    const response = isUpdate
-      ? await apiClient.put(`/Department/${selectedDepartmentRowId}`, payload)
-      : await apiClient.post("/Department", payload);
-
-    const { success, message } = response?.data || {};
-
-    if (!success) {
-      Swal.fire("Error!", message || "Operation failed!", "error");
-      return;
-    }
-
-    await fetchData();
-    resetDepartment(initialDepartmentData);
-    setSelectedDepartmentRowId(null);
-
-    Swal.fire({
-      title: "Success!",
-      text: isUpdate
-        ? "Department updated successfully!"
-        : "Department added successfully!",
-      icon: "success",
-      timer: 1500,
-      showConfirmButton: false,
-    });
-  } catch (error) {
-    console.error("Department Save Error:", error);
-
-    Swal.fire({
-      title: "Error!",
-      text:
+      setDepartmentList(values);
+      // resetDepartment(values); // if needed
+    } catch (error) {
+      const errorMessage =
         error?.response?.data?.message ||
         error?.message ||
-        "Something went wrong",
-      icon: "error",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+        "Failed to fetch department data.";
+
+      console.error("Error fetching departments:", error);
+
+      Swal.fire({
+        title: "Error!",
+        text: errorMessage,
+        icon: "error",
+        confirmButtonText: "Ok",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddOrUpdate = async (data) => {
+    setLoading(true);
+
+    const isUpdate = Boolean(selectedDepartmentRowId);
+
+    const payload = {
+      DocEntry: data.DocEntry || "",
+      UserId: user.UserId,
+      CreatedBy: user.UserName,
+      CreatedDate: dayjs().format("YYYY-MM-DD"),
+      ModifiedBy: isUpdate ? user.UserName : "",
+      ModifiedDate: isUpdate ? dayjs().format("YYYY-MM-DD") : "",
+      Status: "1",
+      Code: data.Code || "0",
+      Name: data.Name || "",
+      Remarks: data.Remarks || "",
+    };
+
+    try {
+      const response = isUpdate
+        ? await apiClient.put(`/Department/${selectedDepartmentRowId}`, payload)
+        : await apiClient.post("/Department", payload);
+
+      const { success, message } = response?.data || {};
+
+      if (!success) {
+        Swal.fire("Error!", message || "Operation failed!", "error");
+        return;
+      }
+
+      await fetchData();
+      resetDepartment(initialDepartmentData);
+      setSelectedDepartmentRowId(null);
+
+      Swal.fire({
+        title: "Success!",
+        text: isUpdate
+          ? "Department updated successfully!"
+          : "Department added successfully!",
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+    } catch (error) {
+      console.error("Department Save Error:", error);
+
+      Swal.fire({
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong",
+        icon: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   //======================PUT and POST API===================
   const StatusValue = watch("Status");
 
-const handleSubmitForm = async (data) => {
-  const isUpdate = SaveUpdateName !== "SAVE";
+  const handleSubmitForm = async (data) => {
+    const isUpdate = SaveUpdateName !== "SAVE";
 
-  const payload = {
-    DocEntry: String(data.DocEntry || ""),
-    DocNum: null,
-    DocDate: dayjs().format("YYYY-MM-DD"),
-    UserId: sessionStorage.getItem("UserId") || "1",
-    CreatedBy: user.UserName || "",
-    CreatedDate: dayjs().format("YYYY-MM-DD"),
-    ModifiedBy: isUpdate ? user.UserName : "",
-    ModifiedDate: isUpdate ? dayjs().format("YYYY-MM-DD") : "",
-    Status: StatusValue === "1" ? "1" : "0",
+    const payload = {
+      DocEntry: String(data.DocEntry || ""),
+      DocNum: null,
+      DocDate: dayjs().format("YYYY-MM-DD"),
+      UserId: sessionStorage.getItem("UserId") || "1",
+      CreatedBy: user.UserName || "",
+      CreatedDate: dayjs().format("YYYY-MM-DD"),
+      ModifiedBy: isUpdate ? user.UserName : "",
+      ModifiedDate: isUpdate ? dayjs().format("YYYY-MM-DD") : "",
+      Status: StatusValue === "1" ? "1" : "0",
 
-    UserName: String(data.UserName || ""),
-    Password: String(data.Password || ""),
-    RoleId: String(data.RoleId || ""),
-    FirstName: String(data.FirstName || ""),
-    LastName: String(data.LastName || ""),
-    PhoneNumber: String(data.PhoneNumber || ""),
-    Email: String(data.Email || ""),
+      UserName: String(data.UserName || ""),
+      Password: String(data.Password || ""),
+      RoleId: String(data.RoleId || ""),
+      FirstName: String(data.FirstName || ""),
+      LastName: String(data.LastName || ""),
+      PhoneNumber: String(data.PhoneNumber || ""),
+      Email: String(data.Email || ""),
 
-    SlpCode: String(data.SlpCode || ""),
-    Flag: "0",
-    OtherUserFlag: "0",
-    SuperUser: "N",
-    MobileUser: "N",
+      SlpCode: String(data.SlpCode || ""),
+      Flag: "0",
+      OtherUserFlag: "0",
+      SuperUser: "N",
+      MobileUser: "N",
 
-    UserCode: data.UserCode || null,
-    PortNum: data.PortNum || null,
-    Branch: "1",
-    Department: data.Department || "",
-    GroupName: data.GroupName || null,
-    PwdNeverEx: data.PwdNeverEx || null,
-    OneLogPwd: data.OneLogPwd || null,
-    Locked: data.Locked || "N",
-  };
+      UserCode: data.UserCode || null,
+      PortNum: data.PortNum || null,
+      Branch: "1",
+      Department: data.Department || "",
+      GroupName: data.GroupName || null,
+      PwdNeverEx: data.PwdNeverEx || null,
+      OneLogPwd: data.OneLogPwd || null,
+      Locked: data.Locked || "N",
+    };
 
-  try {
-    // 🔔 Confirm before UPDATE
-    if (isUpdate) {
-      const confirm = await Swal.fire({
-        text: "Do You Want to Update?",
-        icon: "question",
-        showCancelButton: true,
-        confirmButtonText: "YES",
-        cancelButtonText: "NO",
-      });
-
-      if (!confirm.isConfirmed) {
-        Swal.fire({
-          text: "User is not updated",
-          icon: "info",
-          toast: true,
-          timer: 1500,
-          showConfirmButton: false,
+    try {
+      // 🔔 Confirm before UPDATE
+      if (isUpdate) {
+        const confirm = await Swal.fire({
+          text: "Do You Want to Update?",
+          icon: "question",
+          showCancelButton: true,
+          confirmButtonText: "YES",
+          cancelButtonText: "NO",
         });
+
+        if (!confirm.isConfirmed) {
+          Swal.fire({
+            text: "User is not updated",
+            icon: "info",
+            toast: true,
+            timer: 1500,
+            showConfirmButton: false,
+          });
+          return;
+        }
+      }
+
+      setLoading(true);
+
+      const response = isUpdate
+        ? await apiClient.put(`/Users/${data.DocEntry}`, payload)
+        : await apiClient.post(`/Users`, payload);
+
+      const { success, message } = response.data || {};
+
+      if (!success) {
+        Swal.fire("Error!", message || "Operation failed", "warning");
         return;
       }
+
+      // 🔄 Refresh Lists
+      clearFormData();
+      setOpenListPage(0);
+      setCloseListPage(0);
+      setOpenListData([]);
+      setCloseListData([]);
+      fetchOpenListData(0);
+      fetchCloseListData(0);
+
+      Swal.fire({
+        title: "Success!",
+        text: isUpdate ? "User Updated" : "User Added",
+        icon: "success",
+        timer: 1000,
+        showConfirmButton: false,
+      });
+    } catch (error) {
+      console.error("User submit error:", error);
+
+      Swal.fire({
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong",
+        icon: "error",
+      });
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(true);
-
-    const response = isUpdate
-      ? await apiClient.put(`/Users/${data.DocEntry}`, payload)
-      : await apiClient.post(`/Users`, payload);
-
-    const { success, message } = response.data || {};
-
-    if (!success) {
-      Swal.fire("Error!", message || "Operation failed", "warning");
-      return;
-    }
-
-    // 🔄 Refresh Lists
-    clearFormData();
-    setOpenListPage(0);
-    setCloseListPage(0);
-    setOpenListData([]);
-    setCloseListData([]);
-    fetchOpenListData(0);
-    fetchCloseListData(0);
-
-    Swal.fire({
-      title: "Success!",
-      text: isUpdate ? "User Updated" : "User Added",
-      icon: "success",
-      timer: 1000,
-      showConfirmButton: false,
-    });
-  } catch (error) {
-    console.error("User submit error:", error);
-
-    Swal.fire({
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong",
-      icon: "error",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const sidebarContent = (
     <>
@@ -1110,8 +1104,8 @@ const handleSubmitForm = async (data) => {
 
   return (
     <>
-          {loading && <Loader open={loading} />}
-    
+      {loading && <Loader open={loading} />}
+
       <Dialog
         open={openDepartment}
         onClose={handleClose}
@@ -1543,8 +1537,8 @@ const handleSubmitForm = async (data) => {
                             onClick={HandlePDepartmentOpen}
                             size="small"
                             sx={{
-                              ml:1,
-                              mr:1,
+                              ml: 1,
+                              mr: 1,
                               backgroundColor: "success.main",
                               color: "white",
                               borderRadius: "5px",

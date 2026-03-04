@@ -47,6 +47,7 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  useReducer,
   useRef,
   useState,
 } from "react";
@@ -79,6 +80,8 @@ import { useFileUpload } from "../FileUpload/useFileUpload";
 import { DatePicker } from "antd";
 import { isCellEditable } from "material-react-table";
 import { usePaginatedSearchList } from "../../Hooks/usePaginatedSearchList";
+import BinLocation from "../Components/BinLocation";
+import AllBinLocationShow from "../Components/AllBinLocationShow";
 
 const BomColumns = [
   {
@@ -151,33 +154,56 @@ const modelColumns = [
     width: 120,
     editable: false,
   },
-   {
-      field: "OnHand",
-      headerName: "IN STOCK",
-      width: 100,
-      sortable: false,
-      renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
-    },
-    {
-      field: "IsCommited",
-      headerName: "RESERVE",
-      width: 100,
-      sortable: false,
-      renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
-    },
-    {
-      field: "OnOrder",
-      headerName: "ORDERED",
-      width: 100,
-      sortable: false,
-      renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
-    },
+  {
+    field: "OnHand",
+    headerName: "IN STOCK",
+    width: 100,
+    sortable: false,
+    renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
+  },
+  {
+    field: "IsCommited",
+    headerName: "RESERVE",
+    width: 100,
+    sortable: false,
+    renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
+  },
+  {
+    field: "OnOrder",
+    headerName: "ORDERED",
+    width: 100,
+    sortable: false,
+    renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
+  },
 ];
+const initialState = {
+  BinLocationOpenReciept: false,
+  BinLocationOpenIssue: false,
+  modal2: false,
+};
+function reducer(state, action) {
+  switch (action.type) {
+    case "OPEN":
+      return { ...state, [action.modal]: true };
+    case "CLOSE":
+      return { ...state, [action.modal]: false };
+    case "TOGGLE":
+      return { ...state, [action.modal]: !state[action.modal] };
+    case "CLOSE_ALL":
+      return Object.keys(state).reduce(
+        (acc, key) => ({ ...acc, [key]: false }),
+        {},
+      );
+    default:
+      return state;
+  }
+}
 function ProductionOrder() {
   const theme = useTheme();
   const apiRef = useGridApiRef();
   const issueGridApiRef = useGridApiRef();
   const RecieptGridApiRef = useGridApiRef();
+  const [state, dispatch] = useReducer(reducer, initialState);
   const { user, warehouseData } = useAuth();
   const perms = usePermissions(102);
   const [tabvalue, settabvalue] = useState(0);
@@ -221,12 +247,12 @@ function ProductionOrder() {
   // const [closedListquery, setClosedListQuery] = useState("");
   // const [closedListSearching, setClosedListSearching] = useState(false);
   // ========================end=====================================
-    //! ==============CANCEL LIST===============
-    const [cancelledListData, setCancelledListData] = useState([]);
-    const [cancelListPage, setCancelListPage] = useState(0);
-    const [cancelListSearching, setCancelListSearching] = useState(false);
-    const [cancelledListquery, setCancelledListQuery] = useState("");
-    const [hasMoreCancelled, setHasMoreCancelled] = useState(true);
+  //! ==============CANCEL LIST===============
+  const [cancelledListData, setCancelledListData] = useState([]);
+  const [cancelListPage, setCancelListPage] = useState(0);
+  const [cancelListSearching, setCancelListSearching] = useState(false);
+  const [cancelledListquery, setCancelledListQuery] = useState("");
+  const [hasMoreCancelled, setHasMoreCancelled] = useState(true);
   const controllerRef = useRef(null); // store active controller
 
   const LIMIT = 20;
@@ -246,6 +272,7 @@ function ProductionOrder() {
   const [openBom, setOpenBom] = useState(false);
   const [BomCache, setBomCache] = useState({});
   const [selectedRows, setSelectedRows] = useState([]);
+  const [BinlocListData, setBinLocData] = useState([]);
 
   const [BomList, setBomList] = useState([]);
   const [BomcurrentPage, setBomCurrentPage] = useState(0);
@@ -257,8 +284,8 @@ function ProductionOrder() {
   const toggleModalSize = () => {
     setIsFullScreen((prev) => !prev);
   };
-const [anchorEl, setAnchorEl] = useState(null);
-const rightClick = Boolean(anchorEl);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const rightClick = Boolean(anchorEl);
   // const handleCloseCancel=()=>{
   //   setrightClick(true)
   // }
@@ -420,9 +447,9 @@ const rightClick = Boolean(anchorEl);
 
   const handleTabChangeRight = (e, newvalue1) => {
     settab(newvalue1);
-      const activeTab = tabData.find((t) => t.value === newvalue1);
-  activeTab?.loadIfNeeded(); 
-    setValue("Status", "4");
+    const activeTab = tabData.find((t) => t.value === newvalue1);
+    activeTab?.loadIfNeeded();
+    // setValue("Status", "4");
   };
   const {
     fileData,
@@ -897,39 +924,49 @@ const rightClick = Boolean(anchorEl);
         const WhcLocationName = warehouseData.find(
           (LocCode) => LocCode.WHSCode === item.WHSCode,
         );
-        const DISASSEMBLY = [
-          {
-            BaseRef: item.DocNum,
-            ItemCode: item.ItemCode,
-            ItemName: item.ProdName,
-            Quantity: String(remainingQty),
-            CpyIssueQty: String(remainingQty),
-            Price: String(price),
-            LineTotal: String(remainingQty * price),
-            WHSCode: item.WHSCode,
-            LocCode: WhcLocationName?.Location || "0",
-            LocationName: WhcLocationName?.LocationName || "0",
-            OnHand: item.OnHand || "0",
-            OnOrder: item.OnOrder || "0",
-            IsCommited: item.IsCommited || "0",
-            AcctCode: item.WipActCode,
-            PlannedQty: item.PlannedQty,
-            IssuedQty: item.CmpltQty,
-            Type: item.Type,
-            UomCode: item.UomCode,
-            UomEntry: item.UomEntry,
-            NumPerMsr: item.NumPerMsr || "0",
-            Status: item.Status,
-            BaseEntry: item.DocEntry,
-            BaseLine: item?.LineNum ?? "0",
-          },
-        ];
-        setValueIssue("oLines", DISASSEMBLY);
+        if (remainingQty > 0) {
+          const DISASSEMBLY = [
+            {
+              BaseRef: item.DocNum,
+              ItemCode: item.ItemCode,
+              ItemName: item.ProdName,
+              Quantity: String(remainingQty),
+              CpyIssueQty: String(remainingQty),
+              Price: String(price),
+              LineTotal: String(remainingQty * price),
+              WHSCode: item.WHSCode,
+              LocCode: WhcLocationName?.Location || "0",
+              LocationName: WhcLocationName?.LocationName || "0",
+              BinCode: WhcLocationName?.BinCode ?? "",
+              DftBinAbs: WhcLocationName?.DftBinAbs,
+              BinActivat: WhcLocationName?.BinActivat,
+              OnHand: item.OnHand || "0",
+              OnOrder: item.OnOrder || "0",
+              IsCommited: item.IsCommited || "0",
+              AcctCode: item.WipActCode,
+              PlannedQty: item.PlannedQty,
+              IssuedQty: item.CmpltQty,
+              Type: item.Type,
+              UomCode: item.UomCode,
+              UomEntry: item.UomEntry,
+              NumPerMsr: item.NumPerMsr || "1",
+              Status: item.Status,
+              BaseEntry: item.DocEntry,
+              BaseLine: item?.LineNum ?? "0",
+            },
+          ];
+          setValueIssue("oLines", DISASSEMBLY);
+        }
       } else {
         const IssueCom = (item.oPOLines || []).reduce((acc, issue) => {
-          if (issue.IssueType === "2") {
-            const remainingQty = issue.PlannedQty - issue.IssuedQty;
+          const remainingQty =
+            Number(issue.PlannedQty || 0) - Number(issue.IssuedQty || 0);
+          if (remainingQty > 0 && issue.IssueType === "2") {
+            // const remainingQty = issue.PlannedQty - issue.IssuedQty;
             const price = 150;
+            const WhcLocationName = warehouseData.find(
+              (LocCode) => LocCode.WHSCode === issue.WHSCode,
+            );
             acc.push({
               BaseRef: item.DocNum,
               BaseEntry: issue.DocEntry,
@@ -941,8 +978,11 @@ const rightClick = Boolean(anchorEl);
               Price: String(price),
               LineTotal: String(remainingQty * price),
               WHSCode: issue.WHSCode,
-              LocCode: issue.LocCode || "0",
-              LocationName: issue.LocationName || "0",
+              LocCode: WhcLocationName?.Location || "0",
+              LocationName: WhcLocationName?.LocationName || "0",
+              BinCode: WhcLocationName?.BinCode ?? "",
+              DftBinAbs: WhcLocationName?.DftBinAbs,
+              BinActivat: WhcLocationName?.BinActivat,
               OnHand: issue.OnHand || "0",
               OnOrder: issue.OnOrder || "0",
               IsCommited: issue.IsCommited || "0",
@@ -952,7 +992,7 @@ const rightClick = Boolean(anchorEl);
               Type: item.Type,
               UomCode: issue.UomCode,
               UomEntry: issue.UomEntry,
-              NumPerMsr: issue.NumPerMsr || "0",
+              NumPerMsr: issue.NumPerMsr || "1",
               Status: item.Status,
             });
           }
@@ -964,9 +1004,16 @@ const rightClick = Boolean(anchorEl);
       }
       if (item.Type === "D") {
         const RecieptCom = (item.oPOLines || []).reduce((acc, issue) => {
-          if (issue.IssueType === "2") {
-            const remainingQty = issue.PlannedQty - issue.IssuedQty;
+          const remainingQty =
+            Number(issue.PlannedQty || 0) - Number(issue.IssuedQty || 0);
+
+          if (remainingQty > 0 && issue.IssueType === "2") {
             const price = 150;
+
+            const WhcLocationName = warehouseData.find(
+              (LocCode) => LocCode.WHSCode === issue.WHSCode,
+            );
+
             acc.push({
               BaseRef: item.DocNum,
               ItemCode: issue.ItemCode,
@@ -976,78 +1023,89 @@ const rightClick = Boolean(anchorEl);
               Price: String(price),
               LineTotal: String(remainingQty * price),
               WHSCode: issue.WHSCode,
-              LocCode: issue.LocCode || "0",
-              BaseEntry: issue.DocEntry,
-              BaseLine: issue.LineNum,
-              LocationName: issue.LocationName || "0",
+
+              LocCode: WhcLocationName?.Location || "0",
+              LocationName: WhcLocationName?.LocationName || "0",
+              BinCode: WhcLocationName?.BinCode ?? "",
+              DftBinAbs: WhcLocationName?.DftBinAbs,
+              BinActivat: WhcLocationName?.BinActivat,
+
               OnHand: issue.OnHand || "0",
               OnOrder: issue.OnOrder || "0",
               IsCommited: issue.IsCommited || "0",
+
               AcctCode: issue.WipActCode,
               PlannedQty: issue.PlannedQty,
               IssuedQty: issue.IssuedQty,
               Type: item.Type,
+
               UomCode: issue.UomCode || "0",
               UomEntry: issue.UomEntry || "0",
-              NumPerMsr: issue.NumPerMsr || "0",
+              NumPerMsr: issue.NumPerMsr || "1",
+
               TranType: "",
               CmpltQty: item.CmpltQty || "0",
               RjctQty: item.RjctQty || "0",
               Status: item.Status,
             });
           }
+
           return acc;
         }, []);
-        console.log("RecieptCom", RecieptCom);
+
         setValueReciept("oLines", RecieptCom);
       } else {
         const planned = Number(item.PlannedQty) || 0;
         const complete = Number(item.CmpltQty) || 0;
         const reject = Number(item.RjctQty) || 0;
-
         const remainingQty = Number((planned - (complete + reject)).toFixed(2));
         const price = 150;
-        const WhcLocationName = warehouseData.find(
-          (LocCode) => LocCode.WHSCode === item.WHSCode,
-        );
-        const DISASSEMBLY = [
-          {
-            BaseRef: item.DocNum,
-            ItemCode: item.ItemCode,
-            ItemName: item.ProdName,
-            Quantity: remainingQty,
-            CpyIssueQty: remainingQty,
 
-            Price: String(price),
-            LineTotal: String(remainingQty * price),
-            WHSCode: item.WHSCode,
-            LocCode: WhcLocationName?.Location || "0",
-            LocationName: WhcLocationName?.LocationName || "0",
-            OnHand: item.OnHand || "0",
-            OnOrder: item.OnOrder || "0",
-            IsCommited: item.IsCommited || "0",
-            AcctCode: item.WipActCode || "1234567542",
-            PlannedQty: item.PlannedQty,
-            IssuedQty:
-              parseFloat(item.CmpltQty ?? 0) + parseFloat(item.RjctQty ?? 0),
-            Type: item.Type,
-            UomCode: item.UomCode || "0",
-            UomEntry: item.UomEntry || "0",
-            NumPerMsr: item.NumPerMsr || "0",
-            TranType: "C",
-            CmpltQty: item.CmpltQty || "0",
-            RjctQty: item.RjctQty || "0",
-            Status: item.Status,
-            BaseEntry: item.DocEntry,
-            BaseLine: item.LineNum,
-          },
-        ];
-        console.log("DISASSEMBLY", DISASSEMBLY);
-        // resetReciept({
-        //   ...getValuesReciept(),
-        //   oLines:DISASSEMBLY
-        // })
-        setValueReciept("oLines", DISASSEMBLY);
+        if (remainingQty > 0) {
+          const WhcLocationName = warehouseData.find(
+            (LocCode) => LocCode.WHSCode === item.WHSCode,
+          );
+
+          const DISASSEMBLY = [
+            {
+              BaseRef: item.DocNum,
+              ItemCode: item.ItemCode,
+              ItemName: item.ProdName,
+              Quantity: remainingQty,
+              CpyIssueQty: remainingQty,
+              Price: String(price),
+              LineTotal: String(remainingQty * price),
+              WHSCode: item.WHSCode,
+              LocCode: WhcLocationName?.Location || "0",
+              LocationName: WhcLocationName?.LocationName || "0",
+              BinCode: WhcLocationName?.BinCode ?? "",
+              DftBinAbs: WhcLocationName?.DftBinAbs,
+              BinActivat: WhcLocationName?.BinActivat,
+              OnHand: item.OnHand || "0",
+              OnOrder: item.OnOrder || "0",
+              IsCommited: item.IsCommited || "0",
+              AcctCode: item.WipActCode || "1234567542",
+              PlannedQty: item.PlannedQty,
+              IssuedQty:
+                parseFloat(item.CmpltQty ?? 0) + parseFloat(item.RjctQty ?? 0),
+              Type: item.Type,
+              UomCode: item.UomCode || "0",
+              UomEntry: item.UomEntry || "0",
+              NumPerMsr: item.NumPerMsr || "1",
+              TranType: "C",
+              CmpltQty: item.CmpltQty || "0",
+              RjctQty: item.RjctQty || "0",
+              Status: item.Status,
+              BaseEntry: item.DocEntry,
+              BaseLine: item.LineNum,
+            },
+          ];
+          // resetReciept({
+          //   ...getValuesReciept(),
+          //   oLines:DISASSEMBLY
+          // })
+          setValueReciept("oLines", DISASSEMBLY);
+        }
       }
 
       // const filteredLines = [];
@@ -1165,17 +1223,20 @@ const rightClick = Boolean(anchorEl);
     },
     [currentPage],
   );
-  const handleSearchChange = useCallback((search) => {
-    setSearchText(search);
-    setCurrentPage(0); // Reset to page 0 on search
-    setItemCache({}); // Clear cache on new search
-  }, [searchText]);
+  const handleSearchChange = useCallback(
+    (search) => {
+      setSearchText(search);
+      setCurrentPage(0); // Reset to page 0 on search
+      setItemCache({}); // Clear cache on new search
+    },
+    [searchText],
+  );
 
   const closeModel = () => {
     setOpenItem(false);
     setSearchText("");
     setCurrentPage(0);
-    setSelectedRows([])
+    setSelectedRows([]);
     // setItemCache({}); // Clear cache on new search
   };
 
@@ -1350,7 +1411,7 @@ const rightClick = Boolean(anchorEl);
     const WHSCode = selectedRow.ToWH || selectedRow.DefaultWhs;
     const UomCode = selectedRow.Uom || selectedRow.InvntoryUOM;
 
-    const matchingLoc = warehouseData.find((row) => row.WHSCode  === WHSCode);
+    const matchingLoc = warehouseData.find((row) => row.WHSCode === WHSCode);
     const filteredLines = [];
     const childItemCode = currentData.oLines.some(
       (item) => item.Code === ItemCode,
@@ -1379,8 +1440,8 @@ const rightClick = Boolean(anchorEl);
             filteredLines.push({
               ...line,
               PlannedQty,
-              LocCode: matchingLoc?.Location ??  "",
-              LocationName: matchingLoc?.LocationName ??  "",
+              LocCode: matchingLoc?.Location ?? "",
+              LocationName: matchingLoc?.LocationName ?? "",
             });
           }
         }
@@ -1412,7 +1473,7 @@ const rightClick = Boolean(anchorEl);
       AdditQty: item?.AddQuantit ?? 0,
       WHSCode: item.Warehouse,
       IssueType: item.IssueMthd,
-      
+
       UomCode: item.Uom,
       Type: Number(item.Type ?? "296"),
       price_List_DocEntry: item.PriceList,
@@ -1486,7 +1547,6 @@ const rightClick = Boolean(anchorEl);
   };
 
   const handleCellClick = (id) => {
-    
     const selectedIDs = new Set(id);
     setSelectedRows((prev) => {
       const stillSelected = prev.filter((row) => selectedIDs.has(row.DocEntry));
@@ -1520,7 +1580,7 @@ const rightClick = Boolean(anchorEl);
             Qauntity: 1,
             AdditQty: "0",
             BaseQty: "1",
-            PlannedQty:getValues("PlannedQty"),
+            PlannedQty: getValues("PlannedQty"),
             Uom: data.UgpEntry === "-1" ? "Manual" : data.UOMCode,
             PriceList: currentData.price_List,
             price_List_DocEntry: currentData.price_List_DocEntry,
@@ -1581,7 +1641,7 @@ const rightClick = Boolean(anchorEl);
       const idx = startIndex - 1 + i;
 
       const newRow = {
-        ...lines[idx], 
+        ...lines[idx],
         ...row,
         Type: 4, // child
       };
@@ -1668,7 +1728,6 @@ const rightClick = Boolean(anchorEl);
   //       errorIds.push(rowId);
   //     }
 
-
   //     // 🔴 Quantity
   //     if (Number(line.Quantity) <= 0 && line.Type === 4) {
   //       errors.push(
@@ -1685,13 +1744,12 @@ const rightClick = Boolean(anchorEl);
   //       errorIds.push(rowId);
   //     }
 
-
   //     //Account code
   //     if (!line.WipActCode && line.Type === 4) {
   //       errors.push(`Line ${lineNo}: ${line.ItemCode} (AcctCode not selected)`);
   //       errorIds.push(rowId);
   //     }
-    
+
   //   });
 
   //   return {
@@ -1700,7 +1758,7 @@ const rightClick = Boolean(anchorEl);
   //     errorIds: [...new Set(errorIds)],
   //   };
   // };
- 
+
   const handleSubmitForm = async (data) => {
     // if (data.ItemCode ) {
     //   Swal.fire({
@@ -1726,6 +1784,16 @@ const rightClick = Boolean(anchorEl);
     //     return false;
     //   }
     // }
+    if (data.oLines.length === 0) {
+      Swal.fire({
+        title: "Select Item",
+        text: "Please select at least one item.",
+        icon: "warning",
+        confirmButtonText: "Ok",
+        timer: 3000,
+      });
+      return false;
+    }
     const invalidLines = data.oLines.filter(
       (line) =>
         line.Type === 4 && // ✅ check only ItemType 4
@@ -1962,9 +2030,9 @@ const rightClick = Boolean(anchorEl);
         .then((res) => {
           if (res.data.success) {
             ClearForm();
-            // setPlannedListData([]);
-            // fetchPlannedListData(0);
-              planned.refresh();
+
+            planned.refresh();
+            settab(allFormData.Status);
             DocumentSeries();
             Swal.fire({
               title: "Success!",
@@ -2021,9 +2089,12 @@ const rightClick = Boolean(anchorEl);
                 // setPlannedListData([]);
                 // fetchPlannedListData(0);
                 // fetchReleasedListData(0);
-                 planned.refresh();
-                 released.refresh()
-                 closed.refresh()
+
+                released.refresh();
+                closed.refresh();
+                planned.refresh();
+                settab(allFormData.Status);
+
                 // setReleasedListData([]);
                 // fetchClosedListData(0);
                 // setClosedListData([]);
@@ -2064,7 +2135,7 @@ const rightClick = Boolean(anchorEl);
     }
   };
 
-     const validateAllLinesIssue = (lines) => {
+  const validateAllLinesIssue = (lines) => {
     const errors = [];
     const errorIds = [];
     lines.forEach((line, index) => {
@@ -2098,20 +2169,19 @@ const rightClick = Boolean(anchorEl);
         );
         errorIds.push(rowId);
       }
+      // 🔴 BIN
+      if (line.BinActivat === "Y") {
+        const binLines = line.oDocBinLocationLines || [];
+        const totalBinQty = binLines.reduce(
+          (sum, b) => sum + Number(b.Quantity || 0),
+          0,
+        );
 
-      // // 🔴 BIN
-      // if (line.BinActivat === "Y") {
-      //   const binLines = line.oDocBinLocationLines || [];
-      //   const totalBinQty = binLines.reduce(
-      //     (sum, b) => sum + Number(b.Quantity || 0),
-      //     0,
-      //   );
-
-      //   if (binLines.length === 0 || totalBinQty !== Number(line.Quantity)) {
-      //     errors.push(`Line ${lineNo}: ${line.ItemCode} (Bin Qty mismatch)`);
-      //     errorIds.push(rowId);
-      //   }
-      // }
+        if (binLines.length === 0 || totalBinQty !== Number(line.Quantity)) {
+          errors.push(`Line ${lineNo}: ${line.ItemCode} (Bin Qty mismatch)`);
+          errorIds.push(rowId);
+        }
+      }
 
       //Account code
       if (!line.AcctCode) {
@@ -2149,17 +2219,17 @@ const rightClick = Boolean(anchorEl);
     };
   };
   const handleSubmitISsue = (data) => {
-      const { isValid, errors, errorIds } = validateAllLinesIssue(data.oLines);
+    const { isValid, errors, errorIds } = validateAllLinesIssue(data.oLines);
 
-      if (!isValid) {
-        Swal.fire({
-          icon: "warning",
-          title: "Document Validation Error",
-          html: errors.join("<br/>"),
-          confirmButtonText: "OK",
-        });
-        return false;
-      }
+    if (!isValid) {
+      Swal.fire({
+        icon: "warning",
+        title: "Document Validation Error",
+        html: errors.join("<br/>"),
+        confirmButtonText: "OK",
+      });
+      return false;
+    }
     const obj = {
       ...data,
       Series: String(data.Series),
@@ -2179,9 +2249,9 @@ const rightClick = Boolean(anchorEl);
         ModifiedBy: user.UserName,
         Status: item.Status || "4",
         InvQty: String(item.Quantity),
-        Quantity:String(item.Quantity),
-        LineTotal:String(item.LineTotal),
-        OpenQuantity:String(item.Quantity),
+        Quantity: String(item.Quantity),
+        LineTotal: String(item.LineTotal),
+        OpenQuantity: String(item.Quantity),
         BaseEntry: item.BaseEntry || "0",
         BaseLine: item.BaseLine || "0",
         UomCode: item.UomCode || "0",
@@ -2242,7 +2312,60 @@ const rightClick = Boolean(anchorEl);
         });
       });
   };
-   const validateAllLinesReciept = (lines) => {
+
+  const handleBinlocationSubmit = (rowsFromModal) => {
+    const selectedRow = BinlocListData;
+    const updatedOLines = (getValuesReciept("oLines") || []).map(
+      (row, index) =>
+        index === selectedRow.id
+          ? {
+              ...row,
+              oDocBinLocationLines: rowsFromModal.map((binitem) => ({
+                UserId: user.UserId,
+                CreatedBy: user.UserName,
+                ModifiedBy: user.UserName,
+                Status: 1,
+                MessageID: 0,
+                BinAbs: Number(binitem.DocEntry),
+                SnBMDAbs: 0,
+                Quantity: binitem.Quantity,
+                ITLEntry: 0,
+                BinCode: binitem.BinCode,
+              })),
+            }
+          : row,
+    );
+    setValueReciept("oLines", updatedOLines);
+    dispatch({ type: "CLOSE", modal: "BinLocationOpenReciept" });
+  };
+
+  const handleBinlocationSubmitIssue = (rowsFromModal) => {
+    const selectedRow = getValues("BinLocation");
+    const updatedOLines = (getValuesIssue("oLines") || []).map((row, index) =>
+      index === selectedRow.id
+        ? {
+            ...row,
+            oDocBinLocationLines: (rowsFromModal || []).map((binitem) => ({
+              UserId: user.UserId,
+              CreatedBy: user.UserName,
+              ModifiedBy: user.UserName,
+              Status: 1,
+              MessageID: 0,
+              BinAbs: Number(binitem.DocEntry),
+              SnBMDAbs: 0,
+              Quantity: binitem.allocated,
+              ITLEntry: 0,
+              BinCode: binitem.BinCode,
+            })),
+          }
+        : row,
+    );
+
+    setValueIssue("oLines", updatedOLines);
+
+    dispatch({ type: "CLOSE", modal: "BinLocationOpenIssue" });
+  };
+  const validateAllLinesReciept = (lines) => {
     const errors = [];
     const errorIds = [];
     lines.forEach((line, index) => {
@@ -2296,6 +2419,19 @@ const rightClick = Boolean(anchorEl);
         errors.push(`Line ${lineNo}: ${line.ItemCode} (AcctCode not selected)`);
         errorIds.push(rowId);
       }
+
+      if (line.BinActivat === "Y") {
+        const binLines = line.oDocBinLocationLines || [];
+        const totalBinQty = binLines.reduce(
+          (sum, b) => sum + Number(b.Quantity || 0),
+          0,
+        );
+
+        if (binLines.length === 0 || totalBinQty !== Number(line.Quantity)) {
+          errors.push(`Line ${lineNo}: ${line.ItemCode} (Bin Qty mismatch)`);
+          errorIds.push(rowId);
+        }
+      }
       // // 🔴 BATCH
       // if (line.ManBtchNum === "Y" && line.ManSerNum === "N") {
       //   const batchLines = line.oBatchLines || [];
@@ -2327,18 +2463,17 @@ const rightClick = Boolean(anchorEl);
     };
   };
   const SubmitReciept = (data) => {
+    const { isValid, errors, errorIds } = validateAllLinesReciept(data.oLines);
 
-      const { isValid, errors, errorIds } = validateAllLinesReciept(data.oLines);
-
-      if (!isValid) {
-        Swal.fire({
-          icon: "warning",
-          title: "Document Validation Error",
-          html: errors.join("<br/>"),
-          confirmButtonText: "OK",
-        });
-        return false;
-      }
+    if (!isValid) {
+      Swal.fire({
+        icon: "warning",
+        title: "Document Validation Error",
+        html: errors.join("<br/>"),
+        confirmButtonText: "OK",
+      });
+      return false;
+    }
     const obj = {
       ...data,
       Series: String(data.Series),
@@ -2392,9 +2527,8 @@ const rightClick = Boolean(anchorEl);
         StockSumFc: "0",
         StockSumSc: "0",
         TotalSumSy: "0",
-        oDocBinLocationLines: [],
+        oDocBinLocationLines: item.oDocBinLocationLines || [],
         UgpCode: "0",
-
         MinLevel: "0",
         unitMsr2: "1",
         UomCode2: "0",
@@ -2442,43 +2576,41 @@ const rightClick = Boolean(anchorEl);
       });
   };
 
-const isCellEditableFn = (params) => {
-  const { field, row } = params;
+  const isCellEditableFn = (params) => {
+    const { field, row } = params;
 
-  // --- Type column always editable ---
-  if (field === "Type") return true;
+    // --- Type column always editable ---
+    if (field === "Type") return true;
 
-  // --- ROUTE STAGE (Type = 296) ---
-  const routeFields = ["rote", "StartDate", "EndDate", "Status",];
-  if (Number(row.Type) === 296 && routeFields.includes(field) ) {
-    return true;
-  }
+    // --- ROUTE STAGE (Type = 296) ---
+    const routeFields = ["rote", "StartDate", "EndDate", "Status"];
+    if (Number(row.Type) === 296 && routeFields.includes(field)) {
+      return true;
+    }
 
-  // --- ITEM (Type = 4) ---
-  const itemFields = [
-    "BaseQty",
-    "AdditQty",
-    "PlannedQty",
-    "IssuedQty",
-    "OpenQuantity",
-    "WHSCode",
-    "UomCode",
-    "WipActCode",
-    "IssueType",
-  ];
+    // --- ITEM (Type = 4) ---
+    const itemFields = [
+      "BaseQty",
+      "AdditQty",
+      "PlannedQty",
+      "IssuedQty",
+      "OpenQuantity",
+      "WHSCode",
+      "UomCode",
+      "WipActCode",
+      "IssueType",
+    ];
 
-  if (Number(row.Type) === 4 && itemFields.includes(field)) {
+    if (Number(row.Type) === 4 && itemFields.includes(field)) {
+      if (field === "IssueType" && row.InventoryItem === "N") {
+        return false; // disabled
+      }
 
-  if (field === "IssueType" && row.InventoryItem === "N") {
-    return false; // disabled
-  }
+      return true;
+    }
 
-    return true;
-  }
-
-  return false; 
-};
-
+    return false;
+  };
 
   const prevValueRef = React.useRef({});
   const oLines = getValues("oLines"); // get latest form rows
@@ -2652,7 +2784,7 @@ const isCellEditableFn = (params) => {
       editable: true,
       headerAlign: "center",
       align: "center",
-       renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
+      renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
     },
     {
       field: "AdditQty",
@@ -2661,7 +2793,7 @@ const isCellEditableFn = (params) => {
       editable: true,
       headerAlign: "center",
       align: "center",
-       renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
+      renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
     },
     {
       field: "PlannedQty",
@@ -2670,7 +2802,7 @@ const isCellEditableFn = (params) => {
       editable: true,
       headerAlign: "center",
       align: "center",
-       renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
+      renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
     },
     {
       field: "IssuedQty",
@@ -2679,7 +2811,7 @@ const isCellEditableFn = (params) => {
       editable: false,
       headerAlign: "center",
       align: "center",
-       renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
+      renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
     },
     {
       field: "OpenQuantity",
@@ -2688,7 +2820,7 @@ const isCellEditableFn = (params) => {
       editable: false,
       headerAlign: "center",
       align: "center",
-       renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
+      renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
     },
     {
       field: "IssueType",
@@ -2868,21 +3000,21 @@ const isCellEditableFn = (params) => {
       headerName: "IN STOCK",
       width: 120,
       editable: false,
-       renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
+      renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
     },
     {
       field: "OnOrder",
       headerName: "ORDERED",
       width: 120,
       editable: false,
-       renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
+      renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
     },
     {
       field: "IsCommited",
       headerName: "RESERVE",
       width: 120,
       editable: false,
-       renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
+      renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
     },
     {
       field: "Status",
@@ -3157,7 +3289,81 @@ const isCellEditableFn = (params) => {
         );
       },
     },
-
+    {
+      field: "Bin",
+      headerName: "BIN LOCATION",
+      width: 150,
+      headerAlign: "center",
+      align: "center",
+      renderCell: (params) => {
+        const BinQty = (params.row.oDocBinLocationLines || []).reduce(
+          (cur, val) => cur + parseFloat(val.Quantity || 0),
+          0,
+        );
+        return (
+          <Grid
+            container // ✅ important
+            alignItems="center" // vertical center
+            justifyContent="center" // horizontal center
+            gap={0.5}
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (
+                e.key === "Enter" ||
+                e.key === "F2" ||
+                e.key === "" ||
+                (e.key === "Tab" && !e.shiftKey)
+              ) {
+                e.preventDefault();
+                if (
+                  BinQty !== params.row.Quantity &&
+                  params.row.readonlyRow !== "readonlyRow"
+                ) {
+                  setValue("selectedRowIndex", params.row.id);
+                  setValue("BinLocation", params.row);
+                  dispatch({ type: "OPEN", modal: "BinLocationOpenIssue" });
+                }
+              }
+            }}
+            sx={{
+              width: "100%",
+              height: "100%",
+              outline: "none",
+            }}
+          >
+            <Grid item xs>
+              <Typography noWrap textAlign="center" sx={{ fontSize: 13 }}>
+                {TwoFormatter(BinQty)}
+              </Typography>
+            </Grid>
+            <Grid item>
+              <IconButton
+                onClick={() => {
+                  setValue("selectedRowIndex", params.row.id);
+                  setValue("BinLocation", params.row);
+                  dispatch({ type: "OPEN", modal: "BinLocationOpenIssue" });
+                }}
+                disabled={
+                  params.row.Status === "0" ||
+                  parseFloat(params.row.DftBinAbs) <= 0 ||
+                  params.row.BinActivat !== "Y"
+                }
+                size="small"
+                sx={{
+                  backgroundColor: "green",
+                  color: "white",
+                  borderRadius: "6px",
+                  padding: "4px",
+                  "&:hover": { backgroundColor: "darkgreen" },
+                }}
+              >
+                <ViewListIcon fontSize="small" />
+              </IconButton>
+            </Grid>
+          </Grid>
+        );
+      },
+    },
     {
       field: "LocCode",
       headerName: "LOCATION",
@@ -3510,7 +3716,81 @@ const isCellEditableFn = (params) => {
         );
       },
     },
-
+    {
+      field: "Bin",
+      headerName: "BIN LOCATION",
+      width: 150,
+      headerAlign: "center",
+      align: "center",
+      renderCell: (params) => {
+        const BinQty = (params.row.oDocBinLocationLines || []).reduce(
+          (cur, val) => cur + parseFloat(val.Quantity || 0),
+          0,
+        );
+        return (
+          <Grid
+            container // ✅ important
+            alignItems="center" // vertical center
+            justifyContent="center" // horizontal center
+            gap={0.5}
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (
+                e.key === "Enter" ||
+                e.key === "F2" ||
+                e.key === "" ||
+                (e.key === "Tab" && !e.shiftKey)
+              ) {
+                e.preventDefault();
+                if (
+                  BinQty !== params.row.Quantity &&
+                  params.row.readonlyRow !== "readonlyRow"
+                ) {
+                  setValue("selectedRowIndex", params.row.id);
+                  setBinLocData(params.row);
+                  dispatch({ type: "OPEN", modal: "BinLocationOpenReciept" });
+                }
+              }
+            }}
+            sx={{
+              width: "100%",
+              height: "100%",
+              outline: "none",
+            }}
+          >
+            <Grid item xs>
+              <Typography noWrap textAlign="center" sx={{ fontSize: 13 }}>
+                {TwoFormatter(BinQty)}
+              </Typography>
+            </Grid>
+            <Grid item>
+              <IconButton
+                onClick={() => {
+                  setValue("selectedRowIndex", params.row.id);
+                  setBinLocData(params.row);
+                  dispatch({ type: "OPEN", modal: "BinLocationOpenReciept" });
+                }}
+                disabled={
+                  params.row.Status === "0" ||
+                  parseFloat(params.row.DftBinAbs) <= 0 ||
+                  params.row.BinActivat !== "Y"
+                }
+                size="small"
+                sx={{
+                  backgroundColor: "green",
+                  color: "white",
+                  borderRadius: "6px",
+                  padding: "4px",
+                  "&:hover": { backgroundColor: "darkgreen" },
+                }}
+              >
+                <ViewListIcon fontSize="small" />
+              </IconButton>
+            </Grid>
+          </Grid>
+        );
+      },
+    },
     {
       field: "LocationName",
       headerName: "LOCATION",
@@ -3739,7 +4019,6 @@ const isCellEditableFn = (params) => {
     });
   };
 
-
   function QuantityPlanned(BaseQty, AdditQty) {
     const plnQty = getValues("PlannedQty") || 0;
     const planned =
@@ -3770,7 +4049,6 @@ const isCellEditableFn = (params) => {
       oLines: updatedOLines,
     });
   };
-
 
   const handleCellKeyDown = (params, event) => {
     const api = apiRef.current;
@@ -3959,8 +4237,6 @@ const isCellEditableFn = (params) => {
 
     return updatedRow;
   };
-
-
 
   const handleCellKeyDownIssue = (params, event) => {
     Swal.close();
@@ -4225,7 +4501,6 @@ const isCellEditableFn = (params) => {
   );
   setValueReciept("DocTotal", DocTotal);
 
-
   const handleRoteChange = (e, currentRouteRow) => {
     const newRote = Number(e.target.value);
     if (!newRote) return;
@@ -4395,7 +4670,14 @@ const isCellEditableFn = (params) => {
     });
     setwhscOpenoLines(false);
   };
-  const selectedIssueWhsc = async (WHSCode, LocationName, LocCode) => {
+  const selectedIssueWhsc = async (
+    WHSCode,
+    LocationName,
+    LocCode,
+    BinCode,
+    DftBinAbs,
+    BinActivat,
+  ) => {
     const currentRowIndex = getValuesIssue("selectedRowIndex"); // You'll need to track this
     const updatedLines = getValuesIssue("oLines").map((line, index) => {
       if (index === currentRowIndex) {
@@ -4404,6 +4686,11 @@ const isCellEditableFn = (params) => {
           WHSCode: WHSCode,
           LocationName: LocationName,
           LocCode: LocCode,
+          BinCode: BinCode,
+          DftBinAbs: DftBinAbs,
+          BinActivat,
+          Bin: 0,
+          oDocBinLocationLines: [],
         };
       }
       return line;
@@ -4415,7 +4702,14 @@ const isCellEditableFn = (params) => {
     setwhscOpenIssue(false);
   };
 
-  const selectedRecieptWhsc = async (WHSCode, LocationName, LocCode) => {
+  const selectedRecieptWhsc = async (
+    WHSCode,
+    LocationName,
+    LocCode,
+    BinCode,
+    DftBinAbs,
+    BinActivat,
+  ) => {
     const currentRowIndex = getValuesReciept("selectedRowIndex"); // You'll need to track this
     const updatedLines = getValuesReciept("oLines").map((line, index) => {
       if (index === currentRowIndex) {
@@ -4424,6 +4718,11 @@ const isCellEditableFn = (params) => {
           WHSCode: WHSCode,
           LocationName: LocationName,
           LocCode: LocCode,
+          BinCode: BinCode,
+          DftBinAbs: DftBinAbs,
+          BinActivat,
+          Bin: 0,
+          oDocBinLocationLines: [],
         };
       }
       return line;
@@ -4464,9 +4763,11 @@ const isCellEditableFn = (params) => {
   const ClearForm = () => {
     reset({
       ...initialFormData,
+      // Status: ,
       oLines: [],
     });
     setValue("Type", "S");
+
     setValue("oLines", []);
     clearFiles();
     setSelectData(null);
@@ -4485,10 +4786,20 @@ const isCellEditableFn = (params) => {
     setValueReciept("DocNum", DocseriesReciept[0]?.DocNum ?? "");
     setValueReciept("FinncPriod", DocseriesReciept[0]?.FinncPriod ?? "");
     setValueReciept("PIndicator", DocseriesReciept[0]?.Indicator ?? "");
+    if (planned.query?.trim()) {
+      planned.handleClear();
+    } else if (released.query?.trim()) {
+      released.handleClear();
+    } else if (closed.query?.trim()) {
+      closed.handleClear();
+    } else if (cancelled.query?.trim()) {
+      cancelled.handleClear();
+    }
   };
-    const handleOnCancelDocument = () => {
+
+  const handleOnCancelDocument = () => {
     Swal.fire({
-      text: `Do You Want Cancel "${currentData.CardCode}"`,
+      text: `Do You Want Cancel "${currentData.DocNum}"`,
       icon: "question",
       confirmButtonText: "YES",
       cancelButtonText: "No",
@@ -4496,33 +4807,35 @@ const isCellEditableFn = (params) => {
       showDenyButton: true,
     }).then((result) => {
       if (result.isConfirmed) {
-        apiClient.put(`/ProductionOrder/Cancel/${currentData.DocEntry}`).then((resp) => {
-          if (resp.data.success) {
-            ClearForm();
-            planned.refresh()
-            closed.refresh()
-            cancelled.refresh()
-            // setOpenListData([]);
-            // setPlannedListData(0);
-            // fetchMoreCancelListData(0);
-            // fetchClosedListData(0);
-            Swal.fire({
-              text: "Purchase Order Cancel",
-              icon: "success",
-              toast: true,
-              showConfirmButton: false,
-              timer: 1000,
-            });
-          } else {
-           Swal.fire({
-                        title: "warning!",
-                          text: resp.data.message,
-                        icon: "warning",
-                        confirmButtonText: "Ok",
-                        // timer: 1000,
-                      });
-          }
-        });
+        apiClient
+          .put(`/ProductionOrder/Cancel/${currentData.DocEntry}`)
+          .then((resp) => {
+            if (resp.data.success) {
+              ClearForm();
+              planned.refresh();
+              closed.refresh();
+              cancelled.refresh();
+              // setOpenListData([]);
+              // setPlannedListData(0);
+              // fetchMoreCancelListData(0);
+              // fetchClosedListData(0);
+              Swal.fire({
+                text: "Purchase Order Cancel",
+                icon: "success",
+                toast: true,
+                showConfirmButton: false,
+                timer: 1000,
+              });
+            } else {
+              Swal.fire({
+                title: "warning!",
+                text: resp.data.message,
+                icon: "warning",
+                confirmButtonText: "Ok",
+                // timer: 1000,
+              });
+            }
+          });
       } else {
         Swal.fire({
           text: "Purchase Order Not Cancelled",
@@ -4535,50 +4848,59 @@ const isCellEditableFn = (params) => {
     });
   };
 
-  // const handleOnCloseDocument = () => {
-  //   Swal.fire({
-  //     text: `Do You Want Close "${currentData.CardCode}"`,
-  //     icon: "question",
-  //     confirmButtonText: "YES",
-  //     cancelButtonText: "No",
-  //     showConfirmButton: true,
-  //     showDenyButton: true,
-  //   }).then((result) => {
-  //     if (result.isConfirmed) {
-  //       apiClient.put(`/POV2/Close/${currentData.DocEntry}`).then((resp) => {
-  //         if (resp.data.success) {
-  //           // setPlannedListData([]);
-  //           // fetchPlannedListData(0);
-  //           // fetchClosedListData(0);
-  //           ClearForm();
-  //           Swal.fire({
-  //             text: "Purchase Order Close",
-  //             icon: "success",
-  //             toast: true,
-  //             showConfirmButton: false,
-  //             timer: 1000,
-  //           });
-  //         } else {
-  //             Swal.fire({
-  //                          title: "warning!",
-  //                            text: resp.data.message,
-  //                          icon: "warning",
-  //                          confirmButtonText: "Ok",
-  //                          // timer: 1000,
-  //                        });
-  //         }
-  //       });
-  //     } else {
-  //       Swal.fire({
-  //         text: "Purchase Order Not Close",
-  //         icon: "info",
-  //         toast: true,
-  //         showConfirmButton: false,
-  //         timer: 1500,
-  //       });
-  //     }
-  //   });
-  // };
+  const handleOnCloseDocument = () => {
+    Swal.fire({
+      text: `Do You Want Close "${currentData.DocNum}"`,
+      icon: "question",
+      confirmButtonText: "YES",
+      cancelButtonText: "No",
+      showConfirmButton: true,
+      showDenyButton: true,
+    }).then((result) => {
+      if (result.isConfirmed) {
+        apiClient
+          .put(`/ProductionOrder/Close/${currentData.DocEntry}`)
+          .then((resp) => {
+            if (resp.data.success) {
+              released.refresh();
+              closed.refresh();
+              // cancelled.refresh();
+              ClearForm();
+              Swal.fire({
+                text: "Purchase Order Close",
+                icon: "success",
+                toast: true,
+                showConfirmButton: false,
+                timer: 1000,
+              });
+            } else {
+              Swal.fire({
+                title: "warning!",
+                text: resp.data.message,
+                icon: "warning",
+                confirmButtonText: "Ok",
+                // timer: 1000,
+              });
+            }
+          });
+      } else {
+        Swal.fire({
+          text: "Purchase Order Not Close",
+          icon: "info",
+          toast: true,
+          showConfirmButton: false,
+          timer: 1500,
+        });
+      }
+    });
+  };
+
+  const LineLevelIssueQty = (getValues("oLines") || []).reduce(
+    (sum, row) => (row.Type === "4" ? sum + (Number(row.IssuedQty) || 0) : sum),
+    0,
+  );
+
+  console.log("fdsfsd", LineLevelIssueQty);
 
   const {
     data: whsData,
@@ -4659,27 +4981,34 @@ const isCellEditableFn = (params) => {
     fetchMore: fetchMoreCustomer,
   } = BusinessPartnerScroll(`BPV2/V2/ByCardType`, "C");
 
+  const isFirstLoad = useRef(true);
 
-const planned = usePaginatedSearchList({
-  baseUrl: "/ProductionOrder",
-  status: 4,
-  autoLoad: true,   
-});
+  useEffect(() => {
+    if (isFirstLoad.current) {
+      planned.refresh();
+      isFirstLoad.current = false;
+    }
+  }, []);
+  const planned = usePaginatedSearchList({
+    baseUrl: "/ProductionOrder",
+    status: 4,
+    autoLoad: false,
+  });
 
-const released = usePaginatedSearchList({
-  baseUrl: "/ProductionOrder",
-  status: 5,
-});
+  const released = usePaginatedSearchList({
+    baseUrl: "/ProductionOrder",
+    status: 5,
+  });
 
-const closed = usePaginatedSearchList({
-  baseUrl: "/ProductionOrder",
-  status: 0,
-});
+  const closed = usePaginatedSearchList({
+    baseUrl: "/ProductionOrder",
+    status: 0,
+  });
 
-const cancelled = usePaginatedSearchList({
-  baseUrl: "/ProductionOrder",
-  status: 3,
-});
+  const cancelled = usePaginatedSearchList({
+    baseUrl: "/ProductionOrder",
+    status: 3,
+  });
   const tabData = [
     {
       value: "4",
@@ -4690,7 +5019,7 @@ const cancelled = usePaginatedSearchList({
       // fetchMore: fetchMorePlannedListData,
       // handleSearch: handlePlannedListSearch,
       // handleClear: handlePlannedListClear,
-    ...planned,
+      ...planned,
     },
     {
       value: "5",
@@ -4701,7 +5030,7 @@ const cancelled = usePaginatedSearchList({
       // fetchMore: fetchMoreReleasedData,
       // handleSearch: handleReleasedSearch,
       // handleClear: handleReleasedClear,
-       ...released 
+      ...released,
     },
     {
       value: "0",
@@ -4712,9 +5041,9 @@ const cancelled = usePaginatedSearchList({
       // fetchMore: fetchMoreClosedListData,
       // handleSearch: handleClosedListSearch,
       // handleClear: handleClosedListClear,
-      ...closed 
+      ...closed,
     },
-     {
+    {
       value: "3",
       label: "CANCELLED",
       // data: cancelledListData,
@@ -4723,7 +5052,7 @@ const cancelled = usePaginatedSearchList({
       // fetchMore: fetchMoreCancelListData,
       // handleSearch: handleCancelListSearch,
       // handleClear: handleCancelListClear,
-      ...cancelled
+      ...cancelled,
     },
   ];
   const sidebarContent = (
@@ -4909,6 +5238,33 @@ const cancelled = usePaginatedSearchList({
         oLines={getValues("oLines")}
         ItemCodeH={getValues("ItemCode")}
       />
+      <BinLocation
+        open={state.BinLocationOpenReciept}
+        closeModel={() =>
+          dispatch({ type: "CLOSE", modal: "BinLocationOpenReciept" })
+        }
+        onSubmit={handleBinlocationSubmit}
+        isLoading={isLoading}
+        title="Bin Location"
+        data={BinlocListData}
+        DocNum={getValues("DocNum")}
+        getRowId={(row) => row.id}
+        // DisbledUpdate={SaveUpdateName}
+      />
+
+      <AllBinLocationShow
+        open={state.BinLocationOpenIssue}
+        closeModel={() =>
+          dispatch({ type: "CLOSE", modal: "BinLocationOpenIssue" })
+        }
+        onSubmit={handleBinlocationSubmitIssue}
+        isLoading={isLoading}
+        title="Bin Location"
+        data={getValues("BinLocation")}
+        DocNum={getValues("DocNum")}
+        getRowId={(row) => row.id}
+        // SaveUpdateName={SaveUpdateName}
+      />
       <DataGriCellModelClick
         open={openBom}
         closeModel={closeBom}
@@ -5065,6 +5421,9 @@ const cancelled = usePaginatedSearchList({
                     item.WHSCode,
                     item.LocationName,
                     item.Location,
+                    item.BinCode,
+                    item.DftBinAbs,
+                    item.BinActivat,
                   );
 
                   //  CloseVendorModel(); // Close after selection if needed
@@ -5110,6 +5469,9 @@ const cancelled = usePaginatedSearchList({
                     item.WHSCode,
                     item.LocationName,
                     item.Location,
+                    item.BinCode,
+                    item.DftBinAbs,
+                    item.BinActivat,
                   );
 
                   //  CloseVendorModel(); // Close after selection if needed
@@ -6017,9 +6379,9 @@ const cancelled = usePaginatedSearchList({
             aria-label="menu"
             onClick={toggleSidebar}
             sx={{
-                   display: {
+              display: {
                 lg: "none",
-              }, 
+              },
               position: "absolute",
               left: "10px",
               // display: { lg: "none", xs: "block" },
@@ -6027,38 +6389,41 @@ const cancelled = usePaginatedSearchList({
           >
             <MenuIcon />
           </IconButton>
-     <IconButton
-  edge="end"
-  color="inherit"
-  aria-label="menu"
-  aria-expanded={rightClick ? "true" : undefined}
-  onClick={(e) => setAnchorEl(e.currentTarget)} // 👈 anchor here
-  sx={{
-    position: "absolute",
-    right: "50px",
-  }}
->
-  <MoreVertIcon />
-</IconButton>
+          <IconButton
+            edge="end"
+            color="inherit"
+            aria-label="menu"
+            aria-expanded={rightClick ? "true" : undefined}
+            onClick={(e) => setAnchorEl(e.currentTarget)} // 👈 anchor here
+            sx={{
+              display: {}, // Show only on smaller screens
+              position: "absolute",
+              right: "70px",
+            }}
+          >
+            <MoreVertIcon />
+          </IconButton>
 
           <Menu
-  id="menu"
-  anchorEl={anchorEl}
-  open={rightClick}
-  onClose={() => setAnchorEl(null)}
-  anchorOrigin={{
-    vertical: "bottom",   // 👈 icon bottom
-    horizontal: "right",
-  }}
-  transformOrigin={{
-    vertical: "top",      // 👈 menu starts from top
-    horizontal: "right",
-  }}
->
+            id="menu"
+            anchorEl={anchorEl}
+            open={rightClick}
+            onClose={() => setAnchorEl(null)}
+            anchorOrigin={{
+              vertical: "bottom", // 👈 icon bottom
+              horizontal: "right",
+            }}
+            transformOrigin={{
+              vertical: "top", // 👈 menu starts from top
+              horizontal: "right",
+            }}
+          >
             <MenuItem
               disabled={
                 SaveUpdateName === "SAVE" ||
-                tab === "3"
+                ["0", "3"].includes(allFormData.Status) ||
+                (Number(allFormData.CmpltQty) !== Number(allFormData.RjctQty) &&
+                  LineLevelIssueQty <= 0)
               }
               onClick={() => {
                 handleOnCancelDocument();
@@ -6081,8 +6446,8 @@ const cancelled = usePaginatedSearchList({
                 CANCEL
               </Typography>
             </MenuItem>
-            {/* <MenuItem
-              // disabled={SaveUpdateName === "SAVE" || tab === "1" || tab === "2"}
+            <MenuItem
+              disabled={SaveUpdateName === "SAVE" || allFormData.Status !== "5"}
               onClick={() => {
                 handleOnCloseDocument();
                 setAnchorEl(null);
@@ -6101,7 +6466,7 @@ const cancelled = usePaginatedSearchList({
               >
                 CLOSE
               </Typography>
-            </MenuItem> */}
+            </MenuItem>
           </Menu>
           <IconButton
             edge="start"
@@ -6140,15 +6505,15 @@ const cancelled = usePaginatedSearchList({
             width={"100%"}
             height={"100%"}
             border={"1px silver solid"}
-  //             sx={{
-  //   textTransform: "none",
-  //   "& .MuiTab-root": {
-  //     textTransform: "none",
-  //   },
-  //   "& .MuiButton-root": {
-  //     textTransform: "none",
-  //   },
-  // }}
+            //             sx={{
+            //   textTransform: "none",
+            //   "& .MuiTab-root": {
+            //     textTransform: "none",
+            //   },
+            //   "& .MuiButton-root": {
+            //     textTransform: "none",
+            //   },
+            // }}
             // textTransform={"uppercase"}
           >
             <Grid
@@ -6209,23 +6574,24 @@ const cancelled = usePaginatedSearchList({
                           {...field}
                           error={!!error}
                           helperText={error ? error.message : null}
-                          disabled={SaveUpdateName === "SAVE"}
-                          label="STATUS"
-                          data={
-                            //   [
-                            //   { key: "4", value: "PLANNED" },
-                            //   { key: "5", value: "RELEASED" },
-                            //   { key: "0", value: "CLOSED" },
-                            //   //  { key: "T", value: "TEMPLATE" },
-                            // ]
-                            [
-                              { key: "4", value: "PLANNED" },
-                              { key: "5", value: "RELEASED" },
-                              ...(tab === "0"
-                                ? []
-                                : [{ key: "0", value: "CLOSED" }]),
-                            ]
+                          disabled={
+                            SaveUpdateName === "SAVE" ||
+                            ["0", "3"].includes(allFormData.Status) ||
+                            (Number(allFormData.CmpltQty) !==
+                              Number(allFormData.RjctQty) &&
+                              LineLevelIssueQty <= 0)
                           }
+                          label="STATUS"
+                          data={[
+                            { key: "4", value: "PLANNED" },
+                            { key: "5", value: "RELEASED" },
+                            ...(allFormData.Status === "0"
+                              ? [{ key: "0", value: "CLOSED" }]
+                              : []),
+                            ...(allFormData.Status === "3"
+                              ? [{ key: "3", value: "CANCELLED" }]
+                              : []),
+                          ]}
                         />
                       )}
                     />
@@ -6766,31 +7132,30 @@ const cancelled = usePaginatedSearchList({
                     <Divider />
 
                     {/* Tab 1 - Contents */}
-                    <Grid item xs={12}>
-                      {tabvalue === 0 && (
-                        <>
-                          <IconButton
-                            size="small"
-                            disabled={!allFormData.ItemCode}
-                            sx={{
-                              backgroundColor: "green",
-                              borderRadius: "20%",
-                              color: "white",
-                              m: 1,
-                            }}
-                            onClick={addRow}
-                          >
-                            <AddOutlinedIcon />
-                          </IconButton>
+
+                    {tabvalue === 0 && (
+                      <>
+                        <IconButton
+                          size="small"
+                          disabled={!allFormData.ItemCode}
+                          sx={{
+                            backgroundColor: "green",
+                            borderRadius: "20%",
+                            color: "white",
+                            m: 1,
+                          }}
+                          onClick={addRow}
+                        >
+                          <AddOutlinedIcon />
+                        </IconButton>
+                        <Grid item xs={12}>
                           <Grid
                             container
                             sx={{
                               overflow: "auto",
                               width: "100%",
                               height: "100%",
-                              //  height: "30vh",    // half screen height
-                              // minHeight: 300,
-                              // maxHeight: 500,
+
                               minHeight: "300px",
                               maxHeight: "500px",
                               mt: "5px",
@@ -6801,7 +7166,9 @@ const cancelled = usePaginatedSearchList({
                               columnHeaderHeight={35}
                               rowHeight={45}
                               apiRef={apiRef}
-                              sx={gridSx}
+                              sx={{
+                                ...gridSx,
+                              }}
                               columns={ItemColumn}
                               rows={(getValues("oLines") || []).map(
                                 (data, index) => ({
@@ -6812,27 +7179,30 @@ const cancelled = usePaginatedSearchList({
                               editMode="cell"
                               isCellEditable={isCellEditableFn}
                               getCellClassName={(params) => {
-    const editableFields = [
-      "rote",
-      "StartDate",
-      "EndDate",
-      "Status",
-      "BaseQty",
-      "AdditQty",
-      "PlannedQty",
-      "IssuedQty",
-      "OpenQuantity",
-      "WHSCode",
-      "UomCode",
-      "IssueType",
-      "WipActCode",
-    ];
+                                const editableFields = [
+                                  "rote",
+                                  "StartDate",
+                                  "EndDate",
+                                  "Status",
+                                  "BaseQty",
+                                  "AdditQty",
+                                  "PlannedQty",
+                                  "IssuedQty",
+                                  "OpenQuantity",
+                                  "WHSCode",
+                                  "UomCode",
+                                  "IssueType",
+                                  "WipActCode",
+                                ];
 
-    if (!isCellEditableFn(params) && editableFields.includes(params.field)) {
-      return "disabled-cell";
-    }
-    return "";
-  }}
+                                if (
+                                  !isCellEditableFn(params) &&
+                                  editableFields.includes(params.field)
+                                ) {
+                                  return "disabled-cell";
+                                }
+                                return "";
+                              }}
                               //                              isCellEditable={(params) => {
                               //   if (params.row.Type !== 296 && params.field === "rote") return false;
                               //   if (params.row.Type !== 296 && ["StartDate", "EndDate", "Status"].includes(params.field)) return false;
@@ -6857,6 +7227,14 @@ const cancelled = usePaginatedSearchList({
                               //     ? "disabled-cell"
                               //     : ""
                               // }
+
+                              getRowClassName={(params) =>
+                                allFormData.Status === "0"
+                                  ? "disabled-row"
+                                  : "" || allFormData.Status === "3"
+                                    ? "disabled-row"
+                                    : ""
+                              }
                               getRowId={(row) => row?.id ?? -1}
                               processRowUpdate={processRowUpdate}
                               onProcessRowUpdateError={(err) =>
@@ -6874,9 +7252,9 @@ const cancelled = usePaginatedSearchList({
                               }}
                             />
                           </Grid>
-                        </>
-                      )}
-                    </Grid>
+                        </Grid>
+                      </>
+                    )}
                     {/* Tab 2 - Logistics */}
                     {tabvalue === 1 && (
                       <Grid container spacing={2}>
@@ -7354,7 +7732,6 @@ const cancelled = usePaginatedSearchList({
                   color="info"
                   // disabled={!perms.IsDelete}
                   disabled={true}
-
                 >
                   PRINT
                 </Button>

@@ -36,7 +36,7 @@ import { Loader } from "../Components/Loader";
 export default function PaymentTerm() {
   const theme = useTheme();
   const { user } = useAuth();
- const perms = usePermissions(25);
+  const perms = usePermissions(25);
   const [tab, settab] = useState("1");
   const timeoutRef = useRef(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -73,7 +73,7 @@ export default function PaymentTerm() {
     TolDays: "",
     VolumDscnt: "",
     LatePyChrg: "",
-    ListNum: price.length>0?price[0].DocEntry:"",
+    ListNum: price.length > 0 ? price[0].DocEntry : "",
     CredLimit: "",
     CommitLimit: "",
     Status: "1",
@@ -85,7 +85,7 @@ export default function PaymentTerm() {
   const removeEmojis = (str) =>
     str.replace(
       /([\u2700-\u27BF]|[\uE000-\uF8FF]|[\uD83C-\uDBFF\uDC00-\uDFFF]+|[\u2011-\u26FF]|[\uFE00-\uFE0F])/g,
-      ""
+      "",
     );
   const handleTabChangeRight = (e, newvalue1) => {
     settab(newvalue1);
@@ -103,7 +103,6 @@ export default function PaymentTerm() {
     setSelectedData([]);
     reset(initialFormData);
     setSaveUpdateName("SAVE");
-      
   };
 
   // ==============================================
@@ -123,7 +122,7 @@ export default function PaymentTerm() {
         setHasMoreOpen(newData.length === 20);
 
         setOpenListData((prev) =>
-          pageNum === 0 ? newData : [...prev, ...newData]
+          pageNum === 0 ? newData : [...prev, ...newData],
         );
       }
     } catch (error) {
@@ -165,7 +164,6 @@ export default function PaymentTerm() {
   }, []);
   const setOldOpenData = async (DocEntry, CardCode, CntctCode) => {
     setok("");
-   
 
     try {
       // await setbusinessPartner(CardCode, CntctCode);
@@ -200,70 +198,66 @@ export default function PaymentTerm() {
     }
   };
   const setOldData = async (DocEntry) => {
-  if (!DocEntry) return;
+    if (!DocEntry) return;
 
-  try {
-    setIsLoading(true);
+    try {
+      setIsLoading(true);
 
-    const response = await apiClient.get(`/PaymentTerms/${DocEntry}`);
+      const response = await apiClient.get(`/PaymentTerms/${DocEntry}`);
 
-    const { success, values, message } = response?.data || {};
+      const { success, values, message } = response?.data || {};
 
-    // ❌ API responded but failed
-    if (!success) {
+      // ❌ API responded but failed
+      if (!success) {
+        Swal.fire({
+          icon: "error",
+          text: message || "Failed to fetch payment terms data",
+          confirmButtonText: "OK",
+        });
+        return;
+      }
+
+      // ❌ No data returned
+      if (!values) {
+        Swal.fire({
+          icon: "warning",
+          text: "Payment terms data not found.",
+          confirmButtonText: "OK",
+        });
+        return;
+      }
+
+      // ✅ Success flow
+      toggleDrawer();
+      setSaveUpdateName("UPDATE");
+
+      reset({
+        ...values,
+      });
+
+      setSelectedData(DocEntry);
+    } catch (error) {
+      let errorMessage = "Something went wrong while fetching data.";
+
+      if (error.response) {
+        errorMessage =
+          error.response.data?.message ||
+          `Server error (${error.response.status})`;
+      } else if (error.request) {
+        errorMessage = "Unable to connect to server.";
+      } else {
+        errorMessage = error.message;
+      }
+
       Swal.fire({
         icon: "error",
-        text: message || "Failed to fetch payment terms data",
+        text: errorMessage,
         confirmButtonText: "OK",
       });
-      return;
+    } finally {
+      setIsLoading(false);
     }
-
-    // ❌ No data returned
-    if (!values) {
-      Swal.fire({
-        icon: "warning",
-        text: "Payment terms data not found.",
-        confirmButtonText: "OK",
-      });
-      return;
-    }
-
-    // ✅ Success flow
-    toggleDrawer();
-    setSaveUpdateName("UPDATE");
-
-    reset({
-      ...values,
-    });
-
-    setSelectedData(DocEntry);
-
-  } catch (error) {
-    let errorMessage = "Something went wrong while fetching data.";
-
-    if (error.response) {
-      errorMessage =
-        error.response.data?.message ||
-        `Server error (${error.response.status})`;
-    } else if (error.request) {
-      errorMessage = "Unable to connect to server.";
-    } else {
-      errorMessage = error.message;
-    }
-
-    Swal.fire({
-      icon: "error",
-      text: errorMessage,
-      confirmButtonText: "OK",
-    });
-
-
-  } finally {
-    setIsLoading(false);
-  }
-};
-
+  };
 
   // ==============================================
   // Close Tab Api Binding
@@ -282,7 +276,7 @@ export default function PaymentTerm() {
         setHasMoreClosed(newData.length === 20);
 
         setClosedListData((prev) =>
-          pageNum === 0 ? newData : [...prev, ...newData]
+          pageNum === 0 ? newData : [...prev, ...newData],
         );
       }
     } catch (error) {
@@ -316,7 +310,7 @@ export default function PaymentTerm() {
   const fetchMoreClosedListData = () => {
     fetchClosedListData(
       closedListPage + 1,
-      closedListSearching ? closedListquery : ""
+      closedListSearching ? closedListquery : "",
     );
     setClosedListPage((prev) => prev + 1);
   };
@@ -326,72 +320,70 @@ export default function PaymentTerm() {
   }, []);
 
   //PRICE LIST Drop Down Select Field Logic
-const FetchPriceList = async () => {
-  try {
-    setIsLoading(true);
+  const FetchPriceList = async () => {
+    try {
+      setIsLoading(true);
 
-    const response = await apiClient.get("/PriceList/All");
+      const response = await apiClient.get("/PriceList/All");
 
-    const { success, values, message } = response?.data || {};
+      const { success, values, message } = response?.data || {};
 
-    // ❌ API responded but failed
-    if (!success) {
+      // ❌ API responded but failed
+      if (!success) {
+        Swal.fire({
+          icon: "error",
+          text: message || "Failed to fetch Price List data!",
+          confirmButtonText: "OK",
+        });
+        return;
+      }
+
+      // ✅ Filter active price lists
+      const filteredResponse = Array.isArray(values)
+        ? values.filter((item) => item.Status === "1")
+        : [];
+
+      setPrice(filteredResponse);
+
+      // ❌ No active price list found
+      if (filteredResponse.length === 0) {
+        Swal.fire({
+          icon: "warning",
+          title: "No Price List Found!",
+          text: "Please add a Price List first.",
+          confirmButtonText: "OK",
+        });
+
+        setValue("ListNum", "");
+        return;
+      }
+
+      // ✅ Set default first price list
+      setValue("ListNum", filteredResponse[0].DocEntry);
+    } catch (error) {
+      let errorMessage = "Failed to fetch Price List data!";
+
+      if (error.response) {
+        errorMessage =
+          error.response.data?.message ||
+          `Server error (${error.response.status})`;
+      } else if (error.request) {
+        errorMessage = "Unable to connect to server.";
+      } else {
+        errorMessage = error.message;
+      }
+
       Swal.fire({
         icon: "error",
-        text: message || "Failed to fetch Price List data!",
-        confirmButtonText: "OK",
-      });
-      return;
-    }
-
-    // ✅ Filter active price lists
-    const filteredResponse = Array.isArray(values)
-      ? values.filter((item) => item.Status === "1")
-      : [];
-
-    setPrice(filteredResponse);
-
-    // ❌ No active price list found
-    if (filteredResponse.length === 0) {
-      Swal.fire({
-        icon: "warning",
-        title: "No Price List Found!",
-        text: "Please add a Price List first.",
+        text: errorMessage,
         confirmButtonText: "OK",
       });
 
-      setValue("ListNum", "");
-      return;
+      console.error("FetchPriceList error:", error);
+    } finally {
+      setIsLoading(false);
     }
-
-    // ✅ Set default first price list
-    setValue("ListNum", filteredResponse[0].DocEntry);
-
-  } catch (error) {
-    let errorMessage = "Failed to fetch Price List data!";
-
-    if (error.response) {
-      errorMessage =
-        error.response.data?.message ||
-        `Server error (${error.response.status})`;
-    } else if (error.request) {
-      errorMessage = "Unable to connect to server.";
-    } else {
-      errorMessage = error.message;
-    }
-
-    Swal.fire({
-      icon: "error",
-      text: errorMessage,
-      confirmButtonText: "OK",
-    });
-
-    console.error("FetchPriceList error:", error);
-
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   useEffect(() => {
     FetchPriceList();
@@ -401,238 +393,229 @@ const FetchPriceList = async () => {
   const StatusValue = watch("Status");
 
   const onsubmit = async (data) => {
-  const paymentterms = {
-    UserId: user.UserId,
-    CreatedBy: user.UserName,
-    ModifiedBy: user.UserName,
-    Status: StatusValue === "1" ? "1" : "0",
-    PymntGroup: data.PymntGroup,
-    BslineDate: data.BslineDate,
-    PayDuMonth: data.PayDuMonth,
-    ExtraDays: String(data.ExtraDays || "0"),
-    ExtraMonth: String(data.ExtraMonth || "0"),
-    TolDays: String(data.TolDays || "0"),
-    VolumDscnt: String(data.VolumDscnt || "0"),
-    LatePyChrg: String(data.LatePyChrg || "0"),
-    ListNum: String(data.ListNum || "0"),
-    CredLimit: String(data.CredLimit || "0"),
-    CommitLimit: String(data.CommitLimit || "0"),
-  };
+    const paymentterms = {
+      UserId: user.UserId,
+      CreatedBy: user.UserName,
+      ModifiedBy: user.UserName,
+      Status: StatusValue === "1" ? "1" : "0",
+      PymntGroup: data.PymntGroup,
+      BslineDate: data.BslineDate,
+      PayDuMonth: data.PayDuMonth,
+      ExtraDays: String(data.ExtraDays || "0"),
+      ExtraMonth: String(data.ExtraMonth || "0"),
+      TolDays: String(data.TolDays || "0"),
+      VolumDscnt: String(data.VolumDscnt || "0"),
+      LatePyChrg: String(data.LatePyChrg || "0"),
+      ListNum: String(data.ListNum || "0"),
+      CredLimit: String(data.CredLimit || "0"),
+      CommitLimit: String(data.CommitLimit || "0"),
+    };
 
-  try {
-    setIsLoading(true);
+    try {
+      setIsLoading(true);
 
-    /* ================= SAVE ================= */
-    if (SaveUpdateName === "SAVE") {
-      if (!Array.isArray(openListData)) return;
+      /* ================= SAVE ================= */
+      if (SaveUpdateName === "SAVE") {
+        if (!Array.isArray(openListData)) return;
 
-      const normalizeString = (str) =>
-        str.replace(/\s+/g, "").toLowerCase();
+        const normalizeString = (str) => str.replace(/\s+/g, "").toLowerCase();
 
-      const isExistingName = openListData.some(
-        (item) =>
-          normalizeString(item.PymntGroup) ===
-          normalizeString(data.PymntGroup)
-      );
+        const isExistingName = openListData.some(
+          (item) =>
+            normalizeString(item.PymntGroup) ===
+            normalizeString(data.PymntGroup),
+        );
 
-      if (isExistingName) {
+        if (isExistingName) {
+          Swal.fire({
+            icon: "info",
+            text: "Payment Term Code already exists!",
+            confirmButtonText: "OK",
+          });
+          return;
+        }
+
+        const response = await apiClient.post("/PaymentTerms", paymentterms);
+
+        const { success, message } = response?.data || {};
+
+        if (!success) {
+          Swal.fire({
+            icon: "error",
+            text: message || "Failed to save Payment Term",
+            confirmButtonText: "OK",
+          });
+          return;
+        }
+
+        // ✅ Save success
+        ClearForm();
+        setOpenListPage(0);
+        setOpenListData([]);
+        fetchOpenListData(0);
+        setClosedListPage(0);
+        setClosedListData([]);
+        fetchClosedListData(0);
+
         Swal.fire({
-          icon: "info",
-          text: "Payment Term Code already exists!",
+          icon: "success",
+          text: "Payment Term added successfully",
           confirmButtonText: "OK",
         });
-        return;
-      }
+      } else {
 
-      const response = await apiClient.post(
-        "/PaymentTerms",
-        paymentterms
-      );
-
-      const { success, message } = response?.data || {};
-
-      if (!success) {
-        Swal.fire({
-          icon: "error",
-          text: message || "Failed to save Payment Term",
-          confirmButtonText: "OK",
+      /* ================= UPDATE ================= */
+        const confirmation = await Swal.fire({
+          text: `Do you want to update "${paymentterms.PymntGroup}"?`,
+          icon: "question",
+          showCancelButton: true,
+          confirmButtonText: "YES",
+          cancelButtonText: "NO",
         });
-        return;
-      }
 
-      // ✅ Save success
-      ClearForm();
-      setOpenListPage(0);
-      setOpenListData([]);
-      fetchOpenListData(0);
-      setClosedListPage(0);
-      setClosedListData([]);
-      fetchClosedListData(0);
+        if (!confirmation.isConfirmed) {
+          Swal.fire({
+            icon: "info",
+            text: "Payment Term not updated",
+            confirmButtonText: "OK",
+          });
+          return;
+        }
 
-      Swal.fire({
-        icon: "success",
-        text: "Payment Term added successfully",
-        confirmButtonText: "OK",
-      });
-    }
+        const response = await apiClient.put(
+          `/PaymentTerms/${allFormData.DocEntry}`,
+          paymentterms,
+        );
 
-    /* ================= UPDATE ================= */
-    else {
-      const confirmation = await Swal.fire({
-        text: `Do you want to update "${paymentterms.PymntGroup}"?`,
-        icon: "question",
-        showCancelButton: true,
-        confirmButtonText: "YES",
-        cancelButtonText: "NO",
-      });
+        const { success, message } = response?.data || {};
 
-      if (!confirmation.isConfirmed) {
+        if (!success) {
+          Swal.fire({
+            icon: "error",
+            text: message || "Failed to update Payment Term",
+            confirmButtonText: "OK",
+          });
+          return;
+        }
+
+        // ✅ Update success
+        ClearForm();
+        setOpenListPage(0);
+        setOpenListData([]);
+        fetchOpenListData(0);
+        setClosedListPage(0);
+        setClosedListData([]);
+        fetchClosedListData(0);
+
         Swal.fire({
-          icon: "info",
-          text: "Payment Term not updated",
+          icon: "success",
+          text: "Payment Term updated successfully",
           confirmButtonText: "OK",
+          timer: 1500,
         });
-        return;
+      }
+    } catch (error) {
+      let errorMessage = "Something went wrong. Please try again.";
+
+      if (error.response) {
+        errorMessage =
+          error.response.data?.message ||
+          `Server error (${error.response.status})`;
+      } else if (error.request) {
+        errorMessage = "Unable to connect to server.";
+      } else {
+        errorMessage = error.message;
       }
 
-      const response = await apiClient.put(
-        `/PaymentTerms/${allFormData.DocEntry}`,
-        paymentterms
-      );
-
-      const { success, message } = response?.data || {};
-
-      if (!success) {
-        Swal.fire({
-          icon: "error",
-          text: message || "Failed to update Payment Term",
-          confirmButtonText: "OK",
-        });
-        return;
-      }
-
-      // ✅ Update success
-      ClearForm();
-      setOpenListPage(0);
-      setOpenListData([]);
-      fetchOpenListData(0);
-      setClosedListPage(0);
-      setClosedListData([]);
-      fetchClosedListData(0);
-
-      Swal.fire({
-        icon: "success",
-        text: "Payment Term updated successfully",
-        confirmButtonText: "OK",
-        timer:1500
-      });
-    }
-  } catch (error) {
-    let errorMessage = "Something went wrong. Please try again.";
-
-    if (error.response) {
-      errorMessage =
-        error.response.data?.message ||
-        `Server error (${error.response.status})`;
-    } else if (error.request) {
-      errorMessage = "Unable to connect to server.";
-    } else {
-      errorMessage = error.message;
-    }
-
-    Swal.fire({
-      icon: "error",
-      text: errorMessage,
-      confirmButtonText: "OK",
-    });
-
-    console.error("PaymentTerms submit error:", error);
-  } finally {
-    setIsLoading(false);
-  }
-};
-
-
- const handleOnDelete = async () => {
-  if (!allFormData?.DocEntry) return;
-
-  const confirmation = await Swal.fire({
-    text: "Do you want to delete?",
-    icon: "question",
-    showCancelButton: true,
-    confirmButtonText: "YES",
-    cancelButtonText: "NO",
-  });
-
-  if (!confirmation.isConfirmed) {
-    Swal.fire({
-      icon: "info",
-      text: "Payment Term is not deleted",
-      confirmButtonText: "OK",
-    });
-    return;
-  }
-
-  try {
-    setIsLoading(true);
-
-    const response = await apiClient.delete(
-      `/PaymentTerms/${allFormData.DocEntry}`
-    );
-
-    const { success, message } = response?.data || {};
-
-    // ❌ API responded but delete failed
-    if (!success) {
       Swal.fire({
         icon: "error",
-        text: message || "Failed to delete Payment Term",
+        text: errorMessage,
+        confirmButtonText: "OK",
+      });
+
+      console.error("PaymentTerms submit error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleOnDelete = async () => {
+    if (!allFormData?.DocEntry) return;
+
+    const confirmation = await Swal.fire({
+      text: "Do you want to delete?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "YES",
+      cancelButtonText: "NO",
+    });
+
+    if (!confirmation.isConfirmed) {
+      Swal.fire({
+        icon: "info",
+        text: "Payment Term is not deleted",
         confirmButtonText: "OK",
       });
       return;
     }
 
-    // ✅ Delete success
-    ClearForm();
-    setOpenListPage(0);
-    setOpenListData([]);
-    fetchOpenListData(0);
-    setClosedListPage(0);
-    setClosedListData([]);
-    fetchClosedListData(0);
+    try {
+      setIsLoading(true);
 
-    Swal.fire({
-      icon: "success",
-      text: "Payment Term deleted successfully",
-      confirmButtonText: "OK",
-    });
+      const response = await apiClient.delete(
+        `/PaymentTerms/${allFormData.DocEntry}`,
+      );
 
-  } catch (error) {
-    let errorMessage = "Something went wrong while deleting.";
+      const { success, message } = response?.data || {};
 
-    if (error.response) {
-      errorMessage =
-        error.response.data?.message ||
-        `Server error (${error.response.status})`;
-    } else if (error.request) {
-      errorMessage = "Unable to connect to server.";
-    } else {
-      errorMessage = error.message;
+      // ❌ API responded but delete failed
+      if (!success) {
+        Swal.fire({
+          icon: "error",
+          text: message || "Failed to delete Payment Term",
+          confirmButtonText: "OK",
+        });
+        return;
+      }
+
+      // ✅ Delete success
+      ClearForm();
+      setOpenListPage(0);
+      setOpenListData([]);
+      fetchOpenListData(0);
+      setClosedListPage(0);
+      setClosedListData([]);
+      fetchClosedListData(0);
+
+      Swal.fire({
+        icon: "success",
+        text: "Payment Term deleted successfully",
+        confirmButtonText: "OK",
+      });
+    } catch (error) {
+      let errorMessage = "Something went wrong while deleting.";
+
+      if (error.response) {
+        errorMessage =
+          error.response.data?.message ||
+          `Server error (${error.response.status})`;
+      } else if (error.request) {
+        errorMessage = "Unable to connect to server.";
+      } else {
+        errorMessage = error.message;
+      }
+
+      Swal.fire({
+        icon: "error",
+        text: errorMessage,
+        confirmButtonText: "OK",
+      });
+
+      console.error("PaymentTerms delete error:", error);
+    } finally {
+      setIsLoading(false);
     }
-
-    Swal.fire({
-      icon: "error",
-      text: errorMessage,
-      confirmButtonText: "OK",
-    });
-
-    console.error("PaymentTerms delete error:", error);
-
-  } finally {
-    setIsLoading(false);
-  }
-};
-
+  };
 
   const sidebarContent = (
     <>
@@ -825,8 +808,8 @@ const FetchPriceList = async () => {
 
   return (
     <>
-          {isLoading && <Loader open={isLoading} />}
-    
+      {isLoading && <Loader open={isLoading} />}
+
       <Grid
         container
         width={"100%"}
@@ -834,7 +817,7 @@ const FetchPriceList = async () => {
         position={"relative"}
         component={"form"}
         onSubmit={handleSubmit(onsubmit)}
-         onKeyDown={(e) => {
+        onKeyDown={(e) => {
           if (e.key === "Enter") {
             e.preventDefault();
           }
@@ -1419,7 +1402,7 @@ const FetchPriceList = async () => {
                 variant="contained"
                 type="submit"
                 name={SaveUpdateName}
-               disabled={
+                disabled={
                   (SaveUpdateName === "SAVE" && !perms.IsAdd) ||
                   (SaveUpdateName !== "SAVE" && !perms.IsEdit)
                 }

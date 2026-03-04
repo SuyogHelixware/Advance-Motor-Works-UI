@@ -260,56 +260,53 @@ export default function InventoryQuantityance() {
     );
     setGetListPagePriceList((prev) => prev + 1);
   };
- const fetchGetListDataPriceList = async (pageNum = 0, searchTerm = "") => {
-  try {
-    setLoading(true); // 🔄 start loader (if available)
+  const fetchGetListDataPriceList = async (pageNum = 0, searchTerm = "") => {
+    try {
+      setLoading(true); // 🔄 start loader (if available)
 
-    const url = searchTerm?.trim()
-      ? `/PriceList/Search/${searchTerm.trim()}/1/${pageNum}/20`
-      : `/PriceList/Pages/1/${pageNum}/20`;
+      const url = searchTerm?.trim()
+        ? `/PriceList/Search/${searchTerm.trim()}/1/${pageNum}/20`
+        : `/PriceList/Pages/1/${pageNum}/20`;
 
-    const response = await apiClient.get(url);
+      const response = await apiClient.get(url);
 
-    if (response?.data?.success) {
-      const newData = response.data.values ?? [];
+      if (response?.data?.success) {
+        const newData = response.data.values ?? [];
 
-      setHasMoreGetListPriceList(newData.length === 20);
+        setHasMoreGetListPriceList(newData.length === 20);
 
-      setGetListDataPriceList((prev) =>
-        pageNum === 0 ? newData : [...prev, ...newData]
-      );
+        setGetListDataPriceList((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
 
-      return newData; // ✅ return fetched data
-    } else {
+        return newData; // ✅ return fetched data
+      } else {
+        Swal.fire({
+          icon: "info",
+          text: response?.data?.message || "Failed to load price list data.",
+          toast: true,
+          showConfirmButton: false,
+          timer: 2000,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching price list:", error);
+
       Swal.fire({
-        icon: "info",
+        title: "Error",
         text:
-          response?.data?.message ||
-          "Failed to load price list data.",
-        toast: true,
-        showConfirmButton: false,
-        timer: 2000,
+          error?.response?.data?.message ||
+          error?.message ||
+          "Unable to fetch price list data.",
+        icon: "error",
+        confirmButtonText: "Ok",
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching price list:", error);
 
-    Swal.fire({
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Unable to fetch price list data.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false);
-  }
-
-  return []; // fallback
-};
-
+    return []; // fallback
+  };
 
   const onSelectRequestPriceList = async (DocEntry) => {
     const selectedObj = getListDataPriceList.find(
@@ -546,50 +543,48 @@ export default function InventoryQuantityance() {
 
   //=============================================warehouse field modal(datagrid field)=========================
   const fetchWhscGetListData = async (pageNum = 0, searchTerm = "") => {
-  try {
-    setLoading(true); // 🔄 start loader (if you have one)
+    try {
+      setLoading(true); // 🔄 start loader (if you have one)
 
-    const url = searchTerm?.trim()
-      ? `/WarehouseV2/search/${searchTerm.trim()}/1/${pageNum}`
-      : `/WarehouseV2/pages/1/${pageNum}`;
+      const url = searchTerm?.trim()
+        ? `/WarehouseV2/search/${searchTerm.trim()}/1/${pageNum}`
+        : `/WarehouseV2/pages/1/${pageNum}`;
 
-    const response = await apiClient.get(url);
+      const response = await apiClient.get(url);
 
-    if (response?.data?.success) {
-      const newData = response.data.values ?? [];
+      if (response?.data?.success) {
+        const newData = response.data.values ?? [];
 
-      setWhsHasMoreGetList(newData.length === 20);
+        setWhsHasMoreGetList(newData.length === 20);
 
-      setWhscGetListData((prev) =>
-        pageNum === 0 ? newData : [...prev, ...newData]
-      );
-    } else {
+        setWhscGetListData((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+      } else {
+        Swal.fire({
+          icon: "info",
+          text: response?.data?.message || "Failed to load warehouse data.",
+          toast: true,
+          showConfirmButton: false,
+          timer: 2000,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching warehouse data:", error);
+
       Swal.fire({
-        icon: "info",
+        title: "Error",
         text:
-          response?.data?.message ||
-          "Failed to load warehouse data.",
-        toast: true,
-        showConfirmButton: false,
-        timer: 2000,
+          error?.response?.data?.message ||
+          error?.message ||
+          "Unable to fetch warehouse data.",
+        icon: "error",
+        confirmButtonText: "Ok",
       });
+    } finally {
+      setLoading(false); // ✅ stop loader always
     }
-  } catch (error) {
-    console.error("Error fetching warehouse data:", error);
-
-    Swal.fire({
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Unable to fetch warehouse data.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false); // ✅ stop loader always
-  }
-};
+  };
 
   const handleWhscGetListSearch = (res) => {
     setWhsGetListQuery(res);
@@ -655,82 +650,81 @@ export default function InventoryQuantityance() {
     setWhscOpen(false);
   };
 
- const fetchBinCodeGetListData = async (
-  WHSCode,
-  pageNum = 0,
-  searchTerm = ""
-) => {
-  try {
-    setLoading(true); // 🔄 start loader (if you have one)
+  const fetchBinCodeGetListData = async (
+    WHSCode,
+    pageNum = 0,
+    searchTerm = "",
+  ) => {
+    try {
+      setLoading(true); // 🔄 start loader (if you have one)
 
-    if (!WHSCode) {
-      setBinCodeGetListData([]);
-      setBinCodeHasMoreGetList(false);
-      return;
-    }
-
-    const { data } = await apiClient.get("/BinLocationV2/GetByWHSCode/", {
-      params: {
-        WHSCode,
-        Status: 1,
-        Page: pageNum,
-        Limit: 20,
-        SearchText: searchTerm?.trim() || undefined,
-      },
-    });
-
-    if (data?.success) {
-      let newData = data.values ?? [];
-
-      // Client-side filter (extra safety if API search is inconsistent)
-      if (searchTerm?.trim()) {
-        const lowerSearch = searchTerm.toLowerCase();
-        newData = newData.filter(
-          (item) =>
-            item?.BinCode?.toLowerCase().includes(lowerSearch) ||
-            item?.BinName?.toLowerCase().includes(lowerSearch)
-        );
+      if (!WHSCode) {
+        setBinCodeGetListData([]);
+        setBinCodeHasMoreGetList(false);
+        return;
       }
 
-      const pageSize = 20;
-      const paginatedData = newData.slice(
-        pageNum * pageSize,
-        (pageNum + 1) * pageSize
-      );
-
-      setBinCodeHasMoreGetList(paginatedData.length === pageSize);
-
-      setBinCodeGetListData((prev) =>
-        pageNum === 0 ? paginatedData : [...prev, ...paginatedData]
-      );
-    } else {
-      Swal.fire({
-        icon: "info",
-        text:
-          data?.message ||
-          "No bin locations found for the selected warehouse.",
-        toast: true,
-        showConfirmButton: false,
-        timer: 2000,
+      const { data } = await apiClient.get("/BinLocationV2/GetByWHSCode", {
+        params: {
+          WHSCode,
+          Status: 1,
+          Page: pageNum,
+          Limit: 20,
+          SearchText: searchTerm?.trim() || undefined,
+        },
       });
+
+      if (data?.success) {
+        let newData = data.values ?? [];
+
+        // Client-side filter (extra safety if API search is inconsistent)
+        if (searchTerm?.trim()) {
+          const lowerSearch = searchTerm.toLowerCase();
+          newData = newData.filter(
+            (item) =>
+              item?.BinCode?.toLowerCase().includes(lowerSearch) ||
+              item?.BinName?.toLowerCase().includes(lowerSearch),
+          );
+        }
+
+        const pageSize = 20;
+        const paginatedData = newData.slice(
+          pageNum * pageSize,
+          (pageNum + 1) * pageSize,
+        );
+
+        setBinCodeHasMoreGetList(paginatedData.length === pageSize);
+
+        setBinCodeGetListData((prev) =>
+          pageNum === 0 ? paginatedData : [...prev, ...paginatedData],
+        );
+      } else {
+        Swal.fire({
+          icon: "info",
+          text:
+            data?.message ||
+            "No bin locations found for the selected warehouse.",
+          toast: true,
+          showConfirmButton: false,
+          timer: 2000,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching BinCode data:", error);
+
+      Swal.fire({
+        title: "Error",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Error fetching BinCode data.",
+        icon: "error",
+        confirmButtonText: "Ok",
+      });
+    } finally {
+      setLoading(false); // ✅ stop loader always
     }
-  } catch (error) {
-    console.error("Error fetching BinCode data:", error);
-
-    Swal.fire({
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Error fetching BinCode data.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false); // ✅ stop loader always
-  }
-};
-
+  };
 
   const handleBinCodeGetListSearch = (res) => {
     setBinCodeGetListQuery(res);
@@ -799,51 +793,49 @@ export default function InventoryQuantityance() {
     setBinCodeOpen(false);
   };
   //=============================================warehouse field modal(datagrid field)=========================
- const fetchGLAcctGetListData = async (pageNum = 0, searchTerm = "") => {
-  try {
-    setLoading(true); // 🔄 start loader (if you have one)
+  const fetchGLAcctGetListData = async (pageNum = 0, searchTerm = "") => {
+    try {
+      setLoading(true); // 🔄 start loader (if you have one)
 
-    const url = searchTerm?.trim()
-      ? `/ChartOfAccounts/Search/${searchTerm.trim()}/1/${pageNum}`
-      : `/ChartOfAccounts/Pages/1/${pageNum}`;
+      const url = searchTerm?.trim()
+        ? `/ChartOfAccounts/Search/${searchTerm.trim()}/1/${pageNum}`
+        : `/ChartOfAccounts/Pages/1/${pageNum}`;
 
-    const response = await apiClient.get(url);
+      const response = await apiClient.get(url);
 
-    if (response?.data?.success) {
-      const newData = response.data.values ?? [];
+      if (response?.data?.success) {
+        const newData = response.data.values ?? [];
 
-      setGLAcctHasMoreGetList(newData.length === 20);
+        setGLAcctHasMoreGetList(newData.length === 20);
 
-      setGLAcctGetListData((prev) =>
-        pageNum === 0 ? newData : [...prev, ...newData]
-      );
-    } else {
+        setGLAcctGetListData((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+      } else {
+        Swal.fire({
+          icon: "info",
+          text: response?.data?.message || "Failed to load GL Account list.",
+          toast: true,
+          showConfirmButton: false,
+          timer: 2000,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching GL Account list:", error);
+
       Swal.fire({
-        icon: "info",
+        title: "Error",
         text:
-          response?.data?.message ||
-          "Failed to load GL Account list.",
-        toast: true,
-        showConfirmButton: false,
-        timer: 2000,
+          error?.response?.data?.message ||
+          error?.message ||
+          "Unable to fetch GL Account data.",
+        icon: "error",
+        confirmButtonText: "Ok",
       });
+    } finally {
+      setLoading(false); // ✅ stop loader always
     }
-  } catch (error) {
-    console.error("Error fetching GL Account list:", error);
-
-    Swal.fire({
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Unable to fetch GL Account data.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false); // ✅ stop loader always
-  }
-};
+  };
 
   const handleGLAcctGetListSearch = (res) => {
     setGLAcctGetListQuery(res);
@@ -1558,51 +1550,50 @@ export default function InventoryQuantityance() {
 
   //==============================Left Side Main List=================================================
 
- const fetchOpenListData = async (pageNum = 0, searchTerm = "") => {
-  try {
-    setLoading(true); // 🔄 start loader (if you have one)
+  const fetchOpenListData = async (pageNum = 0, searchTerm = "") => {
+    try {
+      setLoading(true); // 🔄 start loader (if you have one)
 
-    const url = searchTerm?.trim()
-      ? `/InventoryOpeningBalance/Search/${searchTerm.trim()}/1/${pageNum}/20`
-      : `/InventoryOpeningBalance/Pages/1/${pageNum}/20`;
+      const url = searchTerm?.trim()
+        ? `/InventoryOpeningBalance/Search/${searchTerm.trim()}/1/${pageNum}/20`
+        : `/InventoryOpeningBalance/Pages/1/${pageNum}/20`;
 
-    const response = await apiClient.get(url);
+      const response = await apiClient.get(url);
 
-    if (response?.data?.success) {
-      const newData = response.data.values ?? [];
+      if (response?.data?.success) {
+        const newData = response.data.values ?? [];
 
-      setHasMoreOpen(newData.length === 20);
+        setHasMoreOpen(newData.length === 20);
 
-      setOpenListData((prev) =>
-        pageNum === 0 ? newData : [...prev, ...newData]
-      );
-    } else {
+        setOpenListData((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+      } else {
+        Swal.fire({
+          icon: "info",
+          text:
+            response?.data?.message || "Failed to load opening balance list.",
+          toast: true,
+          showConfirmButton: false,
+          timer: 2000,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching opening balance list:", error);
+
       Swal.fire({
-        icon: "info",
+        title: "Error",
         text:
-          response?.data?.message ||
-          "Failed to load opening balance list.",
-        toast: true,
-        showConfirmButton: false,
-        timer: 2000,
+          error?.response?.data?.message ||
+          error?.message ||
+          "Unable to fetch opening balance data.",
+        icon: "error",
+        confirmButtonText: "Ok",
       });
+    } finally {
+      setLoading(false); // ✅ stop loader always
     }
-  } catch (error) {
-    console.error("Error fetching opening balance list:", error);
-
-    Swal.fire({
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Unable to fetch opening balance data.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false); // ✅ stop loader always
-  }
-};
+  };
 
   // Handle search input
   const handleOpenListSearch = (res) => {
@@ -2016,7 +2007,7 @@ export default function InventoryQuantityance() {
           setLoading(false);
           Swal.fire({
             title: "Error!",
-            text:  error || "something went wrong" ,
+            text: error || "something went wrong",
             icon: "warning",
             confirmButtonText: "Ok",
           });
@@ -2915,63 +2906,61 @@ export default function InventoryQuantityance() {
                       onChange={handleTabChange}
                       aria-label="tabs example"
                     > */}
-                      {/* <Tab value={0} label="Contents" /> */}
-                      {/* <Tab value={1} label="Logistics" /> */}
-                      {/* <Tab value={2} label="Attachments" /> */}
+                    {/* <Tab value={0} label="Contents" /> */}
+                    {/* <Tab value={1} label="Logistics" /> */}
+                    {/* <Tab value={2} label="Attachments" /> */}
                     {/* </Tabs> */}
                     <Divider />
 
                     <Grid item xs={12}>
                       {/* {tabvalue === 0 && ( */}
-                        <Grid
-                          container
-                          item
-                          sx={{
-                            overflow: "auto",
-                            width: "100%",
-                            height: "50vh",
-                            // minHeight: "300px",
-                            // maxHeight: "500px",
-                            mt: "5px",
-                          }}
-                        >
-                          <DataGrid
-                            className="datagrid-style"
-                            apiRef={apiRef}
-                            rows={getValues("oLines").map((data, index) => ({
-                              ...data,
-                              id: index,
-                            }))}
-                            // rows={allFormData.oLines.map(())}
-                            getRowId={(row) => row.id}
-                            experimentalFeatures={{ newEditingApi: true }}
-                            columns={Items}
-                            columnHeaderHeight={35}
-                            // rowHeight={45}
-                            isRowSelectable={(params) =>
-                              params.row.Status !== "0"
-                            }
-                            getRowClassName={(params) =>
-                              SaveUpdateName === "UPDATE" ? "disabled-row" : ""
-                            }
-                            processRowUpdate={processRowUpdate}
-                            onProcessRowUpdateError={(err) =>
-                              console.error(err)
-                            }
-                            editMode="cell"
-                            onCellKeyDown={handleCellKeyDown}
-                            // getRowClassName={(params) =>
-                            //   params.row.Status === "0"
-                            //     ? "disabled-row"
-                            //     : "" || params.row.Status === "3"
-                            //     ? "disabled-row"
-                            //     : ""
-                            // }
+                      <Grid
+                        container
+                        item
+                        sx={{
+                          overflow: "auto",
+                          width: "100%",
+                          height: "50vh",
+                          // minHeight: "300px",
+                          // maxHeight: "500px",
+                          mt: "5px",
+                        }}
+                      >
+                        <DataGrid
+                          className="datagrid-style"
+                          apiRef={apiRef}
+                          rows={getValues("oLines").map((data, index) => ({
+                            ...data,
+                            id: index,
+                          }))}
+                          // rows={allFormData.oLines.map(())}
+                          getRowId={(row) => row.id}
+                          experimentalFeatures={{ newEditingApi: true }}
+                          columns={Items}
+                          columnHeaderHeight={35}
+                          // rowHeight={45}
+                          isRowSelectable={(params) =>
+                            params.row.Status !== "0"
+                          }
+                          getRowClassName={(params) =>
+                            SaveUpdateName === "UPDATE" ? "disabled-row" : ""
+                          }
+                          processRowUpdate={processRowUpdate}
+                          onProcessRowUpdateError={(err) => console.error(err)}
+                          editMode="cell"
+                          onCellKeyDown={handleCellKeyDown}
+                          // getRowClassName={(params) =>
+                          //   params.row.Status === "0"
+                          //     ? "disabled-row"
+                          //     : "" || params.row.Status === "3"
+                          //     ? "disabled-row"
+                          //     : ""
+                          // }
 
-                            disableRowSelectionOnClick
-                            sx={gridSx}
-                          />
-                        </Grid>
+                          disableRowSelectionOnClick
+                          sx={gridSx}
+                        />
+                      </Grid>
                       {/* )} */}
                     </Grid>
 
@@ -3224,7 +3213,7 @@ export default function InventoryQuantityance() {
                   disabled={
                     (SaveUpdateName === "SAVE" && !perms.IsAdd) ||
                     (SaveUpdateName !== "SAVE" && !perms.IsEdit) ||
-                    SaveUpdateName==="UPDATE"
+                    SaveUpdateName === "UPDATE"
                   }
                   color="success"
                   sx={{ color: "white" }}

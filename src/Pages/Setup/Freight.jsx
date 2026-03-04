@@ -73,7 +73,7 @@ export default function Freight() {
   const removeEmojis = (str) =>
     str.replace(
       /([\u2700-\u27BF]|[\uE000-\uF8FF]|[\uD83C-\uDBFF\uDC00-\uDFFF]+|[\u2011-\u26FF]|[\uFE00-\uFE0F])/g,
-      ""
+      "",
     );
 
   const theme = useTheme();
@@ -128,7 +128,7 @@ export default function Freight() {
         setHasMoreOpen(newData.length === 20);
 
         setOpenListData((prev) =>
-          pageNum === 0 ? newData : [...prev, ...newData]
+          pageNum === 0 ? newData : [...prev, ...newData],
         );
       }
     } catch (error) {
@@ -171,7 +171,6 @@ export default function Freight() {
   };
   //===============================================Revenue Account=====================================
   const FetchRevList = async ({ page = 0, search = "" }) => {
-    
     try {
       setIsLoading(true);
       // REVENUE ACCOUNT FIELD PARAMS
@@ -233,7 +232,7 @@ export default function Freight() {
         setCurrentRevPage(model.page);
       }
     },
-    [currentRevPage]
+    [currentRevPage],
   );
   const handleSearchChangeRev = useCallback((text) => {
     setSearchRevText(text);
@@ -245,7 +244,6 @@ export default function Freight() {
 
   //=======================================Expense Account================================================
   const FetchExpList = async ({ page = 0, search = "" }) => {
-    
     try {
       setIsLoading(true);
       // EXPENSE ACCOUNT FIELD PARAMS
@@ -310,7 +308,7 @@ export default function Freight() {
         setCurrentExpPage(model.page);
       }
     },
-    [currentExpPage]
+    [currentExpPage],
   );
   const handleSearchChangeExp = useCallback((text) => {
     setSearchExpText(text);
@@ -323,7 +321,6 @@ export default function Freight() {
   //=========================================SAC modal api============================
 
   const FetchSACList = async ({ page = 0, search = "" }) => {
-    
     try {
       setIsLoading(true);
       const url = search
@@ -383,7 +380,7 @@ export default function Freight() {
         setCurrentSACPage(model.page);
       }
     },
-    [currentSACPage]
+    [currentSACPage],
   );
   const handleSearchChangeSAC = useCallback((searchSACText) => {
     setSearchSACText(searchSACText);
@@ -528,53 +525,117 @@ export default function Freight() {
   const WTLiable = watch("WTLiable");
   //============================================post and put api binding================================
 
- const handleSumbit = async (data) => {
-  const obj = {
-    ...data,
-    UserId: user.UserId,
-    CreatedBy: user.UserName,
-    CreatedDate: dayjs().format("YYYY-MM-DD HH:mm:ss"),
-    ModifiedBy: user.UserName,
-    ModifiedDate: dayjs().format("YYYY-MM-DD HH:mm:ss"),
-    SacCode: String(data.SacCode || ""),
-    Status: "1",
-    WTLiable: WTLiable === "1" ? "1" : "0",
-    RevFixSum: String(data.RevFixSum || 0),
-    ExpFixSum: String(data.ExpFixSum || 0),
-  };
+  const handleSumbit = async (data) => {
+    const obj = {
+      ...data,
+      UserId: user.UserId,
+      CreatedBy: user.UserName,
+      CreatedDate: dayjs().format("YYYY-MM-DD HH:mm:ss"),
+      ModifiedBy: user.UserName,
+      ModifiedDate: dayjs().format("YYYY-MM-DD HH:mm:ss"),
+      SacCode: String(data.SacCode || ""),
+      Status: "1",
+      WTLiable: WTLiable === "1" ? "1" : "0",
+      RevFixSum: String(data.RevFixSum || 0),
+      ExpFixSum: String(data.ExpFixSum || 0),
+    };
 
-  const normalizeString = (str) =>
-    str.replace(/\s+/g, "").toLowerCase();
+    const normalizeString = (str) => str.replace(/\s+/g, "").toLowerCase();
 
-  // ================= SAVE =================
-  if (SaveUpdateName === "SAVE") {
-    if (Array.isArray(openListData)) {
-      const isExisting = openListData.some(
-        (item) =>
-          normalizeString(item.ExpnsName) ===
-          normalizeString(data.ExpnsName)
-      );
+    // ================= SAVE =================
+    if (SaveUpdateName === "SAVE") {
+      if (Array.isArray(openListData)) {
+        const isExisting = openListData.some(
+          (item) =>
+            normalizeString(item.ExpnsName) === normalizeString(data.ExpnsName),
+        );
 
-      if (isExisting) {
-        Swal.fire({
-          text: "Freight Name already Exist!",
-          icon: "info",
-          toast: true,
-          showConfirmButton: false,
-          timer: 1500,
-        });
+        if (isExisting) {
+          Swal.fire({
+            text: "Freight Name already Exist!",
+            icon: "info",
+            toast: true,
+            showConfirmButton: false,
+            timer: 1500,
+          });
+          return;
+        }
+      } else {
         return;
       }
-    } else {
+
+      try {
+        setLoading(true);
+
+        const res = await apiClient.post(`/Freight`, obj);
+
+        if (res.data?.success) {
+          ClearFormData();
+          setOpenListPage(0);
+          setOpenListData([]);
+          fetchOpenListData(0);
+
+          Swal.fire({
+            title: "Success!",
+            text: "Freight saved Successfully",
+            icon: "success",
+            confirmButtonText: "Ok",
+            timer: 1000,
+          });
+        } else {
+          Swal.fire({
+            title: "Error!",
+            text: res.data?.message || "Save failed",
+            icon: "error",
+            confirmButtonText: "Ok",
+          });
+        }
+      } catch (error) {
+        console.error("Freight save error:", error);
+
+        Swal.fire({
+          title: "Error!",
+          text:
+            error?.response?.data?.message ||
+            error?.message ||
+            "Something went wrong while saving freight.",
+          icon: "error",
+          confirmButtonText: "Ok",
+        });
+      } finally {
+        setLoading(false);
+      }
+
+      return;
+    }
+
+    // ================= UPDATE =================
+    const confirm = await Swal.fire({
+      text: `Do You Want to Update "${obj.ExpnsName}"`,
+      icon: "question",
+      confirmButtonText: "YES",
+      cancelButtonText: "No",
+      showConfirmButton: true,
+      showCancelButton: true,
+    });
+
+    if (!confirm.isConfirmed) {
+      Swal.fire({
+        text: "Freight Not Updated",
+        icon: "info",
+        toast: true,
+        showConfirmButton: false,
+        timer: 1500,
+      });
       return;
     }
 
     try {
       setLoading(true);
 
-      const res = await apiClient.post(`/Freight`, obj);
+      const response = await apiClient.put(`/Freight/${data.DocEntry}`, obj);
 
-      if (res.data?.success) {
+      if (response.data?.success) {
         ClearFormData();
         setOpenListPage(0);
         setOpenListData([]);
@@ -582,7 +643,7 @@ export default function Freight() {
 
         Swal.fire({
           title: "Success!",
-          text: "Freight saved Successfully",
+          text: "Freight Updated",
           icon: "success",
           confirmButtonText: "Ok",
           timer: 1000,
@@ -590,165 +651,93 @@ export default function Freight() {
       } else {
         Swal.fire({
           title: "Error!",
-          text: res.data?.message || "Save failed",
-          icon: "error",
+          text: response.data?.message || "Update failed",
+          icon: "warning",
           confirmButtonText: "Ok",
         });
       }
     } catch (error) {
-      console.error("Freight save error:", error);
+      console.error("Freight update error:", error);
 
       Swal.fire({
         title: "Error!",
         text:
           error?.response?.data?.message ||
           error?.message ||
-          "Something went wrong while saving freight.",
+          "Something went wrong while updating freight.",
         icon: "error",
         confirmButtonText: "Ok",
       });
     } finally {
       setLoading(false);
     }
-
-    return;
-  }
-
-  // ================= UPDATE =================
-  const confirm = await Swal.fire({
-    text: `Do You Want to Update "${obj.ExpnsName}"`,
-    icon: "question",
-    confirmButtonText: "YES",
-    cancelButtonText: "No",
-    showConfirmButton: true,
-    showCancelButton: true,
-  });
-
-  if (!confirm.isConfirmed) {
-    Swal.fire({
-      text: "Freight Not Updated",
-      icon: "info",
-      toast: true,
-      showConfirmButton: false,
-      timer: 1500,
-    });
-    return;
-  }
-
-  try {
-    setLoading(true);
-
-    const response = await apiClient.put(
-      `/Freight/${data.DocEntry}`,
-      obj
-    );
-
-    if (response.data?.success) {
-      ClearFormData();
-      setOpenListPage(0);
-      setOpenListData([]);
-      fetchOpenListData(0);
-
-      Swal.fire({
-        title: "Success!",
-        text: "Freight Updated",
-        icon: "success",
-        confirmButtonText: "Ok",
-        timer: 1000,
-      });
-    } else {
-      Swal.fire({
-        title: "Error!",
-        text: response.data?.message || "Update failed",
-        icon: "warning",
-        confirmButtonText: "Ok",
-      });
-    }
-  } catch (error) {
-    console.error("Freight update error:", error);
-
-    Swal.fire({
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong while updating freight.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   //===================================================delete api binding============================
-const handleDelete = async () => {
-  const result = await Swal.fire({
-    text: `Do you want to delete "${AllData.ExpnsName}"`,
-    icon: "question",
-    confirmButtonText: "YES",
-    cancelButtonText: "No",
-    showConfirmButton: true,
-    showCancelButton: true,
-  });
-
-  if (!result.isConfirmed) {
-    Swal.fire({
-      text: "Freight Not Deleted",
-      icon: "info",
-      toast: true,
-      showConfirmButton: false,
-      timer: 1500,
+  const handleDelete = async () => {
+    const result = await Swal.fire({
+      text: `Do you want to delete "${AllData.ExpnsName}"`,
+      icon: "question",
+      confirmButtonText: "YES",
+      cancelButtonText: "No",
+      showConfirmButton: true,
+      showCancelButton: true,
     });
-    return;
-  }
 
-  try {
-    setLoading(true);
-
-    const response = await apiClient.delete(
-      `/Freight/${AllData.DocEntry}`
-    );
-
-    if (response.data?.success) {
-      ClearFormData();
-      setOpenListPage(0);
-      setOpenListData([]);
-      fetchOpenListData(0);
-
+    if (!result.isConfirmed) {
       Swal.fire({
-        text: "Freight Deleted",
-        icon: "success",
+        text: "Freight Not Deleted",
+        icon: "info",
         toast: true,
         showConfirmButton: false,
-        timer: 1000,
+        timer: 1500,
       });
-    } else {
-      // ✅ business error (200 but success=false)
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const response = await apiClient.delete(`/Freight/${AllData.DocEntry}`);
+
+      if (response.data?.success) {
+        ClearFormData();
+        setOpenListPage(0);
+        setOpenListData([]);
+        fetchOpenListData(0);
+
+        Swal.fire({
+          text: "Freight Deleted",
+          icon: "success",
+          toast: true,
+          showConfirmButton: false,
+          timer: 1000,
+        });
+      } else {
+        // ✅ business error (200 but success=false)
+        Swal.fire({
+          title: "Error!",
+          text: response.data?.message || "Delete failed",
+          icon: "warning",
+          confirmButtonText: "Ok",
+        });
+      }
+    } catch (error) {
+      console.error("Freight delete error:", error);
+
       Swal.fire({
         title: "Error!",
-        text: response.data?.message || "Delete failed",
-        icon: "warning",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong while deleting freight.",
+        icon: "error",
         confirmButtonText: "Ok",
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Freight delete error:", error);
-
-    Swal.fire({
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong while deleting freight.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const sidebarContent = (
     <>

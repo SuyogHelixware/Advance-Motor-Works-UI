@@ -47,7 +47,6 @@ import apiClient from "../../services/apiClient";
 import CardComponent from "../Components/CardComponent";
 import CardComponentNew from "../Components/CardComponentNew";
 import DataGridModal from "../Components/DataGridModal";
-import ExchangeRate from "../Components/ExchangeRate";
 import { fetchExchangeRateGeneric } from "../Components/fetchExchangeRateGeneric";
 import { fetchPriceListData } from "../Components/fetchPriceListData";
 import {
@@ -62,7 +61,6 @@ import {
 } from "../Components/formComponents";
 import FromAllBin from "../Components/FromAllBin";
 import { recalcHeaderTotals } from "../Components/recalcHeaderTotals";
-import { recalculateLines } from "../Components/recalculateLines";
 import SearchInputField from "../Components/SearchInputField";
 import SearchModel from "../Components/SearchModel";
 import { TimeDelay } from "../Components/TimeDelay";
@@ -83,16 +81,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { fetchExchangeRateStore } from "../../slices/exchangeRateSlice";
 import ExchangeLineRateCopyform from "../Components/ExchangeLineRateCopyform";
-const sharedModel = {};
-const useColumnVisibilityModel = (key) => {
-  const [model, setModel] = useState(sharedModel[key] || {});
-  const updateModel = (newModel) => {
-    sharedModel[key] = newModel; // cache in memory
-    setModel(newModel);
-  };
-  return [model, updateModel];
-};
-
 const modelColumns = [
   {
     id: 1,
@@ -336,87 +324,87 @@ export default function InventoryTransfer() {
     dispatchRedux(fetchExchangeRateStore(docDate))
       .unwrap()
       .then((data) => {
-        if (SaveUpdateName !== "UPDATE"){
-        const values = data.values || [];
-        const sysCurr = companyData.SysCurrncy;
-        const mainCurr = companyData.MainCurncy;
-        let missingRates = [];
-        if (!values.length) {
-          Swal.fire({
-            title: "Exchange Rates Missing",
-            text: "Please define exchange rates before continuing.",
-            icon: "warning",
-          }).then(() => {
-            navigate("/dashboard/Finance/ExchangeRatesAndIndexes", {
-              replace: true,
+        if (SaveUpdateName !== "UPDATE") {
+          const values = data.values || [];
+          const sysCurr = companyData.SysCurrncy;
+          const mainCurr = companyData.MainCurncy;
+          let missingRates = [];
+          if (!values.length) {
+            Swal.fire({
+              title: "Exchange Rates Missing",
+              text: "Please define exchange rates before continuing.",
+              icon: "warning",
+            }).then(() => {
+              navigate("/dashboard/Finance/ExchangeRatesAndIndexes", {
+                replace: true,
+              });
             });
-          });
-          return;
-        }
-        const sysRateObj = values.find((x) => x.Currency === sysCurr);
-        const sysRate =
-          sysCurr === mainCurr ? 1 : parseFloat(sysRateObj?.Rate || 0);
-        const DateWiseSysRate = sysRate; // FIX
-        setValue("SysRate", DateWiseSysRate);
-        if (DateWiseSysRate <= 0) {
-          missingRates.push({
-            Type: "SystemRate",
-            Currency: sysCurr,
-            Rate: sysRate,
-            DocEntry: sysRateObj?.DocEntry ?? "0",
-            RateDate: docDate,
-          });
-        }
-        const UpdateDateRate = allFormData.oLines.map((item) => {
-          const headerRateObj = values.find(
-            (x) => x.Currency === item.Currency,
-          );
-          let headerRate =
-            item.Currency === mainCurr
-              ? 1
-              : parseFloat(headerRateObj?.Rate || 0);
-          if (headerRate <= 0) {
+            return;
+          }
+          const sysRateObj = values.find((x) => x.Currency === sysCurr);
+          const sysRate =
+            sysCurr === mainCurr ? 1 : parseFloat(sysRateObj?.Rate || 0);
+          const DateWiseSysRate = sysRate; // FIX
+          setValue("SysRate", DateWiseSysRate);
+          if (DateWiseSysRate <= 0) {
             missingRates.push({
-              Type: "DocumentRate",
-              Currency: item.Currency,
-              Rate: headerRate,
-              DocEntry: headerRateObj?.DocEntry ?? "0",
+              Type: "SystemRate",
+              Currency: sysCurr,
+              Rate: sysRate,
+              DocEntry: sysRateObj?.DocEntry ?? "0",
               RateDate: docDate,
             });
           }
-          if (missingRates.length > 0) {
-            const uniqueCurrencies = [
-              ...new Map(
-                missingRates.map((item) => [item.Currency, item]),
-              ).values(),
-            ];
-            setAllDataCopyRateLine(uniqueCurrencies);
-            dispatch({ type: "OPEN", modal: "exchaneRateLineCpyform" });
-            Swal.fire({
-              title: "Missing Rates",
-              text: "Some currency exchange rates are missing.",
-              icon: "warning",
-            });
-            return;
-          } else {
-            dispatch({ type: "CLOSE", modal: "exchaneRateLineCpyform" });
-          }
-          const LineTotal = item.Quantity * item.PriceBefDi * headerRate;
-          const TotalSumSy = ValueFormatter(LineTotal / DateWiseSysRate);
-          return {
-            ...item,
-            Rate: headerRate,
-            LineTotal,
-            TotalSumSy,
-          };
-        });
-
-        setValue("oLines", UpdateDateRate);
-        if (!values.length) {
-          navigate("/dashboard/Finance/ExchangeRatesAndIndexes", {
-            replace: true,
+          const UpdateDateRate = allFormData.oLines.map((item) => {
+            const headerRateObj = values.find(
+              (x) => x.Currency === item.Currency,
+            );
+            let headerRate =
+              item.Currency === mainCurr
+                ? 1
+                : parseFloat(headerRateObj?.Rate || 0);
+            if (headerRate <= 0) {
+              missingRates.push({
+                Type: "DocumentRate",
+                Currency: item.Currency,
+                Rate: headerRate,
+                DocEntry: headerRateObj?.DocEntry ?? "0",
+                RateDate: docDate,
+              });
+            }
+            if (missingRates.length > 0) {
+              const uniqueCurrencies = [
+                ...new Map(
+                  missingRates.map((item) => [item.Currency, item]),
+                ).values(),
+              ];
+              setAllDataCopyRateLine(uniqueCurrencies);
+              dispatch({ type: "OPEN", modal: "exchaneRateLineCpyform" });
+              Swal.fire({
+                title: "Missing Rates",
+                text: "Some currency exchange rates are missing.",
+                icon: "warning",
+              });
+              return;
+            } else {
+              dispatch({ type: "CLOSE", modal: "exchaneRateLineCpyform" });
+            }
+            const LineTotal = item.Quantity * item.PriceBefDi * headerRate;
+            const TotalSumSy = ValueFormatter(LineTotal / DateWiseSysRate);
+            return {
+              ...item,
+              Rate: headerRate,
+              LineTotal,
+              TotalSumSy,
+            };
           });
-        }
+
+          setValue("oLines", UpdateDateRate);
+          if (!values.length) {
+            navigate("/dashboard/Finance/ExchangeRatesAndIndexes", {
+              replace: true,
+            });
+          }
         }
       })
       .catch(() => {
@@ -544,7 +532,7 @@ export default function InventoryTransfer() {
         );
         if (dataPrint.success) {
           const OlinesDataPrint = dataPrint.values.oLines;
-           setPrintData(OlinesDataPrint);
+          setPrintData(OlinesDataPrint);
         } else {
           Swal.fire({
             text: dataPrint.message,
@@ -682,7 +670,7 @@ export default function InventoryTransfer() {
     fetchgetListDataFromLine(0);
   }, []);
 
-  const handleCloseListClear = () => {
+  const handleOpenListClear = () => {
     setopenListQuery("");
     setopenListSearching(false);
     setopenListPage(0);
@@ -691,26 +679,20 @@ export default function InventoryTransfer() {
     // getInventoryTransfer()
   };
   // Search Record Result
-  const handleCloseListSearch = (res) => {
+  const handleOpenListSearch = (res) => {
     setopenListQuery(res);
     setopenListSearching(true);
     setopenListPage(0);
     setopenListData([]);
-
-    // Cancel Token
     if (typeof httpRequestToken != typeof undefined) {
-      // console.log("REQUEST CANCELLED", httpRequestToken);
       httpRequestToken.cancel("Operation canceled due to new request.");
     }
-
-    //Searching time out
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
     timeoutRef.current = setTimeout(() => {
       fetchOpenListData(0, res, httpRequestToken);
     }, TimeDelay);
-    // fetchOpenListData(0,res,httpRequestToken);
   };
   //Featch more Data
   const fetchMoreOpenListData = () => {
@@ -727,14 +709,10 @@ export default function InventoryTransfer() {
       const url = searchTerm
         ? `/InventoryTransfer/Search/${searchTerm}/1/${pageNum}/20`
         : `/InventoryTransfer/Pages/1/${pageNum}/20`;
-
       const response = await apiClient.get(url);
-
       if (response.data.success) {
         const newData = response.data.values;
-
         setHasMoreOpen(newData.length === 20);
-
         setopenListData((prev) =>
           pageNum === 0 ? newData : [...prev, ...newData],
         );
@@ -2163,6 +2141,9 @@ export default function InventoryTransfer() {
     selectedRowsRef.current = [];
     setSelectedData([]);
     setSaveUpdateName("SAVE");
+    if (openListQuery?.trim()) {
+      handleOpenListClear();
+    }
     setValue("Series", DocSeries[0]?.SeriesId ?? "");
     setValue("DocNum", DocSeries[0]?.DocNum ?? "");
     setValue("FinncPriod", DocSeries[0]?.FinncPriod ?? "");
@@ -3738,9 +3719,9 @@ export default function InventoryTransfer() {
               }}
             >
               <SearchInputField
-                onChange={(e) => handleCloseListSearch(e.target.value)}
+                onChange={(e) => handleOpenListSearch(e.target.value)}
                 value={openListQuery}
-                onClickClear={handleCloseListClear}
+                onClickClear={handleOpenListClear}
               />
             </Grid>
             <InfiniteScroll
@@ -3755,10 +3736,10 @@ export default function InventoryTransfer() {
               {openListData.map((item) => (
                 <CardComponent
                   key={item.DocEntry}
-                  title={item.DocNum}
-                  isSelected={selectedData === item.DocEntry}
-                  // subtitle={item.JrnlMemo}
+                  title={item.CardCode}
+                  subtitle={item.DocNum}
                   description={dayjs(item.TaxDate).format("DD-MM-YYYY ")}
+                  isSelected={selectedData === item.DocEntry}
                   searchResult={openListQuery}
                   onClick={() => {
                     setInvntTransferData(
@@ -4970,7 +4951,7 @@ export default function InventoryTransfer() {
                 {SaveUpdateName}
               </Button>
               <PrintMenu
-                disabled={ SaveUpdateName === "SAVE"}
+                disabled={SaveUpdateName === "SAVE"}
                 type={"I"}
                 DocEntry={allFormData.DocEntry}
                 PrintData={PrintData}

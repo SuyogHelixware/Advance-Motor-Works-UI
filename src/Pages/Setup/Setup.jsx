@@ -78,7 +78,7 @@ export default function Setup() {
       Count: 100,
       ReDirect: "DocumentSeries",
     },
- 
+
     {
       id: "54",
       Name: "Email Template",
@@ -251,7 +251,7 @@ export default function Setup() {
   const allowedMenuIds = user.SubMenus.flatMap((menu) => menu.MenuId);
 
   const filteredCards = Cards_Setup.filter((card) =>
-    allowedMenuIds.includes(Number(card.id))
+    allowedMenuIds.includes(Number(card.id)),
   );
   return (
     <>

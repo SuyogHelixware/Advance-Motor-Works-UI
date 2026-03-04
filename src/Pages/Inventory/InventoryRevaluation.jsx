@@ -188,92 +188,92 @@ export default function InventoryRevaluation() {
     },
   ];
 
- const loadFifoForRow = useCallback(
-  async (row) => {
-    // 🔹 Guard: invalid row or not FIFO
-    if (!row || row.EvalSystem !== "FIFO") {
-      setFifoRows([]);
-      setActiveRowKey(null);
-      return;
-    }
-
-    const rowKey = `${row.ItemCode}_${row.WHSCode}`;
-    setActiveRowKey(rowKey);
-
-    // 🔹 UPDATE mode → only use existing data
-    if (SaveUpdateName === "UPDATE") {
-      setFifoRows(fifoLayersMap.current.get(rowKey) || []);
-      return;
-    }
-
-    // 🔹 User-edited FIFO data has priority
-    if (fifoLayersMap.current.has(rowKey)) {
-      setFifoRows(fifoLayersMap.current.get(rowKey));
-      return;
-    }
-
-    // 🔹 Cached API data
-    if (fifoCacheRef.current.has(rowKey)) {
-      const cached = fifoCacheRef.current.get(rowKey);
-      fifoLayersMap.current.set(rowKey, cached);
-      setFifoRows(cached);
-      return;
-    }
-
-    // 🔹 API call (SAVE mode only)
-    try {
-      setIsLoading(true);
-
-      const res = await apiClient.get(
-        "/InventoryRevaluation/InvFIFOStockIn",
-        {
-          params: {
-            Status: 1,
-            ItemCode: row.ItemCode,
-            WHSCode: row.WHSCode,
-          },
-        },
-      );
-
-      if (!res.data?.success) {
-        Swal.fire({
-          icon: "warning",
-          title: "Warning",
-          text: res.data?.message || "No FIFO data found.",
-        });
+  const loadFifoForRow = useCallback(
+    async (row) => {
+      // 🔹 Guard: invalid row or not FIFO
+      if (!row || row.EvalSystem !== "FIFO") {
         setFifoRows([]);
+        setActiveRowKey(null);
         return;
       }
 
-      const records = (res.data.values || []).map((item) => ({
-        ...item,
-        id: item.LayerID,            // stable key
-        INMOpenQty: item.OpenQty,
-        RActPrice: item.CalcPrice,
-        IVLTransSe: item.TransSe,
-      }));
+      const rowKey = `${row.ItemCode}_${row.WHSCode}`;
+      setActiveRowKey(rowKey);
 
-      fifoCacheRef.current.set(rowKey, records);
-      fifoLayersMap.current.set(rowKey, records);
-      setFifoRows(records);
-    } catch (error) {
-      console.error("❌ FIFO fetch failed:", error);
+      // 🔹 UPDATE mode → only use existing data
+      if (SaveUpdateName === "UPDATE") {
+        setFifoRows(fifoLayersMap.current.get(rowKey) || []);
+        return;
+      }
 
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text:
-          error?.response?.data?.message ||
-          error?.message ||
-          "Failed to fetch FIFO layers.",
-      });
-    } finally {
-      setIsLoading(false); // ✅ always stop loader
-    }
-  },
-  [SaveUpdateName],
-);
- // Add SaveUpdateName as dependency
+      // 🔹 User-edited FIFO data has priority
+      if (fifoLayersMap.current.has(rowKey)) {
+        setFifoRows(fifoLayersMap.current.get(rowKey));
+        return;
+      }
+
+      // 🔹 Cached API data
+      if (fifoCacheRef.current.has(rowKey)) {
+        const cached = fifoCacheRef.current.get(rowKey);
+        fifoLayersMap.current.set(rowKey, cached);
+        setFifoRows(cached);
+        return;
+      }
+
+      // 🔹 API call (SAVE mode only)
+      try {
+        setIsLoading(true);
+
+        const res = await apiClient.get(
+          "/InventoryRevaluation/InvFIFOStockIn",
+          {
+            params: {
+              Status: 1,
+              ItemCode: row.ItemCode,
+              WHSCode: row.WHSCode,
+            },
+          },
+        );
+
+        if (!res.data?.success) {
+          Swal.fire({
+            icon: "warning",
+            title: "Warning",
+            text: res.data?.message || "No FIFO data found.",
+          });
+          setFifoRows([]);
+          return;
+        }
+
+        const records = (res.data.values || []).map((item) => ({
+          ...item,
+          id: item.LayerID, // stable key
+          INMOpenQty: item.OpenQty,
+          RActPrice: item.CalcPrice,
+          IVLTransSe: item.TransSe,
+        }));
+
+        fifoCacheRef.current.set(rowKey, records);
+        fifoLayersMap.current.set(rowKey, records);
+        setFifoRows(records);
+      } catch (error) {
+        console.error("❌ FIFO fetch failed:", error);
+
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text:
+            error?.response?.data?.message ||
+            error?.message ||
+            "Failed to fetch FIFO layers.",
+        });
+      } finally {
+        setIsLoading(false); // ✅ always stop loader
+      }
+    },
+    [SaveUpdateName],
+  );
+  // Add SaveUpdateName as dependency
   const handleRowClick = useCallback(
     (params) => {
       loadFifoForRow(params.row);
@@ -591,50 +591,49 @@ export default function InventoryRevaluation() {
     fetchOpenListData(openListPage + 1, openListSearching ? openListquery : "");
     setOpenListPage((prev) => prev + 1);
   };
- const fetchOpenListData = async (pageNum = 0, searchTerm = "") => {
-  try {
-    setIsLoading(true); // 🔄 start loader
+  const fetchOpenListData = async (pageNum = 0, searchTerm = "") => {
+    try {
+      setIsLoading(true); // 🔄 start loader
 
-    const params = {
-      Status: 1,
-      Page: pageNum,
-      Limit: 20,
-      ...(searchTerm?.trim() && { SearchText: searchTerm.trim() }),
-    };
+      const params = {
+        Status: 1,
+        Page: pageNum,
+        Limit: 20,
+        ...(searchTerm?.trim() && { SearchText: searchTerm.trim() }),
+      };
 
-    const response = await apiClient.get("/InventoryRevaluation", { params });
+      const response = await apiClient.get("/InventoryRevaluation", { params });
 
-    if (response.data?.success) {
-      const newData = response.data.values || [];
+      if (response.data?.success) {
+        const newData = response.data.values || [];
 
-      setHasMoreOpen(newData.length === 20);
+        setHasMoreOpen(newData.length === 20);
 
-      setOpenListData((prev) =>
-        pageNum === 0 ? newData : [...prev, ...newData],
-      );
-    } else {
+        setOpenListData((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+      } else {
+        Swal.fire({
+          icon: "warning",
+          title: "Warning",
+          text: response.data?.message || "No records found.",
+        });
+      }
+    } catch (error) {
+      console.error("❌ Error fetching Inventory Revaluation:", error);
+
       Swal.fire({
-        icon: "warning",
-        title: "Warning",
-        text: response.data?.message || "No records found.",
+        icon: "error",
+        title: "Error",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to fetch Inventory Revaluation data.",
       });
+    } finally {
+      setIsLoading(false); // ✅ always stop loader
     }
-  } catch (error) {
-    console.error("❌ Error fetching Inventory Revaluation:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to fetch Inventory Revaluation data.",
-    });
-  } finally {
-    setIsLoading(false); // ✅ always stop loader
-  }
-};
-
+  };
 
   useEffect(() => {
     fetchOpenListData(0); // Load first page on mount
@@ -748,12 +747,11 @@ export default function InventoryRevaluation() {
       console.error("Error fetching data:", error);
       Swal.fire({
         title: "Error!",
-        text: error ||"An error occurred while fetching the data.",
+        text: error || "An error occurred while fetching the data.",
         icon: "error",
         confirmButtonText: "Ok",
       });
-    }
-    finally{
+    } finally {
       setIsLoading(false);
     }
   };
@@ -960,7 +958,7 @@ export default function InventoryRevaluation() {
         return;
       }
       try {
-              setIsLoading(true);
+        setIsLoading(true);
 
         const { data } = await apiClient.get(`/ItemsV2`, {
           params: {
@@ -1040,97 +1038,97 @@ export default function InventoryRevaluation() {
       getListSearchingAccount ? getListqueryAccount : "",
     );
   };
-const fetchgetListDataAccount = async (pageNum = 0, searchTerm = "") => {
-  try {
-    setIsLoading(true); // 🔄 start loader
+  const fetchgetListDataAccount = async (pageNum = 0, searchTerm = "") => {
+    try {
+      setIsLoading(true); // 🔄 start loader
 
-    // Build query parameters dynamically
-    const query = new URLSearchParams({
-      Status: 1,
-      Page: pageNum,
-      Limit: 20,
-      LocManTran: "N",
-      Postable: "Y",
-    });
+      // Build query parameters dynamically
+      const query = new URLSearchParams({
+        Status: 1,
+        Page: pageNum,
+        Limit: 20,
+        LocManTran: "N",
+        Postable: "Y",
+      });
 
-    if (searchTerm?.trim()) {
-      query.append("SearchText", searchTerm.trim());
-    }
-
-    const url = `/ChartOfAccounts?${query.toString()}`;
-    const response = await apiClient.get(url);
-
-    if (response.data?.success) {
-      const newData = response.data.values || [];
-
-      // Optional: auto-set AcctCode
-      if (newData.length > 0) {
-        setValue("AcctCode", newData[0]?.AcctCode || "");
+      if (searchTerm?.trim()) {
+        query.append("SearchText", searchTerm.trim());
       }
 
-      sethasMoreGetListAccount(newData.length === 20);
-      setgetListDataAccount((prev) =>
-        pageNum === 0 ? newData : [...prev, ...newData],
-      );
-      setgetListPageAccount(pageNum);
-    } else {
-      // 🔴 API responded but success = false
+      const url = `/ChartOfAccounts?${query.toString()}`;
+      const response = await apiClient.get(url);
+
+      if (response.data?.success) {
+        const newData = response.data.values || [];
+
+        // Optional: auto-set AcctCode
+        if (newData.length > 0) {
+          setValue("AcctCode", newData[0]?.AcctCode || "");
+        }
+
+        sethasMoreGetListAccount(newData.length === 20);
+        setgetListDataAccount((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+        setgetListPageAccount(pageNum);
+      } else {
+        // 🔴 API responded but success = false
+        Swal.fire({
+          icon: "warning",
+          title: "Warning",
+          text: response.data?.message || "Failed to fetch account list.",
+        });
+      }
+    } catch (error) {
+      console.error("❌ Error fetching ChartOfAccounts:", error);
+
       Swal.fire({
-        icon: "warning",
-        title: "Warning",
-        text: response.data?.message || "Failed to fetch account list.",
-      });
-    }
-  } catch (error) {
-    console.error("❌ Error fetching ChartOfAccounts:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong while fetching accounts.",
-    });
-  } finally {
-    setIsLoading(false); // ✅ stop loader always
-  }
-};
-
-const GLAcctData = async () => {
-  try {
-    setIsLoading(true); // 🔄 start loader
-
-    const res = await apiClient.get("/GLAccDetermination/All");
-
-    if (res.data?.success) {
-      const data = res.data.values || [];
-      setGLAcctDeterminationData(data);
-    } else {
-      // 🔴 API responded but success = false
-      Swal.fire({
-        icon: "warning",
-        title: "Warning",
+        icon: "error",
+        title: "Error",
         text:
-          res.data?.message ||
-          "Failed to fetch GL Account Determination data.",
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong while fetching accounts.",
       });
+    } finally {
+      setIsLoading(false); // ✅ stop loader always
     }
-  } catch (error) {
-    console.error("❌ Error fetching GL Account Determination:", error);
+  };
 
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong while fetching GL Account Determination.",
-    });
-  } finally {
-    setIsLoading(false); // ✅ stop loader always
-  }
-};
+  const GLAcctData = async () => {
+    try {
+      setIsLoading(true); // 🔄 start loader
+
+      const res = await apiClient.get("/GLAccDetermination/All");
+
+      if (res.data?.success) {
+        const data = res.data.values || [];
+        setGLAcctDeterminationData(data);
+      } else {
+        // 🔴 API responded but success = false
+        Swal.fire({
+          icon: "warning",
+          title: "Warning",
+          text:
+            res.data?.message ||
+            "Failed to fetch GL Account Determination data.",
+        });
+      }
+    } catch (error) {
+      console.error("❌ Error fetching GL Account Determination:", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong while fetching GL Account Determination.",
+      });
+    } finally {
+      setIsLoading(false); // ✅ stop loader always
+    }
+  };
 
   const handleSelectIncreaseAccount = (selectedAccount) => {
     const rowIndex = getValues("selectedRowIndex");
@@ -1180,63 +1178,62 @@ const GLAcctData = async () => {
       getListSearchingDecAccount ? getListqueryDecAccount : "",
     );
   };
-const fetchgetListDataDecAccount = async (pageNum = 0, searchTerm = "") => {
-  try {
-    setIsLoading(true); // 🔄 start loader
+  const fetchgetListDataDecAccount = async (pageNum = 0, searchTerm = "") => {
+    try {
+      setIsLoading(true); // 🔄 start loader
 
-    // Build query parameters dynamically
-    const query = new URLSearchParams({
-      Status: 1,
-      Page: pageNum,
-      Limit: 20,
-      LocManTran: "N",
-      Postable: "Y",
-    });
+      // Build query parameters dynamically
+      const query = new URLSearchParams({
+        Status: 1,
+        Page: pageNum,
+        Limit: 20,
+        LocManTran: "N",
+        Postable: "Y",
+      });
 
-    if (searchTerm?.trim()) {
-      query.append("SearchText", searchTerm.trim());
-    }
-
-    const url = `/ChartOfAccounts?${query.toString()}`;
-    const response = await apiClient.get(url);
-
-    if (response.data?.success) {
-      const newData = response.data.values || [];
-
-      if (newData.length > 0) {
-        setValue("AcctCode", newData[0]?.AcctCode || "");
+      if (searchTerm?.trim()) {
+        query.append("SearchText", searchTerm.trim());
       }
 
-      sethasMoreGetListDecAccount(newData.length === 20);
-      setgetListDataDecAccount((prev) =>
-        pageNum === 0 ? newData : [...prev, ...newData],
-      );
-      setgetListPageDecAccount(pageNum);
-    } else {
-      // 🔴 API responded but success = false
-      Swal.fire({
-        icon: "warning",
-        title: "Warning",
-        text:
-          response.data?.message ||
-          "Failed to fetch Decrease Account list.",
-      });
-    }
-  } catch (error) {
-    console.error("❌ Error fetching Decrease Accounts:", error);
+      const url = `/ChartOfAccounts?${query.toString()}`;
+      const response = await apiClient.get(url);
 
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong while fetching Decrease Accounts.",
-    });
-  } finally {
-    setIsLoading(false); // ✅ stop loader always
-  }
-};
+      if (response.data?.success) {
+        const newData = response.data.values || [];
+
+        if (newData.length > 0) {
+          setValue("AcctCode", newData[0]?.AcctCode || "");
+        }
+
+        sethasMoreGetListDecAccount(newData.length === 20);
+        setgetListDataDecAccount((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+        setgetListPageDecAccount(pageNum);
+      } else {
+        // 🔴 API responded but success = false
+        Swal.fire({
+          icon: "warning",
+          title: "Warning",
+          text:
+            response.data?.message || "Failed to fetch Decrease Account list.",
+        });
+      }
+    } catch (error) {
+      console.error("❌ Error fetching Decrease Accounts:", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong while fetching Decrease Accounts.",
+      });
+    } finally {
+      setIsLoading(false); // ✅ stop loader always
+    }
+  };
 
   const handleSelectDecreaseAccount = (selectedAccount) => {
     const rowIndex = getValues("selectedRowIndex");
@@ -2214,102 +2211,103 @@ const fetchgetListDataDecAccount = async (pageNum = 0, searchTerm = "") => {
     };
 
     console.log("=====", obj);
-     try {
-    setIsLoading(true); // 🔄 START LOADER
+    try {
+      setIsLoading(true); // 🔄 START LOADER
 
-    // =========================
-    // SAVE
-    // =========================
-    if (SaveUpdateName === "SAVE") {
-      const res = await apiClient.post(`/InventoryRevaluation`, obj);
+      // =========================
+      // SAVE
+      // =========================
+      if (SaveUpdateName === "SAVE") {
+        const res = await apiClient.post(`/InventoryRevaluation`, obj);
 
-      if (!res.data?.success) {
+        if (!res.data?.success) {
+          Swal.fire({
+            icon: "warning",
+            title: "Error",
+            text: res.data?.message || "Save failed",
+          });
+          return;
+        }
+
         Swal.fire({
-          icon: "warning",
-          title: "Error",
-          text: res.data?.message || "Save failed",
-        });
-        return;
-      }
-
-      Swal.fire({
-        icon: "success",
-        title: "Success!",
-        text: "Inventory Revaluation saved successfully",
-        timer: 1000,
-        showConfirmButton: false,
-      });
-    }
-
-    // =========================
-    // UPDATE
-    // =========================
-    else {
-      const confirm = await Swal.fire({
-        text: "Do You Want to Update?",
-        icon: "question",
-        // showCancelButton: true,
-showDenyButton: true,
-          confirmButtonText: "YES",
-          denyButtonText: "No",      });
-
-      if (!confirm.isConfirmed) {
-        Swal.fire({
-          text: "Inventory Revaluation Not Updated",
-          icon: "info",
-          toast: true,
-          timer: 1500,
+          icon: "success",
+          title: "Success!",
+          text: "Inventory Revaluation saved successfully",
+          timer: 1000,
           showConfirmButton: false,
         });
-        return;
       }
 
-      const res = await apiClient.put(
-        `/InventoryRevaluation/${data.DocEntry}`,
-        obj,
-      );
-
-      if (!res.data?.success) {
-        Swal.fire({
-          icon: "warning",
-          title: "Error",
-          text: res.data?.message || "Update failed",
+      // =========================
+      // UPDATE
+      // =========================
+      else {
+        const confirm = await Swal.fire({
+          text: "Do You Want to Update?",
+          icon: "question",
+          // showCancelButton: true,
+          showDenyButton: true,
+          confirmButtonText: "YES",
+          denyButtonText: "No",
         });
-        return;
+
+        if (!confirm.isConfirmed) {
+          Swal.fire({
+            text: "Inventory Revaluation Not Updated",
+            icon: "info",
+            toast: true,
+            timer: 1500,
+            showConfirmButton: false,
+          });
+          return;
+        }
+
+        const res = await apiClient.put(
+          `/InventoryRevaluation/${data.DocEntry}`,
+          obj,
+        );
+
+        if (!res.data?.success) {
+          Swal.fire({
+            icon: "warning",
+            title: "Error",
+            text: res.data?.message || "Update failed",
+          });
+          return;
+        }
+
+        Swal.fire({
+          icon: "success",
+          title: "Success!",
+          text: "Inventory Revaluation updated",
+          timer: 1000,
+          showConfirmButton: false,
+        });
       }
+
+      // =========================
+      // COMMON SUCCESS ACTIONS
+      // =========================
+      ClearForm();
+      setOpenListPage(0);
+      setOpenListData([]);
+      fetchOpenListData(0);
+      setClearCache(true);
+    } catch (error) {
+      console.error("❌ Inventory Revaluation Error:", error);
 
       Swal.fire({
-        icon: "success",
-        title: "Success!",
-        text: "Inventory Revaluation updated",
-        timer: 1000,
-        showConfirmButton: false,
+        icon: "error",
+        title: "Error",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong",
       });
+    } finally {
+      setIsLoading(false); // ✅ STOP LOADER ALWAYS
     }
-
-    // =========================
-    // COMMON SUCCESS ACTIONS
-    // =========================
-    ClearForm();
-    setOpenListPage(0);
-    setOpenListData([]);
-    fetchOpenListData(0);
-    setClearCache(true);
-  } catch (error) {
-    console.error("❌ Inventory Revaluation Error:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong",
-    });
-  } finally {
-    setIsLoading(false); // ✅ STOP LOADER ALWAYS
-  }
-};
+  };
   const sidebarContent = (
     <>
       <Grid
@@ -2440,8 +2438,8 @@ showDenyButton: true,
 
   return (
     <>
-          {isLoading && <Loader open={isLoading} />}
-    
+      {isLoading && <Loader open={isLoading} />}
+
       <SearchModel
         open={searchmodelOpenDecAccount}
         onClose={SearchModelCloseDecAccount}

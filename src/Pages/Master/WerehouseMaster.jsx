@@ -135,7 +135,7 @@ export default function WerehouseMaster() {
               AcctName: account.AcctName,
               CurrTotal: account.CurrTotal,
             }
-          : row
+          : row,
       ),
     }));
     setDatagridAcctCodeOpen(false);
@@ -150,7 +150,7 @@ export default function WerehouseMaster() {
         setCurrentPage(model.page);
       }
     },
-    [currentPage]
+    [currentPage],
   );
   const DatagridAcctCodeList = [
     // {
@@ -415,12 +415,12 @@ export default function WerehouseMaster() {
             "GroupMask",
             Array.isArray(params.groupMask)
               ? params.groupMask.join(",")
-              : params.groupMask
+              : params.groupMask,
           );
         }
         try {
           const res = await apiClient.get(
-            `/ChartOfAccounts?${query.toString()}`
+            `/ChartOfAccounts?${query.toString()}`,
           );
           results[key] = res.data.values || [];
         } catch (innerErr) {
@@ -447,7 +447,7 @@ export default function WerehouseMaster() {
           if (!acctCodeFromGL) return row;
 
           const existsInField = results[linkKey]?.some(
-            (r) => r.AcctCode?.toString() === acctCodeFromGL?.toString()
+            (r) => r.AcctCode?.toString() === acctCodeFromGL?.toString(),
           );
           if (!existsInField) return row;
 
@@ -626,7 +626,7 @@ export default function WerehouseMaster() {
         const newData = response.data.values;
         setHasMoreOpen(newData.length === 20);
         setOpenListData((prev) =>
-          pageNum === 0 ? newData : [...prev, ...newData]
+          pageNum === 0 ? newData : [...prev, ...newData],
         );
       }
     } catch (error) {
@@ -700,7 +700,7 @@ export default function WerehouseMaster() {
         setHasMoreClosed(false);
 
         setClosedListData((prev) =>
-          pageNum === 0 ? newData : [...prev, ...newData]
+          pageNum === 0 ? newData : [...prev, ...newData],
         );
       }
     } catch (error) {
@@ -737,7 +737,7 @@ export default function WerehouseMaster() {
   const fetchMoreClosedListData = () => {
     fetchClosedListData(
       closedListPage + 1,
-      closedListSearching ? closedListquery : ""
+      closedListSearching ? closedListquery : "",
     );
     setClosedListPage((prev) => prev + 1);
   };
@@ -771,7 +771,7 @@ export default function WerehouseMaster() {
   const ListofState = async (CountryCode) => {
     try {
       const res = await apiClient.get(
-        `/ListofStates/GetByCountryCode/${CountryCode}`
+        `/ListofStates/GetByCountryCode/${CountryCode}`,
       );
       const response = res.data;
       if (response.success === true) {
@@ -827,7 +827,7 @@ export default function WerehouseMaster() {
       setSearchQuery(input);
       setLocationPage(0);
     }, 600),
-    []
+    [],
   );
 
   // const LocationList = async () => {
@@ -878,7 +878,7 @@ export default function WerehouseMaster() {
         setWhsHasMoreGetList(newData.length === 20);
 
         setWhscGetListData((prev) =>
-          pageNum === 0 ? newData : [...prev, ...newData]
+          pageNum === 0 ? newData : [...prev, ...newData],
         );
         // setValue("BinCode",newData[0]?.BinCode ?? "")
         // setValue("DftBinAbs",newData[0]?.DocEntry ?? "")
@@ -921,7 +921,7 @@ export default function WerehouseMaster() {
   const fetchWhscMoreGetListData = () => {
     fetchWhscGetListData(
       WhsgetListPage + 1,
-      WhsgetListSearching ? WhsrgetListquery : ""
+      WhsgetListSearching ? WhsrgetListquery : "",
     );
     setWhsGetListPage((prev) => prev + 1);
   };
@@ -1008,12 +1008,12 @@ export default function WerehouseMaster() {
       updated[gridKey] = rows.map((row) => {
         const acctCode = apiValues[row.keyName] || ""; // <-- use apiValues
         const account = chartOfAccounts.find(
-          (acct) => acct.AcctCode === acctCode
+          (acct) => acct.AcctCode === acctCode,
         );
 
         console.log(
           `Hydrating Row: ${row.keyName} AcctCode from API: ${acctCode}`,
-          `AcctName found: ${account?.AcctName}`
+          `AcctName found: ${account?.AcctName}`,
         );
 
         return {
@@ -1090,6 +1090,12 @@ export default function WerehouseMaster() {
     });
     applyDefaultAccounts();
     setDocEntry("");
+
+    if (openListquery?.trim()) {
+      handleOpenListClear();
+    } else if (closedListquery?.trim()) {
+      handleClosedListClear();
+    }
   };
   const applyDefaultAccounts = () => {
     if (!GLAcctDeterminationData.length || !chartOfAccounts.length) return;
@@ -1110,7 +1116,7 @@ export default function WerehouseMaster() {
         if (!acctCodeFromGL) return row;
 
         const existsInField = accountLists[linkKey]?.some(
-          (r) => r.AcctCode === acctCodeFromGL
+          (r) => r.AcctCode === acctCodeFromGL,
         );
         if (!existsInField) return row;
 
@@ -1169,16 +1175,14 @@ export default function WerehouseMaster() {
     if (SaveUpdateName === "SAVE") {
       try {
         setLoading(true);
-
         const res = await apiClient.post(`/WarehouseV2`, obj);
-
         if (res.data.success) {
           ClearFormData();
           setOpenListData([]);
           fetchOpenListData(0);
           fetchClosedListData(0);
           setOpenListPage(0);
-
+          await fetchWarehouse();
           Swal.fire({
             title: "Success!",
             text: "WareHouse saved Successfully",
@@ -1221,7 +1225,7 @@ export default function WerehouseMaster() {
 
             const response = await apiClient.put(
               `/WarehouseV2/${data.DocEntry}`,
-              obj
+              obj,
             );
 
             if (response.data.success) {
@@ -1234,6 +1238,7 @@ export default function WerehouseMaster() {
               setClosedListData([]);
 
               ClearFormData();
+              await fetchWarehouse();
 
               Swal.fire({
                 title: "Success!",
@@ -1467,7 +1472,7 @@ export default function WerehouseMaster() {
                         setOldOpenData(
                           item.DocEntry,
                           item.BinCode,
-                          item.DftBinAbs
+                          item.DftBinAbs,
                         )
                       }
                     />
@@ -1528,7 +1533,7 @@ export default function WerehouseMaster() {
                         setOldOpenData(
                           item.DocEntry,
                           item.BinCode,
-                          item.DftBinAbs
+                          item.DftBinAbs,
                         )
                       }
                     />
@@ -1911,33 +1916,33 @@ export default function WerehouseMaster() {
                                       field.onChange(selectedOption.DocEntry); // Store DocEntry in form
                                       setValue(
                                         "Street",
-                                        selectedOption.Street || ""
+                                        selectedOption.Street || "",
                                       );
                                       setValue(
                                         "Block",
-                                        selectedOption.Block || ""
+                                        selectedOption.Block || "",
                                       );
                                       setValue(
                                         "Address",
                                         `${selectedOption.Block || ""} ${
                                           selectedOption.Street || ""
-                                        } `.trim()
+                                        } `.trim(),
                                       );
                                       setValue(
                                         "City",
-                                        selectedOption.City || ""
+                                        selectedOption.City || "",
                                       );
                                       setValue(
                                         "ZipCode",
-                                        selectedOption.ZipCode || ""
+                                        selectedOption.ZipCode || "",
                                       );
                                       setValue(
                                         "State",
-                                        selectedOption.State || ""
+                                        selectedOption.State || "",
                                       );
                                       setValue(
                                         "Country",
-                                        selectedOption.Country || ""
+                                        selectedOption.Country || "",
                                       );
                                     } else {
                                       field.onChange(""); // Clear form field
@@ -2024,13 +2029,13 @@ export default function WerehouseMaster() {
                             <Controller
                               name="ZipCode"
                               control={control}
-                                rules={{
-                    // required: "Post Code is required",
-                    pattern: {
-                      value: /^[0-9]{6}$/,
-                      message: "Enter a valid 6-digit ZIP Code",
-                    },
-                  }}
+                              rules={{
+                                // required: "Post Code is required",
+                                pattern: {
+                                  value: /^[0-9]{6}$/,
+                                  message: "Enter a valid 6-digit ZIP Code",
+                                },
+                              }}
                               // rules={{ required: "ZipCode is Required" }}
                               render={({ field, fieldState: { error } }) => (
                                 <InputTextField
@@ -2039,14 +2044,17 @@ export default function WerehouseMaster() {
                                   // inputProps={{ maxLength: 20 }}
                                   {...field}
                                   error={!!error}
-                                   inputProps={{
-                        maxLength: 6,
-                        onInput: (e) => {
-                          if (e.target.value.length > 6) {
-                            e.target.value = e.target.value.slice(0, 6);
-                          }
-                        },
-                      }}
+                                  inputProps={{
+                                    maxLength: 6,
+                                    onInput: (e) => {
+                                      if (e.target.value.length > 6) {
+                                        e.target.value = e.target.value.slice(
+                                          0,
+                                          6,
+                                        );
+                                      }
+                                    },
+                                  }}
                                   helperText={error ? error.message : null}
                                 />
                               )}
@@ -2314,7 +2322,7 @@ export default function WerehouseMaster() {
                                       if (e.target.value.length > 11) {
                                         e.target.value = e.target.value.slice(
                                           0,
-                                          11
+                                          11,
                                         );
                                       }
                                     },
@@ -2629,7 +2637,7 @@ export default function WerehouseMaster() {
                                                       AcctCode: "",
                                                       AcctName: "",
                                                     }
-                                                  : r
+                                                  : r,
                                             ),
                                           }));
                                         }
@@ -2647,7 +2655,7 @@ export default function WerehouseMaster() {
                                                 // Open modal
                                                 OpenDatagridAcctCodeModal(
                                                   "Accounting",
-                                                  params.row.id
+                                                  params.row.id,
                                                 );
                                               }}
                                               disabled={

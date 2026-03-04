@@ -27,7 +27,14 @@ import {
 } from "@mui/material";
 import { DataGrid, useGridApiRef } from "@mui/x-data-grid";
 import dayjs from "dayjs";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
 import { Controller, useForm, useFormState } from "react-hook-form";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { BeatLoader } from "react-spinners";
@@ -57,6 +64,7 @@ import { TwoFormatter } from "../Components/ValueFormatter";
 import { Base64FileinNewTab } from "../FileUpload/EditFilePreview";
 import { openFileinNewTab } from "../FileUpload/filePreview";
 import { useFileUpload } from "../FileUpload/useFileUpload";
+import BinLocation from "../Components/BinLocation";
 
 const TranColumn = [
   // {
@@ -148,7 +156,9 @@ const DisassemblyColumn = [
           ? "STANDARD"
           : params.row.Type === "P"
             ? "SPECIAL"
-            : "DISASSEMBLY"}
+            : params.row.Type === "D"
+              ? "DISASSEMBLY"
+              : ""}
       </span>
     ),
   },
@@ -203,12 +213,37 @@ const DisassemblyColumn = [
     align: "center",
   },
 ];
+const initialState = {
+  exchaneRateOpen: false,
+  DocRateOpen: false,
+  BinLocationOpen: false,
+  modal2: false,
+  modal3: false,
+};
+function reducer(state, action) {
+  switch (action.type) {
+    case "OPEN":
+      return { ...state, [action.modal]: true };
+    case "CLOSE":
+      return { ...state, [action.modal]: false };
+    case "TOGGLE":
+      return { ...state, [action.modal]: !state[action.modal] };
+    case "CLOSE_ALL":
+      return Object.keys(state).reduce(
+        (acc, key) => ({ ...acc, [key]: false }),
+        {},
+      );
+    default:
+      return state;
+  }
+}
 export default function RecieptForProduction() {
   const theme = useTheme();
   const timeoutRef = useRef(null);
   const apiRef = useGridApiRef();
   const perms = usePermissions(104);
   const { user, warehouseData } = useAuth();
+  const [state, dispatch] = useReducer(reducer, initialState);
   const [tabvalue, settabvalue] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [SaveUpdateName, setSaveUpdateName] = useState("SAVE");
@@ -241,8 +276,8 @@ export default function RecieptForProduction() {
   const [searchText, setSearchText] = useState("");
   const [rowCount, setRowCount] = useState(0);
   const [clearCache, setClearCache] = useState(false);
-  const [PrintData,  setPrintData] = useState([]);
-
+  const [PrintData, setPrintData] = useState([]);
+  const [BinlocListData, setBinLocData] = useState([]);
   const toggleDrawer = () => {
     setSidebarOpen(!sidebarOpen);
   };
@@ -325,14 +360,16 @@ export default function RecieptForProduction() {
   // -------------------------------------------------------------------\
   const fetchOpenListData = async (pageNum, searchTerm = "") => {
     try {
-      let response;
-      if (searchTerm) {
-        response = await apiClient.get(
-          `/GoodsReceipt/Search/${searchTerm}/1/${pageNum}/20`,
-        );
-      } else {
-        response = await apiClient.get(`/GoodsReceipt/Pages/1/${pageNum}/20`);
-      }
+      let response = await apiClient.get(`/GoodsReceipt/`, {
+        params: {
+          BaseType: "202",
+          Status: "1",
+          Page: pageNum,
+          Limit: "20",
+          ...(searchTerm && { SearchText: searchTerm }),
+        },
+      });
+
       if (response.data.success) {
         const newData = response.data.values;
         setHasMoreOpen(newData.length === 20);
@@ -397,7 +434,9 @@ export default function RecieptForProduction() {
             ? "STANDARD"
             : params.row.Type === "P"
               ? "SPECIAL"
-              : "DISASSEMBLY"}
+              : params.row.Type === "D"
+                ? "DISASSEMBLY"
+                : ""}
         </span>
       ),
     },
@@ -531,6 +570,83 @@ export default function RecieptForProduction() {
                   setwhscOpenIssue(true);
                 }}
                 disabled={disabled}
+                size="small"
+                sx={{
+                  backgroundColor: "green",
+                  color: "white",
+                  borderRadius: "6px",
+                  padding: "4px",
+                  "&:hover": { backgroundColor: "darkgreen" },
+                }}
+              >
+                <ViewListIcon fontSize="small" />
+              </IconButton>
+            </Grid>
+          </Grid>
+        );
+      },
+    },
+    {
+      field: "Bin",
+      headerName: "BIN LOCATION",
+      width: 150,
+      headerAlign: "center",
+      align: "center",
+      renderCell: (params) => {
+        const BinQty = (params.row.oDocBinLocationLines || []).reduce(
+          (cur, val) => cur + parseFloat(val.Quantity || 0),
+          0,
+        );
+        return (
+          <Grid
+            container // ✅ important
+            alignItems="center" // vertical center
+            justifyContent="center" // horizontal center
+            gap={0.5}
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (
+                e.key === "Enter" ||
+                e.key === "F2" ||
+                e.key === "" ||
+                (e.key === "Tab" && !e.shiftKey)
+              ) {
+                e.preventDefault();
+                if (
+                  BinQty !== params.row.Quantity &&
+                  params.row.readonlyRow !== "readonlyRow"
+                ) {
+                  setValue("selectedRowIndex", params.row.id);
+                  setBinLocData(params.row);
+                  dispatch({ type: "OPEN", modal: "BinLocationOpen" });
+                }
+              }
+            }}
+            sx={{
+              width: "100%",
+              height: "100%",
+              outline: "none",
+            }}
+          >
+            <Grid item xs>
+              <Typography noWrap textAlign="center" sx={{ fontSize: 13 }}>
+                {TwoFormatter(BinQty)}
+              </Typography>
+            </Grid>
+            <Grid item>
+              <IconButton
+                onClick={() => {
+                  setValue("selectedRowIndex", params.row.id);
+                  setBinLocData(params.row);
+                  dispatch({ type: "OPEN", modal: "BinLocationOpen" });
+                }}
+                disabled={
+                  SaveUpdateName === "UPDATE"
+                    ? (params.row.oDocBinLocationLines || []).length === 0
+                    : params.row.Status === "0" ||
+                      parseFloat(params.row.DftBinAbs) <= 0 ||
+                      params.row.BinActivat !== "Y"
+                }
                 size="small"
                 sx={{
                   backgroundColor: "green",
@@ -911,7 +1027,40 @@ export default function RecieptForProduction() {
     });
     setIssueChartOpen(false);
   };
-  const selectedIssueWhsc = async (WHSCode, LocationName, LocCode) => {
+  const handleBinlocationSubmit = (rowsFromModal) => {
+    const selectedRow = BinlocListData;
+    const updatedOLines = (getValues("oLines") || []).map((row, index) =>
+      index === selectedRow.id
+        ? {
+            ...row,
+            oDocBinLocationLines: rowsFromModal.map((binitem) => ({
+              UserId: user.UserId,
+              CreatedBy: user.UserName,
+              ModifiedBy: user.UserName,
+              Status: 1,
+              MessageID: 0,
+              BinAbs: Number(binitem.DocEntry),
+              SnBMDAbs: 0,
+              Quantity: binitem.Quantity,
+              ITLEntry: 0,
+              BinCode: binitem.BinCode,
+            })),
+          }
+        : row,
+    );
+
+    setValue("oLines", updatedOLines);
+
+    dispatch({ type: "CLOSE", modal: "BinLocationOpen" });
+  };
+  const selectedIssueWhsc = async (
+    WHSCode,
+    LocationName,
+    LocCode,
+    BinCode,
+    DftBinAbs,
+    BinActivat,
+  ) => {
     const currentRowIndex = getValues("selectedRowIndex"); // You'll need to track this
     const updatedLines = getValues("oLines").map((line, index) => {
       if (index === currentRowIndex) {
@@ -920,6 +1069,11 @@ export default function RecieptForProduction() {
           WHSCode: WHSCode,
           LocationName: LocationName,
           LocCode: LocCode,
+          BinCode: BinCode,
+          DftBinAbs: DftBinAbs,
+          BinActivat,
+          Bin: 0,
+          oDocBinLocationLines: [],
         };
       }
       return line;
@@ -1076,6 +1230,9 @@ export default function RecieptForProduction() {
         ...item,
         LocCode: match ? match.Location : null,
         LocationName: match ? match.LocationName : null,
+        BinCode: match?.BinCode ?? "",
+        DftBinAbs: match?.DftBinAbs,
+        BinActivat: match?.BinActivat,
         Price: Price,
         LineTotal: LineTotal,
         CpyIssueQty: item.Quantity,
@@ -1157,11 +1314,14 @@ export default function RecieptForProduction() {
     },
     [currentPage],
   );
-  const handleSearchChange = useCallback((search) => {
-    setSearchText(search);
-    setCurrentPage(0); 
-    setDisassCache({});
-  }, [searchText]);
+  const handleSearchChange = useCallback(
+    (search) => {
+      setSearchText(search);
+      setCurrentPage(0);
+      setDisassCache({});
+    },
+    [searchText],
+  );
 
   const handleCellClick = async (ids) => {
     const childItemCode = (allFormData.oLines || []).some(
@@ -1202,12 +1362,15 @@ export default function RecieptForProduction() {
           150,
         WHSCode: RowsDis.WHSCode,
         LocationName: whsdata?.LocationName ?? "",
+        BinCode: whsdata?.BinCode ?? "",
+        DftBinAbs: whsdata?.DftBinAbs,
+        BinActivat: whsdata?.BinActivat,
         LocCode: whsdata?.Location ?? "",
         AcctCode: RowsDis.WipActCode,
         PlannedQty: RowsDis.PlannedQty,
         IssuedQty: RowsDis.CmpltQty,
-        RjctQty:RowsDis.RjctQty,
-        CmpltQty:RowsDis.CmpltQty,
+        RjctQty: RowsDis.RjctQty,
+        CmpltQty: RowsDis.CmpltQty,
         UomCode: RowsDis.UomCode,
         BaseType: "202",
         NumPerMsr: RowsDis.NumPerMsr || "0",
@@ -1224,15 +1387,15 @@ export default function RecieptForProduction() {
       oLines: [...allFormData.oLines, ...UpdatedLine],
     };
     reset(updatedData);
-setSearchText("")
+    setSearchText("");
     closeDisassembly();
   };
 
   const closeDisassembly = () => {
     setOpenDisassembly(false);
-    setSearchText("")
+    setSearchText("");
   };
-     const validateAllLines = (lines) => {
+  const validateAllLines = (lines) => {
     const errors = [];
     const errorIds = [];
     lines.forEach((line, index) => {
@@ -1267,19 +1430,19 @@ setSearchText("")
         errorIds.push(rowId);
       }
 
-      // // 🔴 BIN
-      // if (line.BinActivat === "Y") {
-      //   const binLines = line.oDocBinLocationLines || [];
-      //   const totalBinQty = binLines.reduce(
-      //     (sum, b) => sum + Number(b.Quantity || 0),
-      //     0,
-      //   );
+      // 🔴 BIN
+      if (line.BinActivat === "Y") {
+        const binLines = line.oDocBinLocationLines || [];
+        const totalBinQty = binLines.reduce(
+          (sum, b) => sum + Number(b.Quantity || 0),
+          0,
+        );
 
-      //   if (binLines.length === 0 || totalBinQty !== Number(line.Quantity)) {
-      //     errors.push(`Line ${lineNo}: ${line.ItemCode} (Bin Qty mismatch)`);
-      //     errorIds.push(rowId);
-      //   }
-      // }
+        if (binLines.length === 0 || totalBinQty !== Number(line.Quantity)) {
+          errors.push(`Line ${lineNo}: ${line.ItemCode} (Bin Qty mismatch)`);
+          errorIds.push(rowId);
+        }
+      }
 
       //Account code
       if (!line.AcctCode) {
@@ -1318,7 +1481,17 @@ setSearchText("")
   };
   const handleSubmitForm = async (data) => {
     console.log("data submit", data);
-if (SaveUpdateName === "SAVE") {
+    if (data.oLines.length === 0) {
+      Swal.fire({
+        title: "Select Item",
+        text: "Please select at least one item.",
+        icon: "warning",
+        confirmButtonText: "Ok",
+        timer: 3000,
+      });
+      return false;
+    }
+    if (SaveUpdateName === "SAVE") {
       const { isValid, errors, errorIds } = validateAllLines(data.oLines);
 
       if (!isValid) {
@@ -1450,7 +1623,7 @@ if (SaveUpdateName === "SAVE") {
         StockSumFc: "0",
         StockSumSc: "0",
         TotalSumSy: "0",
-        oDocBinLocationLines: [],
+        oDocBinLocationLines: item.oDocBinLocationLines || [],
         StockPrice: "0",
         unitMsr: item.unitMsr || "0",
         NumPerMsr: "1",
@@ -1458,7 +1631,7 @@ if (SaveUpdateName === "SAVE") {
         OpenQuantity: String(item.Quantity),
       })),
     };
-    console.log("obj",obj);
+    console.log("obj", obj);
     if (SaveUpdateName === "SAVE") {
       apiClient
         .post(`/GoodsReceipt`, obj)
@@ -1569,6 +1742,9 @@ if (SaveUpdateName === "SAVE") {
     setCheckedItems({});
     setOlines([]);
     setAllDAta([]);
+    if (openListquery?.trim()) {
+      handleOpenListClear();
+    }
     setValue("Series", DocSeries[0]?.SeriesId ?? "");
     setValue("DocNum", DocSeries[0]?.DocNum ?? "");
     setValue("FinncPriod", DocSeries[0]?.FinncPriod ?? "");
@@ -1624,22 +1800,43 @@ if (SaveUpdateName === "SAVE") {
   const fetchOpenData = async (DocEntry) => {
     const response = await apiClient.get(`/GoodsReceipt/${DocEntry}`);
     if (!response.data || !response.data.values) {
-      console.error("API Response missing `values` key:", response.data);
       return;
     }
     const item = response.data.values;
     if (item.AttcEntry > 0) {
       setFilesFromApi(item.AttcEntry);
     }
-    reset({
-      ...item,
-      oLines: (item.oLines || []).map((element) => ({
-        ...element,
+
+    const updatedOLines = (item.oLines || []).map((line) => {
+      const match = warehouseData.find((loc) => loc.Location === line.LocCode);
+      return {
+        ...line,
+        LocationName: match?.LocationName || "",
+        LocCode: match?.Location || "",
+        BinCode: match?.BinCode ?? "",
+        DftBinAbs: match?.DftBinAbs,
+        BinActivat: match?.BinActivat,
         UserId: user.UserId,
         BaseRef: item.BaseRef || "-1",
-        Quantity: element.Quantity || "0",
-      })),
+        Quantity: item.Quantity || "0",
+        readonlyRow: "readonlyRow",
+      };
     });
+    const updatedData = {
+      ...item,
+      oLines: updatedOLines,
+    };
+
+    reset(updatedData);
+    // reset({
+    //   ...item,
+    //   oLines: (item.oLines || []).map((element) => ({
+    //     ...element,
+    //     UserId: user.UserId,
+    //     BaseRef: item.BaseRef || "-1",
+    //     Quantity: element.Quantity || "0",
+    //   })),
+    // });
     toggleDrawer();
     setSaveUpdateName("UPDATE");
   };
@@ -1763,6 +1960,17 @@ if (SaveUpdateName === "SAVE") {
 
   return (
     <>
+      <BinLocation
+        open={state.BinLocationOpen}
+        closeModel={() => dispatch({ type: "CLOSE", modal: "BinLocationOpen" })}
+        onSubmit={handleBinlocationSubmit}
+        isLoading={isLoading}
+        title="Bin Location"
+        data={BinlocListData}
+        DocNum={getValues("DocNum")}
+        getRowId={(row) => row.id}
+        DisbledUpdate={SaveUpdateName}
+      />
       <SearchModel
         open={IssueAccountOpen}
         onClose={() => setIssueChartOpen(false)}
@@ -1839,6 +2047,9 @@ if (SaveUpdateName === "SAVE") {
                     item.WHSCode,
                     item.LocationName,
                     item.Location,
+                    item.BinCode,
+                    item.DftBinAbs,
+                    item.BinActivat,
                   );
 
                   //  CloseVendorModel(); // Close after selection if needed
@@ -2311,7 +2522,7 @@ if (SaveUpdateName === "SAVE") {
                   </Grid>
                 </Grid>
 
-                <Grid container width={"100%"} >
+                <Grid container width={"100%"}>
                   <Grid
                     container
                     item
@@ -2605,7 +2816,6 @@ if (SaveUpdateName === "SAVE") {
                 <PrintMenu
                   disabled={SaveUpdateName === "SAVE"}
                   type={"I"}
-
                   DocEntry={allFormData.DocEntry}
                   PrintData={PrintData}
                 />

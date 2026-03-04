@@ -84,47 +84,46 @@ export default function SAC() {
     fetchOpenListData(openListPage + 1, openListSearching ? openListquery : "");
     setOpenListPage((prev) => prev + 1);
   };
- const fetchOpenListData = async (pageNum, searchTerm = "") => {
-  try {
-    setLoading(true);
+  const fetchOpenListData = async (pageNum, searchTerm = "") => {
+    try {
+      setLoading(true);
 
-    const url = searchTerm
-      ? `/SACSetup/Search/${searchTerm}/1/${pageNum}/20`
-      : `/SACSetup/Pages/1/${pageNum}/20`;
+      const url = searchTerm
+        ? `/SACSetup/Search/${searchTerm}/1/${pageNum}/20`
+        : `/SACSetup/Pages/1/${pageNum}/20`;
 
-    const response = await apiClient.get(url);
+      const response = await apiClient.get(url);
 
-    if (response.data.success) {
-      const newData = response.data.values || [];
+      if (response.data.success) {
+        const newData = response.data.values || [];
 
-      setHasMoreOpen(newData.length === 20);
-      setOpenListData((prev) =>
-        pageNum === 0 ? newData : [...prev, ...newData]
-      );
-    } else {
+        setHasMoreOpen(newData.length === 20);
+        setOpenListData((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+      } else {
+        await Swal.fire({
+          title: "Error!",
+          text: response.data.message || "Failed to fetch SAC data",
+          icon: "warning",
+          confirmButtonText: "Ok", // ❌ NO TIMER
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching SAC data:", error);
+
       await Swal.fire({
         title: "Error!",
-        text: response.data.message || "Failed to fetch SAC data",
-        icon: "warning",
+        text:
+          error.response?.data?.message ||
+          "Something went wrong while fetching SAC data",
+        icon: "error",
         confirmButtonText: "Ok", // ❌ NO TIMER
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching SAC data:", error);
-
-    await Swal.fire({
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        "Something went wrong while fetching SAC data",
-      icon: "error",
-      confirmButtonText: "Ok", // ❌ NO TIMER
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   useEffect(() => {
     fetchOpenListData(0); // Load first page on mount
@@ -170,47 +169,46 @@ export default function SAC() {
       });
     }
   };
- const setSACDataList = async (DocEntry) => {
-  if (!DocEntry) return;
+  const setSACDataList = async (DocEntry) => {
+    if (!DocEntry) return;
 
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const response = await apiClient.get(`/SACSetup/${DocEntry}`);
+      const response = await apiClient.get(`/SACSetup/${DocEntry}`);
 
-    if (!response.data?.success) {
+      if (!response.data?.success) {
+        await Swal.fire({
+          title: "Error!",
+          text: response.data?.message || "Failed to fetch SAC data",
+          icon: "warning",
+          confirmButtonText: "Ok", // ❌ NO TIMER
+        });
+        return;
+      }
+
+      const data = response.data.values;
+
+      toggleDrawer();
+      reset(data);
+      setSaveUpdateName("UPDATE");
+      setDocEntry(DocEntry);
+      setSelectedData(DocEntry);
+    } catch (error) {
+      console.error("Error fetching SAC data:", error);
+
       await Swal.fire({
         title: "Error!",
-        text: response.data?.message || "Failed to fetch SAC data",
-        icon: "warning",
+        text:
+          error.response?.data?.message ||
+          "An error occurred while fetching the SAC data.",
+        icon: "error",
         confirmButtonText: "Ok", // ❌ NO TIMER
       });
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    const data = response.data.values;
-
-    toggleDrawer();
-    reset(data);
-    setSaveUpdateName("UPDATE");
-    setDocEntry(DocEntry);
-    setSelectedData(DocEntry);
-  } catch (error) {
-    console.error("Error fetching SAC data:", error);
-
-    await Swal.fire({
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        "An error occurred while fetching the SAC data.",
-      icon: "error",
-      confirmButtonText: "Ok", // ❌ NO TIMER
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   // ==============useForm====================================
 
@@ -225,202 +223,199 @@ export default function SAC() {
   const { isDirty } = useFormState({ control });
   // ===============PUT and POST API ===================================
 
- const handleSubmitForm = async (data) => {
-  const normalizeString = (str = "") =>
-    str.replace(/\s+/g, "").toLowerCase();
+  const handleSubmitForm = async (data) => {
+    const normalizeString = (str = "") => str.replace(/\s+/g, "").toLowerCase();
 
-  const obj = {
-    DocEntry: data.DocEntry || "",
-    UserId: user.UserId,
-    CreatedBy: user.UserName || "",
-    CreatedDate: dayjs().format("YYYY/MM/DD"),
-    ModifiedBy: user.UserName || "",
-    ModifiedDate: dayjs().format("YYYY/MM/DD"),
-    ServName: String(data.ServName),
-    ServCode: String(data.ServCode),
-    Status: "1",
+    const obj = {
+      DocEntry: data.DocEntry || "",
+      UserId: user.UserId,
+      CreatedBy: user.UserName || "",
+      CreatedDate: dayjs().format("YYYY/MM/DD"),
+      ModifiedBy: user.UserName || "",
+      ModifiedDate: dayjs().format("YYYY/MM/DD"),
+      ServName: String(data.ServName),
+      ServCode: String(data.ServCode),
+      Status: "1",
+    };
+
+    try {
+      // ================= SAVE =================
+      if (SaveUpdateName === "SAVE") {
+        if (!Array.isArray(openListData)) return;
+
+        const isExistingSAC = openListData.some(
+          (item) =>
+            normalizeString(item.ServCode) === normalizeString(data.ServCode),
+        );
+
+        if (isExistingSAC) {
+          await Swal.fire({
+            text: "SAC Code Already Exist!",
+            icon: "info",
+            toast: true,
+            showConfirmButton: false,
+            timer: 1500,
+          });
+          return;
+        }
+
+        setLoading(true);
+        const resp = await apiClient.post(`/SACSetup`, obj);
+
+        if (!resp.data?.success) {
+          await Swal.fire({
+            title: "Error!",
+            text: resp.data?.message || "SAC is not added",
+            icon: "warning",
+            confirmButtonText: "Ok", // ❌ no timer
+          });
+          return;
+        }
+
+        clearFormData();
+        setOpenListPage(0);
+        setOpenListData([]);
+        fetchOpenListData(0);
+
+        await Swal.fire({
+          title: "Success!",
+          text: "SAC is Added",
+          icon: "success",
+          timer: 1000,
+          showConfirmButton: false,
+        });
+      }
+
+      // ================= UPDATE =================
+      else {
+        const result = await Swal.fire({
+          text: `Do You Want to Update "${data.ServCode}"?`,
+          icon: "question",
+          confirmButtonText: "YES",
+          cancelButtonText: "No",
+          showConfirmButton: true,
+          showDenyButton: true,
+        });
+
+        if (!result.isConfirmed) {
+          await Swal.fire({
+            text: "SAC is Not Updated",
+            icon: "info",
+            toast: true,
+            showConfirmButton: false,
+            timer: 1500,
+          });
+          return;
+        }
+
+        setLoading(true);
+        const response = await apiClient.put(`/SACSetup/${DocEntry}`, obj);
+
+        if (!response.data?.success) {
+          await Swal.fire({
+            title: "Error!",
+            text: response.data?.message || "SAC update failed",
+            icon: "warning",
+            confirmButtonText: "Ok", // ❌ no timer
+          });
+          return;
+        }
+
+        clearFormData();
+        setOpenListPage(0);
+        setOpenListData([]);
+        fetchOpenListData(0);
+
+        await Swal.fire({
+          title: "Success!",
+          text: "SAC Updated",
+          icon: "success",
+          timer: 1000,
+          showConfirmButton: false,
+        });
+      }
+    } catch (error) {
+      console.error("Error submitting form:", error);
+
+      await Swal.fire({
+        title: "Error!",
+        text:
+          error.response?.data?.message ||
+          "Something went wrong while saving SAC",
+        icon: "error",
+        confirmButtonText: "Ok", // ❌ no timer
+      });
+    } finally {
+      setLoading(false);
+    }
   };
-
-  try {
-    // ================= SAVE =================
-    if (SaveUpdateName === "SAVE") {
-      if (!Array.isArray(openListData)) return;
-
-      const isExistingSAC = openListData.some(
-        (item) =>
-          normalizeString(item.ServCode) ===
-          normalizeString(data.ServCode)
-      );
-
-      if (isExistingSAC) {
-        await Swal.fire({
-          text: "SAC Code Already Exist!",
-          icon: "info",
-          toast: true,
-          showConfirmButton: false,
-          timer: 1500,
-        });
-        return;
-      }
-
-      setLoading(true);
-      const resp = await apiClient.post(`/SACSetup`, obj);
-
-      if (!resp.data?.success) {
-        await Swal.fire({
-          title: "Error!",
-          text: resp.data?.message || "SAC is not added",
-          icon: "warning",
-          confirmButtonText: "Ok", // ❌ no timer
-        });
-        return;
-      }
-
-      clearFormData();
-      setOpenListPage(0);
-      setOpenListData([]);
-      fetchOpenListData(0);
-
-      await Swal.fire({
-        title: "Success!",
-        text: "SAC is Added",
-        icon: "success",
-        timer: 1000,
-        showConfirmButton: false,
-      });
-    }
-
-    // ================= UPDATE =================
-    else {
-      const result = await Swal.fire({
-        text: `Do You Want to Update "${data.ServCode}"?`,
-        icon: "question",
-        confirmButtonText: "YES",
-        cancelButtonText: "No",
-        showConfirmButton: true,
-        showDenyButton: true,
-      });
-
-      if (!result.isConfirmed) {
-        await Swal.fire({
-          text: "SAC is Not Updated",
-          icon: "info",
-          toast: true,
-          showConfirmButton: false,
-          timer: 1500,
-        });
-        return;
-      }
-
-      setLoading(true);
-      const response = await apiClient.put(`/SACSetup/${DocEntry}`, obj);
-
-      if (!response.data?.success) {
-        await Swal.fire({
-          title: "Error!",
-          text: response.data?.message || "SAC update failed",
-          icon: "warning",
-          confirmButtonText: "Ok", // ❌ no timer
-        });
-        return;
-      }
-
-      clearFormData();
-      setOpenListPage(0);
-      setOpenListData([]);
-      fetchOpenListData(0);
-
-      await Swal.fire({
-        title: "Success!",
-        text: "SAC Updated",
-        icon: "success",
-        timer: 1000,
-        showConfirmButton: false,
-      });
-    }
-  } catch (error) {
-    console.error("Error submitting form:", error);
-
-    await Swal.fire({
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        "Something went wrong while saving SAC",
-      icon: "error",
-      confirmButtonText: "Ok", // ❌ no timer
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
 
   // ===============Delete API ===================================
 
-const handleOnDelete = async () => {
-  const result = await Swal.fire({
-    text: "Do You Want to Delete ?",
-    icon: "question",
-    confirmButtonText: "YES",
-    cancelButtonText: "No",
-    showConfirmButton: true,
-    showDenyButton: true,
-  });
-
-  if (!result.isConfirmed) {
-    await Swal.fire({
-      text: "SAC Not Deleted",
-      icon: "info",
-      toast: true,
-      showConfirmButton: false,
-      timer: 1500,
+  const handleOnDelete = async () => {
+    const result = await Swal.fire({
+      text: "Do You Want to Delete ?",
+      icon: "question",
+      confirmButtonText: "YES",
+      cancelButtonText: "No",
+      showConfirmButton: true,
+      showDenyButton: true,
     });
-    return;
-  }
 
-  try {
-    setLoading(true);
-
-    const response = await apiClient.delete(`/SACSetup/${DocEntry}`);
-    const { success, message } = response.data;
-
-    if (!success) {
+    if (!result.isConfirmed) {
       await Swal.fire({
-        title: "Error!",
-        text: message || "SAC not deleted",
-        icon: "warning",
-        confirmButtonText: "Ok", // ❌ no timer
+        text: "SAC Not Deleted",
+        icon: "info",
+        toast: true,
+        showConfirmButton: false,
+        timer: 1500,
       });
       return;
     }
 
-    clearFormData();
-    setOpenListPage(0);
-    setOpenListData([]);
-    fetchOpenListData(0);
+    try {
+      setLoading(true);
 
-    await Swal.fire({
-      text: "SAC Deleted",
-      icon: "success",
-      toast: true,
-      showConfirmButton: false,
-      timer: 1000,
-    });
-  } catch (error) {
-    console.error("Error deleting SAC:", error);
+      const response = await apiClient.delete(`/SACSetup/${DocEntry}`);
+      const { success, message } = response.data;
 
-    await Swal.fire({
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        "An error occurred while deleting the SAC",
-      icon: "error",
-      confirmButtonText: "Ok", // ❌ no timer
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+      if (!success) {
+        await Swal.fire({
+          title: "Error!",
+          text: message || "SAC not deleted",
+          icon: "warning",
+          confirmButtonText: "Ok", // ❌ no timer
+        });
+        return;
+      }
+
+      clearFormData();
+      setOpenListPage(0);
+      setOpenListData([]);
+      fetchOpenListData(0);
+
+      await Swal.fire({
+        text: "SAC Deleted",
+        icon: "success",
+        toast: true,
+        showConfirmButton: false,
+        timer: 1000,
+      });
+    } catch (error) {
+      console.error("Error deleting SAC:", error);
+
+      await Swal.fire({
+        title: "Error!",
+        text:
+          error.response?.data?.message ||
+          "An error occurred while deleting the SAC",
+        icon: "error",
+        confirmButtonText: "Ok", // ❌ no timer
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const sidebarContent = (
     <>

@@ -205,7 +205,7 @@ export default function ReportAndLayout() {
     const currentRows = watch("oLines") || [];
     if (currentRows.length === 0) return "";
     const sorted = [...currentRows].sort((a, b) =>
-      a.DocCode.localeCompare(b.DocCode)
+      a.DocCode.localeCompare(b.DocCode),
     );
     return sorted[sorted.length - 1]?.DocCode || "";
   };
@@ -264,16 +264,36 @@ export default function ReportAndLayout() {
   const handleFileUpload = async (file) => {
     if (!file) return;
 
+    const allowedExtensions = ["jpg", "jpeg", "png", "pdf", "rdl"];
+
     const dotIndex = file.name.lastIndexOf(".");
     const name = dotIndex !== -1 ? file.name.substring(0, dotIndex) : file.name;
-    const extension = dotIndex !== -1 ? file.name.substring(dotIndex + 1) : "";
+
+    const extension =
+      dotIndex !== -1 ? file.name.substring(dotIndex + 1).toLowerCase() : "";
+
+    // ✅ Validate extension
+    if (!allowedExtensions.includes(extension)) {
+      Swal.fire({
+        icon: "error",
+        title: "Invalid File",
+        text: "Please select a valid report or document file.",
+        confirmButtonColor: "#d33",
+      });
+      return;
+    }
+
+    const extensionWithDot = `.${extension}`;
 
     setValue("FileName", name, { shouldValidate: true, shouldDirty: true });
-    setValue("FileExt", extension, { shouldValidate: true, shouldDirty: true });
+    setValue("FileExt", extensionWithDot, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
     setValue("DocName", name, { shouldValidate: true, shouldDirty: true });
-    setValue("Type", extension); // Assuming 'Type' is also the extension
+    setValue("Type", extensionWithDot);
 
-    clearErrors(["FileExt", "DocName"]); // Clear errors after setting values
+    clearErrors(["FileExt", "DocName"]);
 
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -282,14 +302,46 @@ export default function ReportAndLayout() {
         shouldDirty: true,
       });
     };
+
     reader.readAsDataURL(file);
   };
+  const getFullMenuPath = (typeCode) => {
+    const rootName = process.env.REACT_APP_REPORT_ROOT || "Celeriq";
 
+    let pathParts = [];
+
+    const cleanName = (name) => {
+      return name.replace(/\s+/g, ""); // remove all spaces
+    };
+
+    const findNode = (nodes, parents = []) => {
+      for (let node of nodes) {
+        if (
+          node.code?.trim().toUpperCase() === typeCode?.trim().toUpperCase()
+        ) {
+          // ✅ Exclude last form
+          pathParts = parents.map(cleanName);
+          return true;
+        }
+
+        if (node.children) {
+          if (findNode(node.children, [...parents, node.title])) {
+            return true;
+          }
+        }
+      }
+      return false;
+    };
+
+    findNode(menuData);
+
+    return `/${cleanName(rootName)}/${pathParts.join("/")}`;
+  };
   const onSubmitLayoutReport = async (data) => {
     try {
       setLoading(true);
       const isUpdate = !!data.selectedRow;
-
+      const generatedPath = getFullMenuPath(data.TypeCode);
       const payload = {
         DocEntry: isUpdate ? data.selectedRow.DocEntry : 0,
         UserId: user.UserId,
@@ -309,6 +361,7 @@ export default function ReportAndLayout() {
         FileExt: data.FileExt,
         FileName: data.FileName,
         FileBase64: data.FileBase64,
+        Path: generatedPath,
         Default: "0",
       };
 
@@ -379,67 +432,63 @@ export default function ReportAndLayout() {
     setSaveUpdateName("UPDATE"); // Change button to UPDATE
   };
 
- const handleDeleteLayoutReport = async (row) => {
-  const confirmation = await Swal.fire({
-    text: `Do You Want to Delete "${row.DocName}"?`,
-    icon: "question",
-    confirmButtonText: "YES",
-    cancelButtonText: "No",
-    showConfirmButton: true,
-    showDenyButton: true,
-  });
-
-  if (!confirmation.isConfirmed) {
-    await Swal.fire({
-      text: `${isLayoutTabActive ? "Layout" : "Report"} Not Deleted`,
-      icon: "info",
-      confirmButtonText: "Ok", // ❌ NO TIMER
+  const handleDeleteLayoutReport = async (row) => {
+    const confirmation = await Swal.fire({
+      text: `Do You Want to Delete "${row.DocName}"?`,
+      icon: "question",
+      confirmButtonText: "YES",
+      cancelButtonText: "No",
+      showConfirmButton: true,
+      showDenyButton: true,
     });
-    return;
-  }
 
-  try {
-    setLoading(true);
-
-    const response = await apiClient.delete(
-      `/ReportDoc/${row.DocEntry}`
-    );
-
-    if (response.data.success) {
-      fetchLayoutData(TypeCode);
-      clearLayoutReportFormData();
-
+    if (!confirmation.isConfirmed) {
       await Swal.fire({
-        icon: "success",
-        title: "Success",
-        text: `${isLayoutTabActive ? "Layout" : "Report"} Deleted`,
-        confirmButtonText: "Ok",
-        timer: 1500, // ✅ SUCCESS TIMER
-      });
-    } else {
-      await Swal.fire({
-        title: "Error!",
-        text: response.data.message || "Deletion failed",
-        icon: "warning",
+        text: `${isLayoutTabActive ? "Layout" : "Report"} Not Deleted`,
+        icon: "info",
         confirmButtonText: "Ok", // ❌ NO TIMER
       });
+      return;
     }
-  } catch (error) {
-    console.error("Error deleting:", error);
 
-    await Swal.fire({
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        "An error occurred while deleting.",
-      icon: "error",
-      confirmButtonText: "Ok", // ❌ NO TIMER
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      setLoading(true);
 
+      const response = await apiClient.delete(`/ReportDoc/${row.DocEntry}`);
+
+      if (response.data.success) {
+        fetchLayoutData(TypeCode);
+        clearLayoutReportFormData();
+
+        await Swal.fire({
+          icon: "success",
+          title: "Success",
+          text: `${isLayoutTabActive ? "Layout" : "Report"} Deleted`,
+          confirmButtonText: "Ok",
+          timer: 1500, // ✅ SUCCESS TIMER
+        });
+      } else {
+        await Swal.fire({
+          title: "Error!",
+          text: response.data.message || "Deletion failed",
+          icon: "warning",
+          confirmButtonText: "Ok", // ❌ NO TIMER
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting:", error);
+
+      await Swal.fire({
+        title: "Error!",
+        text:
+          error.response?.data?.message || "An error occurred while deleting.",
+        icon: "error",
+        confirmButtonText: "Ok", // ❌ NO TIMER
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fileTypeMap = {
     txt: "TEXT File",
@@ -516,7 +565,7 @@ export default function ReportAndLayout() {
         ),
       },
     ],
-    [isLayoutTabActive, TypeCode]
+    [isLayoutTabActive, TypeCode],
   ); // Re-memoize if isLayoutTabActive or TypeCode changes
 
   const childObjectMapping = {
@@ -623,7 +672,7 @@ export default function ReportAndLayout() {
   const handleGroupingCellChange = (rowId, field, value) => {
     const prevRows = getGroupingValues("groupingOlines") || [];
     const updatedRows = prevRows.map((row) =>
-      (row.id ?? row.LineNum) === rowId ? { ...row, [field]: value } : row
+      (row.id ?? row.LineNum) === rowId ? { ...row, [field]: value } : row,
     );
 
     // Update FirstLayout if LaytCode of first row changed
@@ -631,7 +680,7 @@ export default function ReportAndLayout() {
       const firstRow = updatedRows[0];
       if ((firstRow.id ?? firstRow.LineNum) === rowId) {
         const selectedOption = layoutOptionsMap[rowId]?.find(
-          (opt) => opt.key === value
+          (opt) => opt.key === value,
         );
         setGroupingValue("FirstLayout", selectedOption?.value || "");
       }
@@ -640,97 +689,94 @@ export default function ReportAndLayout() {
     setGroupingValue("groupingOlines", updatedRows);
   };
 
-const handleGroupingObjectIDChange = async (rowId, objectCode) => {
-  handleGroupingCellChange(rowId, "ObjectID", objectCode);
+  const handleGroupingObjectIDChange = async (rowId, objectCode) => {
+    handleGroupingCellChange(rowId, "ObjectID", objectCode);
 
-  // Clear layouts if no object selected
-  if (!objectCode) {
-    setLayoutOptionsMap((prev) => ({ ...prev, [rowId]: [] }));
-    handleGroupingCellChange(rowId, "LaytCode", "");
-    return;
-  }
-
-  let options = [];
-
-  try {
-    setLoading(true);
-
-    // ✅ Use cache if available
-    if (objectLayoutsCache[objectCode]) {
-      options = objectLayoutsCache[objectCode];
-    } else {
-      const response = await apiClient.get(
-        `/ReportDoc?TypeCode=${objectCode}`
-      );
-
-      const data = response.data?.values || [];
-
-      options = data.map((item) => ({
-        key: item.DocCode,
-        value: item.DocName,
-      }));
-
-      setObjectLayoutsCache((prev) => ({
-        ...prev,
-        [objectCode]: options,
-      }));
-    }
-
-    setLayoutOptionsMap((prev) => ({ ...prev, [rowId]: options }));
-
-    // ---------------- UPDATE LaytCode ----------------
-    if (options.length > 0) {
-      const firstOption = options[0];
-      handleGroupingCellChange(rowId, "LaytCode", firstOption.key);
-
-      const prevRows = getGroupingValues("groupingOlines") || [];
-      const updatedRows = prevRows.map((row) =>
-        (row.id ?? row.LineNum) === rowId
-          ? { ...row, LaytCode: firstOption.key }
-          : row
-      );
-
-      setGroupingValue("groupingOlines", updatedRows);
-
-      // If first row → update FirstLayout
-      if (
-        updatedRows.length > 0 &&
-        (updatedRows[0].id ?? updatedRows[0].LineNum) === rowId
-      ) {
-        setGroupingValue("FirstLayout", firstOption.value);
-      }
-    } else {
+    // Clear layouts if no object selected
+    if (!objectCode) {
+      setLayoutOptionsMap((prev) => ({ ...prev, [rowId]: [] }));
       handleGroupingCellChange(rowId, "LaytCode", "");
-
-      const prevRows = getGroupingValues("groupingOlines") || [];
-      if (
-        prevRows.length > 0 &&
-        (prevRows[0].id ?? prevRows[0].LineNum) === rowId
-      ) {
-        setGroupingValue("FirstLayout", "");
-      }
+      return;
     }
-  } catch (error) {
-    console.error("Failed to fetch Layout options:", error);
 
-    await Swal.fire({
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        "Failed to fetch Layout options",
-      icon: "error",
-      confirmButtonText: "Ok", // ❌ NO TIMER
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+    let options = [];
 
+    try {
+      setLoading(true);
+
+      // ✅ Use cache if available
+      if (objectLayoutsCache[objectCode]) {
+        options = objectLayoutsCache[objectCode];
+      } else {
+        const response = await apiClient.get(
+          `/ReportDoc?TypeCode=${objectCode}`,
+        );
+
+        const data = response.data?.values || [];
+
+        options = data.map((item) => ({
+          key: item.DocCode,
+          value: item.DocName,
+        }));
+
+        setObjectLayoutsCache((prev) => ({
+          ...prev,
+          [objectCode]: options,
+        }));
+      }
+
+      setLayoutOptionsMap((prev) => ({ ...prev, [rowId]: options }));
+
+      // ---------------- UPDATE LaytCode ----------------
+      if (options.length > 0) {
+        const firstOption = options[0];
+        handleGroupingCellChange(rowId, "LaytCode", firstOption.key);
+
+        const prevRows = getGroupingValues("groupingOlines") || [];
+        const updatedRows = prevRows.map((row) =>
+          (row.id ?? row.LineNum) === rowId
+            ? { ...row, LaytCode: firstOption.key }
+            : row,
+        );
+
+        setGroupingValue("groupingOlines", updatedRows);
+
+        // If first row → update FirstLayout
+        if (
+          updatedRows.length > 0 &&
+          (updatedRows[0].id ?? updatedRows[0].LineNum) === rowId
+        ) {
+          setGroupingValue("FirstLayout", firstOption.value);
+        }
+      } else {
+        handleGroupingCellChange(rowId, "LaytCode", "");
+
+        const prevRows = getGroupingValues("groupingOlines") || [];
+        if (
+          prevRows.length > 0 &&
+          (prevRows[0].id ?? prevRows[0].LineNum) === rowId
+        ) {
+          setGroupingValue("FirstLayout", "");
+        }
+      }
+    } catch (error) {
+      console.error("Failed to fetch Layout options:", error);
+
+      await Swal.fire({
+        title: "Error!",
+        text: error.response?.data?.message || "Failed to fetch Layout options",
+        icon: "error",
+        confirmButtonText: "Ok", // ❌ NO TIMER
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleDeleteGroupingRow = (rowId) => {
     const prevRows = getGroupingValues("groupingOlines") || [];
     const updatedRows = prevRows.filter(
-      (row) => (row.id ?? row.LineNum) !== rowId
+      (row) => (row.id ?? row.LineNum) !== rowId,
     );
 
     setGroupingValue("groupingOlines", updatedRows);
@@ -745,7 +791,7 @@ const handleGroupingObjectIDChange = async (rowId, objectCode) => {
     const defaultObjectID = isFirstRow
       ? objectIDOptions.find(
           (opt) =>
-            opt.key.toUpperCase() === (TypeCode || "").trim().toUpperCase()
+            opt.key.toUpperCase() === (TypeCode || "").trim().toUpperCase(),
         )?.key || ""
       : "";
 
@@ -864,49 +910,47 @@ const handleGroupingObjectIDChange = async (rowId, objectCode) => {
         ),
       },
     ],
-    [groupingOlines, objectIDOptions, layoutOptionsMap] // Dependencies for memoization
+    [groupingOlines, objectIDOptions, layoutOptionsMap], // Dependencies for memoization
   );
 
-const fetchGroupingDataList = async (pageNum = 0, searchTerm = "") => {
-  try {
-    setLoading(true);
+  const fetchGroupingDataList = async (pageNum = 0, searchTerm = "") => {
+    try {
+      setLoading(true);
 
-    const url = `/ReportGrouping?TypeCode=${getValues("TypeCode")}&Status=1${
-      searchTerm ? `&SearchText=${searchTerm}` : ""
-    }&Page=${pageNum}&Limit=20`;
+      const url = `/ReportGrouping?TypeCode=${getValues("TypeCode")}&Status=1${
+        searchTerm ? `&SearchText=${searchTerm}` : ""
+      }&Page=${pageNum}&Limit=20`;
 
-    const response = await apiClient.get(url);
+      const response = await apiClient.get(url);
 
-    if (response.data.success) {
-      const newData = response.data.values || [];
+      if (response.data.success) {
+        const newData = response.data.values || [];
 
-      setHasMoreGroups(newData.length === 20);
-      setGroups((prev) =>
-        pageNum === 0 ? newData : [...prev, ...newData]
-      );
-    } else {
+        setHasMoreGroups(newData.length === 20);
+        setGroups((prev) => (pageNum === 0 ? newData : [...prev, ...newData]));
+      } else {
+        await Swal.fire({
+          title: "Error!",
+          text: response.data.message || "Failed to fetch grouping data",
+          icon: "warning",
+          confirmButtonText: "Ok", // ❌ NO TIMER
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching grouping data:", error);
+
       await Swal.fire({
         title: "Error!",
-        text: response.data.message || "Failed to fetch grouping data",
-        icon: "warning",
+        text:
+          error.response?.data?.message ||
+          "Something went wrong while fetching grouping data",
+        icon: "error",
         confirmButtonText: "Ok", // ❌ NO TIMER
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching grouping data:", error);
-
-    await Swal.fire({
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        "Something went wrong while fetching grouping data",
-      icon: "error",
-      confirmButtonText: "Ok", // ❌ NO TIMER
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const handleGroupSearch = (value) => {
     setGroupQuery(value);
@@ -932,133 +976,132 @@ const fetchGroupingDataList = async (pageNum = 0, searchTerm = "") => {
     fetchGroupingDataList(groupPage + 1, groupSearching ? groupQuery : "");
   };
 
- const setGroupingDataForEdit = async (DocEntry) => {
-  if (!DocEntry) return;
+  const setGroupingDataForEdit = async (DocEntry) => {
+    if (!DocEntry) return;
 
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const response = await apiClient.get(
-      `/ReportGrouping?DocEntry=${DocEntry}`
-    );
+      const response = await apiClient.get(
+        `/ReportGrouping?DocEntry=${DocEntry}`,
+      );
 
-    if (!response.data?.success) {
+      if (!response.data?.success) {
+        await Swal.fire({
+          title: "Error!",
+          text: response.data?.message || "Failed to fetch grouping data",
+          icon: "warning",
+          confirmButtonText: "Ok", // ❌ NO TIMER
+        });
+        return;
+      }
+
+      const data = response.data.values || {};
+
+      setGroupingValue("SeqName", data.SeqName || "");
+      setGroupingValue("GroupingStatus", data.Status === 1 ? 1 : 0);
+
+      // 1️⃣ Build rows
+      const tempRows = (data.oLines || []).map((line) => ({
+        ...line,
+        id: line.LineNum ?? crypto.randomUUID(),
+        ObjectID: line.ObjectID,
+      }));
+
+      // 2️⃣ Fetch layout options (with cache)
+      const layoutDataMap = {};
+      const newObjectLayoutsToCache = {};
+
+      await Promise.all(
+        tempRows.map(async (row) => {
+          if (!row.ObjectID) {
+            layoutDataMap[row.id] = [];
+            return;
+          }
+
+          let options = [];
+
+          if (objectLayoutsCache[row.ObjectID]) {
+            options = objectLayoutsCache[row.ObjectID];
+          } else {
+            try {
+              const resp = await apiClient.get(
+                `/ReportDoc?TypeCode=${row.ObjectID}`,
+              );
+
+              const fetchedData = resp.data?.values || [];
+              options = fetchedData.map((item) => ({
+                key: item.DocCode,
+                value: item.DocName,
+              }));
+
+              newObjectLayoutsToCache[row.ObjectID] = options;
+            } catch (err) {
+              console.error(
+                `Failed to fetch layout options for ObjectID ${row.ObjectID}:`,
+                err,
+              );
+              options = [];
+            }
+          }
+
+          layoutDataMap[row.id] = options;
+        }),
+      );
+
+      // Update cache
+      setObjectLayoutsCache((prev) => ({
+        ...prev,
+        ...newObjectLayoutsToCache,
+      }));
+
+      // 3️⃣ Sync LaytCode
+      const updatedRows = tempRows.map((row) => {
+        const options = layoutDataMap[row.id] || [];
+        const selectedLayout =
+          options.find((opt) => opt.key === row.LaytCode) || options[0];
+
+        return {
+          ...row,
+          LaytCode: selectedLayout ? selectedLayout.key : "",
+        };
+      });
+
+      // 4️⃣ Commit state
+      setLayoutOptionsMap(layoutDataMap);
+      setGroupingValue("groupingOlines", updatedRows);
+      setGroupingValue("NoOfSteps", updatedRows.length);
+
+      // 5️⃣ FirstLayout
+      if (updatedRows.length > 0) {
+        const firstRowOptions = layoutDataMap[updatedRows[0].id] || [];
+        const selectedLayout = firstRowOptions.find(
+          (opt) => opt.key === updatedRows[0].LaytCode,
+        );
+
+        setGroupingValue(
+          "FirstLayout",
+          selectedLayout ? selectedLayout.value : "",
+        );
+      }
+
+      setSaveUpdateName("UPDATE");
+      setSelectedData(DocEntry);
+    } catch (error) {
+      console.error("Error fetching ReportGrouping data:", error);
+
       await Swal.fire({
         title: "Error!",
-        text: response.data?.message || "Failed to fetch grouping data",
-        icon: "warning",
+        text:
+          error.response?.data?.message ||
+          "An error occurred while fetching the ReportGrouping data.",
+        icon: "error",
         confirmButtonText: "Ok", // ❌ NO TIMER
       });
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    const data = response.data.values || {};
-
-    setGroupingValue("SeqName", data.SeqName || "");
-    setGroupingValue("GroupingStatus", data.Status === 1 ? 1 : 0);
-
-    // 1️⃣ Build rows
-    const tempRows = (data.oLines || []).map((line) => ({
-      ...line,
-      id: line.LineNum ?? crypto.randomUUID(),
-      ObjectID: line.ObjectID,
-    }));
-
-    // 2️⃣ Fetch layout options (with cache)
-    const layoutDataMap = {};
-    const newObjectLayoutsToCache = {};
-
-    await Promise.all(
-      tempRows.map(async (row) => {
-        if (!row.ObjectID) {
-          layoutDataMap[row.id] = [];
-          return;
-        }
-
-        let options = [];
-
-        if (objectLayoutsCache[row.ObjectID]) {
-          options = objectLayoutsCache[row.ObjectID];
-        } else {
-          try {
-            const resp = await apiClient.get(
-              `/ReportDoc?TypeCode=${row.ObjectID}`
-            );
-
-            const fetchedData = resp.data?.values || [];
-            options = fetchedData.map((item) => ({
-              key: item.DocCode,
-              value: item.DocName,
-            }));
-
-            newObjectLayoutsToCache[row.ObjectID] = options;
-          } catch (err) {
-            console.error(
-              `Failed to fetch layout options for ObjectID ${row.ObjectID}:`,
-              err
-            );
-            options = [];
-          }
-        }
-
-        layoutDataMap[row.id] = options;
-      })
-    );
-
-    // Update cache
-    setObjectLayoutsCache((prev) => ({
-      ...prev,
-      ...newObjectLayoutsToCache,
-    }));
-
-    // 3️⃣ Sync LaytCode
-    const updatedRows = tempRows.map((row) => {
-      const options = layoutDataMap[row.id] || [];
-      const selectedLayout =
-        options.find((opt) => opt.key === row.LaytCode) || options[0];
-
-      return {
-        ...row,
-        LaytCode: selectedLayout ? selectedLayout.key : "",
-      };
-    });
-
-    // 4️⃣ Commit state
-    setLayoutOptionsMap(layoutDataMap);
-    setGroupingValue("groupingOlines", updatedRows);
-    setGroupingValue("NoOfSteps", updatedRows.length);
-
-    // 5️⃣ FirstLayout
-    if (updatedRows.length > 0) {
-      const firstRowOptions = layoutDataMap[updatedRows[0].id] || [];
-      const selectedLayout = firstRowOptions.find(
-        (opt) => opt.key === updatedRows[0].LaytCode
-      );
-
-      setGroupingValue(
-        "FirstLayout",
-        selectedLayout ? selectedLayout.value : ""
-      );
-    }
-
-    setSaveUpdateName("UPDATE");
-    setSelectedData(DocEntry);
-  } catch (error) {
-    console.error("Error fetching ReportGrouping data:", error);
-
-    await Swal.fire({
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        "An error occurred while fetching the ReportGrouping data.",
-      icon: "error",
-      confirmButtonText: "Ok", // ❌ NO TIMER
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const handleSaveUpdateGrouping = async () => {
     const formData = getGroupingValues();
@@ -1178,7 +1221,7 @@ const fetchGroupingDataList = async (pageNum = 0, searchTerm = "") => {
       try {
         setLoading(true);
         const response = await apiClient.delete(
-          `/ReportGrouping/${selectedData}`
+          `/ReportGrouping/${selectedData}`,
         );
         if (response.data.success) {
           Swal.fire({
@@ -1238,7 +1281,7 @@ const fetchGroupingDataList = async (pageNum = 0, searchTerm = "") => {
     setLoading(true);
     try {
       const response = await apiClient.get(
-        `/ReportLeyoutV2?Status=1&Limit=1000`
+        `/ReportLeyoutV2?Status=1&Limit=1000`,
       );
       if (response.data.success) {
         const formattedData = formatMenuData(response.data.values);
@@ -1302,7 +1345,7 @@ const fetchGroupingDataList = async (pageNum = 0, searchTerm = "") => {
         "DocCode",
         docCodes.length > 0
           ? generateNextDocCode(docCodes.sort().at(-1))
-          : `${typeCode}0001`
+          : `${typeCode}0001`,
       );
     } catch (error) {
       console.error("Error fetching layout data:", error);
@@ -1340,7 +1383,7 @@ const fetchGroupingDataList = async (pageNum = 0, searchTerm = "") => {
         "DocCode",
         docCodes.length > 0
           ? generateNextDocCode(docCodes.sort().at(-1))
-          : `${typeCode}0001`
+          : `${typeCode}0001`,
       );
     } catch (error) {
       console.error("Error fetching report data:", error);
@@ -1808,8 +1851,8 @@ const fetchGroupingDataList = async (pageNum = 0, searchTerm = "") => {
               params.id === selectedRow
                 ? "selected-row"
                 : params.row.Default === "Y"
-                ? "default-row"
-                : ""
+                  ? "default-row"
+                  : ""
             }
             hideFooter
             // sx={{
@@ -2296,7 +2339,7 @@ const fetchGroupingDataList = async (pageNum = 0, searchTerm = "") => {
                                           checked={field.value === 1}
                                           onChange={(e) =>
                                             field.onChange(
-                                              e.target.checked ? 1 : 0
+                                              e.target.checked ? 1 : 0,
                                             )
                                           }
                                         />
@@ -2348,7 +2391,7 @@ const fetchGroupingDataList = async (pageNum = 0, searchTerm = "") => {
                                       newRows[0]?.id !== firstRow.id
                                     ) {
                                       newRows = newRows.filter(
-                                        (r) => r.id !== firstRow.id
+                                        (r) => r.id !== firstRow.id,
                                       );
                                       newRows = [firstRow, ...newRows];
                                     }

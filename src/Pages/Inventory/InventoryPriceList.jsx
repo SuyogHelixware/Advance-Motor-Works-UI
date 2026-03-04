@@ -22,7 +22,7 @@ import {
   Tabs,
   Tooltip,
   Typography,
-  useTheme
+  useTheme,
 } from "@mui/material";
 import { DataGrid, useGridApiRef } from "@mui/x-data-grid";
 import dayjs from "dayjs";
@@ -47,7 +47,7 @@ import DataGridModal from "../Components/DataGridModal";
 import {
   InputSearchableSelect,
   InputSelectTextField,
-  InputTextField
+  InputTextField,
 } from "../Components/formComponents";
 import { Loader } from "../Components/Loader";
 import SearchInputField from "../Components/SearchInputField";
@@ -124,7 +124,7 @@ export default function InventoryPriceList() {
 
   const [openCreateCurrencyDialog, setopenCreateCurrencyDialog] =
     useState(false);
-    const handleCurrencyClose = () => setopenCreateCurrencyDialog(false);
+  const handleCurrencyClose = () => setopenCreateCurrencyDialog(false);
   const apiRef = useGridApiRef();
 
   const handleTabChangeRight = (e, newvalue1) => {
@@ -177,59 +177,59 @@ export default function InventoryPriceList() {
     setOpenListPage((prev) => prev + 1);
   };
 
- const fetchOpenListData = async (pageNum = 0, searchTerm = "") => {
-  try {
-    setIsLoading(true); // 🔄 start loader
+  const fetchOpenListData = async (pageNum = 0, searchTerm = "") => {
+    try {
+      setIsLoading(true); // 🔄 start loader
 
-    const url = searchTerm.trim()
-      ? `/PriceList/search/${searchTerm}/1/${pageNum}/20`
-      : `/PriceList/pages/1/${pageNum}/20`;
+      const url = searchTerm.trim()
+        ? `/PriceList/search/${searchTerm}/1/${pageNum}/20`
+        : `/PriceList/pages/1/${pageNum}/20`;
 
-    const response = await apiClient.get(url);
+      const response = await apiClient.get(url);
 
-    if (!response.data?.success) {
+      if (!response.data?.success) {
+        Swal.fire({
+          icon: "warning",
+          title: "Error",
+          text: response.data?.message || "Failed to fetch price list",
+        });
+        return;
+      }
+
+      const newData = response.data.values || [];
+
+      // 📭 Record not found (only on first page)
+      if (pageNum === 0 && newData.length === 0) {
+        Swal.fire({
+          text: "Record Not Found",
+          icon: "warning",
+          toast: true,
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
+        });
+      }
+
+      setHasMoreOpen(newData.length === 20);
+
+      setOpenListData((prev) =>
+        pageNum === 0 ? newData : [...prev, ...newData],
+      );
+    } catch (error) {
+      console.error("❌ Error fetching price list:", error);
+
       Swal.fire({
-        icon: "warning",
+        icon: "error",
         title: "Error",
-        text: response.data?.message || "Failed to fetch price list",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong while fetching data",
       });
-      return;
+    } finally {
+      setIsLoading(false); // ✅ stop loader always
     }
-
-    const newData = response.data.values || [];
-
-    // 📭 Record not found (only on first page)
-    if (pageNum === 0 && newData.length === 0) {
-      Swal.fire({
-        text: "Record Not Found",
-        icon: "warning",
-        toast: true,
-        showConfirmButton: false,
-        timer: 2000,
-        timerProgressBar: true,
-      });
-    }
-
-    setHasMoreOpen(newData.length === 20);
-
-    setOpenListData((prev) =>
-      pageNum === 0 ? newData : [...prev, ...newData],
-    );
-  } catch (error) {
-    console.error("❌ Error fetching price list:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong while fetching data",
-    });
-  } finally {
-    setIsLoading(false); // ✅ stop loader always
-  }
-};
+  };
 
   //=============================Inactive tab functions===============================================================
 
@@ -265,92 +265,91 @@ export default function InventoryPriceList() {
     setCloseListPage((prev) => prev + 1);
   };
 
-const fetchCloseListData = async (pageNum = 0, searchTerm = "") => {
-  try {
-    setIsLoading(true); // 🔄 start loader
+  const fetchCloseListData = async (pageNum = 0, searchTerm = "") => {
+    try {
+      setIsLoading(true); // 🔄 start loader
 
-    const url = searchTerm.trim()
-      ? `/PriceList/search/${searchTerm}/0/${pageNum}/20`
-      : `/PriceList/pages/0/${pageNum}/20`;
+      const url = searchTerm.trim()
+        ? `/PriceList/search/${searchTerm}/0/${pageNum}/20`
+        : `/PriceList/pages/0/${pageNum}/20`;
 
-    const response = await apiClient.get(url);
+      const response = await apiClient.get(url);
 
-    if (!response.data?.success) {
+      if (!response.data?.success) {
+        Swal.fire({
+          icon: "warning",
+          title: "Error",
+          text: response.data?.message || "Failed to fetch closed price list",
+        });
+        return;
+      }
+
+      const newData = response.data.values || [];
+
+      // 📭 Record not found (only on first page)
+      if (pageNum === 0 && newData.length === 0) {
+        Swal.fire({
+          text: "Record Not Found",
+          icon: "warning",
+          toast: true,
+          showConfirmButton: false,
+          timer: 2000,
+          timerProgressBar: true,
+        });
+      }
+
+      setHasMoreClose(newData.length === 20);
+
+      setCloseListData((prev) =>
+        pageNum === 0 ? newData : [...prev, ...newData],
+      );
+    } catch (error) {
+      console.error("❌ Error fetching closed price list:", error);
+
       Swal.fire({
-        icon: "warning",
+        icon: "error",
         title: "Error",
-        text: response.data?.message || "Failed to fetch closed price list",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong while fetching data",
       });
-      return;
+    } finally {
+      setIsLoading(false); // ✅ stop loader
     }
+  };
 
-    const newData = response.data.values || [];
+  const FetchUomData = async () => {
+    try {
+      setIsLoading(true); // 🔄 start loader
 
-    // 📭 Record not found (only on first page)
-    if (pageNum === 0 && newData.length === 0) {
+      const res = await apiClient.get(`/UnitofMeasure/All`);
+
+      if (!res.data?.success) {
+        Swal.fire({
+          icon: "warning",
+          title: "Error",
+          text: res.data?.message || "Failed to fetch Unit of Measure data",
+        });
+        return;
+      }
+
+      setUomData(res.data.values || []);
+    } catch (error) {
+      console.error("❌ Error fetching UOM data:", error);
+
       Swal.fire({
-        text: "Record Not Found",
-        icon: "warning",
-        toast: true,
-        showConfirmButton: false,
-        timer: 2000,
-        timerProgressBar: true,
-      });
-    }
-
-    setHasMoreClose(newData.length === 20);
-
-    setCloseListData((prev) =>
-      pageNum === 0 ? newData : [...prev, ...newData],
-    );
-  } catch (error) {
-    console.error("❌ Error fetching closed price list:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong while fetching data",
-    });
-  } finally {
-    setIsLoading(false); // ✅ stop loader
-  }
-};
-
-
-const FetchUomData = async () => {
-  try {
-    setIsLoading(true); // 🔄 start loader
-
-    const res = await apiClient.get(`/UnitofMeasure/All`);
-
-    if (!res.data?.success) {
-      Swal.fire({
-        icon: "warning",
+        icon: "error",
         title: "Error",
-        text: res.data?.message || "Failed to fetch Unit of Measure data",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong while fetching Unit of Measure data",
       });
-      return;
+    } finally {
+      setIsLoading(false); // ✅ stop loader
     }
-
-    setUomData(res.data.values || []);
-  } catch (error) {
-    console.error("❌ Error fetching UOM data:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong while fetching Unit of Measure data",
-    });
-  } finally {
-    setIsLoading(false); // ✅ stop loader
-  }
-};
+  };
 
   // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   const OpenDailog = () => {
@@ -420,49 +419,47 @@ const FetchUomData = async () => {
     );
     setGetListPagePriceList((prev) => prev + 1);
   };
- const fetchGetListDataPriceList = async (pageNum = 0, searchTerm = "") => {
-  try {
-    setIsLoading(true); // 🔄 start loader
+  const fetchGetListDataPriceList = async (pageNum = 0, searchTerm = "") => {
+    try {
+      setIsLoading(true); // 🔄 start loader
 
-    const url = searchTerm
-      ? `/PriceList/Search/${searchTerm}/1/${pageNum}/20`
-      : `/PriceList/Pages/1/${pageNum}/20`;
+      const url = searchTerm
+        ? `/PriceList/Search/${searchTerm}/1/${pageNum}/20`
+        : `/PriceList/Pages/1/${pageNum}/20`;
 
-    const response = await apiClient.get(url);
+      const response = await apiClient.get(url);
 
-    if (!response.data?.success) {
+      if (!response.data?.success) {
+        Swal.fire({
+          icon: "warning",
+          title: "Error",
+          text: response.data?.message || "Failed to fetch Price List data",
+        });
+        return;
+      }
+
+      const newData = response.data.values || [];
+
+      setHasMoreGetListPriceList(newData.length === 20);
+
+      setGetListDataPriceList((prev) =>
+        pageNum === 0 ? newData : [...prev, ...newData],
+      );
+    } catch (error) {
+      console.error("❌ PriceList fetch error:", error);
+
       Swal.fire({
-        icon: "warning",
+        icon: "error",
         title: "Error",
         text:
-          response.data?.message ||
-          "Failed to fetch Price List data",
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong while fetching Price List data",
       });
-      return;
+    } finally {
+      setIsLoading(false); // ✅ stop loader
     }
-
-    const newData = response.data.values || [];
-
-    setHasMoreGetListPriceList(newData.length === 20);
-
-    setGetListDataPriceList((prev) =>
-      pageNum === 0 ? newData : [...prev, ...newData],
-    );
-  } catch (error) {
-    console.error("❌ PriceList fetch error:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong while fetching Price List data",
-    });
-  } finally {
-    setIsLoading(false); // ✅ stop loader
-  }
-};
+  };
 
   // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
@@ -473,79 +470,79 @@ const FetchUomData = async () => {
     handleGetListClearPriceList1();
     setSearchmodelOpen1(false);
   };
- const onSelectRequestPriceList1 = async (docEntry, ListName) => {
-  if (!selectedRowData) return;
+  const onSelectRequestPriceList1 = async (docEntry, ListName) => {
+    if (!selectedRowData) return;
 
-  const itemCode = selectedRowData.ItemCode;
-  const status = 1;
-  const page = 0;
-  const limit = 20;
+    const itemCode = selectedRowData.ItemCode;
+    const status = 1;
+    const page = 0;
+    const limit = 20;
 
-  const url = `/PriceList/ItemsPrices/Search/${docEntry}/${itemCode}/${status}/${page}/${limit}`;
+    const url = `/PriceList/ItemsPrices/Search/${docEntry}/${itemCode}/${status}/${page}/${limit}`;
 
-  try {
-    setIsLoading(true); // 🔄 start loader
+    try {
+      setIsLoading(true); // 🔄 start loader
 
-    const response = await apiClient.get(url);
+      const response = await apiClient.get(url);
 
-    if (!response.data?.success) {
+      if (!response.data?.success) {
+        Swal.fire({
+          icon: "warning",
+          title: "Error",
+          text:
+            response.data?.message ||
+            "Failed to fetch item price from Price List",
+        });
+        return;
+      }
+
+      const data = response.data?.values?.[0]; // first item
+
+      if (!data) {
+        Swal.fire({
+          icon: "info",
+          text: "No price found for the selected item in this Price List",
+        });
+        return;
+      }
+
+      const currentLines = getValues("oLines") || [];
+
+      const updatedLines = currentLines.map((row, index) => {
+        if (index !== selectedRowData.id) return row;
+
+        return {
+          ...row,
+          Factor: "", // clear factor
+          BasePLNum: ListName, // selected Price List name
+          BasePrice: Number(data.Price || 0).toFixed(2), // base price
+          Price: "", // reset price
+          _wasEdited: true,
+          manual: false,
+        };
+      });
+
+      reset({
+        ...allFormData,
+        oLines: updatedLines,
+      });
+    } catch (error) {
+      console.error("❌ Error fetching item prices:", error);
+
       Swal.fire({
-        icon: "warning",
+        icon: "error",
         title: "Error",
         text:
-          response.data?.message ||
-          "Failed to fetch item price from Price List",
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong while fetching item price",
       });
-      return;
+    } finally {
+      setIsLoading(false); // ✅ stop loader
     }
 
-    const data = response.data?.values?.[0]; // first item
-
-    if (!data) {
-      Swal.fire({
-        icon: "info",
-        text: "No price found for the selected item in this Price List",
-      });
-      return;
-    }
-
-    const currentLines = getValues("oLines") || [];
-
-    const updatedLines = currentLines.map((row, index) => {
-      if (index !== selectedRowData.id) return row;
-
-      return {
-        ...row,
-        Factor: "", // clear factor
-        BasePLNum: ListName, // selected Price List name
-        BasePrice: Number(data.Price || 0).toFixed(2), // base price
-        Price: "", // reset price
-        _wasEdited: true,
-        manual: false,
-      };
-    });
-
-    reset({
-      ...allFormData,
-      oLines: updatedLines,
-    });
-  } catch (error) {
-    console.error("❌ Error fetching item prices:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong while fetching item price",
-    });
-  } finally {
-    setIsLoading(false); // ✅ stop loader
-  }
-
-  SearchModelClose1();
-};
+    SearchModelClose1();
+  };
 
   const handleGetListClearPriceList1 = () => {
     setGetListQueryPriceList1("");
@@ -582,87 +579,86 @@ const FetchUomData = async () => {
     setDrawerOpen(!drawerOpen);
   };
 
- const CurrencyData = async () => {
-  try {
-    setIsLoading(true); // 🔄 start loader
+  const CurrencyData = async () => {
+    try {
+      setIsLoading(true); // 🔄 start loader
 
-    const res = await apiClient.get(`/Currency/all`);
+      const res = await apiClient.get(`/Currency/all`);
 
-    // ✅ handle API-level failure
-    if (!res.data?.success) {
-      Swal.fire({
-        icon: "warning",
-        title: "Error",
-        text: res.data?.message || "Failed to fetch currency data",
-      });
-      return;
-    }
-
-    const response = res.data.values || [];
-    setCurrencydata(response); // set list
-
-    // ✔ match company currency immediately
-    if (companyData?.MainCurncy && response.length > 0) {
-      const matched = response.find(
-        (x) => x.CurrCode === companyData.MainCurncy,
-      );
-
-      if (matched) {
-        setValue("PrimCurr", matched.DocCurrCod); // RHF default
-        setSelectedCurrency(matched.DocCurrCod); // local state
+      // ✅ handle API-level failure
+      if (!res.data?.success) {
+        Swal.fire({
+          icon: "warning",
+          title: "Error",
+          text: res.data?.message || "Failed to fetch currency data",
+        });
+        return;
       }
+
+      const response = res.data.values || [];
+      setCurrencydata(response); // set list
+
+      // ✔ match company currency immediately
+      if (companyData?.MainCurncy && response.length > 0) {
+        const matched = response.find(
+          (x) => x.CurrCode === companyData.MainCurncy,
+        );
+
+        if (matched) {
+          setValue("PrimCurr", matched.DocCurrCod); // RHF default
+          setSelectedCurrency(matched.DocCurrCod); // local state
+        }
+      }
+    } catch (error) {
+      console.error("❌ Currency fetch error:", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong while fetching currency data",
+      });
+    } finally {
+      setIsLoading(false); // ✅ stop loader always
     }
-  } catch (error) {
-    console.error("❌ Currency fetch error:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong while fetching currency data",
-    });
-  } finally {
-    setIsLoading(false); // ✅ stop loader always
-  }
-};
-
+  };
 
   const FetchPriceListAll = async () => {
-  try {
-    setIsLoading(true); // 🔄 start loader
+    try {
+      setIsLoading(true); // 🔄 start loader
 
-    const res = await apiClient.get(`/PriceList/All`);
+      const res = await apiClient.get(`/PriceList/All`);
 
-    // ✅ API-level failure handling
-    if (!res.data?.success) {
+      // ✅ API-level failure handling
+      if (!res.data?.success) {
+        Swal.fire({
+          icon: "warning",
+          title: "Error",
+          text: res.data?.message || "Failed to fetch Price List data",
+        });
+        return;
+      }
+
+      const response = res.data.values || [];
+      setPriceListAll(response);
+      console.log("pricelistall", response);
+    } catch (error) {
+      console.error("❌ PriceList fetch error:", error);
+
       Swal.fire({
-        icon: "warning",
+        icon: "error",
         title: "Error",
-        text: res.data?.message || "Failed to fetch Price List data",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong while fetching Price List data",
       });
-      return;
+    } finally {
+      setIsLoading(false); // ✅ stop loader always
     }
-
-    const response = res.data.values || [];
-    setPriceListAll(response);
-    console.log("pricelistall", response);
-  } catch (error) {
-    console.error("❌ PriceList fetch error:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong while fetching Price List data",
-    });
-  } finally {
-    setIsLoading(false); // ✅ stop loader always
-  }
-};
+  };
 
   const initialCurrencyData = {
     DocEntry: "",
@@ -699,79 +695,79 @@ const FetchUomData = async () => {
   const ClearCurrencyForm = () => {
     resetCurrency(initialCurrencyData);
   };
- const handleAddCurrency = async (data) => {
-  const obj = {
-    DocEntry: String(data.DocEntry || ""),
-    UserId: user.UserId,
-    CreatedBy: user.UserName,
-    CreatedDate: dayjs().format("YYYY/MM/DD"),
-    ModifiedBy: user.UserName,
-    ModifiedDate: dayjs().format("YYYY/MM/DD"),
-    Status: "1",
-    CurrCode: String(data.CurrCode || ""),
-    CurrName: String(data.CurrName || ""),
-    CountryCode: String(data.CountryCode || ""),
-    DocCurrCod: String(data.DocCurrCod || ""),
-    ChkName: String(data.ChkName || ""),
-    Chk100Name: String(data.Chk100Name || ""),
-    FrgnName: String(data.FrgnName || ""),
-    F100Name: String(data.F100Name || ""),
-    ISOCurrCod: String(data.ISOCurrCod || ""),
-    RoundSys: String(data.RoundSys || ""),
-    Decimals: String(data.Decimals || ""),
-    RoundPym: RoundPym === "Y" ? "Y" : "N",
-  };
+  const handleAddCurrency = async (data) => {
+    const obj = {
+      DocEntry: String(data.DocEntry || ""),
+      UserId: user.UserId,
+      CreatedBy: user.UserName,
+      CreatedDate: dayjs().format("YYYY/MM/DD"),
+      ModifiedBy: user.UserName,
+      ModifiedDate: dayjs().format("YYYY/MM/DD"),
+      Status: "1",
+      CurrCode: String(data.CurrCode || ""),
+      CurrName: String(data.CurrName || ""),
+      CountryCode: String(data.CountryCode || ""),
+      DocCurrCod: String(data.DocCurrCod || ""),
+      ChkName: String(data.ChkName || ""),
+      Chk100Name: String(data.Chk100Name || ""),
+      FrgnName: String(data.FrgnName || ""),
+      F100Name: String(data.F100Name || ""),
+      ISOCurrCod: String(data.ISOCurrCod || ""),
+      RoundSys: String(data.RoundSys || ""),
+      Decimals: String(data.Decimals || ""),
+      RoundPym: RoundPym === "Y" ? "Y" : "N",
+    };
 
-  try {
-    if (SaveUpdateName !== "SAVE") return;
+    try {
+      if (SaveUpdateName !== "SAVE") return;
 
-    setIsLoading(true); // 🔄 start loader
+      setIsLoading(true); // 🔄 start loader
 
-    const response = await apiClient.post(`/CurrenciesV2`, obj);
-    const { success, message } = response.data || {};
+      const response = await apiClient.post(`/CurrenciesV2`, obj);
+      const { success, message } = response.data || {};
 
-    // ❌ API returned failure
-    if (!success) {
+      // ❌ API returned failure
+      if (!success) {
+        Swal.fire({
+          title: "Currency Not Added",
+          text: message || "Failed to add currency",
+          icon: "warning",
+          confirmButtonText: "Ok",
+        });
+        return;
+      }
+
+      // ✅ SUCCESS
+      ClearCurrencyForm();
+      setOpenListPage(0);
+      setOpenListData([]);
+      fetchOpenListData(0);
+      CurrencyData();
+      handleCurrencyClose();
+
       Swal.fire({
-        title: "Currency Not Added",
-        text: message || "Failed to add currency",
-        icon: "warning",
+        title: "Success!",
+        text: "Currency added successfully",
+        icon: "success",
+        confirmButtonText: "Ok",
+        timer: 1000,
+      });
+    } catch (error) {
+      console.error("❌ Currency save error:", error);
+
+      Swal.fire({
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to save Currency data",
+        icon: "error",
         confirmButtonText: "Ok",
       });
-      return;
+    } finally {
+      setIsLoading(false); // ✅ always stop loader
     }
-
-    // ✅ SUCCESS
-    ClearCurrencyForm();
-    setOpenListPage(0);
-    setOpenListData([]);
-    fetchOpenListData(0);
-    CurrencyData();
-    handleCurrencyClose();
-
-    Swal.fire({
-      title: "Success!",
-      text: "Currency added successfully",
-      icon: "success",
-      confirmButtonText: "Ok",
-      timer: 1000,
-    });
-  } catch (error) {
-    console.error("❌ Currency save error:", error);
-
-    Swal.fire({
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to save Currency data",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setIsLoading(false); // ✅ always stop loader
-  }
-};
+  };
 
   const initialFormData = {
     ListName: "",
@@ -866,77 +862,77 @@ const FetchUomData = async () => {
     setItemCache({}); // Clear cache on new search
   }, []);
 
- const handleOnDelete = async () => {
-  const result = await Swal.fire({
-    text: "Do you want to delete?",
-    icon: "question",
-    showCancelButton: true,
-    confirmButtonText: "YES",
-    cancelButtonText: "No",
-  });
-
-  if (!result.isConfirmed) {
-    Swal.fire({
-      text: "Price List not deleted",
-      icon: "info",
-      toast: true,
-      showConfirmButton: false,
-      timer: 1500,
+  const handleOnDelete = async () => {
+    const result = await Swal.fire({
+      text: "Do you want to delete?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "YES",
+      cancelButtonText: "No",
     });
-    return;
-  }
 
-  try {
-    setIsLoading(true); // 🔄 start loader
-
-    const resp = await apiClient.delete(`/PriceList/${DocEntry}`);
-    const { success, message } = resp.data || {};
-
-    // ❌ API-level failure
-    if (!success) {
+    if (!result.isConfirmed) {
       Swal.fire({
-        title: "Delete Failed",
-        text: message || "Unable to delete Price List",
-        icon: "warning",
-        confirmButtonText: "Ok",
+        text: "Price List not deleted",
+        icon: "info",
+        toast: true,
+        showConfirmButton: false,
+        timer: 1500,
       });
       return;
     }
 
-    // ✅ SUCCESS
-    ClearFormData();
+    try {
+      setIsLoading(true); // 🔄 start loader
 
-    setOpenListPage(0);
-    setCloseListPage(0);
-    setOpenListData([]);
-    setCloseListData([]);
+      const resp = await apiClient.delete(`/PriceList/${DocEntry}`);
+      const { success, message } = resp.data || {};
 
-    fetchOpenListData(0);
-    fetchCloseListData(0);
+      // ❌ API-level failure
+      if (!success) {
+        Swal.fire({
+          title: "Delete Failed",
+          text: message || "Unable to delete Price List",
+          icon: "warning",
+          confirmButtonText: "Ok",
+        });
+        return;
+      }
 
-    Swal.fire({
-      text: "Price List deleted successfully",
-      icon: "success",
-      toast: true,
-      showConfirmButton: false,
-      timer: 1000,
-    });
-  } catch (error) {
-    console.error("❌ Error deleting Price List:", error);
+      // ✅ SUCCESS
+      ClearFormData();
 
-    Swal.fire({
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong while deleting",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setIsLoading(false); // ✅ always stop loader
-  }
-};
+      setOpenListPage(0);
+      setCloseListPage(0);
+      setOpenListData([]);
+      setCloseListData([]);
+
+      fetchOpenListData(0);
+      fetchCloseListData(0);
+
+      Swal.fire({
+        text: "Price List deleted successfully",
+        icon: "success",
+        toast: true,
+        showConfirmButton: false,
+        timer: 1000,
+      });
+    } catch (error) {
+      console.error("❌ Error deleting Price List:", error);
+
+      Swal.fire({
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong while deleting",
+        icon: "error",
+        confirmButtonText: "Ok",
+      });
+    } finally {
+      setIsLoading(false); // ✅ always stop loader
+    }
+  };
 
   const ClearFormData = () => {
     reset(initialFormData);
@@ -1460,183 +1456,365 @@ const FetchUomData = async () => {
       });
     }
   };
-const setPriceListData = async (DocEntry) => {
-  if (!DocEntry) return;
+  const setPriceListData = async (DocEntry) => {
+    if (!DocEntry) return;
 
-  try {
-    setIsLoading(true); // 🔄 start loader
+    try {
+      setIsLoading(true); // 🔄 start loader
 
-    const response = await apiClient.get(`/PriceList/${DocEntry}`);
-    const { success, values, message } = response.data || {};
+      const response = await apiClient.get(`/PriceList/${DocEntry}`);
+      const { success, values, message } = response.data || {};
 
-    // ❌ API-level failure
-    if (!success || !values) {
-      Swal.fire({
-        title: "Error!",
-        text: message || "Failed to fetch Price List data.",
-        icon: "error",
-        confirmButtonText: "Ok",
-      });
-      return;
-    }
-
-    const data = values;
-
-    // 🔎 Resolve Base Price List object
-    const fullBasePriceList =
-      getListDataPriceList?.find(
-        (p) => String(p.DocEntry) === String(data.BaseNum),
-      ) || null;
-
-    // ✅ Persist for item price logic
-    setCurrentPriceListDocEntry(data.DocEntry);
-
-    // ✅ Reset form with fetched data
-    reset({
-      ...data,
-      BaseNum: fullBasePriceList,
-      PrimCurr: data.PrimCurr || "INR",
-    });
-
-    // ✅ Update UI states
-    setSelectedCurrency(data.PrimCurr || "INR");
-    setSaveUpdateName("UPDATE");
-    setDocEntry(data.DocEntry);
-    setSelectedData(data.DocEntry);
-    DocEntryRef.current = data.DocEntry;
-
-    toggleDrawer();
-  } catch (error) {
-    console.error("❌ Error fetching Price List:", error);
-
-    Swal.fire({
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong while fetching Price List data.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setIsLoading(false); // ✅ stop loader
-  }
-};
-
-
-  const StatusValue = watch("Status");
-
- const handleSubmitForm = async (data) => {
-  setIsLoading(true);
-
-  try {
-    const Postobj = {
-      DocEntry: String(data.DocEntry || ""),
-      UserId: user.UserId,
-      CreatedBy: user.UserName,
-      CreatedDate: dayjs().format("YYYY-MM-DD"),
-      ModifiedBy: user.UserName,
-      ModifiedDate: dayjs().format("YYYY-MM-DD"),
-      ListNum: String(data.ListNum || "0"),
-      Status: StatusValue === "1" ? "1" : "0",
-      ListName: String(data.ListName || "0"),
-      BaseNum: String(getValues("BaseNum")?.DocEntry || "0"),
-      Factor: String(data.Factor || "0"),
-      ValidFor: data.ValidFor || "1",
-      PrimCurr: String(data.PrimCurr || "0"),
-      RoundSys: String(data.RoundSys || "0"),
-    };
-
-    /* =====================================================
-       ======================= SAVE ========================
-       ===================================================== */
-    if (SaveUpdateName === "SAVE") {
-      let headerResponse;
-
-      try {
-        headerResponse = await apiClient.post(`/PriceList`, Postobj);
-      } catch (err) {
-        throw err;
-      }
-
-      if (!headerResponse?.data?.success) {
+      // ❌ API-level failure
+      if (!success || !values) {
         Swal.fire({
           title: "Error!",
-          text: headerResponse?.data?.message || "Failed to save Price List",
+          text: message || "Failed to fetch Price List data.",
           icon: "error",
           confirmButtonText: "Ok",
         });
         return;
       }
 
-      const generatedDocEntry = headerResponse.data.values?.DocEntry;
-      const oLines = getValues("oLines");
+      const data = values;
 
-      /* ---------- Save Lines ---------- */
-      if (oLines && oLines.length > 0) {
-        const lineData = oLines.map((line) => ({
-          LineNum: String(line.LineNum || "0"),
-          UserId: user.UserId,
-          CreatedBy: user.UserName,
-          CreatedDate: line.CreatedDate || dayjs().toISOString(),
-          ModifiedBy: user.UserName,
-          ModifiedDate: line.ModifiedDate || dayjs().toISOString(),
-          Status: "1",
-          DocEntry: line.PriceList || "0",
-          ItemCode: line.ItemCode || "0",
-          PriceList: String(generatedDocEntry || "0"),
-          Price: String(line.Price || "0"),
-          Currency: line.Currency || "0",
-          AddPrice: line.AddPrice || "0",
-          Currency1: line.Currency1 || "0",
-          BasePLNum: line.BasePLNum || "0",
-          UomEntry: "0",
-          Ovrwritten: line.Ovrwritten || "0",
-          Factor: line.Factor || "0",
-          oUOMLines: [],
-        }));
+      // 🔎 Resolve Base Price List object
+      const fullBasePriceList =
+        getListDataPriceList?.find(
+          (p) => String(p.DocEntry) === String(data.BaseNum),
+        ) || null;
 
-        let lineResponse;
+      // ✅ Persist for item price logic
+      setCurrentPriceListDocEntry(data.DocEntry);
+
+      // ✅ Reset form with fetched data
+      reset({
+        ...data,
+        BaseNum: fullBasePriceList,
+        PrimCurr: data.PrimCurr || "INR",
+      });
+
+      // ✅ Update UI states
+      setSelectedCurrency(data.PrimCurr || "INR");
+      setSaveUpdateName("UPDATE");
+      setDocEntry(data.DocEntry);
+      setSelectedData(data.DocEntry);
+      DocEntryRef.current = data.DocEntry;
+
+      toggleDrawer();
+    } catch (error) {
+      console.error("❌ Error fetching Price List:", error);
+
+      Swal.fire({
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong while fetching Price List data.",
+        icon: "error",
+        confirmButtonText: "Ok",
+      });
+    } finally {
+      setIsLoading(false); // ✅ stop loader
+    }
+  };
+
+  const StatusValue = watch("Status");
+
+  const handleSubmitForm = async (data) => {
+    setIsLoading(true);
+
+    try {
+      const Postobj = {
+        DocEntry: String(data.DocEntry || ""),
+        UserId: user.UserId,
+        CreatedBy: user.UserName,
+        CreatedDate: dayjs().format("YYYY-MM-DD"),
+        ModifiedBy: user.UserName,
+        ModifiedDate: dayjs().format("YYYY-MM-DD"),
+        ListNum: String(data.ListNum || "0"),
+        Status: StatusValue === "1" ? "1" : "0",
+        ListName: String(data.ListName || "0"),
+        BaseNum: String(getValues("BaseNum")?.DocEntry || "0"),
+        Factor: String(data.Factor || "0"),
+        ValidFor: data.ValidFor || "1",
+        PrimCurr: String(data.PrimCurr || "0"),
+        RoundSys: String(data.RoundSys || "0"),
+      };
+
+      /* =====================================================
+       ======================= SAVE ========================
+       ===================================================== */
+      if (SaveUpdateName === "SAVE") {
+        let headerResponse;
 
         try {
-          lineResponse = await apiClient.post(
-            `/PriceList/ItemsPrices/Bulk`,
-            lineData,
+          headerResponse = await apiClient.post(`/PriceList`, Postobj);
+        } catch (err) {
+          throw err;
+        }
+
+        if (!headerResponse?.data?.success) {
+          Swal.fire({
+            title: "Error!",
+            text: headerResponse?.data?.message || "Failed to save Price List",
+            icon: "error",
+            confirmButtonText: "Ok",
+          });
+          return;
+        }
+
+        const generatedDocEntry = headerResponse.data.values?.DocEntry;
+        const oLines = getValues("oLines");
+
+        /* ---------- Save Lines ---------- */
+        if (oLines && oLines.length > 0) {
+          const lineData = oLines.map((line) => ({
+            LineNum: String(line.LineNum || "0"),
+            UserId: user.UserId,
+            CreatedBy: user.UserName,
+            CreatedDate: line.CreatedDate || dayjs().toISOString(),
+            ModifiedBy: user.UserName,
+            ModifiedDate: line.ModifiedDate || dayjs().toISOString(),
+            Status: "1",
+            DocEntry: line.PriceList || "0",
+            ItemCode: line.ItemCode || "0",
+            PriceList: String(generatedDocEntry || "0"),
+            Price: String(line.Price || "0"),
+            Currency: line.Currency || "0",
+            AddPrice: line.AddPrice || "0",
+            Currency1: line.Currency1 || "0",
+            BasePLNum: line.BasePLNum || "0",
+            UomEntry: "0",
+            Ovrwritten: line.Ovrwritten || "0",
+            Factor: line.Factor || "0",
+            oUOMLines: [],
+          }));
+
+          let lineResponse;
+
+          try {
+            lineResponse = await apiClient.post(
+              `/PriceList/ItemsPrices/Bulk`,
+              lineData,
+            );
+          } catch (err) {
+            throw err;
+          }
+
+          if (!lineResponse?.data?.success) {
+            Swal.fire({
+              title: "Error!",
+              text:
+                lineResponse?.data?.message ||
+                "Failed to save Price List Lines",
+              icon: "warning",
+              confirmButtonText: "Ok",
+            });
+            return;
+          }
+
+          Swal.fire({
+            title: "Success!",
+            text: "Price list lines saved successfully",
+            icon: "success",
+            confirmButtonText: "Ok",
+            timer: 1000,
+          });
+        }
+
+        /* ---------- Final Success ---------- */
+        ClearFormData();
+        fetchOpenListData(0);
+        fetchCloseListData(0);
+        setOpenListPage(0);
+        setCloseListPage(0);
+        setOpenListData([]);
+        setCloseListData([]);
+
+        Swal.fire({
+          title: "Success!",
+          text: "Price List saved Successfully",
+          icon: "success",
+          confirmButtonText: "Ok",
+          timer: 1000,
+        });
+      } else {
+
+      /* =====================================================
+       ====================== UPDATE =======================
+       ===================================================== */
+        const PutObj = {
+          DocEntry: String(data.DocEntry),
+          UserId: user.UserId,
+          CreatedBy: user.UserName,
+          CreatedDate: data.CreatedDate || dayjs().toISOString(),
+          ModifiedBy: user.UserName,
+          ModifiedDate: data.ModifiedDate || dayjs().toISOString(),
+          ListNum: String(data.ListNum || "0"),
+          Status: StatusValue === "1" ? "1" : "0",
+          ListName: String(data.ListName || "0"),
+          BaseNum: String(data.BaseNum?.DocEntry || "0"),
+          Factor: String(data.Factor || "0"),
+          ValidFor: data.ValidFor || "1",
+          PrimCurr: String(data.PrimCurr || "0"),
+          RoundSys: String(data.RoundSys || "0"),
+        };
+
+        const result = await Swal.fire({
+          text: `Do You Want to Update "${data.ListName}" ?`,
+          icon: "question",
+          confirmButtonText: "YES",
+          cancelButtonText: "No",
+          showConfirmButton: true,
+          showCancelButton: true,
+        });
+
+        if (!result.isConfirmed) {
+          Swal.fire({
+            text: "Price List Not Updated",
+            icon: "info",
+            toast: true,
+            showConfirmButton: false,
+            timer: 1500,
+          });
+          return;
+        }
+
+        let updateResponse;
+
+        try {
+          updateResponse = await apiClient.put(
+            `/PriceList/${data.DocEntry}`,
+            PutObj,
           );
         } catch (err) {
           throw err;
         }
 
-        if (!lineResponse?.data?.success) {
+        if (!updateResponse?.data?.success) {
           Swal.fire({
             title: "Error!",
-            text:
-              lineResponse?.data?.message ||
-              "Failed to save Price List Lines",
+            text: updateResponse?.data?.message || "Update failed",
             icon: "warning",
             confirmButtonText: "Ok",
           });
           return;
         }
 
+        ClearFormData();
+        fetchOpenListData(0);
+        fetchCloseListData(0);
+        setOpenListPage(0);
+        setCloseListPage(0);
+        setOpenListData([]);
+        setCloseListData([]);
+
         Swal.fire({
           title: "Success!",
-          text: "Price list lines saved successfully",
+          text: "Price List Updated",
           icon: "success",
           confirmButtonText: "Ok",
           timer: 1000,
         });
       }
+    } catch (error) {
+      console.error("❌ Error submitting the form:", error);
 
-      /* ---------- Final Success ---------- */
-      ClearFormData();
-      fetchOpenListData(0);
-      fetchCloseListData(0);
-      setOpenListPage(0);
-      setCloseListPage(0);
-      setOpenListData([]);
-      setCloseListData([]);
+      Swal.fire({
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong",
+        icon: "error",
+        confirmButtonText: "Ok",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  const handleBulkSave = async () => {
+    setIsLoading(true);
+
+    try {
+      const rows = getValues("oLines") || [];
+
+      // Filter edited rows only
+      const selectedRows = rows.filter((row) => row?._wasEdited === true);
+
+      if (selectedRows.length === 0) {
+        Swal.fire({
+          title: "Error!",
+          text: "No rows selected for saving",
+          icon: "error",
+          confirmButtonText: "Ok",
+        });
+        return;
+      }
+
+      /* ---------- Transform rows ---------- */
+      const formattedRows = selectedRows.map((row) => {
+        const matchedBasePriceList = priceListAll?.find(
+          (pl) => pl.ListName === row.BasePLNum,
+        );
+
+        const basePLDocEntry = matchedBasePriceList?.DocEntry ?? "";
+
+        return {
+          LineNum: "",
+          UserId: user?.UserId || "0",
+          CreatedBy: user?.UserName || "",
+          CreatedDate: dayjs().format("YYYY/MM/DD"),
+          ModifiedBy: user?.UserName || "",
+          ModifiedDate: dayjs().format("YYYY/MM/DD"),
+          Status: "1",
+          DocEntry: "",
+          ItemCode: row?.ItemCode || "",
+          PriceList: String(DocEntryRef?.current || ""),
+          Price: row?.Price || "0",
+          Currency: row?.Currency || "INR",
+          AddPrice: "0",
+          Currency1: "",
+          BasePLNum: String(basePLDocEntry),
+          UomEntry: row?.IUoMEntry || "",
+          Ovrwritten: row?.manual ? "Y" : "N",
+          Factor: row?.Factor || "1",
+          oUOMLines: [],
+        };
+      });
+
+      /* ---------- Chunk helper ---------- */
+      const chunkArray = (array, chunkSize) =>
+        Array.from({ length: Math.ceil(array.length / chunkSize) }, (_, i) =>
+          array.slice(i * chunkSize, i * chunkSize + chunkSize),
+        );
+
+      const chunks = chunkArray(formattedRows, 50);
+
+      /* ---------- API Calls ---------- */
+      for (let i = 0; i < chunks.length; i++) {
+        let response;
+
+        try {
+          response = await apiClient.post(
+            `/PriceList/ItemsPrices/Bulk`,
+            chunks[i],
+          );
+        } catch (err) {
+          throw err;
+        }
+
+        if (!response?.data?.success) {
+          throw new Error(
+            response?.data?.message ||
+              `Failed to save chunk ${i + 1} of ${chunks.length}`,
+          );
+        }
+      }
+
+      /* ---------- Success ---------- */
       Swal.fire({
         title: "Success!",
         text: "Price List saved Successfully",
@@ -1644,210 +1822,24 @@ const setPriceListData = async (DocEntry) => {
         confirmButtonText: "Ok",
         timer: 1000,
       });
-    }
-
-    /* =====================================================
-       ====================== UPDATE =======================
-       ===================================================== */
-    else {
-      const PutObj = {
-        DocEntry: String(data.DocEntry),
-        UserId: user.UserId,
-        CreatedBy: user.UserName,
-        CreatedDate: data.CreatedDate || dayjs().toISOString(),
-        ModifiedBy: user.UserName,
-        ModifiedDate: data.ModifiedDate || dayjs().toISOString(),
-        ListNum: String(data.ListNum || "0"),
-        Status: StatusValue === "1" ? "1" : "0",
-        ListName: String(data.ListName || "0"),
-        BaseNum: String(data.BaseNum?.DocEntry || "0"),
-        Factor: String(data.Factor || "0"),
-        ValidFor: data.ValidFor || "1",
-        PrimCurr: String(data.PrimCurr || "0"),
-        RoundSys: String(data.RoundSys || "0"),
-      };
-
-      const result = await Swal.fire({
-        text: `Do You Want to Update "${data.ListName}" ?`,
-        icon: "question",
-        confirmButtonText: "YES",
-        cancelButtonText: "No",
-        showConfirmButton: true,
-        showCancelButton: true,
-      });
-
-      if (!result.isConfirmed) {
-        Swal.fire({
-          text: "Price List Not Updated",
-          icon: "info",
-          toast: true,
-          showConfirmButton: false,
-          timer: 1500,
-        });
-        return;
-      }
-
-      let updateResponse;
-
-      try {
-        updateResponse = await apiClient.put(
-          `/PriceList/${data.DocEntry}`,
-          PutObj,
-        );
-      } catch (err) {
-        throw err;
-      }
-
-      if (!updateResponse?.data?.success) {
-        Swal.fire({
-          title: "Error!",
-          text: updateResponse?.data?.message || "Update failed",
-          icon: "warning",
-          confirmButtonText: "Ok",
-        });
-        return;
-      }
 
       ClearFormData();
-      fetchOpenListData(0);
-      fetchCloseListData(0);
-      setOpenListPage(0);
-      setCloseListPage(0);
-      setOpenListData([]);
-      setCloseListData([]);
+    } catch (error) {
+      console.error("❌ Bulk save error:", error);
 
-      Swal.fire({
-        title: "Success!",
-        text: "Price List Updated",
-        icon: "success",
-        confirmButtonText: "Ok",
-        timer: 1000,
-      });
-    }
-  } catch (error) {
-    console.error("❌ Error submitting the form:", error);
-
-    Swal.fire({
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setIsLoading(false);
-  }
-};
-
-
-const handleBulkSave = async () => {
-  setIsLoading(true);
-
-  try {
-    const rows = getValues("oLines") || [];
-
-    // Filter edited rows only
-    const selectedRows = rows.filter((row) => row?._wasEdited === true);
-
-    if (selectedRows.length === 0) {
       Swal.fire({
         title: "Error!",
-        text: "No rows selected for saving",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to save Price List",
         icon: "error",
         confirmButtonText: "Ok",
       });
-      return;
+    } finally {
+      setIsLoading(false);
     }
-
-    /* ---------- Transform rows ---------- */
-    const formattedRows = selectedRows.map((row) => {
-      const matchedBasePriceList = priceListAll?.find(
-        (pl) => pl.ListName === row.BasePLNum,
-      );
-
-      const basePLDocEntry = matchedBasePriceList?.DocEntry ?? "";
-
-      return {
-        LineNum: "",
-        UserId: user?.UserId || "0",
-        CreatedBy: user?.UserName || "",
-        CreatedDate: dayjs().format("YYYY/MM/DD"),
-        ModifiedBy: user?.UserName || "",
-        ModifiedDate: dayjs().format("YYYY/MM/DD"),
-        Status: "1",
-        DocEntry: "",
-        ItemCode: row?.ItemCode || "",
-        PriceList: String(DocEntryRef?.current || ""),
-        Price: row?.Price || "0",
-        Currency: row?.Currency || "INR",
-        AddPrice: "0",
-        Currency1: "",
-        BasePLNum: String(basePLDocEntry),
-        UomEntry: row?.IUoMEntry || "",
-        Ovrwritten: row?.manual ? "Y" : "N",
-        Factor: row?.Factor || "1",
-        oUOMLines: [],
-      };
-    });
-
-    /* ---------- Chunk helper ---------- */
-    const chunkArray = (array, chunkSize) =>
-      Array.from({ length: Math.ceil(array.length / chunkSize) }, (_, i) =>
-        array.slice(i * chunkSize, i * chunkSize + chunkSize),
-      );
-
-    const chunks = chunkArray(formattedRows, 50);
-
-    /* ---------- API Calls ---------- */
-    for (let i = 0; i < chunks.length; i++) {
-      let response;
-
-      try {
-        response = await apiClient.post(
-          `/PriceList/ItemsPrices/Bulk`,
-          chunks[i],
-        );
-      } catch (err) {
-        throw err;
-      }
-
-      if (!response?.data?.success) {
-        throw new Error(
-          response?.data?.message ||
-            `Failed to save chunk ${i + 1} of ${chunks.length}`,
-        );
-      }
-    }
-
-    /* ---------- Success ---------- */
-    Swal.fire({
-      title: "Success!",
-      text: "Price List saved Successfully",
-      icon: "success",
-      confirmButtonText: "Ok",
-      timer: 1000,
-    });
-
-    ClearFormData();
-  } catch (error) {
-    console.error("❌ Bulk save error:", error);
-
-    Swal.fire({
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to save Price List",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setIsLoading(false);
-  }
-};
-
+  };
 
   const sidebarContent = (
     <>
