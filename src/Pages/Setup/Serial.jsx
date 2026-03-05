@@ -184,7 +184,7 @@ export default function Serial() {
   const [checkTabRows, setcheckTabRows] = useState([]);
   const [MainTopRows, setMainTopRows] = useState([]);
   const [sendDataSerial, setSendDataSerial] = useState([]);
-  const [FinalDataSeries,setFinalDataSeries]=useState([])
+  const [FinalDataSeries, setFinalDataSeries] = useState([]);
   const [tabvalue, settabvalue] = useState(0);
   const handleOpen = () => {
     setOpen(true);
@@ -277,7 +277,7 @@ export default function Serial() {
           Fuel: "",
           LineRemarks: "",
         },
-      ])
+      ]),
     );
   };
   const reindexRows = (rows) =>
@@ -407,9 +407,9 @@ export default function Serial() {
   };
   console.log("sendDataSerial", sendDataSerial);
 
- const dataFinalSerial = (rows) => {
-  setFinalDataSeries(prev => [...prev, ...rows]);
-};
+  const dataFinalSerial = (rows) => {
+    setFinalDataSeries((prev) => [...prev, ...rows]);
+  };
   const onSubmit = () => {};
 
   console.log("dfdsf", MainTopRows);
@@ -475,7 +475,7 @@ export default function Serial() {
                       "&:hover": {
                         backgroundColor: alpha(
                           theme.palette.secondary.main,
-                          0.2
+                          0.2,
                         ),
                       },
                     }}
@@ -652,7 +652,7 @@ export default function Serial() {
                       borderRadius: 2,
                       border: `1px solid ${alpha(
                         theme.palette.primary.main,
-                        0.1
+                        0.1,
                       )}`,
                     }}
                   >
@@ -740,7 +740,7 @@ export default function Serial() {
                       borderRadius: 2,
                       border: `1px solid ${alpha(
                         theme.palette.primary.main,
-                        0.1
+                        0.1,
                       )}`,
                     }}
                   >
@@ -829,7 +829,7 @@ export default function Serial() {
                       borderRadius: 2,
                       border: `1px solid ${alpha(
                         theme.palette.primary.main,
-                        0.1
+                        0.1,
                       )}`,
                     }}
                   >
@@ -1040,7 +1040,7 @@ export default function Serial() {
                             "& .MuiDataGrid-columnHeaders": {
                               backgroundColor: alpha(
                                 theme.palette.primary.main,
-                                0.1
+                                0.1,
                               ),
                             },
                           }}
@@ -1082,7 +1082,7 @@ export default function Serial() {
                             "& .MuiDataGrid-columnHeaders": {
                               backgroundColor: alpha(
                                 theme.palette.secondary.main,
-                                0.1
+                                0.1,
                               ),
                             },
                           }}
@@ -1099,7 +1099,7 @@ export default function Serial() {
                       backgroundColor: alpha(theme.palette.success.main, 0.05),
                       border: `1px solid ${alpha(
                         theme.palette.success.main,
-                        0.2
+                        0.2,
                       )}`,
                       borderRadius: 2,
                     }}
@@ -1179,7 +1179,7 @@ export default function Serial() {
             DialogClosePayto={handleCloseCrate}
             Title="Serial Management - Create"
             DataSerial={sendDataSerial}
-              onSubmit={(row)=>dataFinalSerial(row)}
+            onSubmit={(row) => dataFinalSerial(row)}
           />
         </Stack>
       </ResponsiveContainer>

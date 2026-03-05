@@ -128,67 +128,65 @@ export default function TaxCode() {
   // =======================Purchase Tax Account ==============================
 
   //#region  Route Stage Api Calling Searching And Pagination
- const AccountPurchasesFunc = useCallback(
-  async (page = 0, search = "") => {
-    const cacheKey = `${search}_${page}`;
+  const AccountPurchasesFunc = useCallback(
+    async (page = 0, search = "") => {
+      const cacheKey = `${search}_${page}`;
 
-    if (AccountCache[cacheKey]) {
-      setAccountPurchaseList(AccountCache[cacheKey]);
-      return;
-    }
+      if (AccountCache[cacheKey]) {
+        setAccountPurchaseList(AccountCache[cacheKey]);
+        return;
+      }
 
-    setIsLoading(true);
-    try {
-      const params = new URLSearchParams();
-      params.append("Page", page);
-      params.append("Limit", 20);
-      params.append("Status", 1);
+      setIsLoading(true);
+      try {
+        const params = new URLSearchParams();
+        params.append("Page", page);
+        params.append("Limit", 20);
+        params.append("Status", 1);
 
-      if (search) params.append("SearchText", search);
+        if (search) params.append("SearchText", search);
 
-      params.append("LocManTran", "N");
-      // params.append("GroupMask", "ALL");
-      params.append("Postable", "Y");
+        params.append("LocManTran", "N");
+        // params.append("GroupMask", "ALL");
+        params.append("Postable", "Y");
 
-      const url = `/ChartOfAccounts?${params.toString()}`;
-      const response = await apiClient.get(url);
+        const url = `/ChartOfAccounts?${params.toString()}`;
+        const response = await apiClient.get(url);
 
-      if (response.data.success===true) {
-        const services = response.data?.values || [];
+        if (response.data.success === true) {
+          const services = response.data?.values || [];
 
-        setAccountPurchaseCache((prev) => ({
-          ...prev,
-          [cacheKey]: services,
-        }));
+          setAccountPurchaseCache((prev) => ({
+            ...prev,
+            [cacheKey]: services,
+          }));
 
-        setAccountPurchaseList(services);
+          setAccountPurchaseList(services);
 
-        const estimatedCount =
-          page === 0 ? 21 : page * 20 + services.length + 1;
-        setAccountPurRowCount(estimatedCount);
-      } 
-      else if(response.data.success===false) {
+          const estimatedCount =
+            page === 0 ? 21 : page * 20 + services.length + 1;
+          setAccountPurRowCount(estimatedCount);
+        } else if (response.data.success === false) {
+          Swal.fire({
+            title: "Error!",
+            text: response.data.message || "Something went wrong ffffff",
+            icon: "warning",
+            confirmButtonText: "Ok",
+          });
+        }
+      } catch (error) {
         Swal.fire({
           title: "Error!",
-          text: response.data.message || "Something went wrong ffffff",
-          icon: "warning",
+          text: error.message || "An error occurred",
+          icon: "error",
           confirmButtonText: "Ok",
         });
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      Swal.fire({
-        title: "Error!",
-        text: error.message || "An error occurred",
-        icon: "error",
-        confirmButtonText: "Ok",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  },
-  [AccountCache]
-);
-
+    },
+    [AccountCache],
+  );
 
   const handleAccountPaginationModelChange = useCallback(
     (model) => {
@@ -196,7 +194,7 @@ export default function TaxCode() {
         setAccountCurrentPage(model.page);
       }
     },
-    [AccountcurrentPage]
+    [AccountcurrentPage],
   );
 
   const handleAccountPurSearchChange = useCallback((searchText) => {
@@ -243,7 +241,7 @@ export default function TaxCode() {
         setHasMoreOpen(newData.length === 20);
 
         setOpenListData((prev) =>
-          pageNum === 0 ? newData : [...prev, ...newData]
+          pageNum === 0 ? newData : [...prev, ...newData],
         );
       }
     } catch (error) {
@@ -303,7 +301,7 @@ export default function TaxCode() {
         setHasMoreClosed(false);
 
         setClosedListData((prev) =>
-          pageNum === 0 ? newData : [...prev, ...newData]
+          pageNum === 0 ? newData : [...prev, ...newData],
         );
       }
     } catch (error) {
@@ -339,7 +337,7 @@ export default function TaxCode() {
   const fetchMoreClosedListData = () => {
     fetchClosedListData(
       closedListPage + 1,
-      closedListSearching ? closedListquery : ""
+      closedListSearching ? closedListquery : "",
     );
     setClosedListPage((prev) => prev + 1);
   };
@@ -425,7 +423,7 @@ export default function TaxCode() {
     () => {
       getTaxCodeDataList();
     }, // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [],
   );
 
   // ==========================API for storing the data of specific Card===============================
@@ -458,7 +456,7 @@ export default function TaxCode() {
       // Recalculate the total rate
       const newTotalRate = mappedRows.reduce(
         (total, row) => total + parseFloat(row.Rate || 0),
-        0
+        0,
       );
       setTotalRate(newTotalRate);
     } catch (error) {
@@ -561,7 +559,7 @@ export default function TaxCode() {
         if (result.isConfirmed) {
           const response = await apiClient.put(
             `/TaxCode/${data.DocEntry}`,
-            obj
+            obj,
           );
 
           if (response.data.success) {
@@ -696,7 +694,7 @@ export default function TaxCode() {
 
   const handleDeleteRow = (id) => {
     // Step 1: Filter out the row to be deleted
-    const updatedRows = rows.filter((row) => row.serialNo  !== id);
+    const updatedRows = rows.filter((row) => row.serialNo !== id);
 
     // Step 2: Reassign serial numbers based on the remaining rows
     const updatedRowsWithSerialNo = updatedRows.map((row, index) => ({
@@ -710,7 +708,7 @@ export default function TaxCode() {
     // Step 4: Recalculate the total rate
     const newTotalRate = updatedRowsWithSerialNo.reduce(
       (total, row) => total + parseFloat(row.Rate || 0),
-      0
+      0,
     );
     setTotalRate(newTotalRate);
   };
@@ -759,7 +757,7 @@ export default function TaxCode() {
         if (r.id === row.id) {
           const updatedRow = { ...r, [name]: newValue };
           const selectedTaxType = taxAmt.find(
-            (item) => item.DocEntry === newValue
+            (item) => item.DocEntry === newValue,
           );
           updatedRow.TaxAmtKey = selectedTaxType
             ? selectedTaxType.TaxAmtKey
@@ -828,7 +826,7 @@ export default function TaxCode() {
             }
           }
           return r; // Return unchanged rows
-        })
+        }),
       );
     }
   };

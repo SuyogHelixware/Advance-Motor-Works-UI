@@ -58,7 +58,7 @@ export default function SalesEmp() {
   const removeEmojis = (str) =>
     str.replace(
       /([\u2700-\u27BF]|[\uE000-\uF8FF]|[\uD83C-\uDBFF\uDC00-\uDFFF]+|[\u2011-\u26FF]|[\uFE00-\uFE0F])/g,
-      ""
+      "",
     );
   // ===============Main list handlesearch====================================
 
@@ -91,47 +91,47 @@ export default function SalesEmp() {
     fetchOpenListData(openListPage + 1, openListSearching ? openListquery : "");
     setOpenListPage((prev) => prev + 1);
   };
-const fetchOpenListData = async (pageNum, searchTerm = "") => {
-  try {
-    setLoading(true);
+  const fetchOpenListData = async (pageNum, searchTerm = "") => {
+    try {
+      setLoading(true);
 
-    const url = searchTerm
-      ? `/SalesEmp/Search/${searchTerm}/1/${pageNum}/20`
-      : `/SalesEmp/Pages/${pageNum}`;
+      const url = searchTerm
+        ? `/SalesEmp/Search/${searchTerm}/1/${pageNum}/20`
+        : `/SalesEmp/Pages/${pageNum}`;
 
-    const response = await apiClient.get(url);
+      const response = await apiClient.get(url);
 
-    if (!response.data.success) {
+      if (!response.data.success) {
+        await Swal.fire({
+          title: "Error!",
+          text: response.data.message || "Failed to fetch data",
+          icon: "warning",
+          confirmButtonText: "Ok", // ❌ no timer
+        });
+        return;
+      }
+
+      const newData = response.data.values || [];
+      setHasMoreOpen(newData.length === 20);
+
+      setOpenListData((prev) =>
+        pageNum === 0 ? newData : [...prev, ...newData],
+      );
+    } catch (error) {
+      console.error("Error fetching data:", error);
+
       await Swal.fire({
         title: "Error!",
-        text: response.data.message || "Failed to fetch data",
-        icon: "warning",
+        text:
+          error.response?.data?.message ||
+          "Something went wrong while fetching data",
+        icon: "error",
         confirmButtonText: "Ok", // ❌ no timer
       });
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    const newData = response.data.values || [];
-    setHasMoreOpen(newData.length === 20);
-
-    setOpenListData((prev) =>
-      pageNum === 0 ? newData : [...prev, ...newData]
-    );
-  } catch (error) {
-    console.error("Error fetching data:", error);
-
-    await Swal.fire({
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        "Something went wrong while fetching data",
-      icon: "error",
-      confirmButtonText: "Ok", // ❌ no timer
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const clearFormData = () => {
     reset(initial);
@@ -182,57 +182,56 @@ const fetchOpenListData = async (pageNum, searchTerm = "") => {
       });
     }
   };
-const setSalesEmpDataList = async (DocEntry) => {
-  if (!DocEntry) return;
+  const setSalesEmpDataList = async (DocEntry) => {
+    if (!DocEntry) return;
 
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const response = await apiClient.get(`/SalesEmp/${DocEntry}`);
+      const response = await apiClient.get(`/SalesEmp/${DocEntry}`);
 
-    if (!response.data.success) {
+      if (!response.data.success) {
+        await Swal.fire({
+          title: "Error!",
+          text: response.data.message || "Failed to fetch Sales Employee data",
+          icon: "warning",
+          confirmButtonText: "Ok",
+        });
+        return;
+      }
+
+      const [record] = response.data.values || [];
+
+      if (!record) {
+        await Swal.fire({
+          title: "Warning!",
+          text: "No Sales Employee record found.",
+          icon: "warning",
+          confirmButtonText: "Ok",
+        });
+        return;
+      }
+
+      toggleDrawer();
+      reset(record);
+      setSaveUpdateName("UPDATE");
+      setDocEntry(DocEntry);
+      setSelectedData(DocEntry);
+    } catch (error) {
+      console.error("Error fetching Sales Employee data:", error);
+
       await Swal.fire({
         title: "Error!",
-        text: response.data.message || "Failed to fetch Sales Employee data",
-        icon: "warning",
+        text:
+          error.response?.data?.message ||
+          "An error occurred while fetching the Sales Employee data.",
+        icon: "error",
         confirmButtonText: "Ok",
       });
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    const [record] = response.data.values || [];
-
-    if (!record) {
-      await Swal.fire({
-        title: "Warning!",
-        text: "No Sales Employee record found.",
-        icon: "warning",
-        confirmButtonText: "Ok",
-      });
-      return;
-    }
-
-    toggleDrawer();
-    reset(record);
-    setSaveUpdateName("UPDATE");
-    setDocEntry(DocEntry);
-    setSelectedData(DocEntry);
-  } catch (error) {
-    console.error("Error fetching Sales Employee data:", error);
-
-    await Swal.fire({
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        "An error occurred while fetching the Sales Employee data.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   // ==============useForm====================================
   const { control, handleSubmit, reset } = useForm({
@@ -267,7 +266,7 @@ const setSalesEmpDataList = async (DocEntry) => {
           Array.isArray(openListData) &&
           openListData.some(
             (item) =>
-              normalizeString(item.SlpCode) === normalizeString(data.SlpCode)
+              normalizeString(item.SlpCode) === normalizeString(data.SlpCode),
           );
 
         if (isExisting) {
@@ -361,68 +360,67 @@ const setSalesEmpDataList = async (DocEntry) => {
     }
   };
   // ===============Delete API ===================================
-const handleOnDelete = async () => {
-  const result = await Swal.fire({
-    text: "Do You Want to Delete ?",
-    icon: "question",
-    confirmButtonText: "YES",
-    cancelButtonText: "No",
-    showConfirmButton: true,
-    showDenyButton: true,
-  });
-
-  if (!result.isConfirmed) {
-    await Swal.fire({
-      text: "Sales Employee Not Deleted",
-      icon: "info",
-      confirmButtonText: "Ok",
+  const handleOnDelete = async () => {
+    const result = await Swal.fire({
+      text: "Do You Want to Delete ?",
+      icon: "question",
+      confirmButtonText: "YES",
+      cancelButtonText: "No",
+      showConfirmButton: true,
+      showDenyButton: true,
     });
-    return;
-  }
 
-  try {
-    setLoading(true);
-
-    const response = await apiClient.delete(`/SalesEmp/${DocEntry}`);
-    const { success, message } = response.data;
-
-    if (success) {
-      clearFormData();
-      setOpenListPage(0);
-      setOpenListData([]);
-      fetchOpenListData(0);
-
-      Swal.fire({
-        text: "Sales Employee Deleted",
-        icon: "success",
-        toast: true,
-        showConfirmButton: false,
-        timer: 1000, // ✅ timer only for success
-      });
-    } else {
+    if (!result.isConfirmed) {
       await Swal.fire({
-        title: "Error!",
-        text: message || "Sales Employee not deleted",
-        icon: "warning",
+        text: "Sales Employee Not Deleted",
+        icon: "info",
         confirmButtonText: "Ok",
       });
+      return;
     }
-  } catch (error) {
-    console.error("Error deleting Sales Employee:", error);
 
-    await Swal.fire({
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        "An error occurred while deleting the Sales Employee.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      setLoading(true);
 
+      const response = await apiClient.delete(`/SalesEmp/${DocEntry}`);
+      const { success, message } = response.data;
+
+      if (success) {
+        clearFormData();
+        setOpenListPage(0);
+        setOpenListData([]);
+        fetchOpenListData(0);
+
+        Swal.fire({
+          text: "Sales Employee Deleted",
+          icon: "success",
+          toast: true,
+          showConfirmButton: false,
+          timer: 1000, // ✅ timer only for success
+        });
+      } else {
+        await Swal.fire({
+          title: "Error!",
+          text: message || "Sales Employee not deleted",
+          icon: "warning",
+          confirmButtonText: "Ok",
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting Sales Employee:", error);
+
+      await Swal.fire({
+        title: "Error!",
+        text:
+          error.response?.data?.message ||
+          "An error occurred while deleting the Sales Employee.",
+        icon: "error",
+        confirmButtonText: "Ok",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const sidebarContent = (
     <>

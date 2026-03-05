@@ -220,70 +220,99 @@ export default function ItemMaster() {
   const [itemImages, setItemImages] = useState([]);
   // each item: { id, name, base64, preview }
   const CustomToolbarWithExport = () => {
-  return (
-    <GridToolbarContainer>
-      <GridToolbarExport
-        csvOptions={{
-          fileName: "Inventory_Data",
-          utf8WithBom: true,
-        }}
-        printOptions={{
-          disableToolbarButton: true, // optional
-        }}
-      />
-    </GridToolbarContainer>
-  );
-};
+    return (
+      <GridToolbarContainer>
+        <GridToolbarExport
+          csvOptions={{
+            fileName: "Inventory_Data",
+            utf8WithBom: true,
+          }}
+          printOptions={{
+            disableToolbarButton: true, // optional
+          }}
+        />
+      </GridToolbarContainer>
+    );
+  };
   const handleImagePick = (e) => {
-    const files = Array.from(e.target.files);
-    if (!files.length) return;
+    try {
+      const files = Array.from(e.target.files);
+      if (!files.length) return;
 
-    // 🚫 If already 5 images
-    if (itemImages.length >= 5) {
-      Swal.fire({
-        icon: "warning",
-        title: "Limit Reached",
-        text: "You can upload maximum 5 images.",
-        confirmButtonColor: "#1976d2",
+      if (itemImages.length >= 5) {
+        Swal.fire({
+          icon: "warning",
+          title: "Limit Reached",
+          text: "You can upload maximum 5 images.",
+          confirmButtonColor: "#1976d2",
+        });
+        e.target.value = "";
+        return;
+      }
+
+      const remainingSlots = 5 - itemImages.length;
+      const selectedFiles = files.slice(0, remainingSlots);
+
+      if (files.length > remainingSlots) {
+        Swal.fire({
+          icon: "info",
+          title: "Only " + remainingSlots + " allowed",
+          text: `You can upload only ${remainingSlots} more image(s).`,
+          confirmButtonColor: "#1976d2",
+        });
+      }
+
+      selectedFiles.forEach((file) => {
+        // Basic validation
+        if (!file.type.startsWith("image/")) {
+          console.warn(`Skipping non-image file: ${file.name}`);
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const base64 = reader.result.split(",")[1]; // Assumes data:image/... format
+            setItemImages((prev) => [
+              ...prev,
+              {
+                id: crypto.randomUUID
+                  ? crypto.randomUUID()
+                  : `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                file,
+                preview: URL.createObjectURL(file),
+                base64,
+              },
+            ]);
+          } catch (error) {
+            console.error("Error processing image:", error);
+            Swal.fire({
+              icon: "error",
+              title: "Upload Error",
+              text: "Failed to process the selected image.",
+            });
+          }
+        };
+        reader.onerror = () => {
+          console.error("FileReader failed for file:", file.name);
+          Swal.fire({
+            icon: "error",
+            title: "File Read Error",
+            text: `Could not read ${file.name}. Please try again.`,
+          });
+        };
+        reader.readAsDataURL(file);
       });
+
       e.target.value = "";
-      return;
-    }
-
-    const remainingSlots = 5 - itemImages.length;
-    const selectedFiles = files.slice(0, remainingSlots);
-
-    // 🚫 If user selects more than allowed
-    if (files.length > remainingSlots) {
+    } catch (error) {
+      console.error("Unexpected error in handleImagePick:", error);
       Swal.fire({
-        icon: "info",
-        title: "Only " + remainingSlots + " allowed",
-        text: `You can upload only ${remainingSlots} more image(s).`,
-        confirmButtonColor: "#1976d2",
+        icon: "error",
+        title: "Unexpected Error",
+        text: "Something went wrong while selecting images.",
       });
     }
-
-    selectedFiles.forEach((file) => {
-      const reader = new FileReader();
-
-      reader.onload = () => {
-        const base64 = reader.result.split(",")[1]; // remove data:image/*
-
-        setItemImages((prev) => [
-          ...prev,
-          {
-            id: crypto.randomUUID(),
-            file,
-            preview: URL.createObjectURL(file),
-            base64, // 🔥 store base64 for API
-          },
-        ]);
-      };
-
-      reader.readAsDataURL(file);
-    });
-
-    e.target.value = "";
   };
 
   // FILTERED LIST
@@ -592,38 +621,38 @@ export default function ItemMaster() {
     if (!itemCode) return;
 
     const fetchBarcodes = async () => {
-  try {
-    setLoading(true);
+      try {
+        setLoading(true);
 
-    const response = await apiClient.get(
-      `/Barcode?Status=1&Page=0&SearchText=${itemCode}&Limit=20`
-    );
+        const response = await apiClient.get(
+          `/Barcode?Status=1&Page=0&SearchText=${itemCode}&Limit=20`,
+        );
 
-    if (response?.data?.success) {
-      setBarcodeData(response.data.values || []);
-    } else {
-      Swal.fire({
-        icon: "warning",
-        title: "Warning",
-        text: response?.data?.message || "Failed to fetch barcodes.",
-      });
-      setBarcodeData([]);
-    }
-  } catch (error) {
-    console.error("Barcode fetch failed:", error);
+        if (response?.data?.success) {
+          setBarcodeData(response.data.values || []);
+        } else {
+          Swal.fire({
+            icon: "warning",
+            title: "Warning",
+            text: response?.data?.message || "Failed to fetch barcodes.",
+          });
+          setBarcodeData([]);
+        }
+      } catch (error) {
+        console.error("Barcode fetch failed:", error);
 
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text:
-        error.response?.data?.message ||
-        error.message ||
-        "Something went wrong while fetching barcodes.",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text:
+            error.response?.data?.message ||
+            error.message ||
+            "Something went wrong while fetching barcodes.",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
 
     fetchBarcodes();
   }, [itemCode]);
@@ -698,43 +727,42 @@ export default function ItemMaster() {
       "",
     );
 
-const CustomSearchExportToolbar = () => {
-  return (
-    <GridToolbarContainer
-      sx={{
-        p: 1,
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        gap: 2,
-      }}
-    >
-      {/* 🔍 Search */}
-      <GridToolbarQuickFilter
-        placeholder="Search warehouse…"
-        debounceMs={300}
+  const CustomSearchExportToolbar = () => {
+    return (
+      <GridToolbarContainer
         sx={{
-          width: "50%",
-          "& .MuiInputBase-root": {
-            width: "100%",
-          },
+          p: 1,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          gap: 2,
         }}
-      />
+      >
+        {/* 🔍 Search */}
+        <GridToolbarQuickFilter
+          placeholder="Search warehouse…"
+          debounceMs={300}
+          sx={{
+            width: "50%",
+            "& .MuiInputBase-root": {
+              width: "100%",
+            },
+          }}
+        />
 
-      {/* ⬇️ Export */}
-      <GridToolbarExport
-        csvOptions={{
-          fileName: "Inventory_Data",
-          utf8WithBom: true,
-        }}
-        printOptions={{
-          disableToolbarButton: true,
-        }}
-      />
-    </GridToolbarContainer>
-  );
-};
-
+        {/* ⬇️ Export */}
+        <GridToolbarExport
+          csvOptions={{
+            fileName: "Inventory_Data",
+            utf8WithBom: true,
+          }}
+          printOptions={{
+            disableToolbarButton: true,
+          }}
+        />
+      </GridToolbarContainer>
+    );
+  };
 
   //==================================================set data back to field===================================
   const setOldOpenData = async (DocEntry, CardCode, CntctCode) => {
@@ -977,7 +1005,9 @@ const CustomSearchExportToolbar = () => {
       // 🔥 Load Item Images from API
       if (values.oItemImages?.length > 0) {
         const apiImages = values.oItemImages.map((img) => ({
-          id: crypto.randomUUID(),
+          id: crypto.randomUUID
+            ? crypto.randomUUID()
+            : `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           LineNum: img.LineNum, // 👈 comes from API
           DocEntry: img.DocEntry,
           Name: img.Name,
@@ -1058,8 +1088,7 @@ const CustomSearchExportToolbar = () => {
           error.message ||
           "Something went wrong!",
       });
-    }
-    finally{
+    } finally {
       setLoading(false);
     }
   };
@@ -1659,8 +1688,7 @@ const CustomSearchExportToolbar = () => {
         icon: "warning",
         confirmButtonText: "Ok",
       });
-    }
-    finally{
+    } finally {
       setLoading(false);
     }
 
@@ -2152,52 +2180,51 @@ const CustomSearchExportToolbar = () => {
 
   //============================================================= All other API=============================
 
-const SeriesData = async () => {
-  try {
-    setLoading(true);
+  const SeriesData = async () => {
+    try {
+      setLoading(true);
 
-    const docDate = dayjs().format("YYYY-MM-DD"); // avoid dayjs(undefined)
+      const docDate = dayjs().format("YYYY-MM-DD"); // avoid dayjs(undefined)
 
-    const res = await apiClient.get(
-      `/DocSeriesV2/ForTrans?ObjType=4&DocDate=${docDate}`
-    );
+      const res = await apiClient.get(
+        `/DocSeriesV2/ForTrans?ObjType=4&DocDate=${docDate}`,
+      );
 
-    const response = res.data;
+      const response = res.data;
 
-    if (response?.success && Array.isArray(response.values)) {
-      const values = response.values;
+      if (response?.success && Array.isArray(response.values)) {
+        const values = response.values;
 
-      setSeriesdata(values);
+        setSeriesdata(values);
 
-      // Set default series only in SAVE mode or when needed
-      if (saveUpdateName === "SAVE" && values.length > 0) {
-        setValue("Series", values[0]?.SeriesId || "");
-        setValue("ItemCode", values[0]?.DocNum || "");
+        // Set default series only in SAVE mode or when needed
+        if (saveUpdateName === "SAVE" && values.length > 0) {
+          setValue("Series", values[0]?.SeriesId || "");
+          setValue("ItemCode", values[0]?.DocNum || "");
+        }
+      } else {
+        Swal.fire({
+          title: "Warning!",
+          text: response?.message || "No series data found.",
+          icon: "warning",
+        });
       }
-    } else {
+    } catch (error) {
+      console.error("Error fetching series data:", error);
+
       Swal.fire({
-        title: "Warning!",
-        text: response?.message || "No series data found.",
-        icon: "warning",
+        icon: "error",
+        title: "Error!",
+        text:
+          error.response?.data?.message ||
+          error.message ||
+          "Failed to fetch series data.",
+        confirmButtonColor: "#d33",
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching series data:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to fetch series data.",
-      confirmButtonColor: "#d33",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const docDate = dayjs().format("YYYY-MM-DD");
 
@@ -2209,178 +2236,175 @@ const SeriesData = async () => {
   //   saveUpdateName
   // );
   const GetLengthWidth = async () => {
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const res = await apiClient.get(`/LengthandWidth/Pages/1/0`);
-    const data = res?.data;
+      const res = await apiClient.get(`/LengthandWidth/Pages/1/0`);
+      const data = res?.data;
 
-    if (!data?.values || !Array.isArray(data.values)) {
-      throw new Error("Invalid Length and Width response");
+      if (!data?.values || !Array.isArray(data.values)) {
+        throw new Error("Invalid Length and Width response");
+      }
+
+      const units = data.values;
+      setVolumeUnits(units);
+
+      // 🔹 Find millimeter unit safely
+      const millimeterUnit = units.find(
+        (unit) =>
+          typeof unit?.UnitName === "string" &&
+          unit.UnitName.toLowerCase() === "millimeter",
+      );
+
+      // 🔹 Set defaults only if found
+      if (millimeterUnit?.DocEntry) {
+        const unitId = millimeterUnit.DocEntry.toString();
+
+        const unitFields = [
+          "BVolUnit",
+          "SVolUnit",
+          "BLen1Unit",
+          "BWdth1Unit",
+          "BHght1Unit",
+          "SLen1Unit",
+          "SWdth1Unit",
+          "SHght1Unit",
+        ];
+
+        unitFields.forEach((field) => setValue(field, unitId));
+      }
+    } catch (error) {
+      console.error("Error fetching Length & Width:", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error!",
+        text:
+          error.response?.data?.message ||
+          error.message ||
+          "Failed to fetch Length and Width data.",
+        confirmButtonColor: "#d33",
+      });
+    } finally {
+      setLoading(false);
     }
+  };
 
-    const units = data.values;
-    setVolumeUnits(units);
+  const FetchServiceCategory = async () => {
+    try {
+      setLoading(true);
 
-    // 🔹 Find millimeter unit safely
-    const millimeterUnit = units.find(
-      (unit) =>
-        typeof unit?.UnitName === "string" &&
-        unit.UnitName.toLowerCase() === "millimeter"
-    );
+      const res = await apiClient.get(`/ServiceCategories/All`);
+      const data = res?.data;
 
-    // 🔹 Set defaults only if found
-    if (millimeterUnit?.DocEntry) {
-      const unitId = millimeterUnit.DocEntry.toString();
+      if (!data?.success || !Array.isArray(data.values)) {
+        throw new Error(data?.message || "Invalid Service Category response");
+      }
 
-      const unitFields = [
-        "BVolUnit",
-        "SVolUnit",
-        "BLen1Unit",
-        "BWdth1Unit",
-        "BHght1Unit",
-        "SLen1Unit",
-        "SWdth1Unit",
-        "SHght1Unit",
-      ];
+      // 🔹 Filter active categories safely
+      const activeCategories = data.values.filter(
+        (item) => String(item?.Status) === "1",
+      );
 
-      unitFields.forEach((field) => setValue(field, unitId));
+      setServiceCategories(activeCategories);
+
+      // 🔹 Optional: set default value on SAVE
+      // if (saveUpdateName === "SAVE" && activeCategories.length > 0) {
+      //   setValue("ItemGroupCode", activeCategories[0].DocEntry);
+      // }
+    } catch (error) {
+      console.error("Error fetching Service Categories:", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error!",
+        text:
+          error.response?.data?.message ||
+          error.message ||
+          "Failed to fetch Service Category data.",
+        confirmButtonColor: "#d33",
+      });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching Length & Width:", error);
+  };
 
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to fetch Length and Width data.",
-      confirmButtonColor: "#d33",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  const FetchPriceList = async () => {
+    try {
+      setLoading(true);
 
- const FetchServiceCategory = async () => {
-  try {
-    setLoading(true);
+      const res = await apiClient.get(`/PriceList/All`);
+      const data = res?.data;
 
-    const res = await apiClient.get(`/ServiceCategories/All`);
-    const data = res?.data;
+      if (!data?.success || !Array.isArray(data.values)) {
+        throw new Error(data?.message || "Invalid PriceList response");
+      }
 
-    if (!data?.success || !Array.isArray(data.values)) {
-      throw new Error(data?.message || "Invalid Service Category response");
+      // 🔹 Filter active price lists safely
+      const activePriceLists = data.values.filter(
+        (item) => String(item?.Status) === "1",
+      );
+
+      setPriceList(activePriceLists);
+
+      // 🔹 Set default Price List
+      if (activePriceLists.length > 0) {
+        const defaultDocEntry = activePriceLists[0].DocEntry;
+        setValue("ListName", defaultDocEntry);
+
+        // Optional: trigger dependent logic
+        // handlePriceListChange(defaultDocEntry);
+      }
+    } catch (error) {
+      console.error("Error fetching PriceList:", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error!",
+        text:
+          error.response?.data?.message ||
+          error.message ||
+          "Failed to fetch PriceList data.",
+        confirmButtonColor: "#d33",
+      });
+    } finally {
+      setLoading(false);
     }
+  };
 
-    // 🔹 Filter active categories safely
-    const activeCategories = data.values.filter(
-      (item) => String(item?.Status) === "1"
-    );
+  const FetchShippingType = async () => {
+    try {
+      setLoading(true);
 
-    setServiceCategories(activeCategories);
+      const res = await apiClient.get(`/ShippingType/all`);
+      const data = res?.data;
 
-    // 🔹 Optional: set default value on SAVE
-    // if (saveUpdateName === "SAVE" && activeCategories.length > 0) {
-    //   setValue("ItemGroupCode", activeCategories[0].DocEntry);
-    // }
-  } catch (error) {
-    console.error("Error fetching Service Categories:", error);
+      if (!data?.success || !Array.isArray(data.values)) {
+        throw new Error(data?.message || "Invalid ShippingType response");
+      }
 
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to fetch Service Category data.",
-      confirmButtonColor: "#d33",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+      setShippType(data.values);
 
+      // 🔹 Set default Shipping Type
+      if (data.values.length > 0) {
+        setValue("ShipType", data.values[0].DocEntry);
+      }
+    } catch (error) {
+      console.error("Error fetching ShippingType:", error);
 
-const FetchPriceList = async () => {
-  try {
-    setLoading(true);
-
-    const res = await apiClient.get(`/PriceList/All`);
-    const data = res?.data;
-
-    if (!data?.success || !Array.isArray(data.values)) {
-      throw new Error(data?.message || "Invalid PriceList response");
+      Swal.fire({
+        icon: "error",
+        title: "Error!",
+        text:
+          error.response?.data?.message ||
+          error.message ||
+          "Failed to fetch Shipping Type data.",
+        confirmButtonColor: "#d33",
+      });
+    } finally {
+      setLoading(false);
     }
-
-    // 🔹 Filter active price lists safely
-    const activePriceLists = data.values.filter(
-      (item) => String(item?.Status) === "1"
-    );
-
-    setPriceList(activePriceLists);
-
-    // 🔹 Set default Price List
-    if (activePriceLists.length > 0) {
-      const defaultDocEntry = activePriceLists[0].DocEntry;
-      setValue("ListName", defaultDocEntry);
-
-      // Optional: trigger dependent logic
-      // handlePriceListChange(defaultDocEntry);
-    }
-  } catch (error) {
-    console.error("Error fetching PriceList:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to fetch PriceList data.",
-      confirmButtonColor: "#d33",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
- const FetchShippingType = async () => {
-  try {
-    setLoading(true);
-
-    const res = await apiClient.get(`/ShippingType/all`);
-    const data = res?.data;
-
-    if (!data?.success || !Array.isArray(data.values)) {
-      throw new Error(data?.message || "Invalid ShippingType response");
-    }
-
-    setShippType(data.values);
-
-    // 🔹 Set default Shipping Type
-    if (data.values.length > 0) {
-      setValue("ShipType", data.values[0].DocEntry);
-    }
-  } catch (error) {
-    console.error("Error fetching ShippingType:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to fetch Shipping Type data.",
-      confirmButtonColor: "#d33",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
-
+  };
 
   //==================================================Functions for opening and closing modals=========================
 
@@ -2638,85 +2662,79 @@ const FetchPriceList = async () => {
     [],
   );
 
-const loadWarehouseLines = async (
-  oInvntLines = [],
-  defaultWhs = "",
-  mode = "UPDATE",
-) => {
-  try {
-    setLoading(true);
+  const loadWarehouseLines = async (
+    oInvntLines = [],
+    defaultWhs = "",
+    mode = "UPDATE",
+  ) => {
+    try {
+      setLoading(true);
 
-    const res = await apiClient.get(`/Warehouse/all`);
-    const data = res?.data;
+      const res = await apiClient.get(`/Warehouse/all`);
+      const data = res?.data;
 
-    // 🔐 Validate backend response
-    if (!data?.success || !Array.isArray(data.values)) {
-      throw new Error(data?.message || "Invalid Warehouse response");
+      // 🔐 Validate backend response
+      if (!data?.success || !Array.isArray(data.values)) {
+        throw new Error(data?.message || "Invalid Warehouse response");
+      }
+
+      // 🔹 Only active warehouses
+      const activeWarehouses = data.values.filter(
+        (warehouse) => Number(warehouse.Status) === 1,
+      );
+
+      // 🔹 Existing warehouse codes
+      const existingWhsCodes = new Set(oInvntLines.map((line) => line.WHSCode));
+
+      // 🔹 Create missing warehouse rows
+      const additionalLines = activeWarehouses
+        .filter((warehouse) => !existingWhsCodes.has(warehouse.WHSCode))
+        .map((warehouse, index) => ({
+          id: oInvntLines.length + index,
+          WHSCode: warehouse.WHSCode,
+          WhsName: warehouse.WHSName,
+          Locked: warehouse.Locked === "1" ? "1" : "0",
+          OnHand: "",
+          IsCommited: "",
+          OnOrder: "",
+          Available: "",
+          AvgPrice: "",
+          SaleCostAc: "",
+          Alert: false,
+          MinStock: "",
+          MaxStock: "",
+          MinOrder: "",
+        }));
+
+      // 🔹 Merge existing + new
+      const mergedRows = [...oInvntLines, ...additionalLines].map(
+        (row, index) => ({
+          ...row,
+          checked: mode === "SAVE" ? index === 0 : row.WHSCode === defaultWhs,
+        }),
+      );
+
+      setRows(mergedRows);
+      setSelectedRow(mergedRows.find((r) => r.checked) || null);
+    } catch (error) {
+      console.error("Error loading warehouse lines:", error);
+
+      setRows([]);
+      setSelectedRow(null);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error!",
+        text:
+          error.response?.data?.message ||
+          error.message ||
+          "Failed to load warehouse data.",
+        confirmButtonColor: "#d33",
+      });
+    } finally {
+      setLoading(false);
     }
-
-    // 🔹 Only active warehouses
-    const activeWarehouses = data.values.filter(
-      (warehouse) => Number(warehouse.Status) === 1
-    );
-
-    // 🔹 Existing warehouse codes
-    const existingWhsCodes = new Set(
-      oInvntLines.map((line) => line.WHSCode)
-    );
-
-    // 🔹 Create missing warehouse rows
-    const additionalLines = activeWarehouses
-      .filter((warehouse) => !existingWhsCodes.has(warehouse.WHSCode))
-      .map((warehouse, index) => ({
-        id: oInvntLines.length + index,
-        WHSCode: warehouse.WHSCode,
-        WhsName: warehouse.WHSName,
-        Locked: warehouse.Locked === "1" ? "1" : "0",
-        OnHand: "",
-        IsCommited: "",
-        OnOrder: "",
-        Available: "",
-        AvgPrice: "",
-        SaleCostAc: "",
-        Alert: false,
-        MinStock: "",
-        MaxStock: "",
-        MinOrder: "",
-      }));
-
-    // 🔹 Merge existing + new
-    const mergedRows = [...oInvntLines, ...additionalLines].map(
-      (row, index) => ({
-        ...row,
-        checked:
-          mode === "SAVE"
-            ? index === 0
-            : row.WHSCode === defaultWhs,
-      })
-    );
-
-    setRows(mergedRows);
-    setSelectedRow(mergedRows.find((r) => r.checked) || null);
-  } catch (error) {
-    console.error("Error loading warehouse lines:", error);
-
-    setRows([]);
-    setSelectedRow(null);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to load warehouse data.",
-      confirmButtonColor: "#d33",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const colInvnData = useMemo(() => {
     return isByWhChecked ? [...baseColumns, ...additionalColumns] : baseColumns;
@@ -2890,48 +2908,47 @@ const loadWarehouseLines = async (
   };
 
   //====================================Active Tab API Binding for BP====================================================================
- const fetchOpenListData = async (pageNum, searchTerm = "") => {
-  try {
-    setLoading(true);
+  const fetchOpenListData = async (pageNum, searchTerm = "") => {
+    try {
+      setLoading(true);
 
-    const url = searchTerm
-      ? `/ItemsV2/Search/${searchTerm}/1/${pageNum}/20`
-      : `/ItemsV2/Pages/1/${pageNum}/20`;
+      const url = searchTerm
+        ? `/ItemsV2/Search/${searchTerm}/1/${pageNum}/20`
+        : `/ItemsV2/Pages/1/${pageNum}/20`;
 
-    const res = await apiClient.get(url);
-    const data = res?.data;
+      const res = await apiClient.get(url);
+      const data = res?.data;
 
-    // 🔐 Validate response
-    if (!data?.success || !Array.isArray(data.values)) {
-      throw new Error(data?.message || "Invalid Items response");
+      // 🔐 Validate response
+      if (!data?.success || !Array.isArray(data.values)) {
+        throw new Error(data?.message || "Invalid Items response");
+      }
+
+      const newData = data.values;
+
+      // 🔹 Check pagination
+      setHasMoreOpen(newData.length === 20);
+
+      // 🔹 Append or reset list
+      setOpenListData((prev) =>
+        pageNum === 0 ? newData : [...prev, ...newData],
+      );
+    } catch (error) {
+      console.error("Error fetching Items list:", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error!",
+        text:
+          error.response?.data?.message ||
+          error.message ||
+          "Failed to load Items list.",
+        confirmButtonColor: "#d33",
+      });
+    } finally {
+      setLoading(false);
     }
-
-    const newData = data.values;
-
-    // 🔹 Check pagination
-    setHasMoreOpen(newData.length === 20);
-
-    // 🔹 Append or reset list
-    setOpenListData((prev) =>
-      pageNum === 0 ? newData : [...prev, ...newData]
-    );
-  } catch (error) {
-    console.error("Error fetching Items list:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to load Items list.",
-      confirmButtonColor: "#d33",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const handleOpenListSearch = (res) => {
     setOpenListQuery(res);
@@ -2962,48 +2979,47 @@ const loadWarehouseLines = async (
   };
 
   // ============================================InActive List Start ==================================================================
-const fetchClosedListData = async (pageNum, searchTerm = "") => {
-  try {
-    setLoading(true);
+  const fetchClosedListData = async (pageNum, searchTerm = "") => {
+    try {
+      setLoading(true);
 
-    const url = searchTerm
-      ? `/ItemsV2/Search/${searchTerm}/0/${pageNum}/20`
-      : `/ItemsV2/Pages/0/${pageNum}/20`;
+      const url = searchTerm
+        ? `/ItemsV2/Search/${searchTerm}/0/${pageNum}/20`
+        : `/ItemsV2/Pages/0/${pageNum}/20`;
 
-    const res = await apiClient.get(url);
-    const data = res?.data;
+      const res = await apiClient.get(url);
+      const data = res?.data;
 
-    // 🔐 Validate backend response
-    if (!data?.success || !Array.isArray(data.values)) {
-      throw new Error(data?.message || "Invalid inactive items response");
+      // 🔐 Validate backend response
+      if (!data?.success || !Array.isArray(data.values)) {
+        throw new Error(data?.message || "Invalid inactive items response");
+      }
+
+      const newData = data.values;
+
+      // 🔹 Pagination check
+      setHasMoreClosed(newData.length === 20);
+
+      // 🔹 Append or reset list
+      setClosedListData((prev) =>
+        pageNum === 0 ? newData : [...prev, ...newData],
+      );
+    } catch (error) {
+      console.error("Error fetching inactive items:", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error!",
+        text:
+          error.response?.data?.message ||
+          error.message ||
+          "Failed to load inactive item list.",
+        confirmButtonColor: "#d33",
+      });
+    } finally {
+      setLoading(false);
     }
-
-    const newData = data.values;
-
-    // 🔹 Pagination check
-    setHasMoreClosed(newData.length === 20);
-
-    // 🔹 Append or reset list
-    setClosedListData((prev) =>
-      pageNum === 0 ? newData : [...prev, ...newData]
-    );
-  } catch (error) {
-    console.error("Error fetching inactive items:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to load inactive item list.",
-      confirmButtonColor: "#d33",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const handleClosedListSearch = (res) => {
     setClosedListQuery(res);
@@ -3054,46 +3070,43 @@ const fetchClosedListData = async (pageNum, searchTerm = "") => {
   // ==========================================================================================================================
 
   //Item Group, UoM Group, Price List API Get Method Drop Down Field.....
-const FetchItemGroup = async () => {
-  try {
-    setLoading(true);
+  const FetchItemGroup = async () => {
+    try {
+      setLoading(true);
 
-    const res = await apiClient.get(`/ItemGroupV2/all`);
-    const data = res?.data;
+      const res = await apiClient.get(`/ItemGroupV2/all`);
+      const data = res?.data;
 
-    // 🔐 Validate API response
-    if (!data?.success || !Array.isArray(data.values)) {
-      throw new Error(data?.message || "Invalid Item Group response");
+      // 🔐 Validate API response
+      if (!data?.success || !Array.isArray(data.values)) {
+        throw new Error(data?.message || "Invalid Item Group response");
+      }
+
+      // 🔹 Filter active item groups
+      const activeGroups = data.values.filter((item) => item.Status === "1");
+
+      setItemGroup(activeGroups);
+
+      // 🔹 Set default only in SAVE mode
+      if (saveUpdateName === "SAVE" && activeGroups.length > 0) {
+        setValue("ItemGroupCode", activeGroups[0].DocEntry);
+      }
+    } catch (error) {
+      console.error("Error fetching Item Group:", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error!",
+        text:
+          error.response?.data?.message ||
+          error.message ||
+          "Failed to fetch Item Group list.",
+        confirmButtonColor: "#d33",
+      });
+    } finally {
+      setLoading(false);
     }
-
-    // 🔹 Filter active item groups
-    const activeGroups = data.values.filter(
-      (item) => item.Status === "1"
-    );
-
-    setItemGroup(activeGroups);
-
-    // 🔹 Set default only in SAVE mode
-    if (saveUpdateName === "SAVE" && activeGroups.length > 0) {
-      setValue("ItemGroupCode", activeGroups[0].DocEntry);
-    }
-  } catch (error) {
-    console.error("Error fetching Item Group:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to fetch Item Group list.",
-      confirmButtonColor: "#d33",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const handleUomGroupChange = (docEntry) => {
     // If UOM Group is "Manual" (UgpEntry = "0"), clear the UOM fields
@@ -3199,72 +3212,71 @@ const FetchItemGroup = async () => {
     }
   };
 
- const FetchUoMGroup = async (
-  PUoMEntryValue,
-  SUoMEntryValue,
-  IUoMEntryValue,
-  INUoMEntryValue,
-) => {
-  try {
-    setLoading(true);
+  const FetchUoMGroup = async (
+    PUoMEntryValue,
+    SUoMEntryValue,
+    IUoMEntryValue,
+    INUoMEntryValue,
+  ) => {
+    try {
+      setLoading(true);
 
-    const res = await apiClient.get(`/UGP/All`);
-    const data = res?.data;
+      const res = await apiClient.get(`/UGP/All`);
+      const data = res?.data;
 
-    // 🔐 Validate response
-    if (!data?.success || !Array.isArray(data.values)) {
-      throw new Error(data?.message || "Invalid UoM Group response");
-    }
+      // 🔐 Validate response
+      if (!data?.success || !Array.isArray(data.values)) {
+        throw new Error(data?.message || "Invalid UoM Group response");
+      }
 
-    const response = data.values;
+      const response = data.values;
 
-    setUomGroup(response);
-    setUgpAllData(response);
+      setUomGroup(response);
+      setUgpAllData(response);
 
-    // 🔹 Create map for fast lookup (UomEntry → UomCode)
-    const uomMap = new Map();
+      // 🔹 Create map for fast lookup (UomEntry → UomCode)
+      const uomMap = new Map();
 
-    response.forEach((group) => {
-      group?.oLines?.forEach((line) => {
-        if (line?.UomEntry && line?.UomCode) {
-          uomMap.set(line.UomEntry, line.UomCode);
-        }
+      response.forEach((group) => {
+        group?.oLines?.forEach((line) => {
+          if (line?.UomEntry && line?.UomCode) {
+            uomMap.set(line.UomEntry, line.UomCode);
+          }
+        });
       });
-    });
 
-    // 🔹 Safely set form values if entry exists
-    if (PUoMEntryValue && uomMap.has(PUoMEntryValue)) {
-      setValue("PUoMEntry", uomMap.get(PUoMEntryValue));
+      // 🔹 Safely set form values if entry exists
+      if (PUoMEntryValue && uomMap.has(PUoMEntryValue)) {
+        setValue("PUoMEntry", uomMap.get(PUoMEntryValue));
+      }
+
+      if (SUoMEntryValue && uomMap.has(SUoMEntryValue)) {
+        setValue("SUoMEntry", uomMap.get(SUoMEntryValue));
+      }
+
+      if (IUoMEntryValue && uomMap.has(IUoMEntryValue)) {
+        setValue("IUoMEntry", uomMap.get(IUoMEntryValue));
+      }
+
+      if (INUoMEntryValue && uomMap.has(INUoMEntryValue)) {
+        setValue("INUoMEntry", uomMap.get(INUoMEntryValue));
+      }
+    } catch (error) {
+      console.error("Error fetching UoM Group:", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error!",
+        text:
+          error.response?.data?.message ||
+          error.message ||
+          "Failed to load UoM Group list.",
+        confirmButtonColor: "#d33",
+      });
+    } finally {
+      setLoading(false);
     }
-
-    if (SUoMEntryValue && uomMap.has(SUoMEntryValue)) {
-      setValue("SUoMEntry", uomMap.get(SUoMEntryValue));
-    }
-
-    if (IUoMEntryValue && uomMap.has(IUoMEntryValue)) {
-      setValue("IUoMEntry", uomMap.get(IUoMEntryValue));
-    }
-
-    if (INUoMEntryValue && uomMap.has(INUoMEntryValue)) {
-      setValue("INUoMEntry", uomMap.get(INUoMEntryValue));
-    }
-  } catch (error) {
-    console.error("Error fetching UoM Group:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to load UoM Group list.",
-      confirmButtonColor: "#d33",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const handleItemGroupChange = (ItemGroupCode) => {
     const selectedItem = itemGroup.find(
@@ -3546,45 +3558,45 @@ const FetchItemGroup = async () => {
     }
   };
   //====================================Prefered Vendor Search Model API Binding for BP====================================================================
-const fetchVendorListData = async (pageNum, searchTerm = "") => {
-  try {
-    setLoading(true);
+  const fetchVendorListData = async (pageNum, searchTerm = "") => {
+    try {
+      setLoading(true);
 
-    const url = searchTerm
-      ? `/BPV2/V2/ByCardType/Search/${searchTerm}/V/1/${pageNum}/20`
-      : `/BPV2/V2/ByCardType/Pages/V/1/${pageNum}/20`;
+      const url = searchTerm
+        ? `/BPV2/V2/ByCardType/Search/${searchTerm}/V/1/${pageNum}/20`
+        : `/BPV2/V2/ByCardType/Pages/V/1/${pageNum}/20`;
 
-    const response = await apiClient.get(url);
-    const data = response?.data;
+      const response = await apiClient.get(url);
+      const data = response?.data;
 
-    // 🔐 Validate API response
-    if (!data?.success || !Array.isArray(data.values)) {
-      throw new Error(data?.message || "Invalid Vendor list response");
+      // 🔐 Validate API response
+      if (!data?.success || !Array.isArray(data.values)) {
+        throw new Error(data?.message || "Invalid Vendor list response");
+      }
+
+      const newData = data.values;
+
+      setHasMoreGetList(newData.length === 20);
+
+      setGetListData((prev) =>
+        pageNum === 0 ? newData : [...prev, ...newData],
+      );
+    } catch (error) {
+      console.error("Error fetching vendor list:", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error!",
+        text:
+          error.response?.data?.message ||
+          error.message ||
+          "Failed to fetch Vendors List",
+        confirmButtonColor: "#d33",
+      });
+    } finally {
+      setLoading(false);
     }
-
-    const newData = data.values;
-
-    setHasMoreGetList(newData.length === 20);
-
-    setGetListData((prev) =>
-      pageNum === 0 ? newData : [...prev, ...newData]
-    );
-  } catch (error) {
-    console.error("Error fetching vendor list:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        error.message ||
-        "Failed to fetch Vendors List",
-      confirmButtonColor: "#d33",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const handleOpenListSearch1 = (res) => {
     setGetListData([]);
@@ -3678,75 +3690,70 @@ const fetchVendorListData = async (pageNum, searchTerm = "") => {
   ];
   //=============================================Delete API====================================================
 
-const handleOnDelete = async () => {
-  const result = await Swal.fire({
-    text: `Do You Want to delete "${AllData?.ItemCode}" ?`,
-    icon: "question",
-    confirmButtonText: "YES",
-    cancelButtonText: "No",
-    showConfirmButton: true,
-    showDenyButton: true,
-  });
-
-  if (!result.isConfirmed) {
-    Swal.fire({
-      text: "Item Not Deleted",
-      icon: "info",
-      toast: true,
-      showConfirmButton: false,
-      timer: 1500,
+  const handleOnDelete = async () => {
+    const result = await Swal.fire({
+      text: `Do You Want to delete "${AllData?.ItemCode}" ?`,
+      icon: "question",
+      confirmButtonText: "YES",
+      cancelButtonText: "No",
+      showConfirmButton: true,
+      showDenyButton: true,
     });
-    return;
-  }
 
-  try {
-    setLoading(true);
-
-    const response = await apiClient.delete(
-      `/ItemsV2/${AllData.DocEntry}`
-    );
-
-    const data = response?.data;
-
-    if (!data?.success) {
-      throw new Error(data?.message || "Delete failed");
+    if (!result.isConfirmed) {
+      Swal.fire({
+        text: "Item Not Deleted",
+        icon: "info",
+        toast: true,
+        showConfirmButton: false,
+        timer: 1500,
+      });
+      return;
     }
 
-    // ✅ Clear form & reload lists
-    clearFormData();
+    try {
+      setLoading(true);
 
-    setOpenListPage(0);
-    setOpenListData([]);
-    fetchOpenListData(0);
+      const response = await apiClient.delete(`/ItemsV2/${AllData.DocEntry}`);
 
-    setClosedListPage(0);
-    setClosedListData([]);
-    fetchClosedListData(0);
+      const data = response?.data;
 
-    Swal.fire({
-      title: "Success!",
-      text: "Item Deleted",
-      icon: "success",
-      confirmButtonText: "Ok",
-      timer: 1000,
-    });
-  } catch (error) {
-    console.error("Delete Item Error:", error);
+      if (!data?.success) {
+        throw new Error(data?.message || "Delete failed");
+      }
 
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        error.message ||
-        "Item Not Deleted",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+      // ✅ Clear form & reload lists
+      clearFormData();
 
+      setOpenListPage(0);
+      setOpenListData([]);
+      fetchOpenListData(0);
+
+      setClosedListPage(0);
+      setClosedListData([]);
+      fetchClosedListData(0);
+
+      Swal.fire({
+        title: "Success!",
+        text: "Item Deleted",
+        icon: "success",
+        confirmButtonText: "Ok",
+        timer: 1000,
+      });
+    } catch (error) {
+      console.error("Delete Item Error:", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error!",
+        text:
+          error.response?.data?.message || error.message || "Item Not Deleted",
+        confirmButtonText: "Ok",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const sidebarContent = (
     <>
@@ -5689,7 +5696,7 @@ const handleOnDelete = async () => {
                                               arrow
                                             >
                                               <InputTextField
-                                                label="Capital Goods On Hold Percentage"
+                                                label="CAPITAL GOODS ON HOLD PERCENTAGE"
                                                 type="number"
                                                 {...field}
                                                 error={!!error}
@@ -5723,7 +5730,7 @@ const handleOnDelete = async () => {
                                               arrow
                                             >
                                               <InputTextField
-                                                label="Capital Goods On Hold Amount Limit"
+                                                label="CAPITAL GOODS ON HOLD AMOUNT LIMIT"
                                                 type="number"
                                                 {...field}
                                                 error={!!error}

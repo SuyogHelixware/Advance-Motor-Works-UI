@@ -1,22 +1,14 @@
 import AddIcon from "@mui/icons-material/Add";
+import AttachFileIcon from "@mui/icons-material/AttachFile";
 import CloseIcon from "@mui/icons-material/Close";
-import MenuIcon from "@mui/icons-material/Menu";
-import ViewListIcon from "@mui/icons-material/ViewList";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
-import Select from "react-select";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DoNotDisturbAltSharpIcon from "@mui/icons-material/DoNotDisturbAltSharp";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
-import HomeIcon from "@mui/icons-material/Home";
 import GroupsIcon from "@mui/icons-material/Groups";
+import HomeIcon from "@mui/icons-material/Home";
+import MenuIcon from "@mui/icons-material/Menu";
+import MoreVertIcon from "@mui/icons-material/MoreVert";
 import PersonIcon from "@mui/icons-material/Person";
-import AttachFileIcon from "@mui/icons-material/AttachFile";
+import ViewListIcon from "@mui/icons-material/ViewList";
 import {
   Box,
   Button,
@@ -28,7 +20,6 @@ import {
   Divider,
   Grid,
   IconButton,
-  InputAdornment,
   ListItemIcon,
   Menu,
   MenuItem,
@@ -45,6 +36,14 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import Select from "react-select";
 import CardComponent from "../Components/CardComponent";
 
 import SearchInputField from "../Components/SearchInputField";
@@ -52,6 +51,7 @@ import { Base64FileinNewTab } from "../FileUpload/EditFilePreview";
 
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
+import { TabContext, TabPanel } from "@mui/lab";
 import { DataGrid, useGridApiRef } from "@mui/x-data-grid";
 import dayjs from "dayjs";
 import { Controller, useForm, useFormState } from "react-hook-form";
@@ -60,23 +60,21 @@ import { BeatLoader } from "react-spinners";
 import Swal from "sweetalert2";
 import useAuth from "../../Routing/AuthContext";
 import apiClient from "../../services/apiClient";
+import { dataGridSx } from "../../Styles/dataGridStyles";
 import DataGridModal from "../Components/DataGridModal";
 import {
   InputDatePickerField,
   InputSelectTextField,
   InputTextField,
-  InputTextSearchButtonTable,
   InputTimePickerField,
 } from "../Components/formComponents";
+import { Loader } from "../Components/Loader";
 import SearchModel from "../Components/SearchModel";
 import { TimeDelay } from "../Components/TimeDelay";
 import usePermissions from "../Components/usePermissions";
-import { useFileUpload } from "../FileUpload/useFileUpload";
-import { openFileinNewTab } from "../FileUpload/filePreview";
-import { TabContext, TabPanel } from "@mui/lab";
-import { Loader } from "../Components/Loader";
 import { useDocumentSeries } from "../Components/useSearchInfiniteScroll";
-import { dataGridSx } from "../../Styles/dataGridStyles";
+import { openFileinNewTab } from "../FileUpload/filePreview";
+import { useFileUpload } from "../FileUpload/useFileUpload";
 export default function StockCounting() {
   const perms = usePermissions(90);
   const [tabvalue, settabvalue] = useState(0);
@@ -161,121 +159,119 @@ export default function StockCounting() {
   };
 
   const handleOnCloseDocument = async () => {
-  try {
-    const result = await Swal.fire({
-      text: `Do You Want to Close "${currentData.DocNum}"`,
-      icon: "question",
-      confirmButtonText: "YES",
-      cancelButtonText: "No",
-      showConfirmButton: true,
-      showCancelButton: true,
-    });
-
-    if (!result.isConfirmed) {
-      Swal.fire({
-        text: "Inventory Counting Not Closed",
-        icon: "info",
-        toast: true,
-        showConfirmButton: false,
-        timer: 1500,
+    try {
+      const result = await Swal.fire({
+        text: `Do You Want to Close "${currentData.DocNum}"`,
+        icon: "question",
+        confirmButtonText: "YES",
+        cancelButtonText: "No",
+        showConfirmButton: true,
+        showCancelButton: true,
       });
-      return;
-    }
 
-    // API call
-    const resp = await apiClient.put(
-      `/InventoryCounting/Close/${currentData.DocEntry}`
-    );
+      if (!result.isConfirmed) {
+        Swal.fire({
+          text: "Inventory Counting Not Closed",
+          icon: "info",
+          toast: true,
+          showConfirmButton: false,
+          timer: 1500,
+        });
+        return;
+      }
 
-    if (resp?.data?.success) {
-      setOpenListData([]);
-      fetchOpenListData(0);
-      fetchClosedListData(0);
-      ClearForm();
-
-      Swal.fire({
-        text: "Inventory Counting Closed",
-        icon: "success",
-        toast: true,
-        showConfirmButton: false,
-        timer: 1000,
-      });
-    } else {
-      Swal.fire({
-        title: "Info",
-        text: resp?.data?.message || "Unable to close Inventory Counting",
-        icon: "info",
-        toast: true,
-        showConfirmButton: false,
-      });
-    }
-  } catch (error) {
-    console.error("Close Inventory Error:", error);
-
-    Swal.fire({
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong. Please try again.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  }
-};
-
- const fetchOpenListData = async (pageNum = 0, searchTerm = "") => {
-  try {
-    setIsLoading(true);
-    const params = {
-      Status: 1,       // 1 = Open records
-      Page: pageNum,
-      Limit: 20,
-    };
-
-    if (searchTerm?.trim()) {
-      params.SearchText = searchTerm.trim();
-    }
-
-    const response = await apiClient.get("/InventoryCounting", { params });
-
-    if (response?.data?.success) {
-      const newData = response.data.values ?? [];
-
-      setHasMoreOpen(newData.length === 20);
-
-      setOpenListData((prev) =>
-        pageNum === 0 ? newData : [...prev, ...newData]
+      // API call
+      const resp = await apiClient.put(
+        `/InventoryCounting/Close/${currentData.DocEntry}`,
       );
-    } else {
-      // API responded but success = false
+
+      if (resp?.data?.success) {
+        setOpenListData([]);
+        fetchOpenListData(0);
+        fetchClosedListData(0);
+        ClearForm();
+
+        Swal.fire({
+          text: "Inventory Counting Closed",
+          icon: "success",
+          toast: true,
+          showConfirmButton: false,
+          timer: 1000,
+        });
+      } else {
+        Swal.fire({
+          title: "Info",
+          text: resp?.data?.message || "Unable to close Inventory Counting",
+          icon: "info",
+          toast: true,
+          showConfirmButton: false,
+        });
+      }
+    } catch (error) {
+      console.error("Close Inventory Error:", error);
+
       Swal.fire({
-        title: "Info",
-        text: response?.data?.message || "Failed to load open inventory list",
-        icon: "info",
-        toast: true,
-        showConfirmButton: false,
-        timer: 2000,
+        title: "Error",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong. Please try again.",
+        icon: "error",
+        confirmButtonText: "Ok",
       });
     }
-  } catch (error) {
-    console.error("Error fetching open inventory list:", error);
+  };
 
-    Swal.fire({
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Unable to fetch open inventory data. Please try again.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  }
-  finally{
-    setIsLoading(false);
-  }
-};
+  const fetchOpenListData = async (pageNum = 0, searchTerm = "") => {
+    try {
+      setIsLoading(true);
+      const params = {
+        Status: 1, // 1 = Open records
+        Page: pageNum,
+        Limit: 20,
+      };
 
+      if (searchTerm?.trim()) {
+        params.SearchText = searchTerm.trim();
+      }
+
+      const response = await apiClient.get("/InventoryCounting", { params });
+
+      if (response?.data?.success) {
+        const newData = response.data.values ?? [];
+
+        setHasMoreOpen(newData.length === 20);
+
+        setOpenListData((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+      } else {
+        // API responded but success = false
+        Swal.fire({
+          title: "Info",
+          text: response?.data?.message || "Failed to load open inventory list",
+          icon: "info",
+          toast: true,
+          showConfirmButton: false,
+          timer: 2000,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching open inventory list:", error);
+
+      Swal.fire({
+        title: "Error",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Unable to fetch open inventory data. Please try again.",
+        icon: "error",
+        confirmButtonText: "Ok",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Handle search input
   const handleOpenListSearch = (res) => {
@@ -310,57 +306,57 @@ export default function StockCounting() {
 
   //#endregion End Open  Tab
 
-const fetchClosedListData = async (pageNum = 0, searchTerm = "") => {
-  try {
-    setIsLoading(true);
-    const params = {
-      Status: 0,       // 0 = Closed records
-      Page: pageNum,
-      Limit: 20,
-    };
+  const fetchClosedListData = async (pageNum = 0, searchTerm = "") => {
+    try {
+      setIsLoading(true);
+      const params = {
+        Status: 0, // 0 = Closed records
+        Page: pageNum,
+        Limit: 20,
+      };
 
-    if (searchTerm?.trim()) {
-      params.SearchText = searchTerm.trim();
-    }
+      if (searchTerm?.trim()) {
+        params.SearchText = searchTerm.trim();
+      }
 
-    const response = await apiClient.get("/InventoryCounting", { params });
+      const response = await apiClient.get("/InventoryCounting", { params });
 
-    if (response?.data?.success) {
-      const newData = response.data.values ?? [];
+      if (response?.data?.success) {
+        const newData = response.data.values ?? [];
 
-      setHasMoreClosed(newData.length === 20);
+        setHasMoreClosed(newData.length === 20);
 
-      setClosedListData((prev) =>
-        pageNum === 0 ? newData : [...prev, ...newData]
-      );
-    } else {
-      // API responded but success = false
+        setClosedListData((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+      } else {
+        // API responded but success = false
+        Swal.fire({
+          title: "Info",
+          text:
+            response?.data?.message || "Failed to load closed inventory list",
+          icon: "info",
+          toast: true,
+          showConfirmButton: false,
+          timer: 2000,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching closed inventory list:", error);
+
       Swal.fire({
-        title: "Info",
-        text: response?.data?.message || "Failed to load closed inventory list",
-        icon: "info",
-        toast: true,
-        showConfirmButton: false,
-        timer: 2000,
+        title: "Error",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Unable to fetch closed inventory data. Please try again.",
+        icon: "error",
+        confirmButtonText: "Ok",
       });
+    } finally {
+      setIsLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching closed inventory list:", error);
-
-    Swal.fire({
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Unable to fetch closed inventory data. Please try again.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  }
-  finally{
-    setIsLoading(false);
-  }
-};
+  };
 
   // Handle search input
   const handleClosedListSearch = (res) => {
@@ -418,62 +414,61 @@ const fetchClosedListData = async (pageNum = 0, searchTerm = "") => {
     },
   ];
   const FetchInvCList = async () => {
-  try {
-    setIsLoading(true); // 🔄 start loader
+    try {
+      setIsLoading(true); // 🔄 start loader
 
-    const res = await apiClient.get("/Users/All");
+      const res = await apiClient.get("/Users/All");
 
-    if (res?.data?.success) {
-      const values = res.data.values ?? [];
+      if (res?.data?.success) {
+        const values = res.data.values ?? [];
 
-      // Filter only active users
-      const filteredResponse = values.filter(
-        (item) => String(item.Status) === "1"
-      );
+        // Filter only active users
+        const filteredResponse = values.filter(
+          (item) => String(item.Status) === "1",
+        );
 
-      setInvCRows(filteredResponse);
+        setInvCRows(filteredResponse);
 
-      // Match logged-in user
-      const matchedUser = filteredResponse.find(
-        (item) => Number(item.DocEntry) === Number(user?.UserId)
-      );
+        // Match logged-in user
+        const matchedUser = filteredResponse.find(
+          (item) => Number(item.DocEntry) === Number(user?.UserId),
+        );
 
-      if (matchedUser) {
-        setValue("Taker1Id", [
-          {
-            value: Number(matchedUser.DocEntry),
-            label: matchedUser.UserName,
-            LineNum: 0,
-          },
-        ]);
+        if (matchedUser) {
+          setValue("Taker1Id", [
+            {
+              value: Number(matchedUser.DocEntry),
+              label: matchedUser.UserName,
+              LineNum: 0,
+            },
+          ]);
+        }
+      } else {
+        // API returned success = false
+        Swal.fire({
+          icon: "info",
+          text: res?.data?.message || "Unable to load users data.",
+          toast: true,
+          showConfirmButton: false,
+          timer: 2000,
+        });
       }
-    } else {
-      // API returned success = false
+    } catch (error) {
+      console.error("Fetch Users Error:", error);
+
       Swal.fire({
-        icon: "info",
-        text: res?.data?.message || "Unable to load users data.",
-        toast: true,
-        showConfirmButton: false,
-        timer: 2000,
+        icon: "error",
+        title: "Error",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to fetch users data.",
+        confirmButtonColor: "#d33",
       });
+    } finally {
+      setIsLoading(false); // ✅ stop loader (always runs)
     }
-  } catch (error) {
-    console.error("Fetch Users Error:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to fetch users data.",
-      confirmButtonColor: "#d33",
-    });
-  } finally {
-    setIsLoading(false); // ✅ stop loader (always runs)
-  }
-};
-
+  };
 
   const initial = {
     DocNum: "",
@@ -2006,92 +2001,90 @@ const fetchClosedListData = async (pageNum = 0, searchTerm = "") => {
       });
     }
   };
- const fetchTeamCountUomByGroup = async (ugpEntry, rowIndex) => {
-  try {
-    setIsLoading(true); // 🔄 start loader (if you have one)
+  const fetchTeamCountUomByGroup = async (ugpEntry, rowIndex) => {
+    try {
+      setIsLoading(true); // 🔄 start loader (if you have one)
 
-    if (!ugpEntry && ugpEntry !== 0) {
-      setTeamCountUomRows([]);
-      return;
-    }
+      if (!ugpEntry && ugpEntry !== 0) {
+        setTeamCountUomRows([]);
+        return;
+      }
 
-    const res = await apiClient.get(`/UGP/${ugpEntry}`);
-    const response = res?.data;
+      const res = await apiClient.get(`/UGP/${ugpEntry}`);
+      const response = res?.data;
 
-    if (response?.success && Array.isArray(response?.values?.oLines)) {
-      const apiUoms = response.values.oLines.map((item, idx) => {
-        const baseQty = Number(item?.BaseQty) || 0;
-        const altQty = Number(item?.AltQty) || 1; // prevent divide-by-zero
+      if (response?.success && Array.isArray(response?.values?.oLines)) {
+        const apiUoms = response.values.oLines.map((item, idx) => {
+          const baseQty = Number(item?.BaseQty) || 0;
+          const altQty = Number(item?.AltQty) || 1; // prevent divide-by-zero
 
-        return {
-          id: idx + 1,
-          srNo: idx + 1,
-          LineNum: item?.LineNum ?? idx + 1,
-          UomCode: item?.UomCode ?? "",
-          ItmsPerUnt: altQty ? baseQty / altQty : 0,
-          UomQty: 0,
-          CountQty: 0,
-          checked: false,
-        };
-      });
+          return {
+            id: idx + 1,
+            srNo: idx + 1,
+            LineNum: item?.LineNum ?? idx + 1,
+            UomCode: item?.UomCode ?? "",
+            ItmsPerUnt: altQty ? baseQty / altQty : 0,
+            UomQty: 0,
+            CountQty: 0,
+            checked: false,
+          };
+        });
 
-      // Get previously saved values
-      const teamCountingLines = getValues("TeamCountingoLines") ?? [];
-      const prevRows =
-        teamCountingLines[rowIndex]?.TeamCountUomLines ?? [];
+        // Get previously saved values
+        const teamCountingLines = getValues("TeamCountingoLines") ?? [];
+        const prevRows = teamCountingLines[rowIndex]?.TeamCountUomLines ?? [];
 
-      // Map previous rows by UomCode
-      const prevMap = {};
-      prevRows.forEach((row) => {
-        if (row?.UomCode) {
-          prevMap[row.UomCode.trim().toUpperCase()] = row;
-        }
-      });
+        // Map previous rows by UomCode
+        const prevMap = {};
+        prevRows.forEach((row) => {
+          if (row?.UomCode) {
+            prevMap[row.UomCode.trim().toUpperCase()] = row;
+          }
+        });
 
-      // Merge API rows with previous rows
-      const merged = apiUoms.map((apiRow, idx) => {
-        const key = apiRow.UomCode.trim().toUpperCase();
-        const prev = prevMap[key];
+        // Merge API rows with previous rows
+        const merged = apiUoms.map((apiRow, idx) => {
+          const key = apiRow.UomCode.trim().toUpperCase();
+          const prev = prevMap[key];
 
-        return {
-          ...apiRow,
-          ...(prev ?? {}),
-          id: idx + 1,
-          LineNum: apiRow.LineNum ?? prev?.LineNum ?? idx + 1,
-        };
-      });
+          return {
+            ...apiRow,
+            ...(prev ?? {}),
+            id: idx + 1,
+            LineNum: apiRow.LineNum ?? prev?.LineNum ?? idx + 1,
+          };
+        });
 
-      setTeamCountUomRows(merged);
-    } else {
-      setTeamCountUomRows([]);
+        setTeamCountUomRows(merged);
+      } else {
+        setTeamCountUomRows([]);
+
+        Swal.fire({
+          icon: "info",
+          text: response?.message || "No UOM data found for selected group.",
+          toast: true,
+          showConfirmButton: false,
+          timer: 2000,
+        });
+      }
+    } catch (error) {
+      console.error("Fetch Team Count UOM Error:", error);
 
       Swal.fire({
-        icon: "info",
-        text: response?.message || "No UOM data found for selected group.",
-        toast: true,
-        showConfirmButton: false,
-        timer: 2000,
+        title: "Error",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to fetch Team Count UOMs.",
+        icon: "error",
+        confirmButtonText: "Ok",
       });
+
+      setTeamCountUomRows([]);
+    } finally {
+      setIsLoading(false); // ✅ stop loader always
     }
-  } catch (error) {
-    console.error("Fetch Team Count UOM Error:", error);
-
-    Swal.fire({
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to fetch Team Count UOMs.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-
-    setTeamCountUomRows([]);
-  } finally {
-    setIsLoading(false); // ✅ stop loader always
-  }
-};
-
+  };
 
   const openTeamCountQtyModalHandler = async (rowIndex, ugpEntry) => {
     try {
@@ -2391,93 +2384,86 @@ const fetchClosedListData = async (pageNum = 0, searchTerm = "") => {
           );
         },
       },
-   {
-  field: "TotalCountQty",
-  headerName: "TOTAL COUNTED QTY",
-  width: 180,
-  // editable: true,
+      {
+        field: "TotalCountQty",
+        headerName: "TOTAL COUNTED QTY",
+        width: 180,
+        // editable: true,
 
-  renderCell: (params) => {
-    const rowIndex = params.row.id;
-    const disabled =
-      params.row.UgpEntry === "-1" || params.row.UgpEntry === -1;
+        renderCell: (params) => {
+          const rowIndex = params.row.id;
+          const disabled =
+            params.row.UgpEntry === "-1" || params.row.UgpEntry === -1;
 
-    const hasValue =
-      params.row.TotalCountQty !== null &&
-      params.row.TotalCountQty !== undefined &&
-      params.row.TotalCountQty !== "";
+          const hasValue =
+            params.row.TotalCountQty !== null &&
+            params.row.TotalCountQty !== undefined &&
+            params.row.TotalCountQty !== "";
 
-    return (
-      <Grid
-        container
-        alignItems="center"
-        justifyContent="center"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (
-            e.key === "Enter" ||
-            e.key === "F2" ||
-            e.key === " " ||
-            (e.key === "Tab" && !e.shiftKey)
-          ) {
-            e.preventDefault();
+          return (
+            <Grid
+              container
+              alignItems="center"
+              justifyContent="center"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (
+                  e.key === "Enter" ||
+                  e.key === "F2" ||
+                  e.key === " " ||
+                  (e.key === "Tab" && !e.shiftKey)
+                ) {
+                  e.preventDefault();
 
-            // ⌨️ keyboard opens ONLY when empty
-            if (disabled || hasValue) return;
+                  // ⌨️ keyboard opens ONLY when empty
+                  if (disabled || hasValue) return;
 
-            openTeamCountQtyModalHandler(
-              rowIndex,
-              params.row.UgpEntry,
-            );
-          }
-        }}
-        sx={{
-          width: "100%",
-          height: "100%",
-          outline: "none",
-        }}
-      >
-        {/* VALUE */}
-        <Grid item sx={{ flex: 1, minWidth: 0 }}>
-          <Typography
-            noWrap
-            textAlign="center"
-            sx={{ fontSize: 13 }}
-            title={params.value || ""}
-          >
-            {params.value || ""}
-          </Typography>
-        </Grid>
+                  openTeamCountQtyModalHandler(rowIndex, params.row.UgpEntry);
+                }
+              }}
+              sx={{
+                width: "100%",
+                height: "100%",
+                outline: "none",
+              }}
+            >
+              {/* VALUE */}
+              <Grid item sx={{ flex: 1, minWidth: 0 }}>
+                <Typography
+                  noWrap
+                  textAlign="center"
+                  sx={{ fontSize: 13 }}
+                  title={params.value || ""}
+                >
+                  {params.value || ""}
+                </Typography>
+              </Grid>
 
-        {/* ICON */}
-        <Grid item sx={{ width: 28, textAlign: "center" }}>
-          <IconButton
-            size="small"
-            disabled={disabled}
-            onClick={() =>
-              openTeamCountQtyModalHandler(
-                rowIndex,
-                params.row.UgpEntry,
-              )
-            }
-            sx={{
-              backgroundColor: disabled ? "gray" : "green",
-              color: "white",
-              borderRadius: "6px",
-              padding: "4px",
-              "&:hover": {
-                backgroundColor: disabled ? "gray" : "darkgreen",
-              },
-            }}
-          >
-            <ViewListIcon fontSize="small" />
-          </IconButton>
-        </Grid>
-      </Grid>
-    );
-  },
-}
-
+              {/* ICON */}
+              <Grid item sx={{ width: 28, textAlign: "center" }}>
+                <IconButton
+                  size="small"
+                  disabled={disabled}
+                  onClick={() =>
+                    openTeamCountQtyModalHandler(rowIndex, params.row.UgpEntry)
+                  }
+                  sx={{
+                    backgroundColor: disabled ? "gray" : "green",
+                    color: "white",
+                    borderRadius: "6px",
+                    padding: "4px",
+                    "&:hover": {
+                      backgroundColor: disabled ? "gray" : "darkgreen",
+                    },
+                  }}
+                >
+                  <ViewListIcon fontSize="small" />
+                </IconButton>
+              </Grid>
+            </Grid>
+          );
+        },
+      },
     ],
     [],
   );
@@ -2999,149 +2985,149 @@ const fetchClosedListData = async (pageNum = 0, searchTerm = "") => {
 
       /* ================= WHS CODE ================= */
       {
-  field: "WHSCode",
-  headerName: "WhsCode",
-  width: 180,
-  sortable: false,
-  editable: false,
-  headerAlign: "center",
-  align: "center",
+        field: "WHSCode",
+        headerName: "WhsCode",
+        width: 180,
+        sortable: false,
+        editable: false,
+        headerAlign: "center",
+        align: "center",
 
-  renderCell: (params) => {
-    const rowIndex = params.row.id;
-    const hasValue = !!params.row.WHSCode;
+        renderCell: (params) => {
+          const rowIndex = params.row.id;
+          const hasValue = !!params.row.WHSCode;
 
-    return (
-      <Grid
-        container
-        alignItems="center"
-        justifyContent="center"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (
-            e.key === "Enter" ||
-            e.key === "F2" ||
-            e.key === " " ||
-            (e.key === "Tab" && !e.shiftKey)
-          ) {
-            e.preventDefault();
+          return (
+            <Grid
+              container
+              alignItems="center"
+              justifyContent="center"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (
+                  e.key === "Enter" ||
+                  e.key === "F2" ||
+                  e.key === " " ||
+                  (e.key === "Tab" && !e.shiftKey)
+                ) {
+                  e.preventDefault();
 
-            // ⌨️ open ONLY if empty
-            if (hasValue) return;
+                  // ⌨️ open ONLY if empty
+                  if (hasValue) return;
 
-            setValue("selectedRowIndex", rowIndex);
-            setWhscOpen(true);
-          }
-        }}
-        sx={{ width: "100%", height: "100%", outline: "none" }}
-      >
-        {/* VALUE */}
-        <Grid item sx={{ flex: 1, minWidth: 0 }}>
-          <Typography noWrap textAlign="center" sx={{ fontSize: 13 }}>
-            {params.row.WHSCode || ""}
-          </Typography>
-        </Grid>
+                  setValue("selectedRowIndex", rowIndex);
+                  setWhscOpen(true);
+                }
+              }}
+              sx={{ width: "100%", height: "100%", outline: "none" }}
+            >
+              {/* VALUE */}
+              <Grid item sx={{ flex: 1, minWidth: 0 }}>
+                <Typography noWrap textAlign="center" sx={{ fontSize: 13 }}>
+                  {params.row.WHSCode || ""}
+                </Typography>
+              </Grid>
 
-        {/* ICON */}
-        <Grid item sx={{ width: 28, textAlign: "center" }}>
-          <IconButton
-            size="small"
-            onClick={() => {
-              setValue("selectedRowIndex", rowIndex);
-              setWhscOpen(true);
-            }}
-            sx={{
-              backgroundColor: "green",
-              color: "white",
-              borderRadius: "6px",
-              padding: "4px",
-              "&:hover": { backgroundColor: "darkgreen" },
-            }}
-          >
-            <ViewListIcon fontSize="small" />
-          </IconButton>
-        </Grid>
-      </Grid>
-    );
-  },
-},
+              {/* ICON */}
+              <Grid item sx={{ width: 28, textAlign: "center" }}>
+                <IconButton
+                  size="small"
+                  onClick={() => {
+                    setValue("selectedRowIndex", rowIndex);
+                    setWhscOpen(true);
+                  }}
+                  sx={{
+                    backgroundColor: "green",
+                    color: "white",
+                    borderRadius: "6px",
+                    padding: "4px",
+                    "&:hover": { backgroundColor: "darkgreen" },
+                  }}
+                >
+                  <ViewListIcon fontSize="small" />
+                </IconButton>
+              </Grid>
+            </Grid>
+          );
+        },
+      },
 
       /* ================= BIN LOCATION ================= */
       {
-  field: "BinEntry",
-  headerName: "Bin Location",
-  width: 200,
-  sortable: false,
-  editable: false,
-  headerAlign: "center",
-  align: "center",
+        field: "BinEntry",
+        headerName: "Bin Location",
+        width: 200,
+        sortable: false,
+        editable: false,
+        headerAlign: "center",
+        align: "center",
 
-  renderCell: (params) => {
-    const rowIndex = params.row.id;
-    const row = params.row;
+        renderCell: (params) => {
+          const rowIndex = params.row.id;
+          const row = params.row;
 
-    const disabled = row.BinActivat !== "Y";
-    const hasValue = !!row.BinEntry;
+          const disabled = row.BinActivat !== "Y";
+          const hasValue = !!row.BinEntry;
 
-    return (
-      <Grid
-        container
-        alignItems="center"
-        justifyContent="center"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (
-            e.key === "Enter" ||
-            e.key === "F2" ||
-            e.key === " " ||
-            (e.key === "Tab" && !e.shiftKey)
-          ) {
-            e.preventDefault();
+          return (
+            <Grid
+              container
+              alignItems="center"
+              justifyContent="center"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (
+                  e.key === "Enter" ||
+                  e.key === "F2" ||
+                  e.key === " " ||
+                  (e.key === "Tab" && !e.shiftKey)
+                ) {
+                  e.preventDefault();
 
-            // ⌨️ open ONLY if empty & enabled
-            if (disabled || hasValue) return;
+                  // ⌨️ open ONLY if empty & enabled
+                  if (disabled || hasValue) return;
 
-            setValue("selectedRowIndex", rowIndex);
-            fetchgetListDataAccount(row.ItemCode, row.WHSCode, 0);
-            setsearchmodelOpenAccount(true);
-          }
-        }}
-        sx={{ width: "100%", height: "100%", outline: "none" }}
-      >
-        {/* VALUE */}
-        <Grid item sx={{ flex: 1, minWidth: 0 }}>
-          <Typography noWrap textAlign="center" sx={{ fontSize: 13 }}>
-            {row.BinEntry || ""}
-          </Typography>
-        </Grid>
+                  setValue("selectedRowIndex", rowIndex);
+                  fetchgetListDataAccount(row.ItemCode, row.WHSCode, 0);
+                  setsearchmodelOpenAccount(true);
+                }
+              }}
+              sx={{ width: "100%", height: "100%", outline: "none" }}
+            >
+              {/* VALUE */}
+              <Grid item sx={{ flex: 1, minWidth: 0 }}>
+                <Typography noWrap textAlign="center" sx={{ fontSize: 13 }}>
+                  {row.BinEntry || ""}
+                </Typography>
+              </Grid>
 
-        {/* ICON */}
-        <Grid item sx={{ width: 28, textAlign: "center" }}>
-          <IconButton
-            size="small"
-            disabled={disabled}
-            onClick={() => {
-              setValue("selectedRowIndex", rowIndex);
-              fetchgetListDataAccount(row.ItemCode, row.WHSCode, 0);
-              setsearchmodelOpenAccount(true);
-            }}
-            sx={{
-              backgroundColor: disabled ? "gray" : "green",
-              color: "white",
-              borderRadius: "6px",
-              padding: "4px",
-              "&:hover": {
-                backgroundColor: disabled ? "gray" : "darkgreen",
-              },
-            }}
-          >
-            <ViewListIcon fontSize="small" />
-          </IconButton>
-        </Grid>
-      </Grid>
-    );
-  },
-},
+              {/* ICON */}
+              <Grid item sx={{ width: 28, textAlign: "center" }}>
+                <IconButton
+                  size="small"
+                  disabled={disabled}
+                  onClick={() => {
+                    setValue("selectedRowIndex", rowIndex);
+                    fetchgetListDataAccount(row.ItemCode, row.WHSCode, 0);
+                    setsearchmodelOpenAccount(true);
+                  }}
+                  sx={{
+                    backgroundColor: disabled ? "gray" : "green",
+                    color: "white",
+                    borderRadius: "6px",
+                    padding: "4px",
+                    "&:hover": {
+                      backgroundColor: disabled ? "gray" : "darkgreen",
+                    },
+                  }}
+                >
+                  <ViewListIcon fontSize="small" />
+                </IconButton>
+              </Grid>
+            </Grid>
+          );
+        },
+      },
 
       /* ================= IN WHSE QTY ================= */
       {
@@ -3174,93 +3160,93 @@ const fetchClosedListData = async (pageNum = 0, searchTerm = "") => {
       },
 
       /* ================= UOM QTY ================= */
-    {
-  field: "UomQty",
-  headerName: "UOM COUNTED QTY",
-  width: 200,
-  hide: watchCountType === "2",
-  sortable: false,
-  editable: false,
-  headerAlign: "center",
-  align: "center",
+      {
+        field: "UomQty",
+        headerName: "UOM COUNTED QTY",
+        width: 200,
+        hide: watchCountType === "2",
+        sortable: false,
+        editable: false,
+        headerAlign: "center",
+        align: "center",
 
-  renderCell: (params) => {
-    const rowIndex = params.row.id;
+        renderCell: (params) => {
+          const rowIndex = params.row.id;
 
-    const disabled =
-      params.row.UgpEntry === "-1" || params.row.UgpEntry === -1;
+          const disabled =
+            params.row.UgpEntry === "-1" || params.row.UgpEntry === -1;
 
-    const hasValue =
-      params.row.UomQty !== null &&
-      params.row.UomQty !== undefined &&
-      params.row.UomQty !== "";
+          const hasValue =
+            params.row.UomQty !== null &&
+            params.row.UomQty !== undefined &&
+            params.row.UomQty !== "";
 
-    return (
-      <Grid
-        container
-        alignItems="center"
-        justifyContent="center"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (
-            e.key === "Enter" ||
-            e.key === "F2" ||
-            e.key === " " ||
-            (e.key === "Tab" && !e.shiftKey)
-          ) {
-            e.preventDefault();
+          return (
+            <Grid
+              container
+              alignItems="center"
+              justifyContent="center"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (
+                  e.key === "Enter" ||
+                  e.key === "F2" ||
+                  e.key === " " ||
+                  (e.key === "Tab" && !e.shiftKey)
+                ) {
+                  e.preventDefault();
 
-            // ⌨️ keyboard ONLY when empty
-            if (disabled || hasValue) return;
+                  // ⌨️ keyboard ONLY when empty
+                  if (disabled || hasValue) return;
 
-            openIndividualCountQtyModalHandler(
-              rowIndex,
-              params.row.UgpEntry,
-            );
-          }
-        }}
-        sx={{ width: "100%", height: "100%", outline: "none" }}
-      >
-        {/* VALUE */}
-        <Grid item sx={{ flex: 1, minWidth: 0 }}>
-          <Typography
-            noWrap
-            textAlign="center"
-            sx={{ fontSize: 13 }}
-            title={params.row.UomQty || ""}
-          >
-            {params.row.UomQty || ""}
-          </Typography>
-        </Grid>
+                  openIndividualCountQtyModalHandler(
+                    rowIndex,
+                    params.row.UgpEntry,
+                  );
+                }
+              }}
+              sx={{ width: "100%", height: "100%", outline: "none" }}
+            >
+              {/* VALUE */}
+              <Grid item sx={{ flex: 1, minWidth: 0 }}>
+                <Typography
+                  noWrap
+                  textAlign="center"
+                  sx={{ fontSize: 13 }}
+                  title={params.row.UomQty || ""}
+                >
+                  {params.row.UomQty || ""}
+                </Typography>
+              </Grid>
 
-        {/* ICON */}
-        <Grid item sx={{ width: 28, textAlign: "center" }}>
-          <IconButton
-            size="small"
-            disabled={disabled}
-            onClick={() =>
-              openIndividualCountQtyModalHandler(
-                rowIndex,
-                params.row.UgpEntry,
-              )
-            }
-            sx={{
-              backgroundColor: disabled ? "gray" : "green",
-              color: "white",
-              borderRadius: "6px",
-              padding: "4px",
-              "&:hover": {
-                backgroundColor: disabled ? "gray" : "darkgreen",
-              },
-            }}
-          >
-            <ViewListIcon fontSize="small" />
-          </IconButton>
-        </Grid>
-      </Grid>
-    );
-  },
-},
+              {/* ICON */}
+              <Grid item sx={{ width: 28, textAlign: "center" }}>
+                <IconButton
+                  size="small"
+                  disabled={disabled}
+                  onClick={() =>
+                    openIndividualCountQtyModalHandler(
+                      rowIndex,
+                      params.row.UgpEntry,
+                    )
+                  }
+                  sx={{
+                    backgroundColor: disabled ? "gray" : "green",
+                    color: "white",
+                    borderRadius: "6px",
+                    padding: "4px",
+                    "&:hover": {
+                      backgroundColor: disabled ? "gray" : "darkgreen",
+                    },
+                  }}
+                >
+                  <ViewListIcon fontSize="small" />
+                </IconButton>
+              </Grid>
+            </Grid>
+          );
+        },
+      },
 
       /* ================= COUNT QTY ================= */
       {
@@ -3370,7 +3356,6 @@ const fetchClosedListData = async (pageNum = 0, searchTerm = "") => {
     fetchWhscGetListData(0);
     FetchInvCList();
     fetchOpenListData(0);
-    fetchOpenListData(0); // Load first page on mount
     fetchClosedListData(0);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -3402,73 +3387,73 @@ const fetchClosedListData = async (pageNum = 0, searchTerm = "") => {
       getListSearchingAccount ? getListqueryAccount : "",
     );
   };
- const fetchgetListDataAccount = async (
-  ItemCode,
-  WHSCode,
-  pageNum = 0,
-  searchTerm = ""
-) => {
-  try {
-    setIsLoading(true); // 🔄 start loader (if available)
+  const fetchgetListDataAccount = async (
+    ItemCode,
+    WHSCode,
+    pageNum = 0,
+    searchTerm = "",
+  ) => {
+    try {
+      setIsLoading(true); // 🔄 start loader (if available)
 
-    if (!ItemCode || !WHSCode) {
-      setgetListDataAccount([]);
-      sethasMoreGetListAccount(false);
-      return;
-    }
+      if (!ItemCode || !WHSCode) {
+        setgetListDataAccount([]);
+        sethasMoreGetListAccount(false);
+        return;
+      }
 
-    const query = new URLSearchParams({
-      Status: 1,
-      Page: pageNum,
-      Limit: 20,
-      ItemCode,
-      WHSCode,
-    });
-
-    if (searchTerm?.trim()) {
-      query.append("SearchText", searchTerm.trim());
-    }
-
-    const url = `/BinLocationV2/GetByWHSCode?${query.toString()}`;
-    const response = await apiClient.get(url);
-
-    if (response?.data?.success) {
-      const newData = response.data.values ?? [];
-
-      sethasMoreGetListAccount(newData.length === 20);
-
-      setgetListDataAccount((prev) =>
-        pageNum === 0 ? newData : [...prev, ...newData]
-      );
-
-      setgetListPageAccount(pageNum);
-    } else {
-      Swal.fire({
-        icon: "info",
-        text:
-          response?.data?.message ||
-          "No bin locations found for the selected item and warehouse.",
-        toast: true,
-        showConfirmButton: false,
-        timer: 2000,
+      const query = new URLSearchParams({
+        Status: 1,
+        Page: pageNum,
+        Limit: 20,
+        ItemCode,
+        WHSCode,
       });
-    }
-  } catch (error) {
-    console.error("❌ Error fetching Bin Location:", error);
 
-    Swal.fire({
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to fetch bin location data.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setIsLoading(false); // ✅ stop loader always
-  }
-};
+      if (searchTerm?.trim()) {
+        query.append("SearchText", searchTerm.trim());
+      }
+
+      const url = `/BinLocationV2/GetByWHSCode?${query.toString()}`;
+      const response = await apiClient.get(url);
+
+      if (response?.data?.success) {
+        const newData = response.data.values ?? [];
+
+        sethasMoreGetListAccount(newData.length === 20);
+
+        setgetListDataAccount((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+
+        setgetListPageAccount(pageNum);
+      } else {
+        Swal.fire({
+          icon: "info",
+          text:
+            response?.data?.message ||
+            "No bin locations found for the selected item and warehouse.",
+          toast: true,
+          showConfirmButton: false,
+          timer: 2000,
+        });
+      }
+    } catch (error) {
+      console.error("❌ Error fetching Bin Location:", error);
+
+      Swal.fire({
+        title: "Error",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to fetch bin location data.",
+        icon: "error",
+        confirmButtonText: "Ok",
+      });
+    } finally {
+      setIsLoading(false); // ✅ stop loader always
+    }
+  };
 
   const handleSelectBinLocation = (item) => {
     const index = getValues("selectedRowIndex");
@@ -3508,54 +3493,52 @@ const fetchClosedListData = async (pageNum = 0, searchTerm = "") => {
   };
   // ======================WHSCode Logic=============================
   const fetchWhscGetListData = async (pageNum = 0, searchTerm = "") => {
-  try {
-    setIsLoading(true); // 🔄 start loader (if you have one)
+    try {
+      setIsLoading(true); // 🔄 start loader (if you have one)
 
-    let response;
+      let response;
 
-    if (searchTerm?.trim()) {
-      response = await apiClient.get(
-        `/WarehouseV2/search/${searchTerm.trim()}/1/${pageNum}`
-      );
-    } else {
-      response = await apiClient.get(`/WarehouseV2/pages/1/${pageNum}`);
-    }
+      if (searchTerm?.trim()) {
+        response = await apiClient.get(
+          `/WarehouseV2/search/${searchTerm.trim()}/1/${pageNum}`,
+        );
+      } else {
+        response = await apiClient.get(`/WarehouseV2/pages/1/${pageNum}`);
+      }
 
-    if (response?.data?.success) {
-      const newData = response.data.values ?? [];
+      if (response?.data?.success) {
+        const newData = response.data.values ?? [];
 
-      setWhsHasMoreGetList(newData.length === 20);
+        setWhsHasMoreGetList(newData.length === 20);
 
-      setWhscGetListData((prev) =>
-        pageNum === 0 ? newData : [...prev, ...newData]
-      );
-    } else {
+        setWhscGetListData((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+      } else {
+        Swal.fire({
+          icon: "info",
+          text: response?.data?.message || "Failed to load warehouse list.",
+          toast: true,
+          showConfirmButton: false,
+          timer: 2000,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching warehouse list:", error);
+
       Swal.fire({
-        icon: "info",
+        title: "Error",
         text:
-          response?.data?.message ||
-          "Failed to load warehouse list.",
-        toast: true,
-        showConfirmButton: false,
-        timer: 2000,
+          error?.response?.data?.message ||
+          error?.message ||
+          "Unable to fetch warehouse data.",
+        icon: "error",
+        confirmButtonText: "Ok",
       });
+    } finally {
+      setIsLoading(false); // ✅ stop loader always
     }
-  } catch (error) {
-    console.error("Error fetching warehouse list:", error);
-
-    Swal.fire({
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Unable to fetch warehouse data.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setIsLoading(false); // ✅ stop loader always
-  }
-};
+  };
 
   const handleWhscGetListSearch = (res) => {
     setWhsGetListQuery(res);
@@ -3682,18 +3665,18 @@ const fetchClosedListData = async (pageNum = 0, searchTerm = "") => {
         });
       }
     } catch (error) {
-    console.error("Error fetching warehouse list:", error);
+      console.error("Error fetching warehouse list:", error);
 
-    Swal.fire({
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Unable to fetch warehouse data.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
+      Swal.fire({
+        title: "Error",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Unable to fetch warehouse data.",
+        icon: "error",
+        confirmButtonText: "Ok",
+      });
+    } finally {
       // 🟢 Stop loader
       setIsLoading(false);
       setWhscOpen(false);
@@ -3799,19 +3782,19 @@ const fetchClosedListData = async (pageNum = 0, searchTerm = "") => {
         } else {
           Swal.fire("Error!", data.message, "warning");
         }
-      }  catch (error) {
-    console.error("Error fetching Items list:", error);
+      } catch (error) {
+        console.error("Error fetching Items list:", error);
 
-    Swal.fire({
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Unable to fetch Items data.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
+        Swal.fire({
+          title: "Error",
+          text:
+            error?.response?.data?.message ||
+            error?.message ||
+            "Unable to fetch Items data.",
+          icon: "error",
+          confirmButtonText: "Ok",
+        });
+      } finally {
         setIsLoading(false);
       }
     },
@@ -4231,13 +4214,12 @@ const fetchClosedListData = async (pageNum = 0, searchTerm = "") => {
         TeamCountingoLines.push({
           ...mainLine,
           id: index + 1,
-           BinEntry: mainLine.BinCode,
+          BinEntry: mainLine.BinCode,
           TeamCountUomLines: teamCountUomLines,
           TeamUomCountedQty: Number(totalTeamUomQty.toFixed(4)),
           TotalCountQty: Number(totalTeamCountQty.toFixed(4)),
         });
       });
-
 
       // 8️⃣ BUILD INDIVIDUAL COUNTINGO LINES
       let IndividualCountingoLines = [];
@@ -4294,7 +4276,6 @@ const fetchClosedListData = async (pageNum = 0, searchTerm = "") => {
           });
         });
 
-
         const sortedUomLines = Object.values(uomGrouped).sort(
           (a, b) => a.ItmNum - b.ItmNum || a.ChildNum - b.ChildNum,
         );
@@ -4331,7 +4312,6 @@ const fetchClosedListData = async (pageNum = 0, searchTerm = "") => {
           };
         });
 
-
         // ⚡ CALCULATE TOTALS PER USER FOR MAIN LINE
         const userTotals = {};
         individualCountUomLines.forEach((u) => {
@@ -4346,7 +4326,6 @@ const fetchClosedListData = async (pageNum = 0, searchTerm = "") => {
             );
           });
         });
-
 
         const totalDynamicFields = {};
         Object.keys(userTotals).forEach((label) => {
@@ -4371,11 +4350,10 @@ const fetchClosedListData = async (pageNum = 0, searchTerm = "") => {
         IndividualCountingoLines.push({
           ...mainLine,
           id: index + 1,
-           BinEntry: mainLine.BinCode,
+          BinEntry: mainLine.BinCode,
           IndividualCountUomLines: individualCountUomLines,
           ...totalDynamicFields,
         });
-
       });
 
       // ============================================================
@@ -4423,18 +4401,18 @@ const fetchClosedListData = async (pageNum = 0, searchTerm = "") => {
       }
       settabvalue(0);
     } catch (error) {
-    console.error("Error fetching warehouse list:", error);
+      console.error("Error fetching warehouse list:", error);
 
-    Swal.fire({
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to load Inventory Counting data.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
+      Swal.fire({
+        title: "Error",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to load Inventory Counting data.",
+        icon: "error",
+        confirmButtonText: "Ok",
+      });
+    } finally {
       setIsLoading(false);
     }
   };

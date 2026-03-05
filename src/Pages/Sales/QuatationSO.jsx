@@ -9,7 +9,6 @@ import RemoveCircleIcon from "@mui/icons-material/RemoveCircle";
 import RequestQuoteIcon from "@mui/icons-material/RequestQuote";
 import SearchIcon from "@mui/icons-material/Search";
 import TextSnippetIcon from "@mui/icons-material/TextSnippet";
-
 import { TabContext, TabList, TabPanel } from "@mui/lab";
 import {
   AppBar,
@@ -76,6 +75,7 @@ import SearchInputField from "../Components/SearchInputField";
 import SearchModel from "../Components/SearchModel";
 import usePermissions from "../Components/usePermissions";
 import apiClient from "../../services/apiClient";
+import { Loader } from "../Components/Loader";
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
@@ -91,7 +91,7 @@ export default function QuatationSO() {
   const [bankData, setBankData] = useState([]);
   const [selectedRow, setSelectedRow] = useState(null);
   const [images, setImages] = useState([]);
-  // const [oldOpenData, setSelectData] = useState(null);
+
   const [GRN, setGrn] = useState([]);
   const [GRNPage, setGRNPage] = useState(1);
   const [hasMoreGRN, setHasMoreGRN] = useState(true);
@@ -108,9 +108,8 @@ export default function QuatationSO() {
   const [loadingOpenSO, setLoadingOpenSO] = useState(false);
 
   const [filteredList, setFilteredList] = useState([]);
-  const [ModalLoading, setModalLoading] = useState(false);
+
   const [Suppliers, setSuppliers] = useState([]);
-  // const [storedFittingCharges, setStoredFittingCharges] = useState([]);
 
   const [getListData, setGetListData] = useState([]);
   const [getListquery, setGetListQuery] = useState("");
@@ -133,6 +132,7 @@ export default function QuatationSO() {
   const top20CancelToken = useRef(null);
   const top20DebounceTimer = useRef(null);
   const [SaveUpdateName, setSaveUpdateName] = useState("SAVE");
+  const [loading, setLoading] = useState(false);
 
   const theme = useTheme();
   const checkedRowsRef = useRef([]);
@@ -252,15 +252,7 @@ export default function QuatationSO() {
     Status: "1",
   };
 
-  const {
-    control,
-    handleSubmit,
-    reset,
-    getValues,
-    setValue,
-    watch,
-    // formState: { errors },
-  } = useForm({
+  const { control, handleSubmit, reset, getValues, setValue, watch } = useForm({
     defaultValues: initial,
     shouldFocusError: false,
   });
@@ -269,10 +261,8 @@ export default function QuatationSO() {
     control: controlMdl,
     handleSubmit: handleSubmitMdl,
     reset: resetMdl,
-    // getValues: getValuesMdl,
+
     setValue: setValueMdl,
-    // watch: watchMdl,
-    // formState: { errors: errorsMdl },
   } = useForm({
     defaultValues: initialCustCreation,
     shouldFocusError: false,
@@ -282,16 +272,11 @@ export default function QuatationSO() {
     control: controlMdl1,
     handleSubmit: handleSubmitMdl1,
     reset: resetMdl1,
-    // getValues: getValuesMdl1,
-    // setValue: setValueMdl1,
-    // watch: watchMdl1,
-    // formState: { errors: errorsMdl1 },
   } = useForm({
     defaultValues: initialItemSearch,
     shouldFocusError: false,
   });
 
-  // const allFormData = getValues();
   const perms = usePermissions(356);
 
   const CreditCardList = [
@@ -321,8 +306,6 @@ export default function QuatationSO() {
   };
 
   const gettop20Items = useCallback((searchText = "") => {
-    // setTop20Loading(true);
-
     if (top20DebounceTimer.current) {
       clearTimeout(top20DebounceTimer.current);
     }
@@ -364,7 +347,6 @@ export default function QuatationSO() {
             });
           }
         });
-      // .finally(() => setTop20Loading(false));
     }, 500);
   }, []);
 
@@ -395,14 +377,14 @@ export default function QuatationSO() {
     } catch (error) {
       console.error("Error fetching ARInvoice:", error);
     }
+    handleClose();
   };
 
   const fetchGetListData = async (pageNum, searchTerm = "") => {
     try {
       const url = searchTerm
         ? `/BPV2?Status=1&CardType=C&Limit=${pageNum}&SearchText=${searchTerm}`
-        : // : `/BPV2?Status=1&CardType=C&GroupCode=0&Page=${pageNum}`;
-          `/BPV2/V2/Pages/1/${pageNum}/20`;
+        : `/BPV2/V2/Pages/1/${pageNum}/20`;
 
       const response = await apiClient.get(url);
 
@@ -465,13 +447,13 @@ export default function QuatationSO() {
   };
 
   const fetchAndSetData = async (DocEntry) => {
+    setLoading(true);
     try {
       const res = await apiClient.get(`/QuotationSo/${DocEntry}`);
 
       const data = res.data?.values;
 
       reset(data);
-      // alert(watch("Status"));
 
       reset({
         ...data,
@@ -488,12 +470,6 @@ export default function QuatationSO() {
         oCCPay: [],
         BankPay: [],
         oCashPay: [],
-        // Status:
-        //   data.Status === "1" && data.InvoiceStatus === "1"
-        //     ? "OPEN | P-INVOICE"
-        //     : data.Status === "0"
-        //       ? "CLOSE"
-        //       : "OPEN",
 
         DesiredDiscAmt: Number(data?.DesiredDiscAmt || 0).toFixed(3),
         SpecialDiscAmt: Number(data?.SpecialDiscAmt || 0).toFixed(3),
@@ -534,7 +510,6 @@ export default function QuatationSO() {
         })),
       });
 
-      // reset(transformed);
       setSaveUpdateName("UPDATE");
     } catch (error) {
       console.error("Error fetching data:", error);
@@ -545,6 +520,7 @@ export default function QuatationSO() {
         confirmButtonText: "OK",
       });
     }
+    setLoading(false);
   };
 
   const fetchMoreGetListData = () => {
@@ -618,9 +594,7 @@ export default function QuatationSO() {
   const fetchClosedListData = async (pageNum = 0, searchTerm = "") => {
     try {
       let url = searchTerm
-        ? // ? `${BASE_URL}/QuotationSO/search/${searchTerm}/0/${pageNum}`
-          // : `${BASE_URL}/QuotationSO/pages/${pageNum}/0`;
-          `/QuotationSO?Status=0&Page=${pageNum}&SearchText=${searchTerm}`
+        ? `/QuotationSO?Status=0&Page=${pageNum}&SearchText=${searchTerm}`
         : `/QuotationSO?Status=0&Page=${pageNum}`;
 
       const response = await apiClient.get(url);
@@ -663,7 +637,6 @@ export default function QuatationSO() {
     setClosedListPage((prev) => prev + 1);
   };
 
-  // Initial fetch
   useEffect(() => {
     fetchClosedListData(0);
   }, []);
@@ -672,7 +645,7 @@ export default function QuatationSO() {
     setClosedListQuery(res);
     setClosedListSearching(true);
     setClosedListPage(0);
-    setClosedListData([]); // Clear current data
+    setClosedListData([]);
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
@@ -715,7 +688,7 @@ export default function QuatationSO() {
 
   const getAllBPFormData = async (page = 0, searchQuery = "") => {
     try {
-      setModalLoading(true);
+      setLoading(true);
 
       const res = await apiClient.get(
         `/BPV2?Status=1&CardType=S&Page=0&Limit=200`,
@@ -751,7 +724,7 @@ export default function QuatationSO() {
         confirmButtonColor: "#d33",
       });
     } finally {
-      setModalLoading(false);
+      setLoading(false);
     }
   };
 
@@ -777,7 +750,7 @@ export default function QuatationSO() {
     const ATP = document.getElementById("ATPScroll");
     if (ATP) ATP.scrollTo(0, 0);
 
-    setModalLoading(true);
+    setLoading(true);
 
     apiClient
       .request({
@@ -795,9 +768,9 @@ export default function QuatationSO() {
           setGrn(data?.GRN || []);
           setARInvoice(data?.ARInvoice || []);
           setOpenSO(data?.OpenSO || []);
-          setModalLoading(false);
+          setLoading(false);
         } else if (response.data.success === false) {
-          setModalLoading(false);
+          setLoading(false);
           Swal.fire({
             title: "Error!",
             text: response.data.message,
@@ -807,7 +780,7 @@ export default function QuatationSO() {
         }
       })
       .catch((error) => {
-        setModalLoading(false);
+        setLoading(false);
         console.log(error);
       });
   };
@@ -963,8 +936,6 @@ export default function QuatationSO() {
       return sum + Number(row.LineFittingCharge || 0);
     }, 0);
 
-    // const sDisc = parseFloat(allFormdata.SpecialDisc) || 0;
-
     const sDisc = (() => {
       const desireddis = Number(allFormdata.DesiredDisc) || 0;
       const specialdisc = Number(allFormdata.SpecialDisc) || 0;
@@ -978,7 +949,7 @@ export default function QuatationSO() {
     const sDiscAmt = (totalPartsValue * sDisc) / 100;
     const netParts =
       totalPartsValue - Number(desiredDiscAmt) - Number(sDiscAmt);
-    // const total = netParts + totalFittingCharge + roundAmt + shipAmt;
+
     const total = Math.max(
       0,
       Number(netParts || 0) +
@@ -1212,7 +1183,6 @@ export default function QuatationSO() {
       ];
 
       setValue("oLines", serviceLines);
-      // HandleTableOnChange();
     } else if (!checked && !isServiceOrder) {
       setValue("oLines", []);
       HandleTableOnChange();
@@ -1351,20 +1321,6 @@ export default function QuatationSO() {
 
       checkedRows.forEach((r) => (r.disabled = true));
 
-      // setStoredFittingCharges((prev) => {
-      //   const newData = checkedRows.map((row) => ({
-      //     ItemCode: row.ItemCode,
-      //     FittingCharge: row.OriginalFittingCharge ?? row.FittingCharge,
-      //   }));
-      //   const merged = [...prev];
-      //   newData.forEach((n) => {
-      //     const idx = merged.findIndex((m) => m.ItemCode === n.ItemCode);
-      //     if (idx >= 0) merged[idx] = n;
-      //     else merged.push(n);
-      //   });
-      //   return merged;
-      // });
-
       const processedItems = checkedRows.flatMap((row) => {
         const hasChildren = Array.isArray(row.oLines) && row.oLines.length > 0;
 
@@ -1420,6 +1376,18 @@ export default function QuatationSO() {
       checkedRowsRef.current = [];
     } catch (err) {
       console.error(" handleSave error:", err);
+    }
+  };
+  const getbyidBPV2 = async (DocEntry) => {
+    try {
+      const res = await apiClient.get(`/BPV2?DocEntry=${DocEntry}`);
+
+      if (res?.data?.success) {
+        const data = res.data.values[0];
+        onSelectBusinessPartner(data);
+      }
+    } catch (error) {
+      console.error("Failed to fetch BPV2:", error);
     }
   };
 
@@ -1547,11 +1515,8 @@ export default function QuatationSO() {
     try {
       const response = await apiClient.post(`/BPV2/V2`, obj);
       if (response.data && response.data.success) {
-        handleClose();
-        onSelectBusinessPartner(obj);
-
-        const data = response.data;
-        console.log("object", data);
+        const data = response.data.ID;
+        getbyidBPV2(data);
 
         Swal.fire({
           text: "Customer Created Successfully",
@@ -1560,10 +1525,6 @@ export default function QuatationSO() {
           toast: true,
           timer: 1500,
         });
-
-        // const createdCustomer = Array.isArray(response.data.values)
-        //   ? response.data.values[0]
-        //   : response.data.values;
       } else {
         const errorMessage =
           response.data?.message || "Failed to create customer";
@@ -1701,10 +1662,8 @@ export default function QuatationSO() {
     const CreatedBy = localStorage.getItem("UserName");
     const obj = {
       DocNum: data?.DocNum || null,
-      // UserId: SaveUpdateName === "Update" ? data.UserId : String(UserId),
-      UserId: String(UserId),
-      CreatedBy: CreatedBy,
-      // CreatedBy: SaveUpdateName === "Update" ? data.CreatedBy : CreatedBy,
+      UserId: SaveUpdateName === "Update" ? data.UserId : String(UserId),
+      CreatedBy: SaveUpdateName === "Update" ? data.CreatedBy : CreatedBy,
       DocDate: dayjs(data.DocDate).format("YYYY-MM-DD"),
       Status: data.Status === `OPEN` ? "1" : data.Status,
       JobRemarks: (data.JobRemarks ?? "").toUpperCase(),
@@ -1867,7 +1826,7 @@ export default function QuatationSO() {
       if (results.isConfirmed) {
         obj.SendWPAttach = results.value === 1 ? true : false;
 
-        setModalLoading(true);
+        setLoading(true);
 
         try {
           let res;
@@ -1877,7 +1836,7 @@ export default function QuatationSO() {
           } else if (SaveUpdateName === "UPDATE") {
             res = await apiClient.put(`/quotationSo/${data.DocEntry}`, obj);
           } else {
-            setModalLoading(false);
+            setLoading(false);
             return Swal.fire({
               text: "Document Not Saved",
               icon: "info",
@@ -1891,7 +1850,7 @@ export default function QuatationSO() {
             fetchOpenListData();
             fetchClosedListData();
             reset(initial);
-
+            setLoading(false);
             Swal.fire({
               title: "Success!",
               icon: "success",
@@ -1903,7 +1862,7 @@ export default function QuatationSO() {
               timer: 1500,
             });
           } else {
-            setModalLoading(false);
+            setLoading(false);
             Swal.fire({
               title: "Error!",
               text: res.data.message,
@@ -1912,7 +1871,7 @@ export default function QuatationSO() {
             });
           }
         } catch (error) {
-          setModalLoading(false);
+          setLoading(false);
           Swal.fire({
             title: "Error!123",
             text: error,
@@ -1935,7 +1894,7 @@ export default function QuatationSO() {
   };
 
   const fetchFormData = async (payload = {}) => {
-    setModalLoading(true);
+    setLoading(true);
 
     try {
       const body = {
@@ -1958,7 +1917,7 @@ export default function QuatationSO() {
         text: error?.message || "Something went wrong",
       });
     } finally {
-      setModalLoading(false);
+      setLoading(false);
     }
   };
 
@@ -2071,26 +2030,9 @@ export default function QuatationSO() {
       IssueQuantity: item.IssueQuantity,
     };
 
-    // setStoredFittingCharges((prev) => {
-    //   const merged = [...prev];
-    //   const idx = merged.findIndex((m) => m.ItemCode === item.ItemCode);
-    //   if (idx >= 0)
-    //     merged[idx] = {
-    //       ItemCode: item.ItemCode,
-    //       FittingCharge: realFittingCharge,
-    //     };
-    //   else
-    //     merged.push({
-    //       ItemCode: item.ItemCode,
-    //       FittingCharge: realFittingCharge,
-    //     });
-    //   return merged;
-    // });
-
     const updatedOLines = [...currentOLines, newLine];
     setValue("oLines", updatedOLines);
 
-    // Now update rows
     const price = Number(item.Price || 0);
     const quantity = 1;
     const total = price * quantity;
@@ -2584,6 +2526,7 @@ export default function QuatationSO() {
 
   return (
     <>
+      <Loader open={loading} />
       <Dialog
         open={open}
         onClose={handleClose}
@@ -2613,9 +2556,6 @@ export default function QuatationSO() {
 
           <DialogContent className="bg-light">
             <Grid container gap={2}>
-              {/* CUSTOMER ID */}
-
-              {/* CUSTOMER NAME */}
               <Grid item xs={12} lg={12} textAlign={"center"}>
                 <Controller
                   name="CardName"
@@ -2633,7 +2573,6 @@ export default function QuatationSO() {
                 />
               </Grid>
 
-              {/* PHONE NUMBER */}
               <Grid item xs={12} lg={12} textAlign={"center"}>
                 <Controller
                   name="PhoneNumber1"
@@ -2658,7 +2597,6 @@ export default function QuatationSO() {
                 />
               </Grid>
 
-              {/* EMAIL */}
               <Grid item xs={12} lg={12} textAlign={"center"}>
                 <Controller
                   name="Email"
@@ -2733,8 +2671,6 @@ export default function QuatationSO() {
           {sidebarContent}
         </Grid>
 
-        {/* User Creation Form Grid */}
-
         <Grid
           container
           item
@@ -2743,11 +2679,8 @@ export default function QuatationSO() {
           sm={12}
           md={12}
           lg={9}
-          // component="form"
           position="relative"
         >
-          {/* Hamburger Menu for smaller screens */}
-
           <IconButton
             edge="start"
             color="inherit"
@@ -2756,11 +2689,9 @@ export default function QuatationSO() {
             sx={{
               display: {
                 lg: "none",
-              }, // Show only on smaller screens
+              },
 
               position: "absolute",
-
-              // top: "10px",
 
               left: "10px",
             }}
@@ -2892,6 +2823,7 @@ export default function QuatationSO() {
                                   backgroundColor: "darkgreen",
                                 },
                               }}
+                              disabled={SaveUpdateName === "UPDATE"}
                             >
                               <ContactMailOutlinedIcon />
                             </IconButton>
@@ -3323,6 +3255,14 @@ export default function QuatationSO() {
                               size="medium"
                               sx={{ textAlign: "center", width: 20, mr: 1 }}
                               checked={value}
+                              disabled={
+                                watch("ServiceOrder") ||
+                                oLines.filter(
+                                  (item) =>
+                                    item.QuotStatus === "0" ||
+                                    Number(item.IssueQuantity) > 0,
+                                ).length !== 0
+                              }
                               onChange={(e) => {
                                 const checkedValue = e.target.checked;
                                 onChange(checkedValue);
@@ -5252,7 +5192,7 @@ export default function QuatationSO() {
                             const itemCode = params.row.ItemCode;
                             setSelectedRow(params.row);
                             handleCheck(itemCode);
-                            // Toggle checkbox on row click (skip if already in oLines)
+
                             const alreadyInOLines = (oLines || []).some(
                               (line) => line.ItemCode === itemCode,
                             );

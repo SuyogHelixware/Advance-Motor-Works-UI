@@ -22,7 +22,14 @@ import {
   Typography,
   useTheme,
 } from "@mui/material";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
 
 import SearchInputField from "../Components/SearchInputField";
 
@@ -61,6 +68,7 @@ import { TwoFormatter } from "../Components/ValueFormatter";
 import { Base64FileinNewTab } from "../FileUpload/EditFilePreview";
 import { openFileinNewTab } from "../FileUpload/filePreview";
 import { useFileUpload } from "../FileUpload/useFileUpload";
+import AllBinLocationShow from "../Components/AllBinLocationShow";
 
 const ISsueTranColumn = [
   // {
@@ -207,11 +215,32 @@ const DisassemblyColumn = [
     align: "center",
   },
 ];
+const initialState = {
+  BinLocationOpen: false,
+};
+function reducer(state, action) {
+  switch (action.type) {
+    case "OPEN":
+      return { ...state, [action.modal]: true };
+    case "CLOSE":
+      return { ...state, [action.modal]: false };
+    case "TOGGLE":
+      return { ...state, [action.modal]: !state[action.modal] };
+    case "CLOSE_ALL":
+      return Object.keys(state).reduce(
+        (acc, key) => ({ ...acc, [key]: false }),
+        {},
+      );
+    default:
+      return state;
+  }
+}
 export default function IssueForProduction() {
   const theme = useTheme();
   const timeoutRef = useRef(null);
   const perms = usePermissions(104);
   const apiRef = useGridApiRef();
+  const [state, dispatch] = useReducer(reducer, initialState);
   const { user, warehouseData } = useAuth();
   const [tabvalue, settabvalue] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -400,7 +429,9 @@ export default function IssueForProduction() {
             ? "STANDARD"
             : params.row.Type === "P"
               ? "SPECIAL"
-              : "DISASSEMBLY"}
+              : params.row.Type === "D"
+                ? "DISASSEMBLY"
+                : ""}
         </span>
       ),
     },
@@ -510,6 +541,85 @@ export default function IssueForProduction() {
                   setwhscOpenIssue(true);
                 }}
                 disabled={disabled}
+                size="small"
+                sx={{
+                  backgroundColor: "green",
+                  color: "white",
+                  borderRadius: "6px",
+                  padding: "4px",
+                  "&:hover": { backgroundColor: "darkgreen" },
+                }}
+              >
+                <ViewListIcon fontSize="small" />
+              </IconButton>
+            </Grid>
+          </Grid>
+        );
+      },
+    },
+
+    {
+      field: "Bin",
+      headerName: "BIN LOCATION",
+      width: 150,
+      headerAlign: "center",
+      align: "center",
+      renderCell: (params) => {
+        const BinQty = (params.row.oDocBinLocationLines || []).reduce(
+          (cur, val) => cur + parseFloat(val.Quantity || 0),
+          0,
+        );
+        return (
+          <Grid
+            container // ✅ important
+            alignItems="center" // vertical center
+            justifyContent="center" // horizontal center
+            gap={0.5}
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (
+                e.key === "Enter" ||
+                e.key === "F2" ||
+                e.key === "" ||
+                (e.key === "Tab" && !e.shiftKey)
+              ) {
+                e.preventDefault();
+                if (
+                  BinQty !== params.row.Quantity &&
+                  params.row.readonlyRow !== "readonlyRow"
+                ) {
+                  setValue("selectedRowIndex", params.row.id);
+                  setValue("BinLocation", params.row);
+                  dispatch({ type: "OPEN", modal: "BinLocationOpen" });
+                }
+              }
+            }}
+            sx={{
+              width: "100%",
+              height: "100%",
+              outline: "none",
+            }}
+          >
+            <Grid item xs>
+              <Typography noWrap textAlign="center" sx={{ fontSize: 13 }}>
+                {TwoFormatter(BinQty)}
+              </Typography>
+            </Grid>
+            <Grid item>
+              <IconButton
+                onClick={() => {
+                  setValue("selectedRowIndex", params.row.id);
+                  setValue("BinLocation", params.row);
+                  dispatch({ type: "OPEN", modal: "BinLocationOpen" });
+                }}
+                disabled={
+                  SaveUpdateName === "UPDATE"
+                    ? (params.row.oDocBinLocationLines || []).length === 0
+                    : params.row.Status === "0" ||
+                      parseFloat(params.row.DftBinAbs) <= 0 ||
+                      params.row.BinActivat !== "Y"
+                  // params.row.BaseType === "21"
+                }
                 size="small"
                 sx={{
                   backgroundColor: "green",
@@ -883,7 +993,14 @@ export default function IssueForProduction() {
     });
     setIssueChartOpen(false);
   };
-  const selectedIssueWhsc = async (WHSCode, LocationName, LocCode) => {
+  const selectedIssueWhsc = async (
+    WHSCode,
+    LocationName,
+    LocCode,
+    BinCode,
+    DftBinAbs,
+    BinActivat,
+  ) => {
     const currentRowIndex = getValues("selectedRowIndex"); // You'll need to track this
     const updatedLines = getValues("oLines").map((line, index) => {
       if (index === currentRowIndex) {
@@ -892,6 +1009,11 @@ export default function IssueForProduction() {
           WHSCode: WHSCode,
           LocationName: LocationName,
           LocCode: LocCode,
+          BinCode: BinCode,
+          DftBinAbs: DftBinAbs,
+          BinActivat,
+          Bin: 0,
+          oDocBinLocationLines: [],
         };
       }
       return line;
@@ -903,6 +1025,32 @@ export default function IssueForProduction() {
     setwhscOpenIssue(false);
   };
 
+  const handleBinlocationSubmit = (rowsFromModal) => {
+    const selectedRow = getValues("BinLocation");
+    const updatedOLines = (getValues("oLines") || []).map((row, index) =>
+      index === selectedRow.id
+        ? {
+            ...row,
+            oDocBinLocationLines: (rowsFromModal || []).map((binitem) => ({
+              UserId: user.UserId,
+              CreatedBy: user.UserName,
+              ModifiedBy: user.UserName,
+              Status: 1,
+              MessageID: 0,
+              BinAbs: Number(binitem.DocEntry),
+              SnBMDAbs: 0,
+              Quantity: binitem.allocated,
+              ITLEntry: 0,
+              BinCode: binitem.BinCode,
+            })),
+          }
+        : row,
+    );
+
+    setValue("oLines", updatedOLines);
+
+    dispatch({ type: "CLOSE", modal: "BinLocationOpen" });
+  };
   const fetchIssueTransaction = async (pageNum = 0, searchTerm = "") => {
     try {
       const response = await apiClient.get(`/GoodsIssue/CopyFrom/`, {
@@ -1044,6 +1192,9 @@ export default function IssueForProduction() {
         ...item,
         LocCode: match ? match.Location : null,
         LocationName: match ? match.LocationName : null,
+        BinCode: match?.BinCode ?? "",
+        DftBinAbs: match?.DftBinAbs,
+        BinActivat: match?.BinActivat,
         Price: Price,
         LineTotal: LineTotal,
         CpyIssueQty: item.Quantity,
@@ -1166,6 +1317,9 @@ export default function IssueForProduction() {
         LineTotal: (RowsDis.PlannedQty - RowsDis.CmpltQty) * 150,
         WHSCode: RowsDis.WHSCode,
         LocationName: whsdata?.LocationName ?? "",
+        BinCode: whsdata?.BinCode ?? "",
+        DftBinAbs: whsdata?.DftBinAbs,
+        BinActivat: whsdata?.BinActivat,
         LocCode: whsdata?.Location ?? "",
         AcctCode: RowsDis.WipActCode,
         PlannedQty: RowsDis.PlannedQty,
@@ -1196,7 +1350,7 @@ export default function IssueForProduction() {
     setOpenDisassembly(false);
   };
 
-    const validateAllLines = (lines) => {
+  const validateAllLines = (lines) => {
     const errors = [];
     const errorIds = [];
     lines.forEach((line, index) => {
@@ -1231,19 +1385,19 @@ export default function IssueForProduction() {
         errorIds.push(rowId);
       }
 
-      // // 🔴 BIN
-      // if (line.BinActivat === "Y") {
-      //   const binLines = line.oDocBinLocationLines || [];
-      //   const totalBinQty = binLines.reduce(
-      //     (sum, b) => sum + Number(b.Quantity || 0),
-      //     0,
-      //   );
+      // 🔴 BIN
+      if (line.BinActivat === "Y") {
+        const binLines = line.oDocBinLocationLines || [];
+        const totalBinQty = binLines.reduce(
+          (sum, b) => sum + Number(b.Quantity || 0),
+          0,
+        );
 
-      //   if (binLines.length === 0 || totalBinQty !== Number(line.Quantity)) {
-      //     errors.push(`Line ${lineNo}: ${line.ItemCode} (Bin Qty mismatch)`);
-      //     errorIds.push(rowId);
-      //   }
-      // }
+        if (binLines.length === 0 || totalBinQty !== Number(line.Quantity)) {
+          errors.push(`Line ${lineNo}: ${line.ItemCode} (Bin Qty mismatch)`);
+          errorIds.push(rowId);
+        }
+      }
 
       //Account code
       if (!line.AcctCode) {
@@ -1282,7 +1436,17 @@ export default function IssueForProduction() {
   };
   const handleSubmitForm = async (data) => {
     console.log("data submit", data);
-  if (SaveUpdateName === "SAVE") {
+    if (data.oLines.length === 0) {
+      Swal.fire({
+        title: "Select Item",
+        text: "Please select at least one item.",
+        icon: "warning",
+        confirmButtonText: "Ok",
+        timer: 3000,
+      });
+      return false;
+    }
+    if (SaveUpdateName === "SAVE") {
       const { isValid, errors, errorIds } = validateAllLines(data.oLines);
 
       if (!isValid) {
@@ -1397,7 +1561,7 @@ export default function IssueForProduction() {
         StockSumFc: "0",
         StockSumSc: "0",
         TotalSumSy: "0",
-        oDocBinLocationLines: [],
+        oDocBinLocationLines: item.oDocBinLocationLines || [],
         MinLevel: "0",
         UgpCode: "0",
         unitMsr: item.unitMsr || "0",
@@ -1524,6 +1688,9 @@ export default function IssueForProduction() {
     setCheckedItems({});
     setOlines([]);
     setAllDAta([]);
+    if (openListquery?.trim()) {
+      handleOpenListClear();
+    }
     setValue("Series", DocSeries[0]?.SeriesId ?? "");
     setValue("DocNum", DocSeries[0]?.DocNum ?? "");
     setValue("FinncPriod", DocSeries[0]?.FinncPriod ?? "");
@@ -1586,14 +1753,35 @@ export default function IssueForProduction() {
     if (item.AtcEntry > 0) {
       setFilesFromApi(item.AtcEntry);
     }
-    reset({
-      ...item,
-      oLines: (item.oLines || []).map((element) => ({
-        ...element,
+
+    const updatedOLines = (item.oLines || []).map((line) => {
+      const match = warehouseData.find((loc) => loc.Location === line.LocCode);
+      return {
+        ...line,
+        LocationName: match?.LocationName || "",
+        LocCode: match?.Location || "",
+        BinCode: match?.BinCode ?? "",
+        DftBinAbs: match?.DftBinAbs,
+        BinActivat: match?.BinActivat,
         UserId: user.UserId,
         BaseRef: item.BaseRef || "-1",
-      })),
+        readonlyRow: "readonlyRow",
+      };
     });
+    const updatedData = {
+      ...item,
+      oLines: updatedOLines,
+    };
+
+    reset(updatedData);
+    // reset({
+    //   ...item,
+    //   oLines: (item.oLines || []).map((element) => ({
+    //     ...element,
+    //     UserId: user.UserId,
+    //     BaseRef: item.BaseRef || "-1",
+    //   })),
+    // });
     toggleDrawer();
     setSaveUpdateName("UPDATE");
   };
@@ -1793,6 +1981,9 @@ export default function IssueForProduction() {
                     item.WHSCode,
                     item.LocationName,
                     item.Location,
+                    item.BinCode,
+                    item.DftBinAbs,
+                    item.BinActivat,
                   );
 
                   //  CloseVendorModel(); // Close after selection if needed
@@ -1803,6 +1994,17 @@ export default function IssueForProduction() {
         }
       />
 
+      <AllBinLocationShow
+        open={state.BinLocationOpen}
+        closeModel={() => dispatch({ type: "CLOSE", modal: "BinLocationOpen" })}
+        onSubmit={handleBinlocationSubmit}
+        isLoading={isLoading}
+        title="Bin Location"
+        data={getValues("BinLocation")}
+        DocNum={getValues("DocNum")}
+        getRowId={(row) => row.id}
+        SaveUpdateName={SaveUpdateName}
+      />
       <CopyFromSearchModel
         open={openDialog}
         onClose={handleCloseDialog}

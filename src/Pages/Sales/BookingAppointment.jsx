@@ -90,7 +90,6 @@ export default function BookingAppointment() {
   const timeoutRef = useRef(null);
   const perms = usePermissions(357);
 
-  // ===== Initial Form Values =====
   const initial = {
     OrderNo: "",
     AppointmentNo: "",
@@ -122,16 +121,13 @@ export default function BookingAppointment() {
     defaultValues: initial,
   });
 
-  const {
-    control: control1,
-    handleSubmit: handleSubmit1,
-    // getValues: getValues1,
-  } = useForm({ defaultValues: InitialFld });
+  const { control: control1, handleSubmit: handleSubmit1 } = useForm({
+    defaultValues: InitialFld,
+  });
 
   const AllData = getValues();
   const oLines = useWatch({ control, name: "oLines" });
 
-  // ===== Helpers =====
   const parseTime = (val) => {
     if (!val) return null;
     if (dayjs.isDayjs(val) && val.isValid()) return val;
@@ -148,7 +144,6 @@ export default function BookingAppointment() {
     return parsed.isValid() ? parsed.format("HH:mm") : "";
   };
 
-  // ===== Open List =====
   const fetchOpenListData = async (pageNum, searchTerm = "") => {
     try {
       const url = searchTerm
@@ -193,7 +188,6 @@ export default function BookingAppointment() {
     fetchOpenListData(0);
   }, []);
 
-  // ===== Closed List =====
   const fetchClosedListData = async (pageNum, searchTerm = "") => {
     try {
       const url = searchTerm
@@ -241,7 +235,6 @@ export default function BookingAppointment() {
     fetchClosedListData(0);
   }, []);
 
-  // ===== CopyFrom List =====
   const fetchGetListData = async (pageNum = 0, searchTerm = "") => {
     try {
       const url = searchTerm
@@ -291,7 +284,6 @@ export default function BookingAppointment() {
     if (searchmodelOpen) fetchGetListData(0);
   }, [searchmodelOpen]);
 
-  // ===== Select Order (Copy From) =====
   const onSelectBusinessPartner = async (selectedItem) => {
     try {
       setLoading(true);
@@ -333,7 +325,6 @@ export default function BookingAppointment() {
     }
   };
 
-  // ===== Load Existing Record =====
   const setOldDataOPen = async (DocEntry) => {
     setLoading(true);
     setSaveUpdateName("UPDATE");
@@ -354,7 +345,7 @@ export default function BookingAppointment() {
           AppointType: values.AppointType,
           Vehicle: values.Vehicle,
           IsInward: values.IsInward,
-          // oLines: values.oLines,
+
           Status: values.Status === "1",
           NoAutoAllc: "Y",
           ReceiveBin: "Y",
@@ -404,7 +395,6 @@ export default function BookingAppointment() {
   const isOpen =
     currentStatus === "1" || currentStatus === 1 || currentStatus === true;
 
-  // ===== DataGrid Columns =====
   const columns = [
     { field: "ItemCode", headerName: "ITEM CODE", width: 150 },
     { field: "ItemName", headerName: "ITEM DESCRIPTION", width: 350 },
@@ -437,12 +427,7 @@ export default function BookingAppointment() {
       type: "number",
       editable: true,
     },
-    // {
-    //   field: "Status",
-    //   headerName: "STATUS",
-    //   width: 120,
-    //   type: "number",
-    // },
+
     {
       field: "Status",
       headerName: "STATUS",
@@ -496,7 +481,6 @@ export default function BookingAppointment() {
     },
   ];
 
-  // ===== Cancel Appointment =====
   const onSubmit1 = async (data) => {
     if (!data.CancelRemarks || data.CancelRemarks.trim() === "") {
       Swal.fire({
@@ -555,7 +539,6 @@ export default function BookingAppointment() {
     }
   };
 
-  // ===== Main Form Submit =====
   const handleSumbit = (data) => {
     const UserId = localStorage.getItem("UserId");
     const UserName = localStorage.getItem("UserName");
@@ -903,7 +886,6 @@ export default function BookingAppointment() {
                 </InfiniteScroll>
               </TabPanel>
 
-              {/* CLOSED Tab */}
               <TabPanel
                 value={"0"}
                 style={{
@@ -964,7 +946,6 @@ export default function BookingAppointment() {
     </>
   );
 
-  // ===== Render =====
   return (
     <>
       <Loader open={loading} />
@@ -976,7 +957,6 @@ export default function BookingAppointment() {
         component={"form"}
         onSubmit={handleSubmit(handleSumbit)}
       >
-        {/* Sidebar */}
         <Grid
           container
           item
@@ -997,7 +977,6 @@ export default function BookingAppointment() {
           {sidebarContent}
         </Grid>
 
-        {/* Main Form */}
         <Grid
           container
           item
@@ -1008,7 +987,6 @@ export default function BookingAppointment() {
           lg={9}
           position="relative"
         >
-          {/* Hamburger — small screens only */}
           <IconButton
             edge="start"
             color="inherit"
@@ -1019,7 +997,6 @@ export default function BookingAppointment() {
             <MenuIcon />
           </IconButton>
 
-          {/* New / Clear button */}
           <IconButton
             edge="start"
             color="inherit"
@@ -1030,7 +1007,6 @@ export default function BookingAppointment() {
             <AddIcon />
           </IconButton>
 
-          {/* Page Title */}
           <Grid
             item
             width={"100%"}
@@ -1048,7 +1024,6 @@ export default function BookingAppointment() {
             </Typography>
           </Grid>
 
-          {/* Form Body */}
           <Grid
             container
             item
@@ -1075,7 +1050,6 @@ export default function BookingAppointment() {
                 width={"100%"}
               >
                 <Grid container>
-                  {/* SO NO */}
                   <Grid item xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
                     <Controller
                       name="OrderNo"
@@ -1140,7 +1114,6 @@ export default function BookingAppointment() {
                     />
                   </Grid>
 
-                  {/* Customer Name */}
                   <Grid item xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
                     <Controller
                       name="CustomerName"
@@ -1159,7 +1132,6 @@ export default function BookingAppointment() {
                     />
                   </Grid>
 
-                  {/* Contact No */}
                   <Grid item xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
                     <Controller
                       name="ContactNo"
@@ -1177,8 +1149,6 @@ export default function BookingAppointment() {
                       )}
                     />
                   </Grid>
-
-                  {/* Appointment No */}
                   <Grid item xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
                     <Controller
                       name="AppointmentNo"
@@ -1196,7 +1166,6 @@ export default function BookingAppointment() {
                     />
                   </Grid>
 
-                  {/* Appointment Type */}
                   <Grid item xs={12} sm={6} md={4} lg={4} textAlign="center">
                     <Controller
                       name="AppointType"
@@ -1215,7 +1184,6 @@ export default function BookingAppointment() {
                     />
                   </Grid>
 
-                  {/* Order Type */}
                   <Grid item xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
                     <Controller
                       name="OrderSubType"
@@ -1234,7 +1202,6 @@ export default function BookingAppointment() {
                     />
                   </Grid>
 
-                  {/* Data Grid */}
                   <Grid item xs={12} p={5}>
                     <Grid
                       container
@@ -1261,7 +1228,6 @@ export default function BookingAppointment() {
                     </Grid>
                   </Grid>
 
-                  {/* Vehicle */}
                   <Grid item xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
                     <Controller
                       name="Vehicle"
@@ -1283,7 +1249,6 @@ export default function BookingAppointment() {
                     />
                   </Grid>
 
-                  {/* Appointment Date */}
                   <Grid item xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
                     <Controller
                       name="AppointDate"
@@ -1308,7 +1273,6 @@ export default function BookingAppointment() {
                     />
                   </Grid>
 
-                  {/* Appointment Time FROM */}
                   <Grid item xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
                     <LocalizationProvider dateAdapter={AdapterDayjs}>
                       <Controller
@@ -1321,7 +1285,6 @@ export default function BookingAppointment() {
                         }) => {
                           const now = dayjs();
 
-                          // Normalize stored value → dayjs object for TimePicker
                           const parsedValue = value
                             ? dayjs.isDayjs(value)
                               ? value
@@ -1392,7 +1355,6 @@ export default function BookingAppointment() {
               </Box>
             </Grid>
 
-            {/* Cancel Appointment Dialog */}
             <Dialog
               open={open}
               onClose={handleClose}
@@ -1478,7 +1440,6 @@ export default function BookingAppointment() {
               </form>
             </Dialog>
 
-            {/* Bottom Buttons */}
             <Grid
               item
               px={1}

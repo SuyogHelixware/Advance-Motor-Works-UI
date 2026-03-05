@@ -340,7 +340,6 @@ export default function GoodsIssue() {
     setOpenListSearching(true);
     setopenListPage(0);
     setOpenListData([]);
-
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
@@ -767,7 +766,7 @@ export default function GoodsIssue() {
                 (e.key === "Tab" && !e.shiftKey)
               ) {
                 e.preventDefault();
-                if (!openWHSCode && params.row.readonlyRow!=="readonlyRow") {
+                if (!openWHSCode && params.row.readonlyRow !== "readonlyRow") {
                   setValue("selectedRowIndex", params.row.id);
                   setSelectedRowId(params.row.id);
                   OpenDailog1();
@@ -836,7 +835,10 @@ export default function GoodsIssue() {
                 (e.key === "Tab" && !e.shiftKey)
               ) {
                 e.preventDefault();
-                if (BinQty !== params.row.Quantity  && params.row.readonlyRow!=="readonlyRow") {
+                if (
+                  BinQty !== params.row.Quantity &&
+                  params.row.readonlyRow !== "readonlyRow"
+                ) {
                   setValue("selectedRowIndex", params.row.id);
                   setValue("BinLocation", params.row);
                   dispatch({ type: "OPEN", modal: "BinLocationOpen" });
@@ -954,7 +956,7 @@ export default function GoodsIssue() {
                 (e.key === "Tab" && !e.shiftKey)
               ) {
                 e.preventDefault();
-                if (!openAcctCode  && params.row.readonlyRow!=="readonlyRow") {
+                if (!openAcctCode && params.row.readonlyRow !== "readonlyRow") {
                   setSelectedRowId(params.id);
                   OpenDailog2();
                 }
@@ -1024,7 +1026,7 @@ export default function GoodsIssue() {
                 (e.key === "Tab" && !e.shiftKey)
               ) {
                 e.preventDefault();
-                if (!openUomCode  && params.row.readonlyRow!=="readonlyRow") {
+                if (!openUomCode && params.row.readonlyRow !== "readonlyRow") {
                   setSelectedRowId(params.row.id);
                   OpenDailog3();
                   if (!isDisabled) fetchGetUOMListData3(params.row.UomEntry2);
@@ -1177,7 +1179,10 @@ export default function GoodsIssue() {
                   (e.key === "Tab" && !e.shiftKey)
                 ) {
                   e.preventDefault();
-                  if (InvQty !== savedQty  && params.row.readonlyRow!=="readonlyRow") {
+                  if (
+                    InvQty !== savedQty &&
+                    params.row.readonlyRow !== "readonlyRow"
+                  ) {
                     setValue("selectedRowIndex", params.row.id);
                     handleClick();
                   }
@@ -1221,6 +1226,11 @@ export default function GoodsIssue() {
     setSaveUpdateName("SAVE");
     setSelectedData([]);
     clearFiles();
+
+    if (openListquery?.trim()) {
+      handleOpenListClear();
+    }
+
     setValue("Series", DocSeries[0]?.SeriesId ?? "");
     setValue("DocNum", DocSeries[0]?.DocNum ?? "");
     setValue("FinncPriod", DocSeries[0]?.FinncPriod ?? "");
@@ -1271,14 +1281,16 @@ export default function GoodsIssue() {
   const fetchGoodsIssueAndSetState = (DocEntry) => {
     apiClient.get(`/GoodsIssue/${DocEntry}`).then((response) => {
       const data = response.data.values;
-      setFilesFromApi(data.AttcEntry);
+      if (data.AttcEntry > 0) {
+        setFilesFromApi(data.AttcEntry);
+      }
       const updatedOLines = (data.oLines || []).map((line) => {
         const match = warehouseData.find(
           (loc) => loc.Location === line.LocCode,
         );
         return {
           ...line,
-          LocationName: match?.LocationName || "", // <- Get from matched object safely
+          LocationName: match?.LocationName || "",
           LocCode: match?.Location || "",
           readonlyRow: "readonlyRow",
         };
@@ -2070,6 +2082,8 @@ export default function GoodsIssue() {
         BinCode,
         DftBinAbs,
         BinActivat,
+        Bin: 0,
+        oDocBinLocationLines: [],
       };
     });
     reset({ ...getValues(), oLines: updatedLines });

@@ -18,7 +18,7 @@ import {
   MenuItem,
   OutlinedInput,
   Select,
-  Typography
+  Typography,
 } from "@mui/material";
 import { useTheme } from "@mui/material/styles";
 import { useEffect, useRef, useState } from "react";
@@ -73,14 +73,14 @@ export default function PostingPeriod() {
   const [defaultPostingToDate, setDefaultPostingToDate] = useState(null);
 
   const [postingDate, setpostingDate] = useState(
-    dayjs(undefined).format("YYYY-MM-DD ")
+    dayjs(undefined).format("YYYY-MM-DD "),
   );
   const [DueDate, setDueDate] = useState(
-    dayjs(undefined).format("YYYY-MM-DD ")
+    dayjs(undefined).format("YYYY-MM-DD "),
   );
 
   const [DocDate, setDocDate] = useState(
-    dayjs(undefined).format("YYYY-MM-DD ")
+    dayjs(undefined).format("YYYY-MM-DD "),
   );
   const [isLoading, setIsLoading] = useState(false);
 
@@ -171,7 +171,7 @@ export default function PostingPeriod() {
       fetchAllPostingPeriods();
       fetchData();
     }, // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [],
   );
 
   // ==================================featch more data============================
@@ -217,83 +217,80 @@ export default function PostingPeriod() {
         setHasMoreOpen(newData.length === 20);
 
         setOpenListData((prev) =>
-          pageNum === 0 ? newData : [...prev, ...newData]
+          pageNum === 0 ? newData : [...prev, ...newData],
         );
       }
     } catch (error) {
       console.error("Error fetching data:", error);
     }
   };
- const fetchAllPostingPeriods = async () => {
-  try {
-    setIsLoading(true);
+  const fetchAllPostingPeriods = async () => {
+    try {
+      setIsLoading(true);
 
-    const response = await apiClient.get("/PostingPeriod/All");
+      const response = await apiClient.get("/PostingPeriod/All");
 
-    const { success, values, message } = response?.data || {};
+      const { success, values, message } = response?.data || {};
 
-    // ❌ API responded but failed
-    if (!success) {
+      // ❌ API responded but failed
+      if (!success) {
+        Swal.fire({
+          icon: "error",
+          text: message || "Failed to fetch posting periods",
+          confirmButtonText: "OK",
+        });
+        return;
+      }
+
+      const allPeriods = Array.isArray(values) ? values : [];
+
+      // ❌ No posting periods found
+      if (allPeriods.length === 0) {
+        Swal.fire({
+          icon: "warning",
+          text: "No posting periods found.",
+          confirmButtonText: "OK",
+        });
+        return;
+      }
+
+      // ✅ Find max "To" date
+      const maxToDate = allPeriods.reduce((max, period) => {
+        const toDate = dayjs(period.PostngDteTo, "MM/DD/YYYY HH:mm:ss");
+        return toDate.isAfter(max) ? toDate : max;
+      }, dayjs("1900-01-01"));
+
+      const nextYear = maxToDate.year() + 1;
+      const nextFromDate = dayjs(`04/01/${nextYear}`, "MM/DD/YYYY");
+      const nextToDate = nextFromDate.add(1, "year").subtract(1, "day");
+
+      // ✅ Set defaults
+      setDefaultPostingDate(nextFromDate);
+      setDefaultPostingToDate(nextToDate);
+    } catch (error) {
+      let errorMessage = "Something went wrong while fetching posting periods.";
+
+      if (error.response) {
+        errorMessage =
+          error.response.data?.message ||
+          `Server error (${error.response.status})`;
+      } else if (error.request) {
+        errorMessage = "Unable to connect to server.";
+      } else {
+        errorMessage = error.message;
+      }
+
       Swal.fire({
         icon: "error",
-        text: message || "Failed to fetch posting periods",
+        text: errorMessage,
         confirmButtonText: "OK",
       });
-      return;
+
+      console.error("Error fetching all posting periods:", error);
+    } finally {
+      setIsLoading(false);
     }
-
-    const allPeriods = Array.isArray(values) ? values : [];
-
-    // ❌ No posting periods found
-    if (allPeriods.length === 0) {
-      Swal.fire({
-        icon: "warning",
-        text: "No posting periods found.",
-        confirmButtonText: "OK",
-      });
-      return;
-    }
-
-    // ✅ Find max "To" date
-    const maxToDate = allPeriods.reduce((max, period) => {
-      const toDate = dayjs(period.PostngDteTo, "MM/DD/YYYY HH:mm:ss");
-      return toDate.isAfter(max) ? toDate : max;
-    }, dayjs("1900-01-01"));
-
-    const nextYear = maxToDate.year() + 1;
-    const nextFromDate = dayjs(`04/01/${nextYear}`, "MM/DD/YYYY");
-    const nextToDate = nextFromDate.add(1, "year").subtract(1, "day");
-
-    // ✅ Set defaults
-    setDefaultPostingDate(nextFromDate);
-    setDefaultPostingToDate(nextToDate);
-
-  } catch (error) {
-    let errorMessage = "Something went wrong while fetching posting periods.";
-
-    if (error.response) {
-      errorMessage =
-        error.response.data?.message ||
-        `Server error (${error.response.status})`;
-    } else if (error.request) {
-      errorMessage = "Unable to connect to server.";
-    } else {
-      errorMessage = error.message;
-    }
-
-    Swal.fire({
-      icon: "error",
-      text: errorMessage,
-      confirmButtonText: "OK",
-    });
-
-    console.error("Error fetching all posting periods:", error);
-
-  } finally {
-    setIsLoading(false);
-  }
-};
-
+  };
 
   // =======================================Search OPen List======================================
   const setOldOpenData = async (DocEntry) => {
@@ -330,277 +327,273 @@ export default function PostingPeriod() {
       });
     }
   };
- const SetOldDataFetch = async (DocEntry) => {
-  if (!DocEntry) {
-    Swal.fire({
-      icon: "warning",
-      text: "Invalid document reference.",
-      confirmButtonText: "OK",
-    });
-    return;
-  }
-
-  try {
-    setIsLoading(true);
-
-    const response = await apiClient.get(`/PostingPeriod/${DocEntry}`);
-
-    const { success, values, message } = response?.data || {};
-
-    // ❌ API responded but failed
-    if (!success) {
-      Swal.fire({
-        icon: "error",
-        text: message || "Failed to fetch posting period data.",
-        confirmButtonText: "OK",
-      });
-      return;
-    }
-
-    const data = values;
-
-    // ❌ No data returned
-    if (!data) {
+  const SetOldDataFetch = async (DocEntry) => {
+    if (!DocEntry) {
       Swal.fire({
         icon: "warning",
-        text: "No data found for selected posting period.",
+        text: "Invalid document reference.",
         confirmButtonText: "OK",
       });
       return;
     }
 
-    // ✅ UI state updates
-    toggleDrawer();
-    setDefaultPostingDate(null);
-    setDefaultPostingToDate(null);
-    setSaveUpdateName("UPDATE");
-    setDocEntry(DocEntry);
-    setSelectedData(DocEntry);
+    try {
+      setIsLoading(true);
 
-    const correctIndicatorCode =
-      IndicatorList.find((item) => item.DocEntry === data.Indicator)?.Code || "";
+      const response = await apiClient.get(`/PostingPeriod/${DocEntry}`);
 
-    console.log("Indicator Code:", correctIndicatorCode);
+      const { success, values, message } = response?.data || {};
 
-    // ✅ Reset form
-    reset({
-      ...data,
-      ModifiedBy: data.ModifiedBy,
-      CreatedBy: data.CreatedBy,
-      Category: data.Category,
-      DocEntry: data.DocEntry,
-      Indicator: data.Indicator,
-      SubPeriod: data.SubPeriod,
-      PeriodStat: data.PeriodStat,
-      FisclYear: data.FisclYear,
-      ModifiedDate: dayjs(data.ModifiedDate).format("YYYY-MM-DD"),
-      StrtFisclYear: dayjs(data.StrtFisclYear).format("YYYY-MM-DD"),
-      PostngDteFrom: dayjs(data.PostngDteFrom).format("YYYY-MM-DD"),
-    });
-
-    // ✅ Set dependent fields after reset
-    setTimeout(() => {
-      setValue("SubPeriod", data.SubPeriod);
-      setpostingDate(data.PostngDteFrom);
-      setDocDate(data.DocmntDteFrom);
-      setDueDate(data.DueDteFrom);
-    }, 0);
-
-  } catch (error) {
-    let errorMessage = "Something went wrong while fetching posting period.";
-
-    if (error.response) {
-      errorMessage =
-        error.response.data?.message ||
-        `Server error (${error.response.status})`;
-    } else if (error.request) {
-      errorMessage = "Unable to connect to server.";
-    } else {
-      errorMessage = error.message;
-    }
-
-    Swal.fire({
-      icon: "error",
-      text: errorMessage,
-      confirmButtonText: "OK",
-    });
-
-    console.error("Error fetching posting period:", error);
-
-  } finally {
-    setIsLoading(false);
-  }
-};
-
-
-  const HandlePIndicatorOpen = () => setopenIndicator(true);
-  const handleClose = () => setopenIndicator(false);
-
- const handleSubmitForm = async (data) => {
-  // ------------------ VALIDATIONS ------------------
-  if (
-    data.PostngDteTo &&
-    dayjs(data.PostngDteTo).isBefore(dayjs(postingDate), "day")
-  ) {
-    await Swal.fire({
-      title: "Error!",
-      text: "Posting To Date cannot be before Posting From Date",
-      icon: "warning",
-      confirmButtonText: "Ok",
-    });
-    return;
-  }
-
-  if (
-    data.DueDteTo &&
-    dayjs(data.DueDteTo).isBefore(dayjs(data.DueDteFrom), "day")
-  ) {
-    await Swal.fire({
-      title: "Error!",
-      text: "Due To Date cannot be before Due From Date",
-      icon: "warning",
-      confirmButtonText: "Ok",
-    });
-    return;
-  }
-
-  if (
-    data.DocmntDteTo &&
-    dayjs(data.DocmntDteTo).isBefore(dayjs(data.DocmntDteFrom), "day")
-  ) {
-    await Swal.fire({
-      title: "Error!",
-      text: "Doc To Date cannot be before Doc From Date",
-      icon: "warning",
-      confirmButtonText: "Ok",
-    });
-    return;
-  }
-
-  // ------------------ PAYLOAD ------------------
-  const obj = {
-    DocEntry: data.DocEntry,
-    UserId: user.UserId,
-    CreatedBy: user.UserName,
-    CreatedDate: dayjs(data.CreatedDate).format("YYYY-MM-DD"),
-    ModifiedBy: data.ModifiedBy,
-    ModifiedDate: dayjs(data.ModifiedDate).format("YYYY-MM-DD"),
-    Status: "1",
-    Name: data.Name,
-    Description: data.Description || "0",
-    SubPeriod: data.SubPeriod,
-    NoOfPeriods: data.NoOfPeriods || "0",
-    PeriodStat: data.PeriodStat,
-    FisclYear: data.FisclYear,
-    PostngDteFrom: dayjs(data.PostngDteFrom).format("YYYY-MM-DD"),
-    PostngDteTo: dayjs(data.PostngDteTo).format("YYYY-MM-DD"),
-    DueDteFrom: dayjs(data.DueDteFrom).format("YYYY-MM-DD"),
-    DueDteTo: dayjs(data.DueDteTo).format("YYYY-MM-DD"),
-    DocmntDteFrom: dayjs(data.DocmntDteFrom).format("YYYY-MM-DD"),
-    DocmntDteTo: dayjs(data.DocmntDteTo).format("YYYY-MM-DD"),
-    StrtFisclYear: dayjs(data.StrtFisclYear).format("YYYY-MM-DD"),
-    Category: SaveUpdateName === "SAVE" ? data.Name : data.Category,
-    Indicator: data.Indicator,
-    SubNum: data.SubNum || "",
-    WasStatChd: data.WasStatChd || "",
-    oModel: data.oModel || [],
-  };
-
-  try {
-    setIsLoading(true);
-    // ================= SAVE =================
-    if (SaveUpdateName === "SAVE") {
-      const response = await apiClient.post(`/PostingPeriod`, obj);
-
-      if (response.data.success) {
-        clearFormData();
-        setOpenListPage(0);
-        setOpenListData([]);
-        fetchOpenListData(0);
-        setSelectedData([]);
-
+      // ❌ API responded but failed
+      if (!success) {
         Swal.fire({
-          title: "Success!",
-          text: "Posting Period Added",
-          icon: "success",
-          confirmButtonText: "Ok",
-          timer: 1500, // ✅ SUCCESS TIMER
-        });
-      } else {
-        Swal.fire({
-          title: "Error!",
-          text: response.data.message,
-          icon: "warning",
-          confirmButtonText: "Ok", // ❌ NO TIMER
-        });
-      }
-    }
-
-    // ================= UPDATE =================
-    else {
-      const confirmation = await Swal.fire({
-        text: `Do You Want to Update "${obj.Name}"?`,
-        icon: "question",
-        confirmButtonText: "YES",
-        cancelButtonText: "No",
-        showConfirmButton: true,
-        showDenyButton: true,
-      });
-
-      if (!confirmation.isConfirmed) {
-        Swal.fire({
-          text: "Posting Period Not Updated",
-          icon: "info",
-          confirmButtonText: "Ok", // ❌ NO TIMER
+          icon: "error",
+          text: message || "Failed to fetch posting period data.",
+          confirmButtonText: "OK",
         });
         return;
       }
 
-      const response = await apiClient.put(
-        `/PostingPeriod/${obj.DocEntry}`,
-        obj
-      );
+      const data = values;
 
-      if (response.data.success) {
-        clearFormData();
-        setOpenListPage(0);
-        setOpenListData([]);
-        fetchOpenListData(0);
-        setSelectedData([]);
-
+      // ❌ No data returned
+      if (!data) {
         Swal.fire({
-          title: "Success!",
-          text: "Posting Period Updated",
-          icon: "success",
-          confirmButtonText: "Ok",
-          timer: 1500, // ✅ SUCCESS TIMER
-        });
-      } else {
-        Swal.fire({
-          title: "Error!",
-          text: response.data.message,
           icon: "warning",
-          confirmButtonText: "Ok", // ❌ NO TIMER
+          text: "No data found for selected posting period.",
+          confirmButtonText: "OK",
         });
+        return;
       }
+
+      // ✅ UI state updates
+      toggleDrawer();
+      setDefaultPostingDate(null);
+      setDefaultPostingToDate(null);
+      setSaveUpdateName("UPDATE");
+      setDocEntry(DocEntry);
+      setSelectedData(DocEntry);
+
+      const correctIndicatorCode =
+        IndicatorList.find((item) => item.DocEntry === data.Indicator)?.Code ||
+        "";
+
+      console.log("Indicator Code:", correctIndicatorCode);
+
+      // ✅ Reset form
+      reset({
+        ...data,
+        ModifiedBy: data.ModifiedBy,
+        CreatedBy: data.CreatedBy,
+        Category: data.Category,
+        DocEntry: data.DocEntry,
+        Indicator: data.Indicator,
+        SubPeriod: data.SubPeriod,
+        PeriodStat: data.PeriodStat,
+        FisclYear: data.FisclYear,
+        ModifiedDate: dayjs(data.ModifiedDate).format("YYYY-MM-DD"),
+        StrtFisclYear: dayjs(data.StrtFisclYear).format("YYYY-MM-DD"),
+        PostngDteFrom: dayjs(data.PostngDteFrom).format("YYYY-MM-DD"),
+      });
+
+      // ✅ Set dependent fields after reset
+      setTimeout(() => {
+        setValue("SubPeriod", data.SubPeriod);
+        setpostingDate(data.PostngDteFrom);
+        setDocDate(data.DocmntDteFrom);
+        setDueDate(data.DueDteFrom);
+      }, 0);
+    } catch (error) {
+      let errorMessage = "Something went wrong while fetching posting period.";
+
+      if (error.response) {
+        errorMessage =
+          error.response.data?.message ||
+          `Server error (${error.response.status})`;
+      } else if (error.request) {
+        errorMessage = "Unable to connect to server.";
+      } else {
+        errorMessage = error.message;
+      }
+
+      Swal.fire({
+        icon: "error",
+        text: errorMessage,
+        confirmButtonText: "OK",
+      });
+
+      console.error("Error fetching posting period:", error);
+    } finally {
+      setIsLoading(false);
     }
-  } catch (error) {
-    console.error("Error:", error);
+  };
 
-    Swal.fire({
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        "Something went wrong. Please try again.",
-      icon: "error",
-      confirmButtonText: "Ok", // ❌ NO TIMER
-    });
-  }
-  finally{
-    setIsLoading(false);
-  }
-};
+  const HandlePIndicatorOpen = () => setopenIndicator(true);
+  const handleClose = () => setopenIndicator(false);
 
+  const handleSubmitForm = async (data) => {
+    // ------------------ VALIDATIONS ------------------
+    if (
+      data.PostngDteTo &&
+      dayjs(data.PostngDteTo).isBefore(dayjs(postingDate), "day")
+    ) {
+      await Swal.fire({
+        title: "Error!",
+        text: "Posting To Date cannot be before Posting From Date",
+        icon: "warning",
+        confirmButtonText: "Ok",
+      });
+      return;
+    }
+
+    if (
+      data.DueDteTo &&
+      dayjs(data.DueDteTo).isBefore(dayjs(data.DueDteFrom), "day")
+    ) {
+      await Swal.fire({
+        title: "Error!",
+        text: "Due To Date cannot be before Due From Date",
+        icon: "warning",
+        confirmButtonText: "Ok",
+      });
+      return;
+    }
+
+    if (
+      data.DocmntDteTo &&
+      dayjs(data.DocmntDteTo).isBefore(dayjs(data.DocmntDteFrom), "day")
+    ) {
+      await Swal.fire({
+        title: "Error!",
+        text: "Doc To Date cannot be before Doc From Date",
+        icon: "warning",
+        confirmButtonText: "Ok",
+      });
+      return;
+    }
+
+    // ------------------ PAYLOAD ------------------
+    const obj = {
+      DocEntry: data.DocEntry,
+      UserId: user.UserId,
+      CreatedBy: user.UserName,
+      CreatedDate: dayjs(data.CreatedDate).format("YYYY-MM-DD"),
+      ModifiedBy: data.ModifiedBy,
+      ModifiedDate: dayjs(data.ModifiedDate).format("YYYY-MM-DD"),
+      Status: "1",
+      Name: data.Name,
+      Description: data.Description || "0",
+      SubPeriod: data.SubPeriod,
+      NoOfPeriods: data.NoOfPeriods || "0",
+      PeriodStat: data.PeriodStat,
+      FisclYear: data.FisclYear,
+      PostngDteFrom: dayjs(data.PostngDteFrom).format("YYYY-MM-DD"),
+      PostngDteTo: dayjs(data.PostngDteTo).format("YYYY-MM-DD"),
+      DueDteFrom: dayjs(data.DueDteFrom).format("YYYY-MM-DD"),
+      DueDteTo: dayjs(data.DueDteTo).format("YYYY-MM-DD"),
+      DocmntDteFrom: dayjs(data.DocmntDteFrom).format("YYYY-MM-DD"),
+      DocmntDteTo: dayjs(data.DocmntDteTo).format("YYYY-MM-DD"),
+      StrtFisclYear: dayjs(data.StrtFisclYear).format("YYYY-MM-DD"),
+      Category: SaveUpdateName === "SAVE" ? data.Name : data.Category,
+      Indicator: data.Indicator,
+      SubNum: data.SubNum || "",
+      WasStatChd: data.WasStatChd || "",
+      oModel: data.oModel || [],
+    };
+
+    try {
+      setIsLoading(true);
+      // ================= SAVE =================
+      if (SaveUpdateName === "SAVE") {
+        const response = await apiClient.post(`/PostingPeriod`, obj);
+
+        if (response.data.success) {
+          clearFormData();
+          setOpenListPage(0);
+          setOpenListData([]);
+          fetchOpenListData(0);
+          setSelectedData([]);
+
+          Swal.fire({
+            title: "Success!",
+            text: "Posting Period Added",
+            icon: "success",
+            confirmButtonText: "Ok",
+            timer: 1500, // ✅ SUCCESS TIMER
+          });
+        } else {
+          Swal.fire({
+            title: "Error!",
+            text: response.data.message,
+            icon: "warning",
+            confirmButtonText: "Ok", // ❌ NO TIMER
+          });
+        }
+      }
+
+      // ================= UPDATE =================
+      else {
+        const confirmation = await Swal.fire({
+          text: `Do You Want to Update "${obj.Name}"?`,
+          icon: "question",
+          confirmButtonText: "YES",
+          cancelButtonText: "No",
+          showConfirmButton: true,
+          showDenyButton: true,
+        });
+
+        if (!confirmation.isConfirmed) {
+          Swal.fire({
+            text: "Posting Period Not Updated",
+            icon: "info",
+            confirmButtonText: "Ok", // ❌ NO TIMER
+          });
+          return;
+        }
+
+        const response = await apiClient.put(
+          `/PostingPeriod/${obj.DocEntry}`,
+          obj,
+        );
+
+        if (response.data.success) {
+          clearFormData();
+          setOpenListPage(0);
+          setOpenListData([]);
+          fetchOpenListData(0);
+          setSelectedData([]);
+
+          Swal.fire({
+            title: "Success!",
+            text: "Posting Period Updated",
+            icon: "success",
+            confirmButtonText: "Ok",
+            timer: 1500, // ✅ SUCCESS TIMER
+          });
+        } else {
+          Swal.fire({
+            title: "Error!",
+            text: response.data.message,
+            icon: "warning",
+            confirmButtonText: "Ok", // ❌ NO TIMER
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error:", error);
+
+      Swal.fire({
+        title: "Error!",
+        text:
+          error.response?.data?.message ||
+          "Something went wrong. Please try again.",
+        icon: "error",
+        confirmButtonText: "Ok", // ❌ NO TIMER
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // +++++++++++++++++++++++++++++++++INDICATOR FUNCTION+++++++++++++++++++++++++++++++++++++++++++++++++++
   // Function to calculate Posting To Date
@@ -645,7 +638,7 @@ export default function PostingPeriod() {
       SaveUpdateName,
       defaultPostingToDate,
       setValue,
-    ]
+    ],
   );
 
   const buildDefaultFormData = () => {
@@ -678,7 +671,7 @@ export default function PostingPeriod() {
         }
       }
     }, // eslint-disable-next-line react-hooks/exhaustive-deps
-    [defaultPostingDate, defaultPostingToDate, reset]
+    [defaultPostingDate, defaultPostingToDate, reset],
   );
 
   const handleAddOrUpdate = async (data) => {
@@ -739,7 +732,7 @@ export default function PostingPeriod() {
         if (result.isConfirmed) {
           const response = await apiClient.put(
             `/Indicators/${selectedIndicatorRowId}`,
-            initialIndicatorData
+            initialIndicatorData,
           );
 
           if (response.data?.success) {
@@ -758,7 +751,7 @@ export default function PostingPeriod() {
             Swal.fire(
               "Error!",
               response.data?.message || "Update failed!",
-              "error"
+              "error",
             );
           }
         } else {
@@ -786,67 +779,65 @@ export default function PostingPeriod() {
     }
   };
   const handleOnDelete = async () => {
-  const confirmation = await Swal.fire({
-    text: "Do You Want to Delete?",
-    icon: "question",
-    confirmButtonText: "YES",
-    cancelButtonText: "No",
-    showConfirmButton: true,
-    showDenyButton: true,
-  });
-
-  if (!confirmation.isConfirmed) {
-    await Swal.fire({
-      text: "Posting Period Not Deleted",
-      icon: "info",
-      confirmButtonText: "Ok", // ❌ NO TIMER
+    const confirmation = await Swal.fire({
+      text: "Do You Want to Delete?",
+      icon: "question",
+      confirmButtonText: "YES",
+      cancelButtonText: "No",
+      showConfirmButton: true,
+      showDenyButton: true,
     });
-    return;
-  }
 
-  try {
-    setIsLoading(true);
-
-    const response = await apiClient.delete(
-      `/PostingPeriod/${DocEntry}`
-    );
-
-    if (response.data.success === true) {
-      clearFormData();
-      setOpenListPage(0);
-      setOpenListData([]);
-      fetchOpenListData(0);
-
+    if (!confirmation.isConfirmed) {
       await Swal.fire({
-        title: "Success!",
-        text: "Posting Period Deleted",
-        icon: "success",
-        confirmButtonText: "Ok",
-        timer: 1500, // ✅ SUCCESS TIMER
-      });
-    } else {
-      await Swal.fire({
-        title: "Error!",
-        text: response.data.message,
-        icon: "warning",
+        text: "Posting Period Not Deleted",
+        icon: "info",
         confirmButtonText: "Ok", // ❌ NO TIMER
       });
+      return;
     }
-  } catch (error) {
-    console.error("Delete error:", error);
 
-    await Swal.fire({
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        "Something went wrong while deleting.",
-      icon: "error",
-      confirmButtonText: "Ok", // ❌ NO TIMER
-    });
-  } finally {
-    setIsLoading(false);
-  }
-};
+    try {
+      setIsLoading(true);
+
+      const response = await apiClient.delete(`/PostingPeriod/${DocEntry}`);
+
+      if (response.data.success === true) {
+        clearFormData();
+        setOpenListPage(0);
+        setOpenListData([]);
+        fetchOpenListData(0);
+
+        await Swal.fire({
+          title: "Success!",
+          text: "Posting Period Deleted",
+          icon: "success",
+          confirmButtonText: "Ok",
+          timer: 1500, // ✅ SUCCESS TIMER
+        });
+      } else {
+        await Swal.fire({
+          title: "Error!",
+          text: response.data.message,
+          icon: "warning",
+          confirmButtonText: "Ok", // ❌ NO TIMER
+        });
+      }
+    } catch (error) {
+      console.error("Delete error:", error);
+
+      await Swal.fire({
+        title: "Error!",
+        text:
+          error.response?.data?.message ||
+          "Something went wrong while deleting.",
+        icon: "error",
+        confirmButtonText: "Ok", // ❌ NO TIMER
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // -------------------------------------------------
   // Handle Edit
@@ -860,40 +851,39 @@ export default function PostingPeriod() {
   //   console.log(row.DocEntry)
   // };
 
- const fetchData = async () => {
-  try {
-    setIsLoading(true);
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
 
-    const res = await apiClient.get(`/Indicators/All`);
-    const response = res.data;
+      const res = await apiClient.get(`/Indicators/All`);
+      const response = res.data;
 
-    if (response.success === true) {
-      setIndicatorList(response.values || []);
-      reset(response.values || []);
-    } else {
+      if (response.success === true) {
+        setIndicatorList(response.values || []);
+        reset(response.values || []);
+      } else {
+        await Swal.fire({
+          title: "Error!",
+          text: response.message || "Failed to fetch Indicators",
+          icon: "warning",
+          confirmButtonText: "Ok", // ❌ NO TIMER
+        });
+      }
+    } catch (error) {
+      console.error("Fetch Indicators Error:", error);
+
       await Swal.fire({
         title: "Error!",
-        text: response.message || "Failed to fetch Indicators",
-        icon: "warning",
+        text:
+          error.response?.data?.message ||
+          "Something went wrong while fetching Indicators",
+        icon: "error",
         confirmButtonText: "Ok", // ❌ NO TIMER
       });
+    } finally {
+      setIsLoading(false);
     }
-  } catch (error) {
-    console.error("Fetch Indicators Error:", error);
-
-    await Swal.fire({
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        "Something went wrong while fetching Indicators",
-      icon: "error",
-      confirmButtonText: "Ok", // ❌ NO TIMER
-    });
-  } finally {
-    setIsLoading(false);
-  }
-};
-
+  };
 
   const columns = [
     { field: "id", headerName: "ID", width: 100 },
@@ -952,68 +942,66 @@ export default function PostingPeriod() {
   //   }
   // };
 
-const handleIndicateDelete = async (data) => {
-  console.log("DATADELETED", data.DocEntry);
+  const handleIndicateDelete = async (data) => {
+    console.log("DATADELETED", data.DocEntry);
 
-  const confirmation = await Swal.fire({
-    text: `Do You Want to Delete "${data.Code}" ?`,
-    icon: "question",
-    confirmButtonText: "YES",
-    cancelButtonText: "No",
-    showConfirmButton: true,
-    showDenyButton: true,
-  });
-
-  if (!confirmation.isConfirmed) {
-    await Swal.fire({
-      text: "Indicator Not Deleted",
-      icon: "info",
-      confirmButtonText: "Ok", // ❌ NO TIMER
+    const confirmation = await Swal.fire({
+      text: `Do You Want to Delete "${data.Code}" ?`,
+      icon: "question",
+      confirmButtonText: "YES",
+      cancelButtonText: "No",
+      showConfirmButton: true,
+      showDenyButton: true,
     });
-    return;
-  }
 
-  try {
-    setIsLoading(true);
-
-    const response = await apiClient.delete(
-      `/Indicators/${data.DocEntry}`
-    );
-
-    if (response.data.success) {
-      clearFormData();
-      fetchData();
-
+    if (!confirmation.isConfirmed) {
       await Swal.fire({
-        title: "Success!",
-        text: "Indicator Deleted",
-        icon: "success",
-        confirmButtonText: "Ok",
-        timer: 1500, // ✅ SUCCESS TIMER
-      });
-    } else {
-      await Swal.fire({
-        title: "Error!",
-        text: response.data.message,
-        icon: "warning",
+        text: "Indicator Not Deleted",
+        icon: "info",
         confirmButtonText: "Ok", // ❌ NO TIMER
       });
+      return;
     }
-  } catch (error) {
-    console.error("Delete Indicator Error:", error);
 
-    await Swal.fire({
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        "Something went wrong while deleting Indicator",
-      icon: "error",
-      confirmButtonText: "Ok", // ❌ NO TIMER
-    });
-  } finally {
-    setIsLoading(false);
-  }
-};
+    try {
+      setIsLoading(true);
+
+      const response = await apiClient.delete(`/Indicators/${data.DocEntry}`);
+
+      if (response.data.success) {
+        clearFormData();
+        fetchData();
+
+        await Swal.fire({
+          title: "Success!",
+          text: "Indicator Deleted",
+          icon: "success",
+          confirmButtonText: "Ok",
+          timer: 1500, // ✅ SUCCESS TIMER
+        });
+      } else {
+        await Swal.fire({
+          title: "Error!",
+          text: response.data.message,
+          icon: "warning",
+          confirmButtonText: "Ok", // ❌ NO TIMER
+        });
+      }
+    } catch (error) {
+      console.error("Delete Indicator Error:", error);
+
+      await Swal.fire({
+        title: "Error!",
+        text:
+          error.response?.data?.message ||
+          "Something went wrong while deleting Indicator",
+        icon: "error",
+        confirmButtonText: "Ok", // ❌ NO TIMER
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const sidebarContent = (
     <>
@@ -1132,8 +1120,8 @@ const handleIndicateDelete = async (data) => {
   // ========================PERIOD INDICATOR =====================================
   return (
     <>
-              {isLoading && <Loader open={isLoading} />}
-    
+      {isLoading && <Loader open={isLoading} />}
+
       {/* =================================PERIOD INDICATOR START======================================= */}
       {/* Modal Peroid Indicator */}
       <Dialog
@@ -1652,11 +1640,11 @@ const handleIndicateDelete = async (data) => {
                           onChange={(date) => {
                             // Ensure the selected year is correctly passed back as ISO string
                             field.onChange(
-                              date ? dayjs(date).toISOString() : undefined
+                              date ? dayjs(date).toISOString() : undefined,
                             );
                             setValue(
                               "FisclYear",
-                              date ? dayjs(date).year().toString() : "" // Save only the year as a string
+                              date ? dayjs(date).year().toString() : "", // Save only the year as a string
                             );
                           }}
                           error={!!error}

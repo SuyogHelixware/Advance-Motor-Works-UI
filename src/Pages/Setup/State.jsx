@@ -22,7 +22,7 @@ import apiClient from "../../services/apiClient";
 import CardComponent from "../Components/CardComponent";
 import {
   InputSearchSelectTextField,
-  InputTextField
+  InputTextField,
 } from "../Components/formComponents";
 import { Loader } from "../Components/Loader";
 import SearchInputField from "../Components/SearchInputField";
@@ -83,43 +83,43 @@ export default function State() {
   };
 
   // ===============Get initial list data====================================
- const ListofCountry = async () => {
-  setLoading(true); // Start loading
-  try {
-    const res = await apiClient.get(`/Country/all`);
-    const response = res.data;
+  const ListofCountry = async () => {
+    setLoading(true); // Start loading
+    try {
+      const res = await apiClient.get(`/Country/all`);
+      const response = res.data;
 
-    if (response?.success) {
-      // ✅ Success: set data
-      setListofCountry(response.values || []);
-    } else {
-      // ⚠️ API returned success = false
+      if (response?.success) {
+        // ✅ Success: set data
+        setListofCountry(response.values || []);
+      } else {
+        // ⚠️ API returned success = false
+        Swal.fire({
+          title: "Warning!",
+          text: response?.message || "Failed to fetch countries.",
+          icon: "warning",
+          confirmButtonText: "Ok",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching countries:", error);
+
+      // Extract message if available
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Something went wrong while fetching countries.";
+
       Swal.fire({
-        title: "Warning!",
-        text: response?.message || "Failed to fetch countries.",
-        icon: "warning",
+        title: "Error!",
+        text: errorMessage,
+        icon: "error",
         confirmButtonText: "Ok",
       });
+    } finally {
+      setLoading(false); // Stop loading
     }
-  } catch (error) {
-    console.error("Error fetching countries:", error);
-
-    // Extract message if available
-    const errorMessage =
-      error?.response?.data?.message ||
-      error?.message ||
-      "Something went wrong while fetching countries.";
-
-    Swal.fire({
-      title: "Error!",
-      text: errorMessage,
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false); // Stop loading
-  }
-};
+  };
 
   useEffect(
     () => {
@@ -165,38 +165,38 @@ export default function State() {
       });
     }
   };
- const HandleOldData = async (DocEntry) => {
-  if (!DocEntry) return;
+  const HandleOldData = async (DocEntry) => {
+    if (!DocEntry) return;
 
-  setLoading(true); // Start loading
-  try {
-    const response = await apiClient.get(`/ListofStates/${DocEntry}`);
-    const data = response?.data?.values || {}; // Safe fallback
+    setLoading(true); // Start loading
+    try {
+      const response = await apiClient.get(`/ListofStates/${DocEntry}`);
+      const data = response?.data?.values || {}; // Safe fallback
 
-    // ✅ Reset form with fetched data
-    toggleDrawer();
-    reset(data);
-    setSelectedData(DocEntry);
-    setSaveUpdateName("UPDATE");
-    setDocEntry(DocEntry);
-  } catch (error) {
-    console.error("Error fetching state data:", error);
+      // ✅ Reset form with fetched data
+      toggleDrawer();
+      reset(data);
+      setSelectedData(DocEntry);
+      setSaveUpdateName("UPDATE");
+      setDocEntry(DocEntry);
+    } catch (error) {
+      console.error("Error fetching state data:", error);
 
-    const errorMessage =
-      error?.response?.data?.message ||
-      error?.message ||
-      "An error occurred while fetching the state data.";
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "An error occurred while fetching the state data.";
 
-    Swal.fire({
-      title: "Error!",
-      text: errorMessage,
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false); // Stop loading
-  }
-};
+      Swal.fire({
+        title: "Error!",
+        text: errorMessage,
+        icon: "error",
+        confirmButtonText: "Ok",
+      });
+    } finally {
+      setLoading(false); // Stop loading
+    }
+  };
 
   // ===============API for Pagination ==================================
   const handleOpenListSearch = (res) => {
@@ -229,51 +229,51 @@ export default function State() {
     setOpenListPage((prev) => prev + 1);
   };
   const fetchOpenListData = async (pageNum, searchTerm = "") => {
-  setLoading(true); // Start loading
-  try {
-    const url = searchTerm
-      ? `/ListofStates/Search/${searchTerm}/1/${pageNum}/20`
-      : `/ListofStates/Pages/1/${pageNum}/20`;
+    setLoading(true); // Start loading
+    try {
+      const url = searchTerm
+        ? `/ListofStates/Search/${searchTerm}/1/${pageNum}/20`
+        : `/ListofStates/Pages/1/${pageNum}/20`;
 
-    const response = await apiClient.get(url);
-    const data = response?.data;
+      const response = await apiClient.get(url);
+      const data = response?.data;
 
-    if (data?.success) {
-      const newData = data.values || [];
+      if (data?.success) {
+        const newData = data.values || [];
 
-      // Check if more data exists
-      setHasMoreOpen(newData.length === 20);
+        // Check if more data exists
+        setHasMoreOpen(newData.length === 20);
 
-      // Append or replace data depending on pageNum
-      setOpenListData((prev) =>
-        pageNum === 0 ? newData : [...prev, ...newData]
-      );
-    } else {
+        // Append or replace data depending on pageNum
+        setOpenListData((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+      } else {
+        Swal.fire({
+          title: "Warning!",
+          text: data?.message || "Failed to fetch the list.",
+          icon: "warning",
+          confirmButtonText: "Ok",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching open list data:", error);
+
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Something went wrong while fetching data.";
+
       Swal.fire({
-        title: "Warning!",
-        text: data?.message || "Failed to fetch the list.",
-        icon: "warning",
+        title: "Error!",
+        text: errorMessage,
+        icon: "error",
         confirmButtonText: "Ok",
       });
+    } finally {
+      setLoading(false); // Stop loading
     }
-  } catch (error) {
-    console.error("Error fetching open list data:", error);
-
-    const errorMessage =
-      error?.response?.data?.message ||
-      error?.message ||
-      "Something went wrong while fetching data.";
-
-    Swal.fire({
-      title: "Error!",
-      text: errorMessage,
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false); // Stop loading
-  }
-};
+  };
 
   // ==============useForm====================================
   const { control, handleSubmit, reset, watch, setValue, clearErrors } =
@@ -293,133 +293,137 @@ export default function State() {
     }
   }, [Country, clearErrors, setValue]);
   // ===============PUT and POST API ===================================
- const handleSubmitForm = async (data) => {
-  if (!data) return;
+  const handleSubmitForm = async (data) => {
+    if (!data) return;
 
-  const obj = {
-    DocEntry: data.DocEntry || "",
-    UserId: user.UserId,
-    CreatedBy: user.UserName,
-    CreatedDate: dayjs(data.CreatedDate).format("YYYY-MM-DD"),
-    ModifiedBy: user.UserName,
-    ModifiedDate: dayjs(data.ModifiedDate).format("YYYY-MM-DD"),
-    Status: "1",
-    Code: String(data.Code),
-    Name: String(data.Name),
-    eCode: data.eCode || "0",
-    GSTCode: data.GSTCode || "",
-    GSTIsUT: data.GSTIsUT === "Y" ? "Y" : "N",
-    GNRECode: data.GNRECode || "--",
-    CountryCode: String(data.CountryCode),
-    Active: ActiveValue === "Y" ? "Y" : "N",
-  };
+    const obj = {
+      DocEntry: data.DocEntry || "",
+      UserId: user.UserId,
+      CreatedBy: user.UserName,
+      CreatedDate: dayjs(data.CreatedDate).format("YYYY-MM-DD"),
+      ModifiedBy: user.UserName,
+      ModifiedDate: dayjs(data.ModifiedDate).format("YYYY-MM-DD"),
+      Status: "1",
+      Code: String(data.Code),
+      Name: String(data.Name),
+      eCode: data.eCode || "0",
+      GSTCode: data.GSTCode || "",
+      GSTIsUT: data.GSTIsUT === "Y" ? "Y" : "N",
+      GNRECode: data.GNRECode || "--",
+      CountryCode: String(data.CountryCode),
+      Active: ActiveValue === "Y" ? "Y" : "N",
+    };
 
-  const normalizeString = (str) => str?.replace(/\s+/g, "").toLowerCase() || "";
+    const normalizeString = (str) =>
+      str?.replace(/\s+/g, "").toLowerCase() || "";
 
-  console.log("Submitting object:", obj);
+    console.log("Submitting object:", obj);
 
-  try {
-    setLoading(true); // start loading
+    try {
+      setLoading(true); // start loading
 
-    // -----------------------
-    // Check for duplicates on SAVE
-    // -----------------------
-    if (SaveUpdateName === "SAVE" && Array.isArray(openListData)) {
-      const matchedFields = [];
+      // -----------------------
+      // Check for duplicates on SAVE
+      // -----------------------
+      if (SaveUpdateName === "SAVE" && Array.isArray(openListData)) {
+        const matchedFields = [];
 
-      const isDuplicate = openListData.some((item) => {
-        const matchCode = normalizeString(item.Code) === normalizeString(data.Code);
-        const matchECode = normalizeString(item.eCode) === normalizeString(data.eCode);
-        const matchGST = normalizeString(item.GSTCode) === normalizeString(data.GSTCode);
+        const isDuplicate = openListData.some((item) => {
+          const matchCode =
+            normalizeString(item.Code) === normalizeString(data.Code);
+          const matchECode =
+            normalizeString(item.eCode) === normalizeString(data.eCode);
+          const matchGST =
+            normalizeString(item.GSTCode) === normalizeString(data.GSTCode);
 
-        if (matchCode) matchedFields.push("Code");
-        if (matchECode) matchedFields.push("eCode");
-        if (matchGST) matchedFields.push("GST State Code");
+          if (matchCode) matchedFields.push("Code");
+          if (matchECode) matchedFields.push("eCode");
+          if (matchGST) matchedFields.push("GST State Code");
 
-        return matchCode || matchECode || matchGST;
-      });
-
-      if (isDuplicate) {
-        Swal.fire({
-          text: `${matchedFields.join(", ")} already exist!`,
-          icon: "info",
-          showConfirmButton: true,
+          return matchCode || matchECode || matchGST;
         });
-        return;
+
+        if (isDuplicate) {
+          Swal.fire({
+            text: `${matchedFields.join(", ")} already exist!`,
+            icon: "info",
+            showConfirmButton: true,
+          });
+          return;
+        }
       }
-    }
 
-    // -----------------------
-    // SAVE or UPDATE API Call
-    // -----------------------
-    let response;
-    if (SaveUpdateName === "SAVE") {
-      response = await apiClient.post(`/ListofStates`, obj);
-    } else {
-      const result = await Swal.fire({
-        text: `Do you want to update "${data.Code}"?`,
-        icon: "question",
-        showCancelButton: true,
-        confirmButtonText: "Yes",
-        cancelButtonText: "No",
-      });
+      // -----------------------
+      // SAVE or UPDATE API Call
+      // -----------------------
+      let response;
+      if (SaveUpdateName === "SAVE") {
+        response = await apiClient.post(`/ListofStates`, obj);
+      } else {
+        const result = await Swal.fire({
+          text: `Do you want to update "${data.Code}"?`,
+          icon: "question",
+          showCancelButton: true,
+          confirmButtonText: "Yes",
+          cancelButtonText: "No",
+        });
 
-      if (!result.isConfirmed) {
+        if (!result.isConfirmed) {
+          Swal.fire({
+            text: "Record is not updated!",
+            icon: "info",
+            toast: true,
+            showConfirmButton: false,
+            timer: 1500,
+          });
+          return;
+        }
+
+        response = await apiClient.put(`/ListofStates/${data.DocEntry}`, obj);
+      }
+
+      const { success, message } = response.data;
+
+      if (success) {
+        clearFormData();
+        setOpenListPage(0);
+        setOpenListData([]);
+        await fetchOpenListData(0);
+
         Swal.fire({
-          text: "Record is not updated!",
-          icon: "info",
-          toast: true,
+          title: "Success!",
+          text:
+            SaveUpdateName === "SAVE" ? "State is added" : "State is updated",
+          icon: "success",
+          timer: 1000,
           showConfirmButton: false,
-          timer: 1500,
         });
-        return;
+      } else {
+        Swal.fire({
+          title: "Warning!",
+          text: message || "Something went wrong",
+          icon: "warning",
+          confirmButtonText: "Ok",
+        });
       }
+    } catch (error) {
+      console.error("Error submitting form:", error);
 
-      response = await apiClient.put(`/ListofStates/${data.DocEntry}`, obj);
-    }
-
-    const { success, message } = response.data;
-
-    if (success) {
-      clearFormData();
-      setOpenListPage(0);
-      setOpenListData([]);
-      await fetchOpenListData(0);
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "An error occurred while submitting the form.";
 
       Swal.fire({
-        title: "Success!",
-        text:
-          SaveUpdateName === "SAVE" ? "State is added" : "State is updated",
-        icon: "success",
-        timer: 1000,
-        showConfirmButton: false,
-      });
-    } else {
-      Swal.fire({
-        title: "Warning!",
-        text: message || "Something went wrong",
-        icon: "warning",
+        title: "Error!",
+        text: errorMessage,
+        icon: "error",
         confirmButtonText: "Ok",
       });
+    } finally {
+      setLoading(false); // stop loading
     }
-  } catch (error) {
-    console.error("Error submitting form:", error);
-
-    const errorMessage =
-      error?.response?.data?.message ||
-      error?.message ||
-      "An error occurred while submitting the form.";
-
-    Swal.fire({
-      title: "Error!",
-      text: errorMessage,
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false); // stop loading
-  }
-};
+  };
 
   // ===============Delete API ===================================
   const handleOnDelete = async (data) => {

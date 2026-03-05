@@ -109,7 +109,7 @@ export default function BinLocationMaster() {
         const newData = response.data.values;
         setHasMoreOpen(newData.length === 20);
         setOpenListData((prev) =>
-          pageNum === 0 ? newData : [...prev, ...newData]
+          pageNum === 0 ? newData : [...prev, ...newData],
         );
       }
     } catch (error) {
@@ -167,7 +167,7 @@ export default function BinLocationMaster() {
         const newData = response.data.values;
         setHasMoreClosed(false);
         setClosedListData((prev) =>
-          pageNum === 0 ? newData : [...prev, ...newData]
+          pageNum === 0 ? newData : [...prev, ...newData],
         );
       }
     } catch (error) {
@@ -203,7 +203,7 @@ export default function BinLocationMaster() {
   const fetchMoreClosedListData = () => {
     fetchClosedListData(
       closedListPage + 1,
-      closedListSearching ? closedListquery : ""
+      closedListSearching ? closedListquery : "",
     );
     setClosedListPage((prev) => prev + 1);
   };
@@ -247,6 +247,9 @@ export default function BinLocationMaster() {
   const ClearFormData = () => {
     setSaveUpdateName("SAVE");
     reset(initial);
+    if (openListquery?.trim()) {
+      handleOpenListClear();
+    }
   };
 
   const FetchWareHouse = async () => {
@@ -274,7 +277,7 @@ export default function BinLocationMaster() {
   const BinLocationSublevel1 = async () => {
     try {
       const { data } = await apiClient.get(
-        `/BinLocationSubLevel/ByBinAct/${1}`
+        `/BinLocationSubLevel/ByBinAct/${1}`,
       );
       if (data.success === true) {
         const { values } = data;
@@ -294,7 +297,7 @@ export default function BinLocationMaster() {
   const BinLocationSublevel2 = async () => {
     try {
       const { data } = await apiClient.get(
-        `/BinLocationSubLevel/ByBinAct/${2}`
+        `/BinLocationSubLevel/ByBinAct/${2}`,
       );
       if (data.success === true) {
         const { values } = data;
@@ -315,7 +318,7 @@ export default function BinLocationMaster() {
   const BinLocationSublevel3 = async () => {
     try {
       const { data } = await apiClient.get(
-        `/BinLocationSubLevel/ByBinAct/${3}`
+        `/BinLocationSubLevel/ByBinAct/${3}`,
       );
       if (data.success === true) {
         const { values } = data;
@@ -336,7 +339,7 @@ export default function BinLocationMaster() {
   const BinLocationSublevel4 = async () => {
     try {
       const { data } = await apiClient.get(
-        `/BinLocationSubLevel/ByBinAct/${4}`
+        `/BinLocationSubLevel/ByBinAct/${4}`,
       );
       if (data.success === true) {
         const { values } = data;
@@ -395,14 +398,14 @@ export default function BinLocationMaster() {
           Separator.BinSeptor +
           data.SL3Code +
           Separator.BinSeptor +
-          data.SL4Code
+          data.SL4Code,
       ),
     };
 
     console.log("object ", obj);
     if (SaveUpdateName === "SAVE") {
       let uniCodeExists = openListData.some(
-        (uni) => uni.BinCode === obj.BinCode
+        (uni) => uni.BinCode === obj.BinCode,
       );
       if (uniCodeExists) {
         Swal.fire({

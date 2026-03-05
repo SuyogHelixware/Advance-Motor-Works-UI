@@ -109,7 +109,7 @@ export default function CreditCardPayment() {
         setHasMoreOpen(newData.length === 20);
 
         setOpenListData((prev) =>
-          pageNum === 0 ? newData : [...prev, ...newData]
+          pageNum === 0 ? newData : [...prev, ...newData],
         );
       }
     } catch (error) {
@@ -158,9 +158,7 @@ export default function CreditCardPayment() {
     setSaveUpdateName("UPDATE");
 
     try {
-      const { data } = await apiClient.get(
-        `/CreditCardPayMeth/${DocEntry}`
-      );
+      const { data } = await apiClient.get(`/CreditCardPayMeth/${DocEntry}`);
       const { values } = data;
       console.log(data);
 
@@ -195,7 +193,7 @@ export default function CreditCardPayment() {
         setHasMoreClosed(false);
 
         setClosedListData((prev) =>
-          pageNum === 0 ? newData : [...prev, ...newData]
+          pageNum === 0 ? newData : [...prev, ...newData],
         );
       }
     } catch (error) {
@@ -228,7 +226,7 @@ export default function CreditCardPayment() {
   const fetchMoreClosedListData = () => {
     fetchClosedListData(
       closedListPage + 1,
-      closedListSearching ? closedListquery : ""
+      closedListSearching ? closedListquery : "",
     );
     setClosedListPage((prev) => prev + 1);
   };
@@ -299,10 +297,7 @@ export default function CreditCardPayment() {
       }).then((result) => {
         if (result.isConfirmed) {
           apiClient
-            .put(
-              `/CreditCardPayMeth/${data.DocEntry}`,
-              crcdpaymethod
-            )
+            .put(`/CreditCardPayMeth/${data.DocEntry}`, crcdpaymethod)
             .then((response) => {
               if (response.data.success) {
                 fetchOpenListData(0);

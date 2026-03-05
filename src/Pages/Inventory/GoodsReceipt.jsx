@@ -15,7 +15,6 @@ import {
   Divider,
   Grid,
   IconButton,
-  InputAdornment,
   Tab,
   Table,
   TableBody,
@@ -52,7 +51,11 @@ import apiClient from "../../services/apiClient.js";
 import CardComponent from "../Components/CardComponent.jsx";
 import DataGridModal from "../Components/DataGridModal.jsx";
 
+import { useGridApiRef } from "@mui/x-data-grid";
+import { dataGridSx } from "../../Styles/dataGridStyles.js";
+import BatchIntake from "../Components/Batch.jsx";
 import BinLocation from "../Components/BinLocation.jsx";
+import CalCulation from "../Components/CalCulation.jsx";
 import ExchangeRate from "../Components/ExchangeRate.jsx";
 import { fetchExchangeRateGeneric } from "../Components/fetchExchangeRateGeneric.js";
 import { fetchPriceListData } from "../Components/fetchPriceListData.js";
@@ -62,28 +65,23 @@ import {
   InputSelectFields,
   InputSelectTextField,
   InputTextField,
-  InputTextSearchButtonTable,
   SelectedDatePickerField,
   SmallInputTextField,
 } from "../Components/formComponents";
+import PrintMenu from "../Components/PrintMenu.jsx";
 import { recalcHeaderTotals } from "../Components/recalcHeaderTotals.js";
 import { recalculateLines } from "../Components/recalculateLines.js";
 import SearchModel from "../Components/SearchModel.jsx";
+import SerialIntake from "../Components/SerialIntake.jsx";
 import { useSysRateCurrency } from "../Components/SyRateCurrency.jsx";
 import { TimeDelay } from "../Components/TimeDelay";
 import usePermissions from "../Components/usePermissions.jsx";
 import { useRecalculateLinesOnChange } from "../Components/useRecalculateLinesOnChange.js";
+import { useDocumentSeries } from "../Components/useSearchInfiniteScroll.jsx";
 import { TwoFormatter, ValueFormatter } from "../Components/ValueFormatter.jsx";
 import { Base64FileinNewTab } from "../FileUpload/EditFilePreview";
 import { openFileinNewTab } from "../FileUpload/filePreview";
 import { useFileUpload } from "../FileUpload/useFileUpload";
-import { useDocumentSeries } from "../Components/useSearchInfiniteScroll.jsx";
-import PrintMenu from "../Components/PrintMenu.jsx";
-import SerialIntake from "../Components/SerialIntake.jsx";
-import BatchIntake from "../Components/Batch.jsx";
-import { dataGridSx } from "../../Styles/dataGridStyles.js";
-import { useGridApiRef } from "@mui/x-data-grid";
-import CalCulation from "../Components/CalCulation.jsx";
 const modelColumns = [
   {
     id: 1,
@@ -374,17 +372,15 @@ export default function GoodsReceipt() {
       /([\u2700-\u27BF]|[\uE000-\uF8FF]|[\uD83C-\uDBFF\uDC00-\uDFFF]+|[\u2011-\u26FF]|[\uFE00-\uFE0F])/g,
       "",
     );
-  //===============================================Active list data==========================================
-  // Close Search Fild Clare
-  const handleCloseListClear = () => {
+
+  const handleOpenListClear = () => {
     setopenListquery("");
     setOpenListSearching(false);
     setopenListPage(0);
     setOpenListData([]);
     fetchOpenListData(0);
   };
-  // Search Record Result
-  const handleCloseListSearch = (res) => {
+  const handleOpenListSearch = (res) => {
     setopenListquery(res);
     setOpenListSearching(true);
     setopenListPage(0);
@@ -392,17 +388,14 @@ export default function GoodsReceipt() {
 
     // Cancel Token
     if (typeof httpRequestToken != typeof undefined) {
-      // console.log("REQUEST CANCELLED", httpRequestToken);
       httpRequestToken.cancel("Operation canceled due to new request.");
     }
-    //Searching time out
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
     timeoutRef.current = setTimeout(() => {
       fetchOpenListData(0, res, httpRequestToken);
     }, TimeDelay);
-    // fetchOpenListData(0,res,httpRequestToken);
   };
   //Featch more Data
   const fetchMoreCloseListData = () => {
@@ -1608,6 +1601,9 @@ export default function GoodsReceipt() {
     setSelectedData([]);
     setSaveUpdateName("SAVE");
     clearFiles();
+    if (openListquery?.trim()) {
+      handleOpenListClear();
+    }
     setValue("Series", DocSeries[0]?.SeriesId ?? "");
     setValue("DocNum", DocSeries[0]?.DocNum ?? "");
     setValue("FinncPriod", DocSeries[0]?.FinncPriod ?? "");
@@ -1892,7 +1888,7 @@ export default function GoodsReceipt() {
           TotalSumSy: String(item.TotalSumSy),
           AcctCode: String(item.AcctCode),
           Price: String(item.PriceBefDi),
-          Rate: "1",
+          Rate: String(DocRateLine),
           Currency: data.DocCur,
           StockSum: String(item.StockSum || "0"),
           StockSumSc: String(item.StockSumSc || "0"),
@@ -2590,9 +2586,9 @@ export default function GoodsReceipt() {
               }}
             >
               <SearchInputField
-                onChange={(e) => handleCloseListSearch(e.target.value)}
+                onChange={(e) => handleOpenListSearch(e.target.value)}
                 value={openListquery}
-                onClickClear={handleCloseListClear}
+                onClickClear={handleOpenListClear}
               />
             </Grid>
             <InfiniteScroll
@@ -2697,6 +2693,8 @@ export default function GoodsReceipt() {
         BinCode: BinCode,
         DftBinAbs: DftBinAbs,
         BinActivat,
+        Bin: 0,
+        oDocBinLocationLines: [],
       };
     });
     reset({ ...getValues(), oLines: updatedLines });

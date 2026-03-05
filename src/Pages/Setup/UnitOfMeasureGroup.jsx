@@ -86,7 +86,7 @@ export default function UnitOfMeasureGroup() {
         const newData = response.data.values;
         setHasMoreOpen(newData.length === 20);
         setOpenListData((prev) =>
-          pageNum === 0 ? newData : [...prev, ...newData]
+          pageNum === 0 ? newData : [...prev, ...newData],
         );
       }
     } catch (error) {
@@ -194,7 +194,7 @@ export default function UnitOfMeasureGroup() {
         values.oLines.map((item, index) => ({
           id: index + 1, // Ensure unique IDs
           ...item,
-        }))
+        })),
       );
     } catch (error) {
       console.error("Error", error);
@@ -214,7 +214,8 @@ export default function UnitOfMeasureGroup() {
     console.log("dfdsf", data);
 
     const allFill = rows.some(
-      (item) => !item.AltQty || !item.BaseQty || !item.BaseUom || !item.UomEntry
+      (item) =>
+        !item.AltQty || !item.BaseQty || !item.BaseUom || !item.UomEntry,
     );
     console.log(allFill);
     if (allFill) {
@@ -459,11 +460,11 @@ export default function UnitOfMeasureGroup() {
           ...r,
           BaseUom: value, // Update BaseUom
           UomEntry: r.id === 1 ? value : r.UomEntry, // Reflect in UomEntry for the first row
-        }))
+        })),
       );
     } else {
       setRows((prevRows) =>
-        prevRows.map((r) => (r.id === row.id ? { ...r, [name]: value } : r))
+        prevRows.map((r) => (r.id === row.id ? { ...r, [name]: value } : r)),
       );
     }
   };
@@ -597,7 +598,7 @@ export default function UnitOfMeasureGroup() {
               onChange={(e) =>
                 handleChange(
                   { target: { name: "Status", value: e.target.checked } },
-                  params.row
+                  params.row,
                 )
               }
             />
@@ -901,7 +902,7 @@ export default function UnitOfMeasureGroup() {
                           value: 100,
                           message: "Description 100 characters allowed",
                         },
-                       
+
                         validate: (value) =>
                           value.trim() !== "" || "Description cannot be empty",
                       }}

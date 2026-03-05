@@ -29,7 +29,7 @@ export default function CompanyDetails() {
   // const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tabvalue, settabvalue] = useState(0);
   const [subtab, settab] = useState("0");
- const perms = usePermissions(46);
+  const perms = usePermissions(46);
 
   const handletab = (event, tab) => {
     settab(tab);
@@ -247,7 +247,7 @@ export default function CompanyDetails() {
                                               "'Open Sans', sans-serif", // Apply font family here
                                           }}
                                         >
-                                          Credit Limit 
+                                          Credit Limit
                                         </Typography>
                                       }
                                       sx={{
@@ -3490,14 +3490,18 @@ export default function CompanyDetails() {
                 sx={{ color: "white" }}
                 color="success"
                 type="submit"
-                disabled={!perms.IsAdd || !perms.IsEdit  }
+                disabled={!perms.IsAdd || !perms.IsEdit}
               >
                 Save
               </Button>
               {/* <Button variant="contained" color="error" disabled>
                 CANCEL APPIONTMENT
               </Button> */}
-              <Button variant="contained" color="primary" disabled={!perms.IsDelete}>
+              <Button
+                variant="contained"
+                color="primary"
+                disabled={!perms.IsDelete}
+              >
                 PRINT
               </Button>
             </Grid>

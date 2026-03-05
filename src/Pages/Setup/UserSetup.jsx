@@ -59,20 +59,20 @@ export default function UserSetup() {
   ];
 
   const rows3 = [
-    { id: 1, GLACCOUNT: "101", SELECTED: "ABC", TOTAL: "100",Desc:'ABC' },
-    { id: 2, GLACCOUNT: "102", SELECTED: "PQR", TOTAL: "1000",Desc:'ABC' },
-    { id: 3, GLACCOUNT: "103", SELECTED: "XYZ", TOTAL: "50",Desc:'ABC' },
-    { id: 4, GLACCOUNT: "104", SELECTED: "ABC", TOTAL: "100",Desc:'ABC' },
-    { id: 5, GLACCOUNT: "105", SELECTED: "PQR", TOTAL: "1000",Desc:'ABC' },
-    { id: 6, GLACCOUNT: "106", SELECTED: "XYZ", TOTAL: "50",Desc:'ABC' },
+    { id: 1, GLACCOUNT: "101", SELECTED: "ABC", TOTAL: "100", Desc: "ABC" },
+    { id: 2, GLACCOUNT: "102", SELECTED: "PQR", TOTAL: "1000", Desc: "ABC" },
+    { id: 3, GLACCOUNT: "103", SELECTED: "XYZ", TOTAL: "50", Desc: "ABC" },
+    { id: 4, GLACCOUNT: "104", SELECTED: "ABC", TOTAL: "100", Desc: "ABC" },
+    { id: 5, GLACCOUNT: "105", SELECTED: "PQR", TOTAL: "1000", Desc: "ABC" },
+    { id: 6, GLACCOUNT: "106", SELECTED: "XYZ", TOTAL: "50", Desc: "ABC" },
   ];
   const rows4 = [
-    { id: 1, GLACCOUNT: "101", SELECTED: "ABC", TOTAL: "100",Desc:'ABC' },
-    { id: 2, GLACCOUNT: "102", SELECTED: "PQR", TOTAL: "1000",Desc:'ABC' },
-    { id: 3, GLACCOUNT: "103", SELECTED: "XYZ", TOTAL: "50",Desc:'ABC' },
-    { id: 4, GLACCOUNT: "104", SELECTED: "ABC", TOTAL: "100",Desc:'ABC' },
-    { id: 5, GLACCOUNT: "105", SELECTED: "PQR", TOTAL: "1000",Desc:'ABC' },
-    { id: 6, GLACCOUNT: "106", SELECTED: "XYZ", TOTAL: "50",Desc:'ABC' },
+    { id: 1, GLACCOUNT: "101", SELECTED: "ABC", TOTAL: "100", Desc: "ABC" },
+    { id: 2, GLACCOUNT: "102", SELECTED: "PQR", TOTAL: "1000", Desc: "ABC" },
+    { id: 3, GLACCOUNT: "103", SELECTED: "XYZ", TOTAL: "50", Desc: "ABC" },
+    { id: 4, GLACCOUNT: "104", SELECTED: "ABC", TOTAL: "100", Desc: "ABC" },
+    { id: 5, GLACCOUNT: "105", SELECTED: "PQR", TOTAL: "1000", Desc: "ABC" },
+    { id: 6, GLACCOUNT: "106", SELECTED: "XYZ", TOTAL: "50", Desc: "ABC" },
   ];
 
   const sidebarContent = (
@@ -653,7 +653,10 @@ export default function UserSetup() {
                               lg={6}
                               textAlign={"center"}
                               mt={5}
-                            ><Button variant="contained" color="success">Save</Button>
+                            >
+                              <Button variant="contained" color="success">
+                                Save
+                              </Button>
                             </Grid>
                             <Grid
                               item
@@ -663,7 +666,10 @@ export default function UserSetup() {
                               lg={6}
                               textAlign={"center"}
                               mt={5}
-                            ><Button variant="contained" color="error">Clare</Button>
+                            >
+                              <Button variant="contained" color="error">
+                                Clare
+                              </Button>
                             </Grid>
                             <Grid container item lg={12} p={1} align={"center"}>
                               <Box
@@ -774,7 +780,10 @@ export default function UserSetup() {
                               lg={6}
                               textAlign={"center"}
                               mt={5}
-                            ><Button variant="contained" color="success">Save</Button>
+                            >
+                              <Button variant="contained" color="success">
+                                Save
+                              </Button>
                             </Grid>
                             <Grid
                               item
@@ -784,7 +793,10 @@ export default function UserSetup() {
                               lg={6}
                               textAlign={"center"}
                               mt={5}
-                            ><Button variant="contained" color="error">Clare</Button>
+                            >
+                              <Button variant="contained" color="error">
+                                Clare
+                              </Button>
                             </Grid>
                             <Grid container item lg={12} p={1} align={"center"}>
                               <Box
@@ -856,4 +868,3 @@ export default function UserSetup() {
     </>
   );
 }
-

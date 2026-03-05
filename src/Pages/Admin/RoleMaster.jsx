@@ -18,12 +18,9 @@ import {
   TextField,
   Tooltip,
   Typography,
-  useTheme
+  useTheme,
 } from "@mui/material";
-import {
-  DataGrid,
-  GridToolbarQuickFilter
-} from "@mui/x-data-grid";
+import { DataGrid, GridToolbarQuickFilter } from "@mui/x-data-grid";
 import dayjs from "dayjs";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -35,7 +32,7 @@ import apiClient from "../../services/apiClient";
 import CardComponent from "../Components/CardComponent";
 import {
   InputFields,
-  InputSearchableSelect
+  InputSearchableSelect,
 } from "../Components/formComponents";
 import { Loader } from "../Components/Loader";
 import SearchInputField from "../Components/SearchInputField";
@@ -104,78 +101,76 @@ export default function RoleMaster() {
   const [RoleCreationList, setRoleCreationList] = useState([]);
 
   // ----------------- FETCH ROLE LIST -----------------
- const fetchRoleList = useCallback(
-  async (pageNum = 0, searchTerm = "") => {
-    const cacheKey = `${searchTerm}_${pageNum}`;
+  const fetchRoleList = useCallback(
+    async (pageNum = 0, searchTerm = "") => {
+      const cacheKey = `${searchTerm}_${pageNum}`;
 
-    // ✅ Check cache first
-    if (roleCache[cacheKey]) {
-      setRoleCreationList(roleCache[cacheKey]);
-      return;
-    }
-
-    try {
-      setIsLoading(true); // 🔹 Start loader
-
-      // 🔹 Build URL dynamically
-      const url = searchTerm
-        ? `/Role/Search/${encodeURIComponent(searchTerm)}/1/${pageNum}`
-        : `/Role/Pages/1/${pageNum}`;
-
-      const response = await apiClient.get(url);
-
-      if (response.data?.success) {
-        const newData = response.data.values || [];
-
-        // 🔹 Save to cache
-        setRoleCache((prev) => ({
-          ...prev,
-          [cacheKey]: newData,
-        }));
-
-        // 🔹 Update state
-        setRoleCreationList(newData);
-
-        // 🔹 Estimate row count
-        const estimatedRowCount =
-          pageNum === 0 ? LIMIT + 1 : pageNum * LIMIT + newData.length + 1;
-        setRowCount(estimatedRowCount);
-      } else {
-        const message =
-          response.data?.message || "Failed to fetch Role data";
-        Swal.fire("Error!", message, "warning");
-        console.error("API error:", response.data);
+      // ✅ Check cache first
+      if (roleCache[cacheKey]) {
+        setRoleCreationList(roleCache[cacheKey]);
+        return;
       }
-    } catch (error) {
-      let errorMessage = "Something went wrong while fetching Role list.";
 
-      if (error.response?.data) {
-        const data = error.response.data;
-        if (data.errors) {
-          errorMessage = Object.values(data.errors).flat().join("\n");
-        } else if (data.message) {
-          errorMessage = data.message;
-        } else if (data.title) {
-          errorMessage = data.title;
+      try {
+        setIsLoading(true); // 🔹 Start loader
+
+        // 🔹 Build URL dynamically
+        const url = searchTerm
+          ? `/Role/Search/${encodeURIComponent(searchTerm)}/1/${pageNum}/20`
+          : `/Role/Pages/1/${pageNum}/20`;
+
+        const response = await apiClient.get(url);
+
+        if (response.data?.success) {
+          const newData = response.data.values || [];
+
+          // 🔹 Save to cache
+          setRoleCache((prev) => ({
+            ...prev,
+            [cacheKey]: newData,
+          }));
+
+          // 🔹 Update state
+          setRoleCreationList(newData);
+
+          // 🔹 Estimate row count
+          const estimatedRowCount =
+            pageNum === 0 ? LIMIT + 1 : pageNum * LIMIT + newData.length + 1;
+          setRowCount(estimatedRowCount);
+        } else {
+          const message = response.data?.message || "Failed to fetch Role data";
+          Swal.fire("Error!", message, "warning");
+          console.error("API error:", response.data);
         }
-      } else if (error.message) {
-        errorMessage = error.message;
+      } catch (error) {
+        let errorMessage = "Something went wrong while fetching Role list.";
+
+        if (error.response?.data) {
+          const data = error.response.data;
+          if (data.errors) {
+            errorMessage = Object.values(data.errors).flat().join("\n");
+          } else if (data.message) {
+            errorMessage = data.message;
+          } else if (data.title) {
+            errorMessage = data.title;
+          }
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+
+        Swal.fire("Error!", errorMessage, "error");
+        console.error("Fetch Role list error:", error);
+      } finally {
+        setIsLoading(false); // 🔹 Stop loader
       }
-
-      Swal.fire("Error!", errorMessage, "error");
-      console.error("Fetch Role list error:", error);
-    } finally {
-      setIsLoading(false); // 🔹 Stop loader
-    }
-  },
-  [roleCache]
-);
-
+    },
+    [roleCache],
+  );
 
   // ----------------- LOAD WHEN PAGE OR SEARCH CHANGES -----------------
   useEffect(() => {
     fetchRoleList(currentPage, searchRoleText);
-  }, [currentPage, searchRoleText, fetchRoleList]);
+  }, [currentPage, searchRoleText]);
 
   // ----------------- PAGINATION HANDLER -----------------
   function CustomQuickSearchToolbar() {
@@ -198,7 +193,7 @@ export default function RoleMaster() {
         setCurrentPage(page);
       }
     },
-    [currentPage]
+    [currentPage],
   );
 
   // ----------------- SEARCH HANDLER -----------------
@@ -219,7 +214,7 @@ export default function RoleMaster() {
       Object.values(row)
         .join(" ") // combine all fields
         .toLowerCase()
-        .includes(searchText.toLowerCase())
+        .includes(searchText.toLowerCase()),
     );
   }, [searchText, MenuList]);
   const handleOpenListSearch = (res) => {
@@ -248,136 +243,117 @@ export default function RoleMaster() {
     fetchOpenListData(openListPage + 1, openListSearching ? openListquery : "");
     setOpenListPage((prev) => prev + 1);
   };
- const fetchOpenListData = async (pageNum = 0, searchTerm = "") => {
-  try {
-    setIsLoading(true); // 🔹 Start loader
+  const fetchOpenListData = async (pageNum = 0, searchTerm = "") => {
+    try {
+      setIsLoading(true); // 🔹 Start loader
 
-    // Build URL dynamically
-    const url = searchTerm
-      ? `/RoleMapping/Search/${encodeURIComponent(searchTerm)}/1/${pageNum}`
-      : `/RoleMapping/Pages/1/${pageNum}`;
+      // Build URL dynamically
+      const url = searchTerm
+        ? `/RoleMapping/Search/${encodeURIComponent(searchTerm)}/1/${pageNum}/20`
+        : `/RoleMapping/Pages/1/${pageNum}/20`;
 
-    const response = await apiClient.get(url);
+      const response = await apiClient.get(url);
 
-    // ✅ API response success
-    if (response.data?.success) {
-      const newData = response.data.values || [];
+      // ✅ API response success
+      if (response.data?.success) {
+        const newData = response.data.values || [];
 
-      setHasMoreOpen(newData.length === 20);
+        setHasMoreOpen(newData.length === 20);
 
-      setOpenListData((prev) =>
-        pageNum === 0 ? newData : [...prev, ...newData]
-      );
-    } else {
-      // 🔹 Handle API success=false
-      const message =
-        response.data?.message || "Failed to fetch Role Mapping data";
-      Swal.fire("Error!", message, "warning");
-      console.error("API returned success=false:", response.data);
-    }
-  } catch (error) {
-    // 🔹 Catch network or unexpected errors
-    let errorMessage = "Something went wrong while fetching data.";
-
-    if (error.response?.data) {
-      const data = error.response.data;
-      if (data.errors) {
-        errorMessage = Object.values(data.errors).flat().join("\n");
-      } else if (data.message) {
-        errorMessage = data.message;
-      } else if (data.title) {
-        errorMessage = data.title;
+        setOpenListData((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+      } else {
+        // 🔹 Handle API success=false
+        const message =
+          response.data?.message || "Failed to fetch Role Mapping data";
+        Swal.fire("Error!", message, "warning");
+        console.error("API returned success=false:", response.data);
       }
-    } else if (error.message) {
-      errorMessage = error.message;
+    } catch (error) {
+      // 🔹 Catch network or unexpected errors
+      let errorMessage = "Something went wrong while fetching data.";
+
+      if (error.response?.data) {
+        const data = error.response.data;
+        if (data.errors) {
+          errorMessage = Object.values(data.errors).flat().join("\n");
+        } else if (data.message) {
+          errorMessage = data.message;
+        } else if (data.title) {
+          errorMessage = data.title;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
+      Swal.fire("Error!", errorMessage, "error");
+      console.error("FetchOpenListData error:", error);
+    } finally {
+      setIsLoading(false); // 🔹 Stop loader
     }
-
-    Swal.fire("Error!", errorMessage, "error");
-    console.error("FetchOpenListData error:", error);
-  } finally {
-    setIsLoading(false); // 🔹 Stop loader
-  }
-};
-
+  };
 
   const getRoleName = async () => {
-  setIsLoading(true);
+    setIsLoading(true);
 
-  try {
-    const response = await apiClient.get(`/Role/All`, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+    try {
+      const response = await apiClient.get(`/Role/All`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-    const { success, values = [], message } = response?.data || {};
+      const { success, values = [], message } = response?.data || {};
 
-    if (!success) {
+      if (!success) {
+        Swal.fire({
+          title: "Error!",
+          text: message || "Failed to fetch role names.",
+          icon: "error",
+        });
+        return;
+      }
+
+      setCardNameValue(values);
+    } catch (error) {
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to fetch data.";
+
+      console.error("Error fetching role names:", error);
+
       Swal.fire({
         title: "Error!",
-        text: message || "Failed to fetch role names.",
+        text: errorMessage,
         icon: "error",
       });
-      return;
+    } finally {
+      setIsLoading(false);
     }
-
-    setCardNameValue(values);
-  } catch (error) {
-    const errorMessage =
-      error?.response?.data?.message ||
-      error?.message ||
-      "Failed to fetch data.";
-
-    console.error("Error fetching role names:", error);
-
-    Swal.fire({
-      title: "Error!",
-      text: errorMessage,
-      icon: "error",
-    });
-  } finally {
-    setIsLoading(false);
-  }
-};
-
+  };
 
   useEffect(() => {
     getRoleName();
     GetMenuList();
-    fetchRoleList(0);
+    // fetchRoleList(0);
     fetchOpenListData(0);
   }, []);
 
- const handleOnDelete = async () => {
-  const result = await Swal.fire({
-    text: "Do You Want to Delete?",
-    icon: "question",
-    showConfirmButton: true,
-    showDenyButton: true,
-    confirmButtonText: "YES",
-    cancelButtonText: "No",
-  });
-
-  if (!result.isConfirmed) {
-    Swal.fire({
-      text: "Role Mapping Not Deleted",
-      icon: "info",
-      toast: true,
-      showConfirmButton: false,
-      timer: 1500,
+  const handleOnDelete = async () => {
+    const result = await Swal.fire({
+      text: "Do You Want to Delete?",
+      icon: "question",
+      showConfirmButton: true,
+      showDenyButton: true,
+      confirmButtonText: "YES",
+      cancelButtonText: "No",
     });
-    return;
-  }
 
-  setIsLoading(true);
-
-  try {
-    const resp = await apiClient.delete(`/RoleMapping/${DocEntry}`);
-    const { success, message } = resp?.data || {};
-
-    if (!success) {
+    if (!result.isConfirmed) {
       Swal.fire({
-        text: message || "Delete failed",
+        text: "Role Mapping Not Deleted",
         icon: "info",
         toast: true,
         showConfirmButton: false,
@@ -386,38 +362,55 @@ export default function RoleMaster() {
       return;
     }
 
-    // ✅ Common success handling
-    clearFormData();
-    setOpenListPage(0);
-    setOpenListData([]);
-    fetchOpenListData(0);
+    setIsLoading(true);
 
-    Swal.fire({
-      text: "Role Mapping Deleted",
-      icon: "success",
-      toast: true,
-      showConfirmButton: false,
-      timer: 1000,
-    });
-  } catch (error) {
-    const errorMessage =
-      error?.response?.data?.message ||
-      error?.message ||
-      "Failed to delete role mapping.";
+    try {
+      const resp = await apiClient.delete(`/RoleMapping/${DocEntry}`);
+      const { success, message } = resp?.data || {};
 
-    console.error("Error deleting role mapping:", error);
+      if (!success) {
+        Swal.fire({
+          text: message || "Delete failed",
+          icon: "info",
+          toast: true,
+          showConfirmButton: false,
+          timer: 1500,
+        });
+        return;
+      }
 
-    Swal.fire({
-      text: errorMessage,
-      icon: "error",
-      toast: true,
-      showConfirmButton: false,
-      timer: 1500,
-    });
-  } finally {
-    setIsLoading(false);
-  }
-};
+      // ✅ Common success handling
+      clearFormData();
+      setOpenListPage(0);
+      setOpenListData([]);
+      fetchOpenListData(0);
+
+      Swal.fire({
+        text: "Role Mapping Deleted",
+        icon: "success",
+        toast: true,
+        showConfirmButton: false,
+        timer: 1000,
+      });
+    } catch (error) {
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to delete role mapping.";
+
+      console.error("Error deleting role mapping:", error);
+
+      Swal.fire({
+        text: errorMessage,
+        icon: "error",
+        toast: true,
+        showConfirmButton: false,
+        timer: 1500,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const clearFormData = () => {
     reset(initial);
@@ -431,7 +424,7 @@ export default function RoleMaster() {
       MenuList.map((item) => ({
         ...item,
         isDisabled: false,
-      }))
+      })),
     );
   };
   const ItemColumn = [
@@ -457,7 +450,7 @@ export default function RoleMaster() {
               setSelectedRows((prev) => [
                 ...prev,
                 ...filteredRows.filter(
-                  (row) => !prev.some((p) => p.LineNum === row.LineNum)
+                  (row) => !prev.some((p) => p.LineNum === row.LineNum),
                 ),
               ]);
             } else {
@@ -465,10 +458,10 @@ export default function RoleMaster() {
               const filteredIds = filteredRows.map((row) => row.LineNum);
               setSelectedRowIds(
                 (prev) =>
-                  new Set([...prev].filter((id) => !filteredIds.includes(id)))
+                  new Set([...prev].filter((id) => !filteredIds.includes(id))),
               );
               setSelectedRows((prev) =>
-                prev.filter((row) => !filteredIds.includes(row.LineNum))
+                prev.filter((row) => !filteredIds.includes(row.LineNum)),
               );
             }
           }}
@@ -497,19 +490,18 @@ export default function RoleMaster() {
     setSelectedRowIds(alreadySelectedIds);
 
     const matchedRows = MenuList.filter((item) =>
-      alreadySelectedIds.has(item.LineNum)
+      alreadySelectedIds.has(item.LineNum),
     );
     setSelectedRows(matchedRows);
-  
   };
 
   const closeModel = () => {
     setOpen(false);
   };
 
-  const handleRoleChange = (e) => {
-    setSelectedRole(e.target.value); // Set selected tax category based on user input
-  };
+  // const handleRoleChange = (e) => {
+  //   setSelectedRole(e.target.value); // Set selected tax category based on user input
+  // };
   const { getValues, setValue, reset, handleSubmit, control, watch } = useForm({
     defaultValues: initial,
   });
@@ -517,7 +509,6 @@ export default function RoleMaster() {
   const handleSubmitForm = async (data) => {
     // Get the current form data
     const formRows = getValues("oLines") || [];
- 
 
     if (formRows.length === 0) {
       Swal.fire({
@@ -600,7 +591,7 @@ export default function RoleMaster() {
         if (result.isConfirmed) {
           const response = await apiClient.put(
             `/RoleMapping/${data.DocEntry}`,
-            obj
+            obj,
           );
           const { success, message } = response.data;
           if (success) {
@@ -641,114 +632,112 @@ export default function RoleMaster() {
   };
 
   const setRoleListData = async (DocEntry) => {
-  if (!DocEntry) return;
+    if (!DocEntry) return;
 
-
-  try {
+    try {
       setIsLoading(true);
 
-    const response = await apiClient.get(`/RoleMapping/${DocEntry}`);
-    const { success, values: data, message } = response?.data || {};
+      const response = await apiClient.get(`/RoleMapping/${DocEntry}`);
+      const { success, values: data, message } = response?.data || {};
 
-    if (!success || !data) {
+      if (!success || !data) {
+        Swal.fire({
+          title: "Error!",
+          text: message || "Failed to fetch role mapping data.",
+          icon: "error",
+        });
+        return;
+      }
+
+      toggleDrawer();
+
+      const lines = data?.oLines || [];
+
+      // ✅ Transform rows safely
+      const transformedRows = lines.map((row, index) => ({
+        ...row,
+        tempKey: row.tempKey || row.LineNum || row.MenuId || `row_${index}`,
+        serialNumber: index + 1,
+      }));
+
+      // ✅ Permission Sets
+      setSelectedAddIds(
+        new Set(
+          transformedRows
+            .filter((r) => r.IsAdd === "True")
+            .map((r) => r.tempKey),
+        ),
+      );
+
+      setSelectedEditIds(
+        new Set(
+          transformedRows
+            .filter((r) => r.IsEdit === "True")
+            .map((r) => r.tempKey),
+        ),
+      );
+
+      setSelectedReadIds(
+        new Set(
+          transformedRows
+            .filter((r) => r.IsRead === "True")
+            .map((r) => r.tempKey),
+        ),
+      );
+
+      setSelectedDeleteIds(
+        new Set(
+          transformedRows
+            .filter((r) => r.IsDelete === "True")
+            .map((r) => r.tempKey),
+        ),
+      );
+
+      // ✅ Reset form
+      reset({
+        ...data,
+        RoleId: String(data.RoleId || ""),
+        oLines: transformedRows,
+      });
+
+      // ✅ Ensure RoleId is set after options render
+      setTimeout(() => {
+        setValue("RoleId", String(data.RoleId || ""));
+      }, 0);
+
+      // ✅ State updates
+      setSelectedRole(data.RoleName || "");
+      setSelectedRows(transformedRows);
+      setSaveUpdateName("UPDATE");
+      setDocEntry(DocEntry);
+      setSelectedData(DocEntry);
+
+      // ✅ Disable menus already mapped
+      const menuIds = lines.map((line) => line.MenuId);
+
+      setMenuList((prev) =>
+        prev.map((item) => ({
+          ...item,
+          isDisabled: menuIds.includes(item.LineNum),
+        })),
+      );
+    } catch (error) {
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to fetch role mapping data.";
+
+      console.error("Error fetching role mapping:", error);
+
       Swal.fire({
         title: "Error!",
-        text: message || "Failed to fetch role mapping data.",
+        text: errorMessage,
         icon: "error",
       });
-      return;
+    } finally {
+      setIsLoading(false);
     }
-
-    toggleDrawer();
-
-    const lines = data?.oLines || [];
-
-    // ✅ Transform rows safely
-    const transformedRows = lines.map((row, index) => ({
-      ...row,
-      tempKey: row.tempKey || row.LineNum || row.MenuId || `row_${index}`,
-      serialNumber: index + 1,
-    }));
-
-    // ✅ Permission Sets
-    setSelectedAddIds(
-      new Set(
-        transformedRows
-          .filter((r) => r.IsAdd === "True")
-          .map((r) => r.tempKey)
-      )
-    );
-
-    setSelectedEditIds(
-      new Set(
-        transformedRows
-          .filter((r) => r.IsEdit === "True")
-          .map((r) => r.tempKey)
-      )
-    );
-
-    setSelectedReadIds(
-      new Set(
-        transformedRows
-          .filter((r) => r.IsRead === "True")
-          .map((r) => r.tempKey)
-      )
-    );
-
-    setSelectedDeleteIds(
-      new Set(
-        transformedRows
-          .filter((r) => r.IsDelete === "True")
-          .map((r) => r.tempKey)
-      )
-    );
-
-    // ✅ Reset form
-    reset({
-      ...data,
-      RoleId: String(data.RoleId || ""),
-      oLines: transformedRows,
-    });
-
-    // ✅ Ensure RoleId is set after options render
-    setTimeout(() => {
-      setValue("RoleId", String(data.RoleId || ""));
-    }, 0);
-
-    // ✅ State updates
-    setSelectedRole(data.RoleName || "");
-    setSelectedRows(transformedRows);
-    setSaveUpdateName("UPDATE");
-    setDocEntry(DocEntry);
-    setSelectedData(DocEntry);
-
-    // ✅ Disable menus already mapped
-    const menuIds = lines.map((line) => line.MenuId);
-
-    setMenuList((prev) =>
-      prev.map((item) => ({
-        ...item,
-        isDisabled: menuIds.includes(item.LineNum),
-      }))
-    );
-  } catch (error) {
-    const errorMessage =
-      error?.response?.data?.message ||
-      error?.message ||
-      "Failed to fetch role mapping data.";
-
-    console.error("Error fetching role mapping:", error);
-
-    Swal.fire({
-      title: "Error!",
-      text: errorMessage,
-      icon: "error",
-    });
-  } finally {
-    setIsLoading(false);
-  }
-};
-
+  };
 
   const handleCheckboxChange = (rowId, field, checked) => {
     let setter;
@@ -854,6 +843,26 @@ export default function RoleMaster() {
     return (
       rows.some((row) => selected.has(row.tempKey)) &&
       !rows.every((row) => selected.has(row.tempKey))
+    );
+  };
+  const CustomToolbar = () => {
+    return (
+      <GridToolbarQuickFilter
+        quickFilterParser={(searchInput) =>
+          searchInput
+            .split(",")
+            .map((value) => value.trim())
+            .filter(Boolean)
+        }
+        sx={{
+          width: 300, // 👈 set width here
+          "& .MuiInputBase-root": {
+            width: "100%",
+          },
+        }}
+        debounceMs={300}
+        placeholder="Search…"
+      />
     );
   };
 
@@ -1015,7 +1024,7 @@ export default function RoleMaster() {
             handleCheckboxChange(
               params.row.tempKey,
               "IsDelete",
-              e.target.checked
+              e.target.checked,
             )
           }
         />
@@ -1023,11 +1032,11 @@ export default function RoleMaster() {
     },
   ];
 
-  const getDisabledRows = () => {
-    const oLines = getValues("oLines");
-    const disabledLineNums = oLines.map((row) => row.TileName || row.MenuName);
-    return disabledLineNums;
-  };
+  // const getDisabledRows = () => {
+  //   const oLines = getValues("oLines");
+  //   const disabledLineNums = oLines.map((row) => row.TileName || row.MenuName);
+  //   return disabledLineNums;
+  // };
 
   const handleRowSelectionChange = (id) => {
     setSelectedRowIds((prev) => {
@@ -1047,7 +1056,7 @@ export default function RoleMaster() {
 
   useEffect(() => {
     const updatedSelectedRows = MenuList.filter((row) =>
-      selectedRowIds.has(row.LineNum)
+      selectedRowIds.has(row.LineNum),
     );
     setSelectedRows(updatedSelectedRows);
   }, [selectedRowIds, MenuList]);
@@ -1071,18 +1080,18 @@ export default function RoleMaster() {
 
     // Remove unselected rows
     const keptRows = existingLines.filter((line) =>
-      selectedIds.has(line.MenuId)
+      selectedIds.has(line.MenuId),
     );
 
     // Add new rows (not existing)
     const newRows = selectedRows
       .filter(
-        (row) => !existingLines.some((line) => line.MenuId === row.LineNum)
+        (row) => !existingLines.some((line) => line.MenuId === row.LineNum),
       )
       .map((row, idx) => ({
         ...row,
         MenuId: row.LineNum,
-        ParentMenuId:row.DocEntry,
+        ParentMenuId: row.DocEntry,
         serialNumber: keptRows.length + idx + 1,
         tempKey: `${Date.now()}_${Math.random()}`,
       }));
@@ -1095,41 +1104,40 @@ export default function RoleMaster() {
     closeModel();
   };
 
+  const GetMenuList = async () => {
+    setIsLoading(true);
 
-const GetMenuList = async () => {
-  setIsLoading(true);
+    try {
+      const res = await apiClient.get(`/Menu/SubMenu/all`);
+      const { success, values = [], message } = res?.data || {};
 
-  try {
-    const res = await apiClient.get(`/Menu/SubMenu/all`);
-    const { success, values = [], message } = res?.data || {};
+      if (!success) {
+        Swal.fire({
+          title: "Error!",
+          text: message || "Failed to fetch menu list.",
+          icon: "error",
+        });
+        return;
+      }
 
-    if (!success) {
+      setMenuList(values);
+    } catch (error) {
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to fetch menu list.";
+
+      console.error("Error fetching menu list:", error);
+
       Swal.fire({
         title: "Error!",
-        text: message || "Failed to fetch menu list.",
+        text: errorMessage,
         icon: "error",
       });
-      return;
+    } finally {
+      setIsLoading(false);
     }
-
-    setMenuList(values);
-  } catch (error) {
-    const errorMessage =
-      error?.response?.data?.message ||
-      error?.message ||
-      "Failed to fetch menu list.";
-
-    console.error("Error fetching menu list:", error);
-
-    Swal.fire({
-      title: "Error!",
-      text: errorMessage,
-      icon: "error",
-    });
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   const initialRoleCreationData = {
     DocEntry: "",
@@ -1156,7 +1164,6 @@ const GetMenuList = async () => {
   const handleClose = () => setopenRoleCreation(false);
 
   const handleAddOrUpdate = async (data) => {
-
     const obj = {
       DocEntry: data.DocEntry || "",
       UserId: user.UserId,
@@ -1204,7 +1211,7 @@ const GetMenuList = async () => {
       // -----------------------------
       const response = await apiClient.put(
         `/Role/${selectedRoleCreationRowId}`,
-        obj
+        obj,
       );
 
       if (response.data?.success) {
@@ -1223,7 +1230,7 @@ const GetMenuList = async () => {
         Swal.fire(
           "Error!",
           response.data?.message || "Update failed!",
-          "error"
+          "error",
         );
       }
     } catch (error) {
@@ -1239,115 +1246,114 @@ const GetMenuList = async () => {
       setIsLoading(false);
     }
   };
-const handleRoleCreationDelete = async (data) => {
-  const result = await Swal.fire({
-    text: `Do You Want to Delete "${data.RoleName}" ?`,
-    icon: "question",
-    showCancelButton: true,
-    confirmButtonText: "YES",
-    cancelButtonText: "NO",
-  });
-
-  if (!result.isConfirmed) {
-    Swal.fire({
-      text: "Role Not Deleted",
-      icon: "info",
-      toast: true,
-      timer: 1500,
-      showConfirmButton: false,
+  const handleRoleCreationDelete = async (data) => {
+    const result = await Swal.fire({
+      text: `Do You Want to Delete "${data.RoleName}" ?`,
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "YES",
+      cancelButtonText: "NO",
     });
-    return;
-  }
 
-  setIsLoading(true);
-
-  try {
-    const response = await apiClient.delete(`/Role/${data.DocEntry}`);
-    const { success, message } = response?.data || {};
-
-    if (!success) {
+    if (!result.isConfirmed) {
       Swal.fire({
-        title: "Error!",
-        text: message || "Failed to delete role.",
-        icon: "warning",
+        text: "Role Not Deleted",
+        icon: "info",
+        toast: true,
+        timer: 1500,
+        showConfirmButton: false,
       });
       return;
     }
 
-    // ✅ Refresh dependent data
-    fetchRoleList(0);
-    getRoleName();
+    setIsLoading(true);
 
-    Swal.fire({
-      title: "Success!",
-      text: "Role Deleted",
-      icon: "success",
-      timer: 1500,
-      showConfirmButton: false,
-    });
-  } catch (error) {
-    const errorMessage =
-      error?.response?.data?.message ||
-      error?.message ||
-      "Failed to delete role.";
+    try {
+      const response = await apiClient.delete(`/Role/${data.DocEntry}`);
+      const { success, message } = response?.data || {};
 
-    console.error("Error deleting role:", error);
+      if (!success) {
+        Swal.fire({
+          title: "Error!",
+          text: message || "Failed to delete role.",
+          icon: "warning",
+        });
+        return;
+      }
 
-    Swal.fire({
-      title: "Error!",
-      text: errorMessage,
-      icon: "error",
-    });
-  } finally {
-    setIsLoading(false);
-  }
-};
+      // ✅ Refresh dependent data
+      fetchRoleList(0);
+      getRoleName();
 
+      Swal.fire({
+        title: "Success!",
+        text: "Role Deleted",
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false,
+      });
+    } catch (error) {
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to delete role.";
 
-const handleEdit = async (row) => {
-  if (!row?.DocEntry) return;
+      console.error("Error deleting role:", error);
 
-  setIsLoading(true);
-
-  try {
-    const res = await apiClient.get(`/Role/${row.DocEntry}`);
-    const { success, values, message } = res?.data || {};
-
-    if (!success || !values) {
       Swal.fire({
         title: "Error!",
-        text: message || "Failed to fetch role details.",
-        icon: "warning",
+        text: errorMessage,
+        icon: "error",
       });
-      return;
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    const { DocEntry, RoleName, Remarks } = values;
+  const handleEdit = async (row) => {
+    if (!row?.DocEntry) return;
 
-    // ✅ Set form fields
-    setValueRoleCreation("RoleName", RoleName || "");
-    setValueRoleCreation("DocEntry", DocEntry || "");
-    setValueRoleCreation("Remarks", Remarks || "");
+    setIsLoading(true);
 
-    // ✅ Store DocEntry for update
-    setSelectedRoleCreationRowId(DocEntry);
-  } catch (error) {
-    const errorMessage =
-      error?.response?.data?.message ||
-      error?.message ||
-      "Failed to fetch role details.";
+    try {
+      const res = await apiClient.get(`/Role/${row.DocEntry}`);
+      const { success, values, message } = res?.data || {};
 
-    console.error("Error fetching role:", error);
+      if (!success || !values) {
+        Swal.fire({
+          title: "Error!",
+          text: message || "Failed to fetch role details.",
+          icon: "warning",
+        });
+        return;
+      }
 
-    Swal.fire({
-      title: "Error!",
-      text: errorMessage,
-      icon: "error",
-    });
-  } finally {
-    setIsLoading(false);
-  }
-};
+      const { DocEntry, RoleName, Remarks } = values;
+
+      // ✅ Set form fields
+      setValueRoleCreation("RoleName", RoleName || "");
+      setValueRoleCreation("DocEntry", DocEntry || "");
+      setValueRoleCreation("Remarks", Remarks || "");
+
+      // ✅ Store DocEntry for update
+      setSelectedRoleCreationRowId(DocEntry);
+    } catch (error) {
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Failed to fetch role details.";
+
+      console.error("Error fetching role:", error);
+
+      Swal.fire({
+        title: "Error!",
+        text: errorMessage,
+        icon: "error",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const RoleCreationcolumns = [
     {
@@ -1519,8 +1525,8 @@ const handleEdit = async (row) => {
 
   return (
     <>
-          {isLoading && <Loader open={isLoading} />}
-    
+      {isLoading && <Loader open={isLoading} />}
+
       <Dialog
         open={openRoleCreation}
         onClose={handleClose}
@@ -2061,6 +2067,9 @@ const handleEdit = async (row) => {
                           // serialNumber: index + 1,
                           MenuName: data.TileName || data.MenuName,
                         }))}
+                        slots={{
+                          toolbar: CustomToolbar,
+                        }}
                         columns={columns}
                         // hideFooter
                         sx={{

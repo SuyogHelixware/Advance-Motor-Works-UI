@@ -99,7 +99,7 @@ const rows = [
 ];
 
 export default function ProcurementETA() {
-   const perms = usePermissions(140);
+  const perms = usePermissions(140);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const handleCloseDialog = () => {
     setIsDialogOpen(false);
@@ -177,7 +177,14 @@ export default function ProcurementETA() {
               >
                 <Grid container>
                   <Grid container item>
-                    <Grid item xs={12} sm={6} md={3} lg={4} textAlign={"center"}>
+                    <Grid
+                      item
+                      xs={12}
+                      sm={6}
+                      md={3}
+                      lg={4}
+                      textAlign={"center"}
+                    >
                       <InputTextSearchButton
                         label="SEARCH"
                         onClick={handleInputChange}
@@ -191,12 +198,24 @@ export default function ProcurementETA() {
                         title="SELECT VENDOR"
                       />
                     </Grid>
-                    <Grid item xs={12} sm={6} md={3} lg={4} textAlign={"center"}>
-                      <InputFields
-                        label="DOC ENTRY"                      
-                      />
+                    <Grid
+                      item
+                      xs={12}
+                      sm={6}
+                      md={3}
+                      lg={4}
+                      textAlign={"center"}
+                    >
+                      <InputFields label="DOC ENTRY" />
                     </Grid>
-                    <Grid item xs={12} sm={6} md={3} lg={4} textAlign={"center"}>
+                    <Grid
+                      item
+                      xs={12}
+                      sm={6}
+                      md={3}
+                      lg={4}
+                      textAlign={"center"}
+                    >
                       <InputFields label="PO DOC ENTRY" name="customer_id" />
                     </Grid>
                   </Grid>

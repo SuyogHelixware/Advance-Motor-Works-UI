@@ -373,18 +373,17 @@ export default function Country() {
     } catch (error) {
       console.error("Error deleting tax:", error);
 
-        Swal.fire({
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.response?.data?.error ||
-        error?.message ||
-        "Failed to delete Country",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-    }
-    finally{
+      Swal.fire({
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          error?.response?.data?.error ||
+          error?.message ||
+          "Failed to delete Country",
+        icon: "error",
+        confirmButtonText: "Ok",
+      });
+    } finally {
       setLoading(false);
     }
   };

@@ -138,13 +138,14 @@ export default function DocumentSeries() {
     const rowsToCheck =
       isEditMode === "UPDATE"
         ? existingRows.filter(
-            (row) => (row.id || row.LineNum) !== selectedRowId
+            (row) => (row.id || row.LineNum) !== selectedRowId,
           )
         : existingRows;
 
     const duplicateSeriesName = rowsToCheck.find(
       (row) =>
-        row.SeriesName?.trim().toLowerCase() === SeriesName.trim().toLowerCase()
+        row.SeriesName?.trim().toLowerCase() ===
+        SeriesName.trim().toLowerCase(),
     );
 
     if (duplicateSeriesName) {
@@ -183,12 +184,12 @@ export default function DocumentSeries() {
               Indicator: formData.Indicator,
               Status: formData.Status || "1",
             }
-          : row
+          : row,
       );
 
       // 🔹 Prepare payload for API (only this row)
       const rowToUpdate = updatedRows.find(
-        (row) => (row.id || row.LineNum) === selectedRowId
+        (row) => (row.id || row.LineNum) === selectedRowId,
       );
 
       const payload = {
@@ -229,7 +230,7 @@ export default function DocumentSeries() {
           setLoading(true);
           const response = await apiClient.put(
             `/DocSeriesV2/Line${rowToUpdate.LineNum}`,
-            payload
+            payload,
           );
 
           const { success, message } = response.data;
@@ -374,7 +375,7 @@ export default function DocumentSeries() {
         } else if (key === "DfltSeries") {
           setValue(
             "DfltSeries",
-            row.SeriesName === docSeriesData?.DfltSeries ? "1" : "0"
+            row.SeriesName === docSeriesData?.DfltSeries ? "1" : "0",
           );
         } else {
           setValue(key, row[key] ?? "");
@@ -617,7 +618,7 @@ export default function DocumentSeries() {
         setHasMoreOpen(newData.length === 20);
 
         setOpenListData((prev) =>
-          pageNum === 0 ? newData : [...prev, ...newData]
+          pageNum === 0 ? newData : [...prev, ...newData],
         );
       }
     } catch (error) {
@@ -630,7 +631,7 @@ export default function DocumentSeries() {
       fetchOpenListData(0);
       fetchData();
     }, // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [],
   );
   // ===============API for Setting specific  Cards data====================================
 
@@ -682,7 +683,7 @@ export default function DocumentSeries() {
       setValue("ObjectName", data.ObjectName);
       // find matching row based on DfltSeries
       let rowToEdit = data?.oLines?.find(
-        (row) => row.SeriesName?.toString() === data?.DfltSeries?.toString()
+        (row) => row.SeriesName?.toString() === data?.DfltSeries?.toString(),
       );
 
       // fallback to first row if no DfltSeries match
@@ -1149,6 +1150,12 @@ export default function DocumentSeries() {
                       control={control}
                       rules={{
                         required: "First No is required",
+                        min: {
+                          value: 0,
+                          message: "Only positive numbers allowed",
+                        },
+                        validate: (value) =>
+                          value >= 0 || "Negative values are not allowed",
                       }}
                       render={({ field, fieldState: { error } }) => (
                         <InputTextField
@@ -1156,6 +1163,12 @@ export default function DocumentSeries() {
                           type="number"
                           {...field}
                           disabled={isExistingRow}
+                          inputProps={{ min: 0 }}
+                          onKeyDown={(e) => {
+                            if (e.key === "-" || e.key === "e") {
+                              e.preventDefault();
+                            }
+                          }}
                           error={!!error}
                           helperText={error ? error.message : null}
                         />
@@ -1184,14 +1197,25 @@ export default function DocumentSeries() {
                     <Controller
                       name="LastNum"
                       control={control}
-                      // rules={{
-                      //   required: "Last No Name is required",
-                      // }}
+                      rules={{
+                        min: {
+                          value: 0,
+                          message: "Only positive numbers allowed",
+                        },
+                        validate: (value) =>
+                          value >= 0 || "Negative values are not allowed",
+                      }}
                       render={({ field, fieldState: { error } }) => (
                         <InputTextField
                           label="Last No"
                           type="number"
                           {...field}
+                          inputProps={{ min: 0 }}
+                          onKeyDown={(e) => {
+                            if (e.key === "-" || e.key === "e") {
+                              e.preventDefault();
+                            }
+                          }}
                           error={!!error}
                           helperText={error ? error.message : null}
                         />

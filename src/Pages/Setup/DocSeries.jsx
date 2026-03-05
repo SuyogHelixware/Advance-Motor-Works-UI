@@ -51,7 +51,7 @@ export default function DocSeries() {
   const [openListquery, setOpenListQuery] = useState("");
   const [openListSearching, setOpenListSearching] = useState(false);
   const [ValitedDate, setValitedDate] = useState(
-    dayjs(undefined).format("YYYY-MM-DD ")
+    dayjs(undefined).format("YYYY-MM-DD "),
   );
 
   const [loading, setLoading] = useState(false);
@@ -203,7 +203,7 @@ export default function DocSeries() {
         setHasMoreOpen(newData.length === 20);
 
         setOpenListData((prev) =>
-          pageNum === 0 ? newData : [...prev, ...newData]
+          pageNum === 0 ? newData : [...prev, ...newData],
         );
       }
     } catch (error) {
@@ -217,7 +217,7 @@ export default function DocSeries() {
       fetchIndicateData();
       fetchGetListData(0); // Load first page on mount
     }, // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [],
   );
 
   const handleInputChange = () => {
@@ -266,7 +266,7 @@ export default function DocSeries() {
         setHasMoreGetList(newData.length === 20);
 
         setGetListData((prev) =>
-          pageNum === 0 ? newData : [...prev, ...newData]
+          pageNum === 0 ? newData : [...prev, ...newData],
         );
       }
     } catch (error) {
@@ -455,10 +455,7 @@ export default function DocSeries() {
 
         if (result.isConfirmed) {
           setLoading(true);
-          const response = await apiClient.put(
-            `/DocSeries/${DocEntry}`,
-            obj
-          );
+          const response = await apiClient.put(`/DocSeries/${DocEntry}`, obj);
           const { success, message } = response.data;
           setLoading(false);
           if (success) {
@@ -520,9 +517,7 @@ export default function DocSeries() {
 
       if (result.isConfirmed) {
         setLoading(true);
-        const response = await apiClient.delete(
-          `/DocSeries/${DocEntry}`
-        );
+        const response = await apiClient.delete(`/DocSeries/${DocEntry}`);
         const { success, message } = response.data;
         setLoading(false);
         if (success) {

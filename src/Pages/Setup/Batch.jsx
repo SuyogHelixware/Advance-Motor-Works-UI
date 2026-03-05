@@ -234,7 +234,7 @@ export default function Batch() {
           Fuel: "",
           LineRemarks: "",
         },
-      ])
+      ]),
     );
   };
   const reindexRows = (rows) =>
@@ -549,7 +549,7 @@ export default function Batch() {
                     borderRadius: 2,
                     border: `1px solid ${alpha(
                       theme.palette.primary.main,
-                      0.1
+                      0.1,
                     )}`,
                   }}
                 >
@@ -634,7 +634,7 @@ export default function Batch() {
                     borderRadius: 2,
                     border: `1px solid ${alpha(
                       theme.palette.primary.main,
-                      0.1
+                      0.1,
                     )}`,
                   }}
                 >
@@ -828,7 +828,7 @@ export default function Batch() {
                           "& .MuiDataGrid-columnHeaders": {
                             backgroundColor: alpha(
                               theme.palette.primary.main,
-                              0.1
+                              0.1,
                             ),
                           },
                         }}
@@ -866,7 +866,7 @@ export default function Batch() {
                           "& .MuiDataGrid-columnHeaders": {
                             backgroundColor: alpha(
                               theme.palette.secondary.main,
-                              0.1
+                              0.1,
                             ),
                           },
                         }}
@@ -883,7 +883,7 @@ export default function Batch() {
                     backgroundColor: alpha(theme.palette.success.main, 0.05),
                     border: `1px solid ${alpha(
                       theme.palette.success.main,
-                      0.2
+                      0.2,
                     )}`,
                     borderRadius: 2,
                   }}
@@ -1132,7 +1132,7 @@ export default function Batch() {
                         "& .MuiDataGrid-columnHeaders": {
                           backgroundColor: alpha(
                             theme.palette.primary.main,
-                            0.1
+                            0.1,
                           ),
                           fontWeight: "bold",
                         },

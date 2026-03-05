@@ -67,7 +67,10 @@ import { useItemServiceList } from "../../Hooks/useItemServiceList";
 import DynamicLoader from "../../Loaders/DynamicLoader";
 import useAuth from "../../Routing/AuthContext";
 import apiClient from "../../services/apiClient";
-import { fetchExchangeRateStore } from "../../slices/exchangeRateSlice";
+import {
+  clearAllCache,
+  fetchExchangeRateStore,
+} from "../../slices/exchangeRateSlice";
 import { dataGridSx } from "../../Styles/dataGridStyles";
 import {
   calculateExpenseTotals,
@@ -89,7 +92,10 @@ import {
 import LogisticAddress from "../Components/LogisticAddress";
 import PrintMenu from "../Components/PrintMenu";
 import SearchInputField from "../Components/SearchInputField";
-import SearchModel, { CopyFromSearchModel, SearchBPModel } from "../Components/SearchModel";
+import SearchModel, {
+  CopyFromSearchModel,
+  SearchBPModel,
+} from "../Components/SearchModel";
 import { getStatus } from "../Components/status";
 import TableGridFrieght from "../Components/TableGridFrieght";
 import TaxCategoryModel from "../Components/TaxCategoryModel";
@@ -479,15 +485,17 @@ function PurchaseQuotation() {
     CardName: "",
     DocTotalSy: "",
     ListNum: "",
-    DiscSumFC: "",
-    DiscSumSy: "",
+
     SysRate: "",
     TotalExpns: "0.000",
     TaxOnExpFc: "0.000",
     TotalBefDisc: "0.000",
     TotalBefDiscSy: "0.000",
     TotalBefDiscFrgn: "0.000",
-    DiscountAmt: "0.000",
+
+    DiscountAmt: "0.00",
+    DiscSumSy: "0.000",
+    DiscSumFC: "0.000",
     DocNum: "",
     AttcEntry: "0",
     Currency: "",
@@ -617,18 +625,18 @@ function PurchaseQuotation() {
         const mainCurr = companyData.MainCurncy;
         const headerCurr = currency;
         let missingRates = [];
-          if (!values.length) {
-                        Swal.fire({
-                          title: "Exchange Rates Missing",
-                          text: "Please define exchange rates before continuing.",
-                          icon: "warning",
-                        }).then(() => {
-                          navigate("/dashboard/Finance/ExchangeRatesAndIndexes", {
-                            replace: true,
-                          });
-                        });
-                        return;
-                      }
+        if (!values.length) {
+          Swal.fire({
+            title: "Exchange Rates Missing",
+            text: "Please define exchange rates before continuing.",
+            icon: "warning",
+          }).then(() => {
+            navigate("/dashboard/Finance/ExchangeRatesAndIndexes", {
+              replace: true,
+            });
+          });
+          return;
+        }
         // ============================
         // SYSTEM RATE CHECK
         // ============================
@@ -893,16 +901,16 @@ function PurchaseQuotation() {
         }
       })
       .catch(() => {
-           Swal.fire({
-             title: "Error",
+        Swal.fire({
+          title: "Error",
           text: "Please define the exchange rates.",
-             icon: "error",
-           }).then(() => {
-             navigate("/dashboard/Finance/ExchangeRatesAndIndexes", {
-               replace: true,
-             });
-           });
-         });
+          icon: "error",
+        }).then(() => {
+          navigate("/dashboard/Finance/ExchangeRatesAndIndexes", {
+            replace: true,
+          });
+        });
+      });
   }, [docDate]);
   console.log("Redux Data Store exchange", data);
   const companyAddresss = useCallback(() => {
@@ -942,9 +950,11 @@ function PurchaseQuotation() {
       selectedAddress.State,
       selectedAddress.Zipcode,
       selectedAddress.Country,
-    ].filter(v => v?.trim()).join(", ");
-      // .filter(Boolean)
-      // .join(", ");
+    ]
+      .filter((v) => v?.trim())
+      .join(", ");
+    // .filter(Boolean)
+    // .join(", ");
     setValue("DfltAddress", DfltAddress || "");
     setValue("BlockB", selectedAddress.BlockB);
     setValue("StreetB", selectedAddress.Address2);
@@ -972,9 +982,11 @@ function PurchaseQuotation() {
       data.StateB,
       data.ZipCodeB,
       data.CountryB,
-    ].filter(v => v?.trim()).join(", ");
-      // .filter(Boolean) // Remove empty fields
-      // .join(", ");
+    ]
+      .filter((v) => v?.trim())
+      .join(", ");
+    // .filter(Boolean) // Remove empty fields
+    // .join(", ");
     setValue("DfltAddress", DfltAddress || "");
     setValue("BlockB", data.BlockB);
     setValue("StreetB", data.StreetB);
@@ -1003,7 +1015,9 @@ function PurchaseQuotation() {
       data.StateB,
       data.ZipCodeB,
       data.CountryB,
-    ].filter(v => v?.trim()).join(", ");
+    ]
+      .filter((v) => v?.trim())
+      .join(", ");
     let updatedData = allFormData.oTaxExtLines.map((add) => ({
       ...add,
       BlockS: data?.BlockB ?? "", // ✅ Correct syntax
@@ -1059,6 +1073,13 @@ function PurchaseQuotation() {
     setRollBackoExpLines([]);
     setGetListPageCopyFrom([]);
     setHasMorePOList(true);
+    if (openListquery?.trim()) {
+      handleOpenListClear();
+    } else if (closedListquery?.trim()) {
+      handleClosedListClear();
+    } else if (cancelledListquery?.trim()) {
+      handleCancelListClear();
+    }
     setValue("Series", DocSeries[0]?.SeriesId ?? "");
     setValue("DocNum", DocSeries[0]?.DocNum ?? "");
     setValue("FinncPriod", DocSeries[0]?.FinncPriod ?? "");
@@ -1356,15 +1377,18 @@ function PurchaseQuotation() {
     setGetListPage((prev) => prev + 1);
   };
   useEffect(() => {
-        if(searchmodelOpen===true){
-    fetchGetListData(0); 
-     }
+    if (searchmodelOpen === true) {
+      fetchGetListData(0);
+      setGetListQuery("");
+    }
   }, [searchmodelOpen]);
 
   const onSelectBusinessPartner = async (DocEntry) => {
     const { data: dataBP } = await apiClient.get(`/BPV2/V2/${DocEntry}`);
     const { values } = dataBP;
     setBusinessPartnerData(values);
+    dispatchRedux(clearAllCache());
+    dispatchRedux(fetchExchangeRateStore(docDate));
     SearchModelClose();
     let selectedAddress =
       (values?.oLines || []).find(
@@ -1378,7 +1402,9 @@ function PurchaseQuotation() {
       selectedAddress.State,
       selectedAddress.Zipcode,
       selectedAddress.Country,
-    ].filter(v => v?.trim()).join(", ");
+    ]
+      .filter((v) => v?.trim())
+      .join(", ");
     setValue("DfltAddress", DfltAddress || "");
     setValue("BlockB", selectedAddress.Address1);
     setValue("StreetB", selectedAddress.Address2);
@@ -1823,7 +1849,9 @@ function PurchaseQuotation() {
       newWareAddress.State ?? "",
       newWareAddress.ZipCode ?? "",
       newWareAddress.Country ?? "",
-    ].filter(v => v?.trim()).join(", ");
+    ]
+      .filter((v) => v?.trim())
+      .join(", ");
 
     const newCompanAddress = allFormData.oTaxExtLines.map((add) => ({
       ...add,
@@ -2023,14 +2051,14 @@ function PurchaseQuotation() {
   const handleDeleteRow = (id) => {
     const updatedLines = getValues("oLines").filter((_, index) => index !== id);
     setok("UPDATE");
-    const updatedData = {
-      ...getValues(),
-      oLines: updatedLines,
-    };
-    // Reset the form with the updated data
-    reset(updatedData);
+    setValue("oLines", updatedLines, {
+      shouldDirty: true,
+      shouldValidate: false,
+    });
 
-    calculateDiscountAmt(parseFloat(getValues("Discount")) || 0);
+    if (discPercent > 0) {
+      calculateDiscountAmt(discPercent);
+    }
   };
 
   const handleClose = () => {
@@ -2375,11 +2403,11 @@ function PurchaseQuotation() {
         );
         if (curSource === "C") {
           if (isMainCurrency) {
-            LineTotal = priceLineRatio * (parseFloat(newPrice) || 0);
+            LineTotal = priceLineRatio * CalcLines.LineTotal;
             TotalSumSy = LineTotal / SysRate;
             TotalFrgn = 0;
           } else {
-            TotalFrgn = priceLineRatio * (parseFloat(newPrice) || 0);
+            TotalFrgn = priceLineRatio * CalcLines.TotalFrgn;
             TotalSumSy = TotalFrgn / SysRate;
             LineTotal = TotalFrgn * DocRate;
           }
@@ -4484,26 +4512,50 @@ function PurchaseQuotation() {
         const oBaseNum = line.UOMFactor;
         const oInvNumPerMsr = ValueFormatter(oBaseNum / newnum, 6);
         const InvQty = ValueFormatter(oInvNumPerMsr * line.Quantity, 6);
-        let newQuantity =
-          line.BaseType > 1 ? originalQuantity / oInvNumPerMsr : line.Quantity;
-        const newLineTotal = newQuantity * line.Price;
-        let oTaxLine = line.oTaxLines;
-        let VatPrcnt = line.VatPrcnt;
-        let VatSum = line.VatSum;
         if (line.BaseType > 1) {
-          const taxLines = taxCalculation(
-            newLineTotal,
-            line.AssblValue,
-            getValues("DocTotal"),
-            line.PriceBefDi,
-            line.Quantity,
-            line.TaxCode,
+          let newQuantity = originalQuantity / oInvNumPerMsr;
+          const isMainCurrency = currency === companyData.MainCurncy;
+          const CalcLines = CalCulation(
+            newQuantity,
+            line.Price,
+            line.Discount,
+            line.Rate,
           );
-          oTaxLine = taxLines.oTaxLines;
-          VatPrcnt = taxLines.VatPrcnt;
-          VatSum = ValueFormatter(
-            taxLines.oTaxLines.reduce((sum, curr) => sum + curr.TaxSum, 0),
-          );
+          if (curSource === "C") {
+            if (isMainCurrency) {
+              line.LineTotal = line.Rate * CalcLines.LineTotal;
+              line.TotalSumSy = line.LineTotal / SysRate;
+              line.TotalFrgn = 0;
+            } else {
+              line.TotalFrgn = line.Rate * CalcLines.TotalFrgn;
+              line.TotalSumSy = line.TotalFrgn / SysRate;
+              line.LineTotal = line.TotalFrgn * DocRate;
+            }
+          } else {
+            line.LineTotal = line.LineTotal || 0;
+            line.TotalSumSy = line.TotalSumSy || 0;
+            line.TotalFrgn = line.TotalFrgn || 0;
+          }
+          if (line.TaxCode > 0) {
+            const taxLines = taxCalculation(
+              line.LineTotal,
+              line.AssblValue,
+              getValues("DocTotal"),
+              line.PriceBefDi,
+              line.Quantity,
+              line.TaxCode,
+            );
+            line.Quantity = newQuantity;
+            line.OpenQuantity = newQuantity;
+            line.oTaxLines = taxLines.oTaxLines;
+            line.VatPrcnt = taxLines.VatPrcnt;
+            line.VatSum = taxLines.VatSum;
+            line.VatSumSy = taxLines.VatSumSy;
+            line.VatSumFrgn = taxLines.VatSumFrgn;
+            line.PriceAfVAT = ValueFormatter(
+              line.Price + line.Price * (line.VatPrcnt / 100),
+            );
+          }
         }
         return {
           ...line,
@@ -4513,14 +4565,9 @@ function PurchaseQuotation() {
           NumPerMsr: oInvNumPerMsr,
           InvQty: InvQty,
           OpenInvQty: InvQty,
-          Quantity: newQuantity,
-          OpenQuantity: originalRow?.OpenQuantity ?? newQuantity,
           // PriceBefDi: newPriceBefDi.toFixed(3),
           // Price: Price.toFixed(3),
-          LineTotal: newLineTotal.toFixed(3),
           // Discount: "",
-          oTaxLines: oTaxLine,
-          VatPrcnt: VatPrcnt,
           VatSum: VatSum,
           // PriceAfVAT: priceWithVAT,
         };
@@ -4529,16 +4576,14 @@ function PurchaseQuotation() {
     });
 
     // Reset form with updated lines
-    reset({
-      ...allFormData,
-      oLines: updatedLines,
-      // AssblValue: getValues("AssblValue"),
-      // NumAtCard: getValues("NumAtCard"),
-      // Comments: getValues("Comments"),
-      // DiscountAmt: getValues("DiscountAmt"),
+    setValue("oLines", updatedLines, {
+      shouldDirty: true,
+      shouldValidate: false,
     });
-    console.log("upmcode inv", updatedLines);
-    calculateDiscountAmt(discPercent);
+
+    if (discPercent > 0) {
+      calculateDiscountAmt(discPercent);
+    }
 
     setUomcodeOpen(false);
   };
@@ -4633,9 +4678,10 @@ function PurchaseQuotation() {
     });
   };
 
-  const findRate = (data, curr) => {
-    return parseFloat(data.find((ex) => ex.Currency === curr)?.Rate) || 0;
-  };
+  const findRate = (data, curr) =>
+    companyData?.MainCurncy === curr
+      ? 1
+      : parseFloat(data?.find((ex) => ex.Currency === curr)?.Rate) || 0;
 
   // 2️⃣ Validate Rate & Show Modal
   const validateRate = (rate, modalName, docEntry = "", message) => {
@@ -4797,59 +4843,10 @@ function PurchaseQuotation() {
         });
       }
       // if (DocRateLine > 0) {
-      const UpdatedLines = updatedLines.map((item) => {
-        let LineTotal = item.LineTotal || 0;
-        let TotalSumSy = item.TotalSumSy || 0;
-        let TotalFrgn = item.TotalFrgn || 0;
-        let Price = type === "S" ? item.Price : item.Price * item.Quantity;
-        switch (curSource) {
-          case "L":
-            LineTotal = Price * DocRateLine;
-            TotalFrgn = LineTotal / DocRate;
-            TotalSumSy = LineTotal / SysRate;
-            break;
-          case "S":
-            LineTotal = Price * DocRateLine;
-            TotalSumSy = ValueFormatter(LineTotal / SysRate, 3);
-            TotalFrgn = LineTotal / DocRate;
-            break;
-          case "C":
-            if (currency === companyData.MainCurncy) {
-              LineTotal = Price * DocRateLine;
-              TotalFrgn = LineTotal / DocRate;
-              TotalSumSy = LineTotal / SysRate;
-            } else {
-              if (type === "S") {
-                TotalFrgn =
-                  currency === item.Currency
-                    ? ValueFormatter(Price)
-                    : ValueFormatter(item.LineTotal / DocRate);
-                LineTotal = ValueFormatter(TotalFrgn * DocRate);
-                TotalSumSy = ValueFormatter(LineTotal / SysRate);
-              } else {
-                const latestDocRate = getValues("DocRate");
-                LineTotal = ValueFormatter(Price * DocRateLine);
-                TotalFrgn =
-                  currency === item.Currency
-                    ? ValueFormatter(Price)
-                    : ValueFormatter(LineTotal / latestDocRate);
-                TotalSumSy =
-                  currency === companyData.SysCurrncy
-                    ? ValueFormatter(LineTotal / latestDocRate)
-                    : ValueFormatter(LineTotal / SysRate);
-              }
-            }
-            break;
-          default:
-        }
-        return {
-          ...item,
-          LineTotal,
-          TotalSumSy,
-          TotalFrgn,
-          Rate: DocRateLine,
-        };
-      });
+      const UpdatedLines = updatedLines.map((item) => ({
+        ...item,
+        Rate: findRate(records, item.Currency),
+      }));
       setValue("oLines", UpdatedLines);
       console.log("oLines", UpdatedLines);
       const WHSCode = UpdatedLines?.[0]?.WHSCode ?? "";
@@ -4862,7 +4859,9 @@ function PurchaseQuotation() {
           warehouse.State,
           warehouse.ZipCode,
           warehouse.Country,
-        ].filter(v => v?.trim()).join(", ");
+        ]
+          .filter((v) => v?.trim())
+          .join(", ");
         setValue("CompnyAddr", CompnyAddr);
         setValue("BlockS", warehouse.Block ?? "");
         setValue("StreetS", warehouse.Street ?? "");
@@ -4882,9 +4881,14 @@ function PurchaseQuotation() {
         setValue("oTaxExtLines", updatedTaxLines);
       }
       const discountValue = parseFloat(currentData.Discount) || 0;
-      if (Array.isArray(UpdatedLines) && UpdatedLines.length > 0) {
+      if (
+        Array.isArray(UpdatedLines) &&
+        UpdatedLines.length > 0 &&
+        Number(discountValue) > 0
+      ) {
         calculateDiscountAmt(discountValue);
       }
+      CalculateRate();
 
       closeModel();
       // }
@@ -5681,7 +5685,7 @@ function PurchaseQuotation() {
         updatedData.LineTotal =
           companyData.MainCurncy === updatedData.Currency
             ? CalcLines.LineTotal
-            : CalcLines.LineTotal * updatedData.Rate;
+            : CalcLines.TotalFrgn * updatedData.Rate;
 
         updatedData.TotalFrgn =
           currency === updatedData.Currency
@@ -5771,8 +5775,14 @@ function PurchaseQuotation() {
       i === oldRow.id ? updatedData : d,
     );
 
-    reset({ ...allFormData, oLines: updatedLines });
-    calculateDiscountAmt(discPercent);
+    setValue("oLines", updatedLines, {
+      shouldDirty: true,
+      shouldValidate: false,
+    });
+    // reset({ ...allFormData, oLines: updatedLines });
+    if (discPercent > 0) {
+      calculateDiscountAmt(discPercent);
+    }
 
     return updatedData;
   };
@@ -5949,36 +5959,36 @@ function PurchaseQuotation() {
   // };
 
   //! Header Level CalCaculation
-  const oLines = getValues("oLines") || []; // Ensure it's an array
-  const { TotalBefDisc, totalBefDiscSy, totalBefDiscFrgn, TotalVatSumSy } =
-    useMemo(() => {
-      let TotalBefDisc = 0;
-      let totalBefDiscSy = 0;
-      let totalBefDiscFrgn = 0;
-      let TotalVatSumSy = 0;
-      oLines.forEach((line) => {
-        TotalBefDisc += parseFloat(line?.LineTotal) || 0;
-        totalBefDiscSy += parseFloat(line?.TotalSumSy) || 0;
-        totalBefDiscFrgn += parseFloat(line?.TotalFrgn) || 0;
-        TotalVatSumSy += parseFloat(line?.VatSumSy) || 0;
-      });
-      return { TotalBefDisc, totalBefDiscSy, totalBefDiscFrgn, TotalVatSumSy };
-    }, [oLines]);
+  const oLines = watch("oLines") || []; // Ensure it's an array
+  const totals = useMemo(() => {
+    return oLines.reduce(
+      (acc, line) => {
+        acc.TotalBefDisc += Number(line?.LineTotal) || 0;
+        acc.totalBefDiscSy += Number(line?.TotalSumSy) || 0;
+        acc.totalBefDiscFrgn += Number(line?.TotalFrgn) || 0;
+        return acc;
+      },
+      {
+        TotalBefDisc: 0,
+        totalBefDiscSy: 0,
+        totalBefDiscFrgn: 0,
+      },
+    );
+  }, [oLines]);
 
-  console.log("", allFormData.oLines);
   useEffect(() => {
-    setValue("TotalBefDisc", ValueFormatter(TotalBefDisc));
-    setValue("TotalBefDiscSy", ValueFormatter(totalBefDiscSy));
-    setValue("TotalBefDiscFrgn", ValueFormatter(totalBefDiscFrgn));
-    const Discount = getValues("Discount");
-    calculateDiscountAmt(Discount);
+    setValue("TotalBefDisc", ValueFormatter(totals.TotalBefDisc));
+    setValue("TotalBefDiscSy", ValueFormatter(totals.totalBefDiscSy));
+    setValue("TotalBefDiscFrgn", ValueFormatter(totals.totalBefDiscFrgn));
+    if (discPercent > 0) {
+      calculateDiscountAmt(discPercent);
+    }
   }, [
-    calculateDiscountAmt,
-    TotalBefDisc,
-    totalBefDiscSy,
-    totalBefDiscFrgn,
-    GroupNum,
-    setValue,
+    totals.TotalBefDisc,
+    totals.totalBefDiscSy,
+    totals.totalBefDiscFrgn,
+    currency,
+    docDate,
   ]);
 
   //! Local Currency Calculation
@@ -5993,7 +6003,7 @@ function PurchaseQuotation() {
   let TotalExpns = parseFloat(getValues("TotalExpns") || "0.000");
   const DiscountAmt = parseFloat(getValues("DiscountAmt")) || 0;
   const DocTotal =
-    TotalBefDisc -
+    totals.TotalBefDisc -
     DiscountAmt +
     TotalExpns +
     VatSum +
@@ -6012,7 +6022,7 @@ function PurchaseQuotation() {
   let TotalExpSC = parseFloat(getValues("TotalExpSC") || "0.000");
   const DiscSumSy = parseFloat(getValues("DiscSumSy")) || 0;
   const DocTotalSy =
-    totalBefDiscSy -
+    totals.totalBefDiscSy -
     DiscSumSy +
     TotalExpSC +
     VatSumSy +
@@ -6029,7 +6039,7 @@ function PurchaseQuotation() {
   const DiscSumFC = parseFloat(getValues("DiscSumFC")) || 0;
   let TotalExpFC = parseFloat(getValues("TotalExpFC")) || 0;
   const DocTotalFC =
-    totalBefDiscFrgn -
+    totals.totalBefDiscFrgn -
     DiscSumFC +
     TotalExpFC +
     VatSumFC +
@@ -6512,7 +6522,7 @@ function PurchaseQuotation() {
       })),
     };
     console.log("=============", obj);
-     setapiloading(true);
+    setapiloading(true);
     if (SaveUpdateName === "SAVE") {
       apiClient
         .post(`/PurchaseQuotation`, obj)
@@ -6556,9 +6566,9 @@ function PurchaseQuotation() {
             confirmButtonText: "Ok",
           });
         })
-         .finally(() => {
+        .finally(() => {
           setapiloading(false);
-        });;
+        });
     } else {
       Swal.fire({
         text: `Do You Want Update "${obj.CardCode}"`,
@@ -6607,9 +6617,9 @@ function PurchaseQuotation() {
                 confirmButtonText: "Ok",
               });
             })
-             .finally(() => {
-          setapiloading(false);
-        });;
+            .finally(() => {
+              setapiloading(false);
+            });
         } else {
           Swal.fire({
             text: " PO Not Updated",
@@ -6650,13 +6660,13 @@ function PurchaseQuotation() {
                 timer: 1000,
               });
             } else {
-                Swal.fire({
-                             title: "warning!",
-                               text: resp.data.message,
-                             icon: "warning",
-                             confirmButtonText: "Ok",
-                             // timer: 1000,
-                           });
+              Swal.fire({
+                title: "warning!",
+                text: resp.data.message,
+                icon: "warning",
+                confirmButtonText: "Ok",
+                // timer: 1000,
+              });
             }
           });
       } else {
@@ -6700,12 +6710,12 @@ function PurchaseQuotation() {
               });
             } else {
               Swal.fire({
-                           title: "warning!",
-                             text: resp.data.message,
-                           icon: "warning",
-                           confirmButtonText: "Ok",
-                           // timer: 1000,
-                         });
+                title: "warning!",
+                text: resp.data.message,
+                icon: "warning",
+                confirmButtonText: "Ok",
+                // timer: 1000,
+              });
             }
           });
       } else {
@@ -7499,10 +7509,10 @@ function PurchaseQuotation() {
         );
         if (dataPrint.success) {
           const OlinesDataPrint = dataPrint.values.oLines;
-            setPrintData(OlinesDataPrint);
+          setPrintData(OlinesDataPrint);
         } else {
           Swal.fire({
-             text: dataPrint.message,
+            text: dataPrint.message,
             icon: "question",
             confirmButtonText: "YES",
           });
@@ -9464,13 +9474,12 @@ function PurchaseQuotation() {
                                   {...field}
                                   error={!!error}
                                   readOnly={true}
-                                                                   onKeyDown={(e) => {
-                                  
-        if (e.key === "Enter") {    
-          e.preventDefault();  
-          DialogOpenCompany();
-        }
-      }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                      e.preventDefault();
+                                      DialogOpenCompany();
+                                    }
+                                  }}
                                   helperText={error ? error.message : null}
                                   InputProps={{
                                     endAdornment: (
@@ -9555,13 +9564,12 @@ function PurchaseQuotation() {
                                   multiline
                                   type="text"
                                   readOnly={true}
-                                                                     onKeyDown={(e) => {
-                                  
-        if (e.key === "Enter") {
-          e.preventDefault();  
-          DialogOpenPayto();
-        }
-      }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                      e.preventDefault();
+                                      DialogOpenPayto();
+                                    }
+                                  }}
                                   {...field}
                                   error={!!error}
                                   helperText={error ? error.message : null}
@@ -9997,12 +10005,12 @@ function PurchaseQuotation() {
                         label="TOTAL BEF DISC"
                         value={
                           curSource === "L"
-                            ? ValueFormatter(TotalBefDisc)
+                            ? ValueFormatter(totals.TotalBefDisc)
                             : curSource === "S"
-                              ? ValueFormatter(totalBefDiscSy)
+                              ? ValueFormatter(totals.totalBefDiscSy)
                               : getValues("Currency") === companyData.MainCurncy
-                                ? ValueFormatter(TotalBefDisc)
-                                : ValueFormatter(totalBefDiscFrgn)
+                                ? ValueFormatter(totals.TotalBefDisc)
+                                : ValueFormatter(totals.totalBefDiscFrgn)
                         }
                         readOnly={true}
                       />
@@ -10343,7 +10351,6 @@ function PurchaseQuotation() {
               </Grid>
               <Grid item>
                 <PrintMenu
-
                   disabled={SaveUpdateName === "SAVE"}
                   type={type}
                   DocEntry={DocEntry}

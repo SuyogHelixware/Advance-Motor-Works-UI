@@ -322,50 +322,122 @@ export default function BinLocationMaster() {
   }, []);
 
   const handleSumbit = async (data) => {
-  const obj = {
-    ...data,
-    Status: data.Status ? "1" : "0",
-    PriceList: String(data.PriceList),
-  };
+    const obj = {
+      ...data,
+      Status: data.Status ? "1" : "0",
+      PriceList: String(data.PriceList),
+    };
 
-  const normalizeString = (str) =>
-    str.replace(/\s+/g, "").toLowerCase();
+    const normalizeString = (str) => str.replace(/\s+/g, "").toLowerCase();
 
-  // ✅ SAVE MODE
-  if (SaveUpdateName === "SAVE") {
-    if (Array.isArray(openListData)) {
-      const isExisting = openListData.some(
-        (item) =>
-          normalizeString(item.GroupName) ===
-          normalizeString(data.GroupName)
-      );
+    // ✅ SAVE MODE
+    if (SaveUpdateName === "SAVE") {
+      if (Array.isArray(openListData)) {
+        const isExisting = openListData.some(
+          (item) =>
+            normalizeString(item.GroupName) === normalizeString(data.GroupName),
+        );
 
-      if (isExisting) {
-        Swal.fire({
-          text: "Business Partner Group Name Already Exist!",
-          icon: "info",
-          confirmButtonText: "Ok",
-        });
+        if (isExisting) {
+          Swal.fire({
+            text: "Business Partner Group Name Already Exist!",
+            icon: "info",
+            confirmButtonText: "Ok",
+          });
+          return;
+        }
+      } else {
         return;
       }
-    } else {
+
+      try {
+        setLoading(true);
+
+        const res = await apiClient.post(`/BusinessPartnerGroup`, obj);
+
+        if (res.data?.success) {
+          ClearFormData();
+          setOpenListPage(0);
+          setOpenListData([]);
+          fetchOpenListData(0);
+
+          Swal.fire({
+            title: "Success!",
+            text: "Business Partner Group added Successfully",
+            icon: "success",
+            confirmButtonText: "Ok",
+            timer: 1000,
+          });
+        } else {
+          Swal.fire({
+            title: "Error!",
+            text: res.data?.message || "Save failed",
+            icon: "error",
+            confirmButtonText: "Ok",
+          });
+        }
+      } catch (error) {
+        console.error("Save error:", error);
+
+        Swal.fire({
+          title: "Error!",
+          text:
+            error?.response?.data?.message ||
+            error?.message ||
+            "Something went wrong while saving.",
+          icon: "error",
+          confirmButtonText: "Ok",
+        });
+      } finally {
+        setLoading(false);
+      }
+
+      return;
+    }
+
+    // ✅ UPDATE MODE
+    const confirm = await Swal.fire({
+      text: `Do You Want to Update "${obj.GroupName}"`,
+      icon: "question",
+      confirmButtonText: "YES",
+      cancelButtonText: "No",
+      showConfirmButton: true,
+      showCancelButton: true,
+    });
+
+    if (!confirm.isConfirmed) {
+      Swal.fire({
+        text: "Business Partner Group Not Updated",
+        icon: "info",
+        toast: true,
+        showConfirmButton: false,
+        timer: 1500,
+      });
       return;
     }
 
     try {
       setLoading(true);
 
-      const res = await apiClient.post(`/BusinessPartnerGroup`, obj);
+      const response = await apiClient.put(
+        `/BusinessPartnerGroup/${data.DocEntry}`,
+        obj,
+      );
 
-      if (res.data?.success) {
+      if (response.data?.success) {
         ClearFormData();
+
         setOpenListPage(0);
         setOpenListData([]);
         fetchOpenListData(0);
 
+        setClosedListPage(0);
+        setClosedListData([]);
+        fetchClosedListData(0);
+
         Swal.fire({
           title: "Success!",
-          text: "Business Partner Group added Successfully",
+          text: "Business Partner Group Updated",
           icon: "success",
           confirmButtonText: "Ok",
           timer: 1000,
@@ -373,170 +445,95 @@ export default function BinLocationMaster() {
       } else {
         Swal.fire({
           title: "Error!",
-          text: res.data?.message || "Save failed",
-          icon: "error",
+          text: response.data?.message || "Update failed",
+          icon: "warning",
           confirmButtonText: "Ok",
         });
       }
     } catch (error) {
-      console.error("Save error:", error);
+      console.error("Update error:", error);
 
       Swal.fire({
         title: "Error!",
         text:
           error?.response?.data?.message ||
           error?.message ||
-          "Something went wrong while saving.",
+          "Something went wrong while updating.",
         icon: "error",
         confirmButtonText: "Ok",
       });
     } finally {
       setLoading(false);
     }
+  };
 
-    return;
-  }
-
-  // ✅ UPDATE MODE
-  const confirm = await Swal.fire({
-    text: `Do You Want to Update "${obj.GroupName}"`,
-    icon: "question",
-    confirmButtonText: "YES",
-    cancelButtonText: "No",
-    showConfirmButton: true,
-    showCancelButton: true,
-  });
-
-  if (!confirm.isConfirmed) {
-    Swal.fire({
-      text: "Business Partner Group Not Updated",
-      icon: "info",
-      toast: true,
-      showConfirmButton: false,
-      timer: 1500,
+  const handleDelete = async () => {
+    const result = await Swal.fire({
+      text: `Do You Want to delete "${AllData.GroupName}"`,
+      icon: "question",
+      confirmButtonText: "YES",
+      cancelButtonText: "No",
+      showConfirmButton: true,
+      showCancelButton: true,
     });
-    return;
-  }
 
-  try {
-    setLoading(true);
-
-    const response = await apiClient.put(
-      `/BusinessPartnerGroup/${data.DocEntry}`,
-      obj
-    );
-
-    if (response.data?.success) {
-      ClearFormData();
-
-      setOpenListPage(0);
-      setOpenListData([]);
-      fetchOpenListData(0);
-
-      setClosedListPage(0);
-      setClosedListData([]);
-      fetchClosedListData(0);
-
+    if (!result.isConfirmed) {
       Swal.fire({
-        title: "Success!",
-        text: "Business Partner Group Updated",
-        icon: "success",
-        confirmButtonText: "Ok",
-        timer: 1000,
-      });
-    } else {
-      Swal.fire({
-        title: "Error!",
-        text: response.data?.message || "Update failed",
-        icon: "warning",
-        confirmButtonText: "Ok",
-      });
-    }
-  } catch (error) {
-    console.error("Update error:", error);
-
-    Swal.fire({
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong while updating.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
- const handleDelete = async () => {
-  const result = await Swal.fire({
-    text: `Do You Want to delete "${AllData.GroupName}"`,
-    icon: "question",
-    confirmButtonText: "YES",
-    cancelButtonText: "No",
-    showConfirmButton: true,
-    showCancelButton: true,
-  });
-
-  if (!result.isConfirmed) {
-    Swal.fire({
-      text: "Business Partner Group Not Deleted",
-      icon: "info",
-      toast: true,
-      showConfirmButton: false,
-      timer: 1500,
-    });
-    return;
-  }
-
-  try {
-    setLoading(true);
-
-    const response = await apiClient.delete(
-      `/BusinessPartnerGroup/${AllData.DocEntry}`
-    );
-
-    if (response.data?.success) {
-      ClearFormData();
-      setOpenListPage(0);
-      setOpenListData([]);
-      fetchOpenListData(0);
-
-      Swal.fire({
-        text: "Business Partner Group Deleted",
-        icon: "success",
+        text: "Business Partner Group Not Deleted",
+        icon: "info",
         toast: true,
         showConfirmButton: false,
-        timer: 1000,
+        timer: 1500,
       });
-    } else {
-      // ✅ business error (200 but success=false)
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      const response = await apiClient.delete(
+        `/BusinessPartnerGroup/${AllData.DocEntry}`,
+      );
+
+      if (response.data?.success) {
+        ClearFormData();
+        setOpenListPage(0);
+        setOpenListData([]);
+        fetchOpenListData(0);
+
+        Swal.fire({
+          text: "Business Partner Group Deleted",
+          icon: "success",
+          toast: true,
+          showConfirmButton: false,
+          timer: 1000,
+        });
+      } else {
+        // ✅ business error (200 but success=false)
+        Swal.fire({
+          title: "Error!",
+          text: response.data?.message || "Delete failed",
+          icon: "warning",
+          confirmButtonText: "Ok",
+        });
+      }
+    } catch (error) {
+      console.error("Delete error:", error);
+
       Swal.fire({
         title: "Error!",
-        text: response.data?.message || "Delete failed",
-        icon: "warning",
+        text:
+          error?.response?.data?.message ||
+          error?.response?.data?.error ||
+          error?.message ||
+          "Something went wrong while deleting.",
+        icon: "error",
         confirmButtonText: "Ok",
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Delete error:", error);
-
-    Swal.fire({
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.response?.data?.error ||
-        error?.message ||
-        "Something went wrong while deleting.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const sidebarContent = (
     <>

@@ -1,15 +1,15 @@
 import CloseIcon from "@mui/icons-material/Close";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import {
-    Box,
-    Button,
-    Checkbox,
-    Grid,
-    IconButton,
-    Modal,
-    Paper,
-    Typography,
-    useTheme
+  Box,
+  Button,
+  Checkbox,
+  Grid,
+  IconButton,
+  Modal,
+  Paper,
+  Typography,
+  useTheme,
 } from "@mui/material";
 import React, { useState } from "react";
 
@@ -17,10 +17,9 @@ import MenuIcon from "@mui/icons-material/Menu";
 import { DataGrid } from "@mui/x-data-grid";
 import SearchInputField from "../Components/SearchInputField";
 import {
-    InputFields,
-    InputSelectTextField
+  InputFields,
+  InputSelectTextField,
 } from "../Components/formComponents";
-
 
 export default function HouseBanks() {
   const theme = useTheme();
@@ -58,13 +57,37 @@ export default function HouseBanks() {
   ];
 
   const rows = [
-    { id: 1, OrderNo: "001", TIME: "USA", RCTNO: "Branch 1", PhoneNumber1: "123456", PAYMethod: "IBAN1", partsAmt: "BIC1" },
-    { id: 2, OrderNo: "002", TIME: "Canada", RCTNO: "Branch 2", PhoneNumber1: "234567", PAYMethod: "IBAN2", partsAmt: "BIC2" },
-    { id: 3, OrderNo: "003", TIME: "UK", RCTNO: "Branch 3", PhoneNumber1: "345678", PAYMethod: "IBAN3", partsAmt: "BIC3" },
+    {
+      id: 1,
+      OrderNo: "001",
+      TIME: "USA",
+      RCTNO: "Branch 1",
+      PhoneNumber1: "123456",
+      PAYMethod: "IBAN1",
+      partsAmt: "BIC1",
+    },
+    {
+      id: 2,
+      OrderNo: "002",
+      TIME: "Canada",
+      RCTNO: "Branch 2",
+      PhoneNumber1: "234567",
+      PAYMethod: "IBAN2",
+      partsAmt: "BIC2",
+    },
+    {
+      id: 3,
+      OrderNo: "003",
+      TIME: "UK",
+      RCTNO: "Branch 3",
+      PhoneNumber1: "345678",
+      PAYMethod: "IBAN3",
+      partsAmt: "BIC3",
+    },
     // Add more rows as necessary
   ];
 
-//   const handleOpen = () => setOpen(true);
+  //   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
   const toggleDrawer = () => {
@@ -145,7 +168,8 @@ export default function HouseBanks() {
               sx={{
                 position: "sticky",
                 top: "0",
-                backgroundColor:theme.palette.mode === "light" ? "#F5F6FA" : "#080D2B",
+                backgroundColor:
+                  theme.palette.mode === "light" ? "#F5F6FA" : "#080D2B",
               }}
             >
               <SearchInputField
@@ -332,11 +356,7 @@ export default function HouseBanks() {
                   </Grid>
 
                   <Grid item md={4} sm={4} xs={12} textAlign={"center"}>
-                    <InputFields
-                      label="A/C NO."
-                      name="a/c"
-                      value=""
-                    />
+                    <InputFields label="A/C NO." name="a/c" value="" />
                   </Grid>
 
                   <Grid item md={4} sm={4} xs={12} textAlign={"center"}>
@@ -400,11 +420,7 @@ export default function HouseBanks() {
                   </Grid>
 
                   <Grid item md={4} sm={4} xs={12} textAlign={"center"}>
-                    <InputFields
-                      label="IBAN"
-                      name="iban"
-                      value=""
-                    />
+                    <InputFields label="IBAN" name="iban" value="" />
                   </Grid>
 
                   <Grid item md={4} sm={4} xs={12} textAlign={"center"}>
@@ -422,27 +438,15 @@ export default function HouseBanks() {
                   </Grid>
 
                   <Grid item md={4} sm={4} xs={12} textAlign={"center"}>
-                    <InputFields
-                      label="STREET NO."
-                      name="streetno"
-                      value=""
-                    />
+                    <InputFields label="STREET NO." name="streetno" value="" />
                   </Grid>
 
                   <Grid item md={4} sm={4} xs={12} textAlign={"center"}>
-                    <InputFields
-                      label="BLOCK"
-                      name="block"
-                      value=""
-                    />
+                    <InputFields label="BLOCK" name="block" value="" />
                   </Grid>
 
                   <Grid item md={4} sm={4} xs={12} textAlign={"center"}>
-                    <InputFields
-                      label="CITY"
-                      name="city"
-                      value=""
-                    />
+                    <InputFields label="CITY" name="city" value="" />
                   </Grid>
 
                   <Grid item md={4} sm={4} xs={12} textAlign={"center"}>
@@ -474,11 +478,7 @@ export default function HouseBanks() {
                   </Grid>
 
                   <Grid item md={4} sm={4} xs={12} textAlign={"center"}>
-                    <InputFields
-                      label="ZIP CODE"
-                      name="zip-code"
-                      value=""
-                    />
+                    <InputFields label="ZIP CODE" name="zip-code" value="" />
                   </Grid>
 
                   <Grid item md={4} sm={4} xs={12} textAlign={"center"}>
@@ -510,11 +510,7 @@ export default function HouseBanks() {
                   </Grid>
 
                   <Grid item md={4} sm={4} xs={12} textAlign={"center"}>
-                    <InputFields
-                      label="IFSC CODE"
-                      name="zip-code"
-                      value=""
-                    />
+                    <InputFields label="IFSC CODE" name="zip-code" value="" />
                   </Grid>
 
                   {/* --------------------------------------------------------------------------------------------- */}
@@ -612,7 +608,6 @@ export default function HouseBanks() {
                     </Paper>
                   </Modal>
                   {/* ---------------------------------Modal------------------------------------------------------------ */}
-                  
                 </Grid>
               </Box>
             </Grid>
@@ -629,7 +624,11 @@ export default function HouseBanks() {
                 bottom: "0px",
               }}
             >
-              <Button variant="contained" color="success" sx={{ color: 'white'}} >
+              <Button
+                variant="contained"
+                color="success"
+                sx={{ color: "white" }}
+              >
                 SAVE
               </Button>
 

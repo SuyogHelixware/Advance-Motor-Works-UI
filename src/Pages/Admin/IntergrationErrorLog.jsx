@@ -10,7 +10,10 @@ import {
   useTheme,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
-import { InputSelectTextField, InputTextSearchField } from "../Components/formComponents";
+import {
+  InputSelectTextField,
+  InputTextSearchField,
+} from "../Components/formComponents";
 import { useState } from "react";
 import useAuth from "../../Routing/AuthContext";
 
@@ -30,11 +33,11 @@ const columns = [
     flex: 1,
     sortable: false,
   },
-  { 
-    field: "posdoc", 
-    headerName: "POSDOC", 
-    width: 100, 
-    sortable: false 
+  {
+    field: "posdoc",
+    headerName: "POSDOC",
+    width: 100,
+    sortable: false,
   },
   {
     field: "CardName",
@@ -83,23 +86,24 @@ const rows = [
 ];
 
 export default function IntergrationErrorLog() {
-  const {user}=useAuth()
-        const getPermissionsByMenuId = (menuId) => {
-      const matchedMenu = user?.SubMenus?.flatMap(sub =>
-        sub.Menus.filter(menu => menu.MenuId === menuId)
-      )[0];
-      return matchedMenu || {
+  const { user } = useAuth();
+  const getPermissionsByMenuId = (menuId) => {
+    const matchedMenu = user?.SubMenus?.flatMap((sub) =>
+      sub.Menus.filter((menu) => menu.MenuId === menuId),
+    )[0];
+    return (
+      matchedMenu || {
         IsRead: false,
         IsAdd: false,
         IsEdit: false,
         IsDelete: false,
-      };
-    };
-    // getPermissionsByMenuId(MenuID)
- const perms = getPermissionsByMenuId(13);
- const [Disbled,setdisbled]=useState(perms.IsAdd)
-const theme = useTheme();
-
+      }
+    );
+  };
+  // getPermissionsByMenuId(MenuID)
+  const perms = getPermissionsByMenuId(13);
+  const [Disbled, setdisbled] = useState(perms.IsAdd);
+  const theme = useTheme();
 
   return (
     <>
@@ -170,31 +174,31 @@ const theme = useTheme();
             >
               <Grid container>
                 <Grid item md={4} xs={12} textAlign={"center"}>
-                    <InputTextSearchField
-                      label="ACCOUNT NO"
-                      type="text"
-                      // onClick={handleOpen}
-                    />
+                  <InputTextSearchField
+                    label="ACCOUNT NO"
+                    type="text"
+                    // onClick={handleOpen}
+                  />
                 </Grid>
                 <Grid item md={4} xs={12} textAlign={"center"}>
-                    <InputSelectTextField
-                      label="TRANS TYPE"
-                      name="Ttrantype"
-                      value=""
-                      data={[
-                        { key: "1", value: "INVOICE" },
-                        { key: "2", value: "SALES EMP" },
-                        { key: "3", value: "WAREHOUSE" },
-                        { key: "4", value: "ITEM MASTER" },
-                        { key: "5", value: "SALES OREDR" },
-                        { key: "6", value: "BIN LOCATION" },
-                        { key: "7", value: "BUSINESS PARTNER" },
-                        { key: "8", value: "INVENTORY TRANSFER" },
-                        { key: "9", value: "A/R DOWN PAYMENT" },
-                      ]}
-                    />
+                  <InputSelectTextField
+                    label="TRANS TYPE"
+                    name="Ttrantype"
+                    value=""
+                    data={[
+                      { key: "1", value: "INVOICE" },
+                      { key: "2", value: "SALES EMP" },
+                      { key: "3", value: "WAREHOUSE" },
+                      { key: "4", value: "ITEM MASTER" },
+                      { key: "5", value: "SALES OREDR" },
+                      { key: "6", value: "BIN LOCATION" },
+                      { key: "7", value: "BUSINESS PARTNER" },
+                      { key: "8", value: "INVENTORY TRANSFER" },
+                      { key: "9", value: "A/R DOWN PAYMENT" },
+                    ]}
+                  />
                 </Grid>
-                
+
                 <Grid item md={4} xs={12} textAlign={"center"}>
                   <Button
                     variant="contained"
@@ -214,7 +218,6 @@ const theme = useTheme();
                     SEARCH
                   </Button>
                 </Grid>
-                
               </Grid>
 
               <Grid

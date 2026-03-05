@@ -78,7 +78,10 @@ import {
 } from "../Components/formComponents";
 import LogisticAddress from "../Components/LogisticAddress";
 import SearchInputField from "../Components/SearchInputField";
-import SearchModel, { CopyFromSearchModel, SearchBPModel } from "../Components/SearchModel";
+import SearchModel, {
+  CopyFromSearchModel,
+  SearchBPModel,
+} from "../Components/SearchModel";
 import SerialIntake from "../Components/SerialIntake";
 import { getStatus } from "../Components/status";
 import TaxCategoryModel from "../Components/TaxCategoryModel";
@@ -95,7 +98,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useItemServiceList } from "../../Hooks/useItemServiceList";
 import DynamicLoader from "../../Loaders/DynamicLoader";
-import { fetchExchangeRateStore } from "../../slices/exchangeRateSlice";
+import {
+  clearAllCache,
+  fetchExchangeRateStore,
+} from "../../slices/exchangeRateSlice";
 import { dataGridSx } from "../../Styles/dataGridStyles";
 import BatchIntake from "../Components/Batch";
 import BinLocation from "../Components/BinLocation";
@@ -265,11 +271,13 @@ function PurchaseInvoice() {
   const [checkedItems, setCheckedItems] = useState({});
   const [DownPaymentRecord, setDownPaymentRecord] = useState([]);
   const [loadingDownPayment, setLoadingDownpayment] = useState(false);
-const [paginationModel, setPaginationModel] = useState({ page: 0, pageSize: 20 });
-const [rowCount, setRowCount] = useState(0);
-const [searchText, setSearchText] = useState("");
-const downPaymentAbortRef = useRef(null);
-  // const [downpaymentPostingData, setDownPostingData] = useState([]);
+  const [paginationModel, setPaginationModel] = useState({
+    page: 0,
+    pageSize: 20,
+  });
+  const [rowCount, setRowCount] = useState(0);
+  const [searchText, setSearchText] = useState("");
+  const downPaymentAbortRef = useRef(null);
   const [apiloading, setapiloading] = useState(false);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const toggleModalSize = () => {
@@ -326,7 +334,6 @@ const downPaymentAbortRef = useRef(null);
   const [getListquery, setGetListQuery] = useState("");
   const [getListSearching, setGetListSearching] = useState(false);
   //=========================================get List State End================================================================
-
   //=====================================open List State====================================================================
   const [openListData, setOpenListData] = useState([]);
   const [openListPage, setOpenListPage] = useState(0);
@@ -449,7 +456,9 @@ const downPaymentAbortRef = useRef(null);
     ShipType: "",
     DfltAddress: "",
     TotalBefDisc: "",
-    DiscountAmt: "0.000",
+    DiscountAmt: "0.00",
+    DiscSumSy: "0.000",
+    DiscSumFC: "0.000",
     TotalExpns: "0.000",
     DocRateLine: "",
     CurrencyLine: "",
@@ -557,7 +566,7 @@ const downPaymentAbortRef = useRef(null);
           setPrintData(OlinesDataPrint);
         } else {
           Swal.fire({
-            text:  dataPrint.message,
+            text: dataPrint.message,
             icon: "question",
             confirmButtonText: "YES",
           });
@@ -580,7 +589,7 @@ const downPaymentAbortRef = useRef(null);
   const curSource = watch("CurSource");
   const DocRate = watch("DocRate");
   const currency = watch("Currency");
-  const CardCode=watch("CardCode");
+  const CardCode = watch("CardCode");
   const SysRate = watch("SysRate");
   const paymentTerm = watch("PayDuMonth");
   const extraMonth = watch("ExtraMonth");
@@ -608,18 +617,18 @@ const downPaymentAbortRef = useRef(null);
           // ============================
           // SYSTEM RATE CHECK
           // ============================
-            if (!values.length) {
-                Swal.fire({
-                  title: "Exchange Rates Missing",
-                  text: "Please define exchange rates before continuing.",
-                  icon: "warning",
-                }).then(() => {
-                  navigate("/dashboard/Finance/ExchangeRatesAndIndexes", {
-                    replace: true,
-                  });
-                });
-                return;
-              }
+          if (!values.length) {
+            Swal.fire({
+              title: "Exchange Rates Missing",
+              text: "Please define exchange rates before continuing.",
+              icon: "warning",
+            }).then(() => {
+              navigate("/dashboard/Finance/ExchangeRatesAndIndexes", {
+                replace: true,
+              });
+            });
+            return;
+          }
           const sysRateObj = values.find((x) => x.Currency === sysCurr);
           const sysRate =
             sysCurr === mainCurr ? 1 : parseFloat(sysRateObj?.Rate || 0);
@@ -884,17 +893,17 @@ const downPaymentAbortRef = useRef(null);
           }
         }
       })
-        .catch(() => {
-           Swal.fire({
-             title: "Error",
+      .catch(() => {
+        Swal.fire({
+          title: "Error",
           text: "Please define the exchange rates.",
-             icon: "error",
-           }).then(() => {
-             navigate("/dashboard/Finance/ExchangeRatesAndIndexes", {
-               replace: true,
-             });
-           });
-         });
+          icon: "error",
+        }).then(() => {
+          navigate("/dashboard/Finance/ExchangeRatesAndIndexes", {
+            replace: true,
+          });
+        });
+      });
   }, [docDate]);
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
@@ -935,7 +944,16 @@ const downPaymentAbortRef = useRef(null);
   const handleCloseMenu = () => {
     setOpenDialog(false); // Close modal
   };
-
+  const CurrencyObj = {
+    Currency:
+      curSource === "L"
+        ? companyData.MainCurncy
+        : curSource === "S"
+          ? companyData.SysCurrncy
+          : currency === companyData.MainCurncy
+            ? companyData.MainCurncy
+            : currency,
+  };
   const DownPaymentColumn = [
     { field: "DocNum", headerName: "DocNum", width: 100 },
     {
@@ -959,7 +977,7 @@ const downPaymentAbortRef = useRef(null);
       // editable: true,
       //       valueFormatter: (value, row) =>
       //   `${currency} ${Number(value ?? row.PriceBefDi ?? 0).toFixed(2)}`,
-     field:
+      field:
         curSource === "L"
           ? "NetAmtToDraw"
           : curSource === "S"
@@ -981,7 +999,7 @@ const downPaymentAbortRef = useRef(null);
       align: "center",
       type: "number",
       valueFormatter: (value, row) =>
-        `${row.Currency} ${Number(value).toFixed(2)}`,
+        `${CurrencyObj.Currency} ${Number(value).toFixed(2)}`,
     },
 
     // {
@@ -1008,7 +1026,7 @@ const downPaymentAbortRef = useRef(null);
       // headerName: "GrossAmtToDraw",
       // width: 120,
       // sortable: false,
-       field:
+      field:
         curSource === "L"
           ? "GrossAmtToDraw"
           : curSource === "S"
@@ -1017,7 +1035,7 @@ const downPaymentAbortRef = useRef(null);
               ? "GrossAmtToDraw"
               : "GrossAmtToDrawFc",
       // headerName: "GrossAmtToDraw",
-       headerName:
+      headerName:
         curSource === "L"
           ? "GrossAmtToDraw"
           : curSource === "S"
@@ -1032,7 +1050,7 @@ const downPaymentAbortRef = useRef(null);
       // field: "OpenNetAmt",
       // headerName: "OpenNetAmt",
       // width: 120,
-       field:
+      field:
         curSource === "L"
           ? "OpenNetAmt"
           : curSource === "S"
@@ -1048,7 +1066,7 @@ const downPaymentAbortRef = useRef(null);
             : currency === companyData.MainCurncy
               ? "OpenNetAmt"
               : `OpenNetAmtFc`,
-               width: 160,
+      width: 160,
       sortable: false,
 
       renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
@@ -1074,7 +1092,7 @@ const downPaymentAbortRef = useRef(null);
             : currency === companyData.MainCurncy
               ? "OpenTaxAmt"
               : `OpenTaxAmtFc`,
-               width: 160,
+      width: 160,
       sortable: false,
 
       renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
@@ -1084,7 +1102,7 @@ const downPaymentAbortRef = useRef(null);
       // headerName: "OpenGrossAmt",
       // width: 120,
       // sortable: false,
-        field:
+      field:
         curSource === "L"
           ? "OpenGrossAmt"
           : curSource === "S"
@@ -1100,73 +1118,11 @@ const downPaymentAbortRef = useRef(null);
             : currency === companyData.MainCurncy
               ? "OpenGrossAmt"
               : `OpenGrossAmtFc`,
-               width: 160,
+      width: 160,
       sortable: false,
 
       renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
     },
-    // {
-    //   field: "TotalNetAmt",
-    //   headerName: "TotalNetAmt",
-    //   width: 120,
-    //   sortable: false,
-
-    // },
-    // {
-    //   field: "TotalTaxAmt",
-    //   headerName: "TotalTaxAmt",
-    //   width: 120,
-    //   sortable: false,
-
-    // },
-    // {
-    //   field: "TotalGrsAmt",
-    //   headerName: "TotalGrsAmt",
-    //   width: 120,
-    //   sortable: false,
-
-    // },
-    // {
-    //   field: "BaseNetLC",
-    //   headerName: "BaseNetLC",
-    //   type: "number",
-    //   width: 120,
-    //   sortable: false,
-
-    //   // renderCell: (params) => (
-    //   //   <InputTextField name="LineTotal" type="number" value={params.value} />
-    //   // ),
-    // },
-
-    // {
-    //   field: "BaseVATLCt",
-    //   headerName: "BaseVATLCt",
-    //   width: 120,
-    //   sortable: false,
-    // },
-    // {
-    //   field: "BaseGrsLc",
-    //   headerName: "BaseGrossLc",
-    //   width: 100,
-    //   sortable: false,
-    // },
-
-    // {
-    //   field: "ACTION",
-    //   headerName: "ACTION",
-    //   width: 100,
-    //   sortable: false,
-    //   renderCell: (params) => {
-    //     return (
-    //       <IconButton
-    //         color="error"
-    //         onClick={() => handleDeleteRow(params.row.id)}
-    //       >
-    //         <DeleteIcon />
-    //       </IconButton>
-    //     );
-    //   },
-    // },
   ];
   // const DownPaymentApi = async (CardCode, Currency) => {
   //   setLoadingDownpayment(true);
@@ -1198,96 +1154,205 @@ const downPaymentAbortRef = useRef(null);
   //   }
   // };
 
-
   const fetchDownPaymentRows = useCallback(
-  async (page, pageSize, search = "") => {
-    // Abort previous request
-    if (downPaymentAbortRef.current) downPaymentAbortRef.current.abort();
-    const controller = new AbortController();
-    downPaymentAbortRef.current = controller;
-
-    setLoadingDownpayment(true);
-
-    try {
-      const res = await apiClient.get(
-        `/APDownPayment/FromUnsettledDoc/${CardCode}/${page}/${pageSize}`,
-        {
-         params: {
-      Currency: currency, // ✅ MUST be query param
-      ...(search && search.trim()
-        ? { SearchText: search.trim() }
-        : {}),
-    },
+    async (page, pageSize, search = "") => {
+      // Abort previous request
+      if (downPaymentAbortRef.current) downPaymentAbortRef.current.abort();
+      const controller = new AbortController();
+      downPaymentAbortRef.current = controller;
+      setLoadingDownpayment(true);
+      try {
+        const res = await apiClient.get(`/APDownPayment/UnsettledDoc`, {
+          params: {
+            CardCode: CardCode,
+            Currency: currency, // ✅ MUST be query param
+            ...(search && search.trim() ? { SearchText: search.trim() } : {}),
+            Page: page,
+            Limit: pageSize,
+          },
           signal: controller.signal,
+        });
+
+        const response = res.data;
+        if (response.success) {
+          setDownPaymentRecord(response.values || []);
+          setRowCount(response.count || 0);
+        } else {
+          Swal.fire("Error!", response.message, "warning");
         }
+      } catch (err) {
+        if (err.name !== "CanceledError" && err.name !== "AbortError") {
+          Swal.fire("Error!", err.message, "error");
+        }
+      } finally {
+        setLoadingDownpayment(false);
+      }
+    },
+    [CardCode, currency],
+  );
+  useEffect(() => {
+    if (!!CardCode) {
+      fetchDownPaymentRows(
+        paginationModel.page,
+        paginationModel.pageSize,
+        searchText,
+      );
+    }
+  }, [CardCode, paginationModel, searchText, fetchDownPaymentRows]);
+  const recalculateAllDownPayments = (rows) => {
+    const num = (v) => Number(v) || 0;
+    let updatedRows = [...rows];
+
+    updatedRows = updatedRows.map((r) => {
+      if (!r.parentId) return r; // skip parent here
+
+      let updated = { ...r };
+
+      if (curSource === "L") {
+        updated.Currency = companyData.MainCurncy;
+        updated.Rate = 1;
+        updated.NetAmtToDrawSc = num(r.NetAmtToDraw) / SysRate;
+        updated.OpenNetAmtSc = updated.NetAmtToDrawSc;
+        updated.NetAmtToDrawFc = 0;
+      } else if (curSource === "S") {
+        updated.Rate = SysRate;
+        updated.NetAmtToDraw = num(r.NetAmtToDrawSc) * SysRate;
+        updated.NetAmtToDrawFc = updated.NetAmtToDraw / DocRate;
+        updated.OpenNetAmt = updated.NetAmtToDraw;
+        updated.OpenNetAmtFc = updated.NetAmtToDrawFc;
+      } else {
+        if (currency === companyData.MainCurncy) {
+          updated.NetAmtToDrawSc = num(r.NetAmtToDraw) / SysRate;
+          updated.OpenNetAmtSc = updated.NetAmtToDrawSc;
+          updated.NetAmtToDrawFc = 0;
+        } else {
+          updated.NetAmtToDraw = num(r.NetAmtToDrawFc) * DocRate;
+          updated.NetAmtToDrawSc = updated.NetAmtToDraw / SysRate;
+          updated.OpenNetAmt = updated.NetAmtToDraw;
+          updated.OpenNetAmtSc = updated.NetAmtToDrawSc;
+        }
+      }
+
+      // ---- Tax Recalculation ----
+      const taxCalc = taxCalculation(
+        num(updated.NetAmtToDraw),
+        0,
+        0,
+        0,
+        0,
+        r.TaxCode,
       );
 
-      const response = res.data;
-      if (response.success) {
-         setDownPaymentRecord(response.values || []);
-        setRowCount(response.totalCount || 0); 
-      } else {
-        Swal.fire("Error!", response.message, "warning");
-      }
-    } catch (err) {
-      if (err.name !== "CanceledError" && err.name !== "AbortError") {
-        Swal.fire("Error!", err.message, "error");
-      }
-    } finally {
-      setLoadingDownpayment(false);
-    }
-  },
-  [CardCode, currency]
-);
-useEffect(() => {
-  if(!!CardCode){
-  fetchDownPaymentRows(paginationModel.page, paginationModel.pageSize, searchText);
+      updated.TaxAmtToDraw = taxCalc?.VatSum ?? 0;
+      updated.TaxAmtToDrawSc = taxCalc?.VatSumSy ?? 0;
+      updated.TaxAmtToDrawFc = taxCalc?.VatSumFrgn ?? 0;
+      updated.OpenTaxAmt = taxCalc?.VatSum ?? 0;
+      updated.OpenTaxAmtSc = taxCalc?.VatSumSy ?? 0;
+      updated.OpenTaxAmtFc = taxCalc?.VatSumFrgn ?? 0;
+      updated.GrossAmtToDraw =
+        num(updated.NetAmtToDraw) + num(updated.TaxAmtToDraw);
+      updated.GrossAmtToDrawSc =
+        num(updated.NetAmtToDrawSc) + num(updated.TaxAmtToDrawSc);
+      updated.GrossAmtToDrawFc =
+        num(updated.NetAmtToDrawFc) + num(updated.TaxAmtToDrawFc);
+      updated.OpenGrossAmt = updated.GrossAmtToDraw;
+      updated.OpenGrossAmtSc = updated.GrossAmtToDrawSc;
+      updated.OpenGrossAmtFc = updated.GrossAmtToDrawFc;
+      updated.oTaxLines = taxCalc?.oTaxLines || [];
 
-  }
-}, [CardCode,paginationModel, searchText, fetchDownPaymentRows]);
+      return updated;
+    });
 
+    // 2️⃣ Recalculate Parent Totals
+    const parents = updatedRows.filter((r) => !r.parentId);
+
+    parents.forEach((parent) => {
+      const childs = updatedRows.filter((r) => r.parentId === parent.id);
+      const totals = childs.reduce(
+        (acc, r) => {
+          acc.NetAmtToDraw += num(r.NetAmtToDraw);
+          acc.NetAmtToDrawSc += num(r.NetAmtToDrawSc);
+          acc.NetAmtToDrawFc += num(r.NetAmtToDrawFc);
+          acc.TaxAmtToDraw += num(r.TaxAmtToDraw);
+          acc.TaxAmtToDrawSc += num(r.TaxAmtToDrawSc);
+          acc.TaxAmtToDrawFc += num(r.TaxAmtToDrawFc);
+          acc.GrossAmtToDraw += num(r.GrossAmtToDraw);
+          acc.GrossAmtToDrawSc += num(r.GrossAmtToDrawSc);
+          acc.GrossAmtToDrawFc += num(r.GrossAmtToDrawFc);
+
+          acc.OpenNetAmt += num(r.OpenNetAmt);
+          acc.OpenNetAmtSc += num(r.OpenNetAmtSc);
+          acc.OpenNetAmtFc += num(r.OpenNetAmtFc);
+          acc.OpenTaxAmt += num(r.OpenTaxAmt);
+          acc.OpenTaxAmtSc += num(r.OpenTaxAmtSc);
+          acc.OpenTaxAmtFc += num(r.OpenTaxAmtFc);
+          acc.OpenGrossAmt += num(r.OpenGrossAmt);
+          acc.OpenGrossAmtSc += num(r.OpenGrossAmtSc);
+          acc.OpenGrossAmtFc += num(r.OpenGrossAmtFc);
+          return acc;
+        },
+        {
+          NetAmtToDraw: 0,
+          NetAmtToDrawSc: 0,
+          NetAmtToDrawFc: 0,
+          TaxAmtToDraw: 0,
+          TaxAmtToDrawSc: 0,
+          TaxAmtToDrawFc: 0,
+          GrossAmtToDraw: 0,
+          GrossAmtToDrawSc: 0,
+          GrossAmtToDrawFc: 0,
+          OpenNetAmt: 0,
+          OpenNetAmtSc: 0,
+          OpenNetAmtFc: 0,
+          OpenTaxAmt: 0,
+          OpenTaxAmtSc: 0,
+          OpenTaxAmtFc: 0,
+          OpenGrossAmt: 0,
+          OpenGrossAmtSc: 0,
+          OpenGrossAmtFc: 0,
+        },
+      );
+
+      updatedRows = updatedRows.map((r) =>
+        r.id === parent.id ? { ...r, ...totals } : r,
+      );
+    });
+
+    return updatedRows;
+  };
   useEffect(() => {
     const CurrencyObj = {
-    Currency:
-      curSource === "L"
-        ? companyData.MainCurncy
-        : curSource === "S"
-        ? companyData.SysCurrncy
-        : currency === companyData.MainCurncy
-        ? companyData.MainCurncy
-        : currency,
-  };
-
+      Currency:
+        curSource === "L"
+          ? companyData.MainCurncy
+          : curSource === "S"
+            ? companyData.SysCurrncy
+            : currency === companyData.MainCurncy
+              ? companyData.MainCurncy
+              : currency,
+    };
     const rows = DownPaymentRecord.flatMap((item) => [
       {
         id: item.DocEntry,
         DocNum: item.DocNum,
         CardName: item.CardName,
         DocDueDate: item.DocDueDate,
-          // Currency:   curSource === "L"
-          // ?  companyData.Currency
-          // : curSource === "S"
-          //   ? companyData.SysCurrncy
-          //   : currency === companyData.MainCurncy
-          //     ? companyData.Currency
-          //     : currency,
-      
         ...item,
-         ...CurrencyObj,
+        ...CurrencyObj,
       },
-      ...(item.oDPMLines || []).map((line) => ({
-        id: `line-${item.DocEntry}-${line.LineNum}`, // unique id per line
+      ...(item.oDPMLines || []).map((line, i) => ({
+        id: `line-${item.DocEntry}-${line.LineNum + i}`, // unique id per line
         parentId: item.DocEntry, // link to header
         LineNum: line.LineNum,
         BaseNet: line.BaseNet,
         VatSum: line.VatSum,
         TaxCode: line.TaxCode,
         NetAmtToDraw: line.PaidNet,
-        NetAmtToDrawSc:line.PaidNetSc,
-        NetAmtToDrawFc:line.PaidNetFc,
+        NetAmtToDrawSc: line.PaidNetSc,
+        NetAmtToDrawFc: line.PaidNetFc,
         TaxAmtToDraw: line.PaidVat,
-        TaxAmtToDrawFc:line.PaidVatFc,
-        TaxAmtToDrawSc:line.PaidVatSc,
+        TaxAmtToDrawFc: line.PaidVatFc,
+        TaxAmtToDrawSc: line.PaidVatSc,
         GrossAmtToDraw: line.PaidGrs,
         TotalNetAmt: line.BaseNet,
         TotalTaxAmt: line.VatSum,
@@ -1295,14 +1360,35 @@ useEffect(() => {
         BaseNetLC: line.PaidNet,
         BaseVATLCt: line.PaidVat,
         BaseGrsLc: line.PaidGrs,
-        
-        ...line,   
+        ...line,
         ...CurrencyObj,
       })),
     ]);
-    setDownPaymentRows(rows);
-  }, [DownPaymentRecord,curSource,currency]);
 
+    const recalculated = recalculateAllDownPayments(rows);
+    setDownPaymentRows(recalculated);
+    // setDownPaymentRows(rows);
+
+    const fieldsToCalculate = [
+      { key: "DpmAmnt", field: "0.00" },
+      { key: "DpmAmntSC", field: "0.00" },
+      { key: "DpmAmntFC", field: "0.00" },
+      { key: "DpmVat", field: "0.00" },
+      { key: "DpmVatSc", field: "0.00" },
+      { key: "DpmVatFc", field: "0.00" },
+    ];
+    fieldsToCalculate.forEach(({ key, field }) => {
+      const total = field;
+      setValue(key, total);
+    });
+  }, [DownPaymentRecord, SysRate, DocRate, currency]);
+
+  //  useEffect(() => {
+  //   if (downPayopen) {
+  //     const recalculated = recalculateAllDownPayments(DownPaymentRows);
+  //     setDownPaymentRows(recalculated);
+  //   }
+  // }, [downPayopen, SysRate, DocRate]);
   // const handleOpenDownCals = (e, row) => {
   //   const { name, value } = e.target;
   //   const isParent = !row.parentId;
@@ -1440,14 +1526,14 @@ useEffect(() => {
   //   if (isParent) {
   //     const headerNetAmt = parseFloat(newRow.NetAmtToDraw || 0);
   //     if (headerNetAmt > parseFloat(newRow.OpenNetAmt)) {
-  //       return oldRow; 
+  //       return oldRow;
   //     }
   //     updatedRows = updatedRows.map((r) => {
   //       if (r.id === newRow.id) {
-          
+
   //         return { ...r, NetAmtToDraw: headerNetAmt };
   //       }
-        
+
   //       if (r.parentId === newRow.id) {
   //         const ratio = headerNetAmt / newRow.OpenNetAmt;
   //         const childNet = ratio * r.OpenNetAmt;
@@ -1477,7 +1563,7 @@ useEffect(() => {
   //           }
   //         : r,
   //     );
-  //   } 
+  //   }
   //   else {
   //     debugger
   //     const value = parseFloat(newRow.NetAmtToDraw || 0);
@@ -1516,109 +1602,257 @@ useEffect(() => {
   //   setDownPaymentRows(updatedRows);
   //   return newRow;
   // };
-const processRowUpdateDownPayment = (newRow, oldRow) => {
-  let updatedRows = [...DownPaymentRows];
-  const isParent = !newRow.parentId;
 
-  if (isParent) {
-    const headerNetAmt = parseFloat(newRow.NetAmtToDraw || 0);
-    if (headerNetAmt > parseFloat(newRow.OpenNetAmt)) {
+  const processRowUpdateDownPayment = (newRow, oldRow) => {
+    const num = (v) => Number(v) || 0;
+    let updatedRows = [...DownPaymentRows];
+    const isParent = !newRow.parentId;
+    // =========================================================
+    //! ======================= PARENT EDIT =====================
+    // =========================================================
+    if (isParent) {
+      const headerNet = num(newRow.NetAmtToDraw);
+      const headerNetSc = num(newRow.NetAmtToDrawSc);
+      const headerNetFc = num(newRow.NetAmtToDrawFc);
+
+      // ---------- VALIDATION ----------
+      if (
+        (curSource === "L" && headerNet > num(newRow.OpenNetAmt)) ||
+        (curSource === "S" && headerNetSc > num(newRow.OpenNetAmtSc)) ||
+        (curSource === "C" &&
+          ((currency === companyData.MainCurncy &&
+            headerNet > num(newRow.OpenNetAmt)) ||
+            (currency !== companyData.MainCurncy &&
+              headerNetFc > num(newRow.OpenNetAmtFc))))
+      ) {
+        return oldRow;
+      }
+
+      // ---------- RATIO CALC ----------
+      let ratio = 0;
+      if (curSource === "L") {
+        ratio = headerNet / num(newRow.OpenNetAmt);
+      } else if (curSource === "S") {
+        ratio = headerNetSc / num(newRow.OpenNetAmtSc);
+      } else {
+        ratio =
+          currency === companyData.MainCurncy
+            ? headerNet / num(newRow.OpenNetAmt)
+            : headerNetFc / num(newRow.OpenNetAmtFc);
+      }
+
+      // ---------- UPDATE ROWS ----------
+      updatedRows = updatedRows.map((r) => {
+        // ===== Parent Row =====
+        if (r.id === newRow.id) {
+          let parent = { ...r };
+
+          if (curSource === "L") {
+            parent.Currency = companyData.MainCurncy;
+            parent.Rate = 1;
+            parent.NetAmtToDraw = headerNet;
+            parent.NetAmtToDrawSc = headerNet / SysRate;
+            parent.NetAmtToDrawFc = 0;
+          } else if (curSource === "S") {
+            parent.Currency = companyData.SysCurrncy;
+            parent.Rate = SysRate;
+            parent.NetAmtToDrawSc = headerNetSc;
+            parent.NetAmtToDraw = headerNetSc * SysRate;
+            parent.NetAmtToDrawFc = parent.NetAmtToDraw / DocRate;
+          } else {
+            if (currency === companyData.MainCurncy) {
+              parent.NetAmtToDraw = headerNet;
+              parent.NetAmtToDrawSc = headerNet / SysRate;
+              parent.NetAmtToDrawFc = 0;
+              parent.Currency = companyData.MainCurncy;
+            } else {
+              parent.NetAmtToDrawFc = headerNetFc;
+              parent.NetAmtToDraw = headerNetFc * DocRate;
+              parent.NetAmtToDrawSc = parent.NetAmtToDraw / SysRate;
+              parent.Currency = currency;
+            }
+          }
+
+          return parent;
+        }
+
+        //! ===== Child Rows =====
+        if (r.parentId === newRow.id) {
+          const net = num(r.OpenNetAmt) * ratio;
+          const netSc = num(r.OpenNetAmtSc) * ratio;
+          const netFc = num(r.OpenNetAmtFc) * ratio;
+
+          const taxCalc = taxCalculation(net, 0, 0, 0, 0, r.TaxCode);
+
+          const tax = taxCalc?.VatSum ?? 0;
+          const taxSc = taxCalc?.VatSumSy ?? 0;
+          const taxFc = taxCalc?.VatSumFrgn ?? 0;
+
+          return {
+            ...r,
+            NetAmtToDraw: net,
+            NetAmtToDrawSc: netSc,
+            NetAmtToDrawFc: netFc,
+            TaxAmtToDraw: tax,
+            TaxAmtToDrawSc: taxSc,
+            TaxAmtToDrawFc: taxFc,
+            GrossAmtToDraw: net + num(tax),
+            GrossAmtToDrawSc: netSc + num(taxSc),
+            GrossAmtToDrawFc: netFc + num(taxFc),
+            oTaxLines: taxCalc?.oTaxLines || [],
+          };
+        }
+
+        return r;
+      });
+
+      // ---------- HEADER TOTALS ----------
+      const childs = updatedRows.filter((r) => r.parentId === newRow.id);
+      const totals = childs.reduce(
+        (acc, r) => {
+          acc.NetAmtToDraw += num(r.NetAmtToDraw);
+          acc.NetAmtToDrawSc += num(r.NetAmtToDrawSc);
+          acc.NetAmtToDrawFc += num(r.NetAmtToDrawFc);
+          acc.TaxAmtToDraw += num(r.TaxAmtToDraw);
+          acc.TaxAmtToDrawSc += num(r.TaxAmtToDrawSc);
+          acc.TaxAmtToDrawFc += num(r.TaxAmtToDrawFc);
+          acc.GrossAmtToDraw += num(r.GrossAmtToDraw);
+          acc.GrossAmtToDrawSc += num(r.GrossAmtToDrawSc);
+          acc.GrossAmtToDrawFc += num(r.GrossAmtToDrawFc);
+          return acc;
+        },
+        {
+          NetAmtToDraw: 0,
+          NetAmtToDrawSc: 0,
+          NetAmtToDrawFc: 0,
+          TaxAmtToDraw: 0,
+          TaxAmtToDrawSc: 0,
+          TaxAmtToDrawFc: 0,
+          GrossAmtToDraw: 0,
+          GrossAmtToDrawSc: 0,
+          GrossAmtToDrawFc: 0,
+        },
+      );
+
+      updatedRows = updatedRows.map((r) =>
+        r.id === newRow.id ? { ...r, ...totals } : r,
+      );
+
+      setDownPaymentRows(updatedRows);
+      return updatedRows.find((r) => r.id === newRow.id);
+    }
+
+    // =========================================================
+    //! ======================= CHILD EDIT ======================
+    // =========================================================
+    const value = num(newRow.NetAmtToDraw);
+    const valueSc = num(newRow.NetAmtToDrawSc);
+    const valueFc = num(newRow.NetAmtToDrawFc);
+
+    if (
+      (curSource === "L" && value > num(newRow.OpenNetAmt)) ||
+      (curSource === "S" && valueSc > num(newRow.OpenNetAmtSc)) ||
+      (curSource === "C" &&
+        ((currency === companyData.MainCurncy &&
+          value > num(newRow.OpenNetAmt)) ||
+          (currency !== companyData.MainCurncy &&
+            valueFc > num(newRow.OpenNetAmtFc))))
+    ) {
       return oldRow;
     }
 
     updatedRows = updatedRows.map((r) => {
-      if (r.id === newRow.id) {
-        return { ...r, NetAmtToDraw: headerNetAmt };
+      if (r.id !== newRow.id) return r;
+      let updated = { ...r };
+      if (curSource === "L") {
+        updated.Currency = companyData.MainCurncy;
+        updated.Rate = 1;
+        updated.NetAmtToDraw = value;
+        updated.NetAmtToDrawSc = value / SysRate;
+        updated.NetAmtToDrawFc = 0;
+      } else if (curSource === "S") {
+        updated.Currency = companyData.SysCurrncy;
+        updated.Rate = SysRate;
+        updated.NetAmtToDrawSc = valueSc;
+        updated.NetAmtToDraw = valueSc * SysRate;
+        updated.NetAmtToDrawFc = updated.NetAmtToDraw / DocRate;
+      } else {
+        if (currency === companyData.MainCurncy) {
+          updated.NetAmtToDraw = value;
+          updated.NetAmtToDrawSc = value / SysRate;
+          updated.NetAmtToDrawFc = 0;
+        } else {
+          updated.NetAmtToDrawFc = valueFc;
+          updated.NetAmtToDraw = valueFc * DocRate;
+          updated.NetAmtToDrawSc = updated.NetAmtToDraw / SysRate;
+        }
       }
 
-      if (r.parentId === newRow.id) {
-        const ratio = headerNetAmt / newRow.OpenNetAmt;
-        const childNet = ratio * r.OpenNetAmt;
-        const taxCalc = taxCalculation(childNet, 0, 0, 0, 0, r.TaxCode);
-        const tax = taxCalc?.VatSum ?? 0;
-        let Gross=parseFloat(childNet) + parseFloat(tax)
-        return {
-          ...r,
-          NetAmtToDraw: childNet,
-          TaxAmtToDraw: tax,
-          GrossAmtToDraw: Gross,
-          oTaxLines: taxCalc?.oTaxLines,
-        };
-      }
-      return r;
+      const taxCalc = taxCalculation(
+        updated.NetAmtToDraw,
+        0,
+        0,
+        0,
+        0,
+        newRow.TaxCode,
+      );
+
+      updated.TaxAmtToDraw = taxCalc?.VatSum ?? 0;
+      updated.TaxAmtToDrawSc = taxCalc?.VatSumSy ?? 0;
+      updated.TaxAmtToDrawFc = taxCalc?.VatSumFrgn ?? 0;
+      updated.GrossAmtToDraw =
+        Number(updated.NetAmtToDraw) + Number(updated.TaxAmtToDraw);
+      updated.GrossAmtToDrawSc =
+        Number(updated.NetAmtToDrawSc) + Number(updated.TaxAmtToDrawSc);
+      updated.GrossAmtToDrawFc =
+        Number(updated.NetAmtToDrawFc) + Number(updated.TaxAmtToDrawFc);
+
+      updated.oTaxLines = taxCalc?.oTaxLines || [];
+
+      return updated;
     });
 
-    const childs = updatedRows.filter((r) => r.parentId === newRow.id);
-    const totalNet = childs.reduce((s, r) => s + (+r.NetAmtToDraw || 0), 0);
-    const totalTax = childs.reduce((s, r) => s + (+r.TaxAmtToDraw || 0), 0);
-    const totalGross = childs.reduce((s, r) => s + (+r.GrossAmtToDraw || 0), 0);
+    const parentId = newRow.parentId;
+    const childs = updatedRows.filter((r) => r.parentId === parentId);
 
-    let updatedParentRow;
+    const totals = childs.reduce(
+      (acc, r) => {
+        acc.NetAmtToDraw += num(r.NetAmtToDraw);
+        acc.NetAmtToDrawSc += num(r.NetAmtToDrawSc);
+        acc.NetAmtToDrawFc += num(r.NetAmtToDrawFc);
 
-    updatedRows = updatedRows.map((r) => {
-      if (r.id === newRow.id) {
-        updatedParentRow = {
-          ...r,
-          NetAmtToDraw: totalNet,
-          TaxAmtToDraw: totalTax,
-          GrossAmtToDraw: totalGross,
-        };
-        return updatedParentRow;
-      }
-      return r;
-    });
+        acc.TaxAmtToDraw += num(r.TaxAmtToDraw);
+        acc.TaxAmtToDrawSc += num(r.TaxAmtToDrawSc);
+        acc.TaxAmtToDrawFc += num(r.TaxAmtToDrawFc);
+
+        acc.GrossAmtToDraw += num(r.GrossAmtToDraw);
+        acc.GrossAmtToDrawSc += num(r.GrossAmtToDawSc);
+        acc.GrossAmtToDrawFc += num(r.GrossAmtToDrrawFc);
+
+        return acc;
+      },
+      {
+        NetAmtToDraw: 0,
+        NetAmtToDrawSc: 0,
+        NetAmtToDrawFc: 0,
+        TaxAmtToDraw: 0,
+        TaxAmtToDrawSc: 0,
+        TaxAmtToDrawFc: 0,
+        GrossAmtToDraw: 0,
+        GrossAmtToDrawSc: 0,
+        GrossAmtToDrawFc: 0,
+      },
+    );
+
+    updatedRows = updatedRows.map((r) =>
+      r.id === parentId ? { ...r, ...totals } : r,
+    );
 
     setDownPaymentRows(updatedRows);
-    return updatedParentRow; // 🔥 CRITICAL FIX
-  }
-
-  // ================= CHILD EDIT =================
-  const value = parseFloat(newRow.NetAmtToDraw || 0);
-  if (value > parseFloat(oldRow.OpenNetAmt)) {
-    return oldRow;
-  }
-
-  const taxCalc = taxCalculation(value, 0, 0, 0, 0, newRow.TaxCode);
-  const tax = taxCalc?.VatSum ?? 0;
-
-  updatedRows = updatedRows.map((r) =>
-    r.id === newRow.id
-      ? {
-          ...r,
-          NetAmtToDraw: value,
-          TaxAmtToDraw: tax,
-          GrossAmtToDraw: parseFloat(value) + parseFloat(tax),
-          oTaxLines: taxCalc?.oTaxLines,
-        }
-      : r
-  );
-
-  const parentId = newRow.parentId;
-  const childs = updatedRows.filter((r) => r.parentId === parentId);
-
-  const totalNet = childs.reduce((s, r) => s + (+r.NetAmtToDraw || 0), 0);
-  const totalTax = childs.reduce((s, r) => s + (+r.TaxAmtToDraw || 0), 0);
-  const totalGross = childs.reduce((s, r) => s + (+r.GrossAmtToDraw || 0), 0);
-
-  updatedRows = updatedRows.map((r) =>
-    r.id === parentId
-      ? {
-          ...r,
-          NetAmtToDraw: totalNet,
-          TaxAmtToDraw: totalTax,
-          GrossAmtToDraw: totalGross,
-        }
-      : r
-  );
-
-  setDownPaymentRows(updatedRows);
-  return {
-    ...newRow,
-    TaxAmtToDraw: tax,
-    GrossAmtToDraw: parseFloat(value) + parseFloat(tax),
+    return updatedRows.find((r) => r.id === newRow.id);
   };
-};
 
+  console.log("dsfdsfdsfDonwPayment", DownPaymentRows);
   const getChildrenRecursively = (parentId) => {
     const children = DownPaymentRows.filter((row) => row.parentId === parentId);
     let allChildren = [...children];
@@ -1719,20 +1953,20 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
       BaseLine: Downheader.LineNum || "0",
       BaseDocNum: Downheader.DocNum,
       BsCardName: Downheader.CardName,
-      DrawnSum: Downheader.NetAmtToDraw,
-      DrawnSumFc:Downheader.NetAmtToDrawFc,
-      DrawnSumSc: Downheader.NetAmtToDrawSc,
+      DrawnSum: String(Downheader.NetAmtToDraw),
+      DrawnSumFc: String(Downheader.NetAmtToDrawFc),
+      DrawnSumSc: String(Downheader.NetAmtToDrawSc),
       ApplDrawn: "0",
       ApplDrawnF: "0",
       ApplDrawnS: "0",
-      Vat: Downheader.TaxAmtToDraw,
+      Vat: String(Downheader.TaxAmtToDraw),
       // Vat: Downheader.VatSum,
-      VatFc: Downheader.TaxAmtToDrawFc,
-      VatSc: Downheader.TaxAmtToDrawSc,
-      Gross: Downheader.GrossAmtToDraw || "0",
-      GrossFc:  Downheader.GrossAmtToDrawFc || "0",
+      VatFc: String(Downheader.TaxAmtToDrawFc),
+      VatSc: String(Downheader.TaxAmtToDrawSc),
+      Gross: String(Downheader.GrossAmtToDraw || "0"),
+      GrossFc: String(Downheader.GrossAmtToDrawFc || "0"),
       BaseAbs: "0",
-      GrossSc:   Downheader.GrossAmtToDrawSc || "0",
+      GrossSc: String(Downheader.GrossAmtToDrawSc || "0"),
       oDPTaxLines: Downheader.oDPMLines.map((childDown) => ({
         LineNum: "",
         DocEntry: "",
@@ -1744,34 +1978,35 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
         Status: "1",
         LineSeq: "0",
         BaseType: "204",
+        BaseLine: childDown.LineNum || "0",
         VatPrcnt: childDown.VatPrcnt || "0",
-        LineTotal: childDown.NetAmtToDraw,
-        TotalFrgn: childDown.NetAmtToDrawFc,
-        TotalSumSy: childDown.NetAmtToDrawSc,
-        VatSum: childDown.TaxAmtToDraw,
+        LineTotal: String(childDown.NetAmtToDraw),
+        TotalFrgn: String(childDown.NetAmtToDrawFc),
+        TotalSumSy: String(childDown.NetAmtToDrawSc),
+        VatSum: String(childDown.TaxAmtToDraw),
         // VatSum: childDown.VatSum,
-        VatSumFrgn: childDown.TaxAmtToDrawFc,
-        VatSumSys: childDown.TaxAmtToDrawSc,
-        Gross: childDown.GrossAmtToDraw,
-        GrossFc:  childDown.GrossAmtToDrawFc,
-        GrossSc:  childDown.GrossAmtToDrawSc,
-        BaseNet: childDown.NetAmtToDraw,
-        BaseNetFc:childDown.NetAmtToDrawFc,
-        BaseNetSc: childDown.NetAmtToDrawSc,
-        BaseVat: childDown.TaxAmtToDraw,
+        VatSumFrgn: String(childDown.TaxAmtToDrawFc),
+        VatSumSys: String(childDown.TaxAmtToDrawSc),
+        Gross: String(childDown.GrossAmtToDraw),
+        GrossFc: String(childDown.GrossAmtToDrawFc),
+        GrossSc: String(childDown.GrossAmtToDrawSc),
+        BaseNet: String(childDown.NetAmtToDraw),
+        BaseNetFc: String(childDown.NetAmtToDrawFc),
+        BaseNetSc: String(childDown.NetAmtToDrawSc),
+        BaseVat: String(childDown.TaxAmtToDraw),
         // BaseVat: childDown.VatSum,
-        BaseVatFc:childDown.TaxAmtToDrawFc,
-        BaseVatSc: childDown.TaxAmtToDrawSc,
-        BaseGross: childDown.GrossAmtToDraw,
-        BaseGrossF: childDown.GrossAmtToDrawFc,
-        BaseGrossS: childDown.GrossAmtToDrawSc,
-        DctSum: childDown.TaxAmtToDraw,
-        DctSumFc:childDown.GrossAmtToDrawFc,
-        DctSumSc: childDown.GrossAmtToDrawSc,
+        BaseVatFc: String(childDown.TaxAmtToDrawFc),
+        BaseVatSc: String(childDown.TaxAmtToDrawSc),
+        BaseGross: String(childDown.GrossAmtToDraw),
+        BaseGrossF: String(childDown.GrossAmtToDrawFc),
+        BaseGrossS: String(childDown.GrossAmtToDrawSc),
+        DctSum: String(childDown.TaxAmtToDraw),
+        DctSumFc: String(childDown.GrossAmtToDrawFc),
+        DctSumSc: String(childDown.GrossAmtToDrawSc),
         BaseDct: childDown.TaxAmtToDraw,
         // BaseDct: childDown.VatSum,
         BaseDctFc: childDown.TaxAmtToDrawFc,
-        BaseDctSc:childDown.TaxAmtToDrawSc,
+        BaseDctSc: childDown.TaxAmtToDrawSc,
         TaxCode: childDown.TaxCode,
         RelateEntry: "0",
         BaseAbs: childDown.DocEntry,
@@ -1801,9 +2036,9 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
           VatAppldSC: taxItem.VatAppldSC || "0",
           LineSeq: taxItem.LineSeq || "1",
           DeferrAcct: taxItem.DeferrAcct || "0",
-          BaseType: taxItem.BaseType || "1",
-          BaseAbs: taxItem.BaseAbs || "1",
-          BaseSeq: taxItem.BaseSeq || "1",
+          BaseType: taxItem.BaseType || "-1",
+          BaseAbs: taxItem.BaseAbs || "-1",
+          BaseSeq: taxItem.BaseSeq || "-1",
           DeductTax: taxItem.DeductTax || "0",
           DdctTaxFrg: taxItem.DdctTaxFrg || "0",
           DdctTaxSys: taxItem.DdctTaxSys || "0",
@@ -1816,6 +2051,8 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
         })),
       })),
     }));
+    console.log("transformed", transformed);
+    console.log("oDPLines", oDPLines);
     const updatedData = {
       ...allFormData,
       oDPLines: [...allFormData.oDPLines, ...oDPLines],
@@ -1823,7 +2060,7 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
     reset(updatedData);
     const sumField = (field) =>
       oDPLines.reduce(
-        (sum, current) => sum + (parseFloat(current?.[field]) || 0),
+        (sum, current) => sum + (Number(current?.[field]) || 0),
         0,
       );
     const fieldsToCalculate = [
@@ -2130,9 +2367,10 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
   };
 
   useEffect(() => {
-         if(searchmodelOpen===true){
-    fetchGetListData(0); 
-     }
+    if (searchmodelOpen === true) {
+      fetchGetListData(0);
+      setGetListQuery("");
+    }
   }, [searchmodelOpen]);
 
   const companyAddresss = useCallback(() => {
@@ -2166,7 +2404,8 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
     const { data: dataBP } = await apiClient.get(`/BPV2/V2/${DocEntry}`);
     const { values } = dataBP;
     setBusinessPartnerData(values);
-
+    dispatchRedux(clearAllCache());
+    dispatchRedux(fetchExchangeRateStore(docDate));
     SearchModelClose();
     let selectedAddress =
       (values?.oLines || []).find(
@@ -2180,7 +2419,9 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
       selectedAddress.State,
       selectedAddress.Zipcode,
       selectedAddress.Country,
-    ].filter(v => v?.trim()).join(", ");
+    ]
+      .filter((v) => v?.trim())
+      .join(", ");
     setValue("DfltAddress", DfltAddress || "");
     setValue("BlockB", selectedAddress.Address1);
     setValue("StreetB", selectedAddress.Address2);
@@ -2309,7 +2550,9 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
       selectedAddress.State,
       selectedAddress.Zipcode,
       selectedAddress.Country,
-    ].filter(v => v?.trim()).join(", ");
+    ]
+      .filter((v) => v?.trim())
+      .join(", ");
     setValue("DfltAddress", DfltAddress || "");
     setValue("BlockB", selectedAddress.BlockB);
     setValue("StreetB", selectedAddress.Address2);
@@ -2337,7 +2580,9 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
       data.StateB,
       data.ZipCodeB,
       data.CountryB,
-    ].filter(v => v?.trim()).join(", ");
+    ]
+      .filter((v) => v?.trim())
+      .join(", ");
     setValue("DfltAddress", DfltAddress || "");
     setValue("BlockB", data.BlockB);
     setValue("StreetB", data.StreetB);
@@ -2443,21 +2688,21 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
   //   setGetListPageCopyFrom((prev) => prev + 1);
   // };
 
-  const baseType = watch("baseType")
-    const {
-      data: getListPOData,
-      hasMore: hasMorePOList,
-      query: getListqueryCopyFrom,
-      onSearch: handleGetListSearchCopyFrom,
-      onClear: handleGetListClearCopyFrom,
-      fetchMore: fetchMoreGetListCopyFrom,
-    } = useCopyFromList({
-      BasePoint:"/APInvoice",
-      open: openDialog,
-      CardCode,
-      baseType,
-      type,
-    });
+  const baseType = watch("baseType");
+  const {
+    data: getListPOData,
+    hasMore: hasMorePOList,
+    query: getListqueryCopyFrom,
+    onSearch: handleGetListSearchCopyFrom,
+    onClear: handleGetListClearCopyFrom,
+    fetchMore: fetchMoreGetListCopyFrom,
+  } = useCopyFromList({
+    BasePoint: "/APInvoice",
+    open: openDialog,
+    CardCode,
+    baseType,
+    type,
+  });
   //#endregion Copy Form Logic Code
 
   // ======================WHSCode Logic=============================
@@ -2708,14 +2953,14 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
   const handleDeleteRow = (id) => {
     const updatedLines = getValues("oLines").filter((_, index) => index !== id);
     setok("UPDATE");
-    const updatedData = {
-      ...getValues(),
-      oLines: updatedLines,
-    };
-    // Reset the form with the updated data
-    reset(updatedData);
+    setValue("oLines", updatedLines, {
+      shouldDirty: true,
+      shouldValidate: false,
+    });
 
-    calculateDiscountAmt(parseFloat(getValues("Discount")) || 0);
+    if (discPercent > 0) {
+      calculateDiscountAmt(discPercent);
+    }
   };
 
   const handleDeleteFrieght = (id) => {
@@ -3142,11 +3387,11 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
         );
         if (curSource === "C") {
           if (isMainCurrency) {
-            LineTotal = priceLineRatio * (parseFloat(newPrice) || 0);
+            LineTotal = priceLineRatio * CalcLines.LineTotal;
             TotalSumSy = LineTotal / SysRate;
             TotalFrgn = 0;
           } else {
-            TotalFrgn = priceLineRatio * (parseFloat(newPrice) || 0);
+            TotalFrgn = priceLineRatio * CalcLines.TotalFrgn;
             TotalSumSy = TotalFrgn / SysRate;
             LineTotal = TotalFrgn * DocRate;
           }
@@ -5306,47 +5551,10 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
   };
 
   // 1️⃣ Find Rate by Currency
-  const findRate = (data, curr) => {
-    return parseFloat(data.find((ex) => ex.Currency === curr)?.Rate) || 0;
-  };
-
-  // 2️⃣ Validate Rate & Show Modal
-  const validateRate = (rate, modalName, docEntry = "", message) => {
-    if (rate <= 0) {
-      if (docEntry) setValue("DocEntryCur", docEntry);
-      dispatch({ type: "OPEN", modal: modalName });
-
-      Swal.fire({
-        title: "Rate Not Found",
-        text: `No ${message} exchange rate available for the selected currency/date.`,
-        icon: "warning",
-        confirmButtonText: "Ok",
-      });
-    }
-  };
-  // 3️⃣ Check Line-wise Zero Rate for oLines
-  const checkLineZeroRate = (data) => {
-    const currencySet = new Set(oLines.map((x) => x.Currency));
-    const recordRateWise = data
-      .filter((ex) => currencySet.has(ex.Currency))
-      .map((ex) => ({
-        RateDate: docDate,
-        Currency: ex.Currency,
-        DocEntry: ex.DocEntry,
-        Rate: ex.Rate ?? "0",
-      }));
-    const hasZeroRate = recordRateWise.some((x) => String(x.Rate) === "0");
-    if (hasZeroRate) {
-      dispatch({ type: "OPEN", modal: "exchaneRateLineCpyform" });
-      setAllDataCopyRateLine(recordRateWise);
-      Swal.fire({
-        title: "Rate Not Found",
-        text: "No rate available for some line-level currency.",
-        icon: "warning",
-        confirmButtonText: "Ok",
-      });
-    }
-  };
+  const findRate = (data, curr) =>
+    companyData?.MainCurncy === curr
+      ? 1
+      : parseFloat(data?.find((ex) => ex.Currency === curr)?.Rate) || 0;
 
   const onSubmitLineCurrency = (data) => {
     // If lines already exist → open purchase modal
@@ -5354,7 +5562,7 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
       handleOpenPurchase("NEW", data);
       return;
     }
-  
+
     // READ complete current form (header + lines)
     const allFormData = getValues();
 
@@ -5493,59 +5701,10 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
         });
       }
       // if (DocRateLine > 0) {
-      const UpdatedLines = updatedLines.map((item) => {
-        let LineTotal = item.LineTotal || 0;
-        let TotalSumSy = item.TotalSumSy || 0;
-        let TotalFrgn = item.TotalFrgn || 0;
-        let Price = type === "S" ? item.Price : item.Price * item.Quantity;
-        switch (curSource) {
-          case "L":
-            LineTotal = Price * DocRateLine;
-            TotalFrgn = LineTotal / DocRate;
-            TotalSumSy = LineTotal / SysRate;
-            break;
-          case "S":
-            LineTotal = Price * DocRateLine;
-            TotalSumSy = ValueFormatter(LineTotal / SysRate, 3);
-            TotalFrgn = LineTotal / DocRate;
-            break;
-          case "C":
-            if (currency === companyData.MainCurncy) {
-              LineTotal = Price * DocRateLine;
-              TotalFrgn = LineTotal / DocRate;
-              TotalSumSy = LineTotal / SysRate;
-            } else {
-              if (type === "S") {
-                TotalFrgn =
-                  currency === item.Currency
-                    ? ValueFormatter(Price)
-                    : ValueFormatter(item.LineTotal / DocRate);
-                LineTotal = ValueFormatter(TotalFrgn * DocRate);
-                TotalSumSy = ValueFormatter(LineTotal / SysRate);
-              } else {
-                const latestDocRate = getValues("DocRate");
-                LineTotal = ValueFormatter(Price * DocRateLine);
-                TotalFrgn =
-                  currency === item.Currency
-                    ? ValueFormatter(Price)
-                    : ValueFormatter(LineTotal / latestDocRate);
-                TotalSumSy =
-                  currency === companyData.SysCurrncy
-                    ? ValueFormatter(LineTotal / latestDocRate)
-                    : ValueFormatter(LineTotal / SysRate);
-              }
-            }
-            break;
-          default:
-        }
-        return {
-          ...item,
-          LineTotal,
-          TotalSumSy,
-          TotalFrgn,
-          Rate: DocRateLine,
-        };
-      });
+      const UpdatedLines = updatedLines.map((item) => ({
+        ...item,
+        Rate: findRate(records, item.Currency),
+      }));
       setValue("oLines", UpdatedLines);
       console.log("oLines", UpdatedLines);
       const WHSCode = UpdatedLines?.[0]?.WHSCode ?? "";
@@ -5558,7 +5717,9 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
           warehouse.State,
           warehouse.ZipCode,
           warehouse.Country,
-        ].filter(v => v?.trim()).join(", ");
+        ]
+          .filter((v) => v?.trim())
+          .join(", ");
         setValue("CompnyAddr", CompnyAddr);
         setValue("BlockS", warehouse.Block ?? "");
         setValue("StreetS", warehouse.Street ?? "");
@@ -5580,9 +5741,14 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
 
       // ✅ Discount recalculation
       const discountValue = parseFloat(currentData.Discount) || 0;
-      if (Array.isArray(UpdatedLines) && UpdatedLines.length > 0) {
+      if (
+        Array.isArray(UpdatedLines) &&
+        UpdatedLines.length > 0 &&
+        Number(discountValue) > 0
+      ) {
         calculateDiscountAmt(discountValue);
       }
+      CalculateRate();
 
       closeModel();
       // }
@@ -5898,6 +6064,8 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
             BinCode: BinCode,
             DftBinAbs: DftBinAbs,
             BinActivat,
+            Bin: 0,
+            oDocBinLocationLines: [],
             AcctCode: line.GLMethod === "W" ? BalInvntAc : line.AcctCode,
             LocationName,
             // Clear tax codes when shouldClearTax is true
@@ -5963,6 +6131,8 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
             BinCode: BinCode,
             BinActivat,
             DftBinAbs: DftBinAbs,
+            Bin: 0,
+            oDocBinLocationLines: [],
             AcctCode: line.GLMethod === "W" ? BalInvntAc : line.AcctCode,
 
             LocationName,
@@ -6033,7 +6203,9 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
       newWareAddress.State ?? "",
       newWareAddress.ZipCode ?? "",
       newWareAddress.Country ?? "",
-    ].filter(v => v?.trim()).join(", ");
+    ]
+      .filter((v) => v?.trim())
+      .join(", ");
 
     const newCompanAddress = allFormData.oTaxExtLines.map((add) => ({
       ...add,
@@ -6068,26 +6240,50 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
         const oBaseNum = line.UOMFactor;
         const oInvNumPerMsr = ValueFormatter(oBaseNum / newnum, 6);
         const InvQty = ValueFormatter(oInvNumPerMsr * line.Quantity, 6);
-        let newQuantity =
-          line.BaseType > 1 ? originalQuantity / oInvNumPerMsr : line.Quantity;
-        const newLineTotal = newQuantity * line.Price;
-        let oTaxLine = line.oTaxLines;
-        let VatPrcnt = line.VatPrcnt;
-        let VatSum = line.VatSum;
         if (line.BaseType > 1) {
-          const taxLines = taxCalculation(
-            newLineTotal,
-            line.AssblValue,
-            getValues("DocTotal"),
-            line.PriceBefDi,
-            line.Quantity,
-            line.TaxCode,
+          let newQuantity = originalQuantity / oInvNumPerMsr;
+          const isMainCurrency = currency === companyData.MainCurncy;
+          const CalcLines = CalCulation(
+            newQuantity,
+            line.Price,
+            line.Discount,
+            line.Rate,
           );
-          oTaxLine = taxLines.oTaxLines;
-          VatPrcnt = taxLines.VatPrcnt;
-          VatSum = ValueFormatter(
-            taxLines.oTaxLines.reduce((sum, curr) => sum + curr.TaxSum, 0),
-          );
+          if (curSource === "C") {
+            if (isMainCurrency) {
+              line.LineTotal = line.Rate * CalcLines.LineTotal;
+              line.TotalSumSy = line.LineTotal / SysRate;
+              line.TotalFrgn = 0;
+            } else {
+              line.TotalFrgn = line.Rate * CalcLines.TotalFrgn;
+              line.TotalSumSy = line.TotalFrgn / SysRate;
+              line.LineTotal = line.TotalFrgn * DocRate;
+            }
+          } else {
+            line.LineTotal = line.LineTotal || 0;
+            line.TotalSumSy = line.TotalSumSy || 0;
+            line.TotalFrgn = line.TotalFrgn || 0;
+          }
+          if (line.TaxCode > 0) {
+            const taxLines = taxCalculation(
+              line.LineTotal,
+              line.AssblValue,
+              getValues("DocTotal"),
+              line.PriceBefDi,
+              line.Quantity,
+              line.TaxCode,
+            );
+            line.Quantity = newQuantity;
+            line.OpenQuantity = newQuantity;
+            line.oTaxLines = taxLines.oTaxLines;
+            line.VatPrcnt = taxLines.VatPrcnt;
+            line.VatSum = taxLines.VatSum;
+            line.VatSumSy = taxLines.VatSumSy;
+            line.VatSumFrgn = taxLines.VatSumFrgn;
+            line.PriceAfVAT = ValueFormatter(
+              line.Price + line.Price * (line.VatPrcnt / 100),
+            );
+          }
         }
         return {
           ...line,
@@ -6097,14 +6293,9 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
           NumPerMsr: oInvNumPerMsr,
           InvQty: InvQty,
           OpenInvQty: InvQty,
-          Quantity: newQuantity,
-          OpenQuantity: originalRow?.OpenQuantity ?? newQuantity,
           // PriceBefDi: newPriceBefDi.toFixed(3),
           // Price: Price.toFixed(3),
-          LineTotal: newLineTotal.toFixed(3),
           // Discount: "",
-          oTaxLines: oTaxLine,
-          VatPrcnt: VatPrcnt,
           VatSum: VatSum,
           // PriceAfVAT: priceWithVAT,
         };
@@ -6113,16 +6304,14 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
     });
 
     // Reset form with updated lines
-    reset({
-      ...allFormData,
-      oLines: updatedLines,
-      // AssblValue: getValues("AssblValue"),
-      // NumAtCard: getValues("NumAtCard"),
-      // Comments: getValues("Comments"),
-      // DiscountAmt: getValues("DiscountAmt"),
+    setValue("oLines", updatedLines, {
+      shouldDirty: true,
+      shouldValidate: false,
     });
-    console.log("upmcode inv", updatedLines);
-    calculateDiscountAmt(discPercent);
+
+    if (discPercent > 0) {
+      calculateDiscountAmt(discPercent);
+    }
 
     setUomcodeOpen(false);
   };
@@ -6443,7 +6632,6 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
     if (!DocRate || DocRate <= 0) return;
     const isSysCurrency = currency === companyData.SysCurrncy;
     const allFormData = getValues();
-
     let updatedData = { ...allFormData };
     if (isSysCurrency) {
       updatedData.SysRate = DocRate;
@@ -7238,7 +7426,7 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
         updatedData.LineTotal =
           companyData.MainCurncy === updatedData.Currency
             ? CalcLines.LineTotal
-            : CalcLines.LineTotal * updatedData.Rate;
+            : CalcLines.TotalFrgn * updatedData.Rate;
 
         updatedData.TotalFrgn =
           currency === updatedData.Currency
@@ -7328,45 +7516,48 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
       i === oldRow.id ? updatedData : d,
     );
 
-    reset({ ...allFormData, oLines: updatedLines });
-    calculateDiscountAmt(discPercent);
+    // reset({ ...allFormData, oLines: updatedLines });
+    setValue("oLines", updatedLines, {
+      shouldDirty: true,
+      shouldValidate: false,
+    });
+    // reset({ ...allFormData, oLines: updatedLines });
+    if (discPercent > 0) {
+      calculateDiscountAmt(discPercent);
+    }
 
     return updatedData;
   };
-  const oLines = getValues("oLines") || []; // Ensure it's an array
-  console.log("dsfdsfdsf", oLines);
-  // const oExpLines = getValues("oExpLines") || []; // Ensure it's an array
-  const { TotalBefDisc, totalBefDiscSy, totalBefDiscFrgn, TotalVatSumSy } =
-    useMemo(() => {
-      let TotalBefDisc = 0;
-      let totalBefDiscSy = 0;
-      let totalBefDiscFrgn = 0;
-      let TotalVatSumSy = 0;
-      oLines.forEach((line) => {
-        TotalBefDisc += parseFloat(line?.LineTotal) || 0;
-        totalBefDiscSy += parseFloat(line?.TotalSumSy) || 0;
-        totalBefDiscFrgn += parseFloat(line?.TotalFrgn) || 0;
-        TotalVatSumSy += parseFloat(line?.VatSumSy) || 0;
-      });
+  const oLines = watch("oLines") || []; // Ensure it's an array
+  const totals = useMemo(() => {
+    return oLines.reduce(
+      (acc, line) => {
+        acc.TotalBefDisc += Number(line?.LineTotal) || 0;
+        acc.totalBefDiscSy += Number(line?.TotalSumSy) || 0;
+        acc.totalBefDiscFrgn += Number(line?.TotalFrgn) || 0;
+        return acc;
+      },
+      {
+        TotalBefDisc: 0,
+        totalBefDiscSy: 0,
+        totalBefDiscFrgn: 0,
+      },
+    );
+  }, [oLines]);
 
-      return { TotalBefDisc, totalBefDiscSy, totalBefDiscFrgn, TotalVatSumSy };
-    }, [oLines]);
-
-  console.log("", allFormData.oLines);
   useEffect(() => {
-    setValue("TotalBefDisc", ValueFormatter(TotalBefDisc));
-    setValue("TotalBefDiscSy", ValueFormatter(totalBefDiscSy));
-    setValue("TotalBefDiscFrgn", ValueFormatter(totalBefDiscFrgn));
-    console.log("dfdsf", TotalVatSumSy);
-    const Discount = getValues("Discount");
-    calculateDiscountAmt(Discount);
+    setValue("TotalBefDisc", ValueFormatter(totals.TotalBefDisc));
+    setValue("TotalBefDiscSy", ValueFormatter(totals.totalBefDiscSy));
+    setValue("TotalBefDiscFrgn", ValueFormatter(totals.totalBefDiscFrgn));
+    if (discPercent > 0) {
+      calculateDiscountAmt(discPercent);
+    }
   }, [
-    calculateDiscountAmt,
-    TotalBefDisc,
-    totalBefDiscSy,
-    GroupNum,
-    totalBefDiscFrgn,
-    setValue,
+    totals.TotalBefDisc,
+    totals.totalBefDiscSy,
+    totals.totalBefDiscFrgn,
+    currency,
+    docDate,
   ]);
 
   //! Local Currency Calculation
@@ -7383,7 +7574,7 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
   const DiscountAmt = parseFloat(getValues("DiscountAmt")) || 0;
   const DpmAmnt = parseFloat(getValues("DpmAmnt") || 0);
   const DocTotal =
-    TotalBefDisc -
+    totals.TotalBefDisc -
     DpmAmnt -
     DiscountAmt +
     TotalExpns +
@@ -7407,7 +7598,7 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
   const DiscSumSy = parseFloat(getValues("DiscSumSy")) || 0;
   const DpmAmntSC = parseFloat(getValues("DpmAmntSC") || 0);
   const DocTotalSy =
-    totalBefDiscSy -
+    totals.totalBefDiscSy -
     DpmAmntSC -
     DiscSumSy +
     TotalExpSC +
@@ -7431,7 +7622,7 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
   let TotalExpFC = parseFloat(getValues("TotalExpFC")) || 0;
   const DpmAmntFC = parseFloat(getValues("DpmAmntFC") || 0);
   const DocTotalFC =
-    totalBefDiscFrgn -
+    totals.totalBefDiscFrgn -
     DpmAmntFC -
     DiscSumFC +
     TotalExpFC +
@@ -7473,73 +7664,72 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
   };
   // ===================PUsh Serial &  Batch end=====================
 
-   const validateAllLines = (lines) => {
-      const errors = [];
-      const errorIds = [];
-  
-      lines.forEach((line, index) => {
-        const lineNo = index + 1;
-        const rowId = line.id ?? index;
-  
-        // 🔴 BIN VALIDATION
-        if (line.BinActivat === "Y" && line.BaseType!=="20") {
-          const binLines = line.oDocBinLocationLines || [];
-          const totalBinQty = binLines.reduce(
-            (sum, b) => sum + Number(b.Quantity || 0),
-            0,
+  const validateAllLines = (lines) => {
+    const errors = [];
+    const errorIds = [];
+
+    lines.forEach((line, index) => {
+      const lineNo = index + 1;
+      const rowId = line.id ?? index;
+
+      // 🔴 BIN VALIDATION
+      if (line.BinActivat === "Y" && line.BaseType !== "20") {
+        const binLines = line.oDocBinLocationLines || [];
+        const totalBinQty = binLines.reduce(
+          (sum, b) => sum + Number(b.Quantity || 0),
+          0,
+        );
+
+        if (binLines.length === 0 || totalBinQty !== Number(line.Quantity)) {
+          errors.push(
+            `Line ${lineNo}: ${line.ItemCode} - ${line.ItemName} (Bin Qty mismatch)`,
           );
-  
-          if (binLines.length === 0 || totalBinQty !== Number(line.Quantity)) {
-            errors.push(
-              `Line ${lineNo}: ${line.ItemCode} - ${line.ItemName} (Bin Qty mismatch)`,
-            );
-            errorIds.push(rowId);
-          }
+          errorIds.push(rowId);
         }
-  
-       
-        if (line.ManBtchNum === "Y" && line.ManSerNum === "N") {
-          const batchLines = line.oBatchLines || [];
-          const totalBatchQty = batchLines.reduce(
-            (sum, b) => sum + Number(b.BatchQty || 0),
-            0,
+      }
+
+      if (line.ManBtchNum === "Y" && line.ManSerNum === "N") {
+        const batchLines = line.oBatchLines || [];
+        const totalBatchQty = batchLines.reduce(
+          (sum, b) => sum + Number(b.BatchQty || 0),
+          0,
+        );
+
+        if (totalBatchQty !== Number(line.InvQty || 0)) {
+          errors.push(
+            `Line ${lineNo}: ${line.ItemCode} - ${
+              line.ItemName
+            } (Batch Qty ${TwoFormatter(totalBatchQty)} ≠ Qty ${TwoFormatter(
+              line.InvQty,
+            )})`,
           );
-  
-          if (totalBatchQty !== Number(line.InvQty || 0)) {
-            errors.push(
-              `Line ${lineNo}: ${line.ItemCode} - ${
-                line.ItemName
-              } (Batch Qty ${TwoFormatter(totalBatchQty)} ≠ Qty ${TwoFormatter(
-                line.InvQty,
-              )})`,
-            );
-            errorIds.push(rowId);
-          }
+          errorIds.push(rowId);
         }
-  
-        // 🔴 SERIAL VALIDATION
-        if (line.ManBtchNum === "N" && line.ManSerNum === "Y") {
-          const serialLines = line.oSerialLines || [];
-  
-          if (serialLines.length !== Number(line.InvQty || 0)) {
-            errors.push(
-              `Line ${lineNo}: ${line.ItemCode} - ${
-                line.ItemName
-              } (Serial Count ${serialLines.length} ≠ Qty ${TwoFormatter(
-                line.InvQty,
-              )})`,
-            );
-            errorIds.push(rowId);
-          }
+      }
+
+      // 🔴 SERIAL VALIDATION
+      if (line.ManBtchNum === "N" && line.ManSerNum === "Y") {
+        const serialLines = line.oSerialLines || [];
+
+        if (serialLines.length !== Number(line.InvQty || 0)) {
+          errors.push(
+            `Line ${lineNo}: ${line.ItemCode} - ${
+              line.ItemName
+            } (Serial Count ${serialLines.length} ≠ Qty ${TwoFormatter(
+              line.InvQty,
+            )})`,
+          );
+          errorIds.push(rowId);
         }
-      });
-  
-      return {
-        isValid: errors.length === 0,
-        errors,
-        errorIds: [...new Set(errorIds)], // remove duplicates
-      };
+      }
+    });
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+      errorIds: [...new Set(errorIds)], // remove duplicates
     };
+  };
   //#region Post Api
   const handleSubmitForm = async (data) => {
     const isValid = ValidationSubmitForm(data, type, warehouseData, getValues);
@@ -7579,29 +7769,29 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
     //     return false;
     //   }
     // }
-      if (SaveUpdateName === "SAVE") {
-          const { isValid, errors, errorIds } = validateAllLines(data.oLines);
-    
-          if (!isValid) {
-            // setErrorLineIds(errorIds);
-    
-            setTimeout(() => {
-              apiRef.current?.scrollToIndexes({
-                rowIndex: errorIds[0],
-              });
-              apiRef.current?.setCellFocus(errorIds[0], "ItemCode");
-            }, 100);
-    
-            Swal.fire({
-              icon: "warning",
-              title: "Document Validation Error",
-              html: errors.join("<br/>"),
-              confirmButtonText: "OK",
-            });
-    
-            return false; // ⛔ STOP SAVE
-          }
-        }
+    if (SaveUpdateName === "SAVE") {
+      const { isValid, errors, errorIds } = validateAllLines(data.oLines);
+
+      if (!isValid) {
+        // setErrorLineIds(errorIds);
+
+        setTimeout(() => {
+          apiRef.current?.scrollToIndexes({
+            rowIndex: errorIds[0],
+          });
+          apiRef.current?.setCellFocus(errorIds[0], "ItemCode");
+        }, 100);
+
+        Swal.fire({
+          icon: "warning",
+          title: "Document Validation Error",
+          html: errors.join("<br/>"),
+          confirmButtonText: "OK",
+        });
+
+        return false; // ⛔ STOP SAVE
+      }
+    }
     console.log(isValid);
     if (!isValid) return;
 
@@ -7734,18 +7924,18 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
       BnkCntry: data.BnkCntry || "0",
       DpmDrawn: data.DpmDrawn || "0",
       DpmPrcnt: data.DpmPrcnt || "0",
-      DpmVatFc: data.DpmVatFc || "0",
-      DpmVatSc: data.DpmVatSc || "0",
+      DpmVatFc: String(data.DpmVatFc || "0"),
+      DpmVatSc: String(data.DpmVatSc || "0"),
       FolioNum: data.FolioNum || "0",
       PaidDpmF: data.PaidDpmF || "0",
       PaidDpmS: data.PaidDpmS || "0",
       VatSumSy: data.VatSumSy || "0",
       BnkBranch: data.BnkBranch || "0",
       DiscSumFC: data.DiscSumFC || "0",
-      DiscSumSy: data.DiscSumSy || "0",
-      DpmAmntFC: data.DpmAmntFC || "0",
-      DpmAmntSC: data.DpmAmntSC || "0",
-      DpmApplFc: data.DpmApplFc || "0",
+      DiscSumSy: String(data.DiscSumSy || "0"),
+      DpmAmntFC: String(data.DpmAmntFC || "0"),
+      DpmAmntSC: String(data.DpmAmntSC || "0"),
+      DpmApplFc: String(data.DpmApplFc || "0"),
       DpmApplSc: data.DpmApplSc || "0",
       DpmAppVat: data.DpmAppVat || "0",
       DpmStatus: data.DpmStatus || "0",
@@ -7812,7 +8002,7 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
         StockSumFc:
           getValues("Currency") === companyData.MainCurncy
             ? "0"
-            : String(item.StockSumFc || ""),
+            : String(item.StockSumFc || "0"),
         OnHand: item.OnHand || "0",
         IsCommited: item.IsCommited || "0",
         OnOrder: item.OnOrder || "0",
@@ -8033,13 +8223,13 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
         // CreatedDate: dayjs(undefined).format("YYYY-MM-DD HH:mm:ss"),
         // ModifiedDate:dayjs(undefined).format("YYYY-MM-DD HH:mm:ss"),
         Status: "1",
-        ExpnsCode: item.DocEntry,
+        ExpnsCode: String(item.DocEntry),
         ModifiedBy: user.UserName,
         LineTotal: String(item.LineTotal),
         TaxCode: String(item.TaxCode || "0"),
         VatSum: String(item.VatSum),
         GrsAmount: String(item.GrsAmount),
-        ExpnsName: String(item.ExpnsCode),
+        ExpnsName: String(item.ExpnsCode || "0"),
         GrsFC:
           getValues("Currency") === companyData.MainCurncy
             ? "0"
@@ -8120,6 +8310,10 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
         ModifiedBy: user.UserName,
         ModifiedDate: dayjs(undefined).format("YYYY-MM-DD"),
         Gross: String(odownpayment.Gross),
+        DrawnSum: String(odownpayment.DrawnSum),
+        DrawnSumFc: String(odownpayment.DrawnSumFc),
+        DrawnSumSc: String(odownpayment.DrawnSumSc),
+
         oDPTaxLines: (odownpayment.oDPTaxLines || []).map((oDPTax) => ({
           ...oDPTax,
           ApplDctFc: String(odownpayment.ApplDctFc || "0"),
@@ -8137,13 +8331,13 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
       })),
     };
     console.log(obj);
- setapiloading(true);
+    setapiloading(true);
 
     if (SaveUpdateName === "SAVE") {
       apiClient
         .post(`/APInvoice`, obj)
         .then((res) => {
-          if (res.data.success===true) {
+          if (res.data.success === true) {
             ClearForm();
             setOpenListData([]);
             fetchOpenListData(0);
@@ -8159,14 +8353,14 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
             if (attachmentDocEntry > "0") {
               apiClient.delete(`/Attachment/${attachmentDocEntry}`);
             }
-              Swal.fire({
-                title: "Error!",
-                text: res.data.message,
-                icon: "error",
-                confirmButtonText: "Ok",
-                // timer: 1000,
-              });
-            }
+            Swal.fire({
+              title: "Error!",
+              text: res.data.message,
+              icon: "error",
+              confirmButtonText: "Ok",
+              // timer: 1000,
+            });
+          }
         })
         .catch((error) => {
           if (attachmentDocEntry > "0") {
@@ -8180,7 +8374,7 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
             confirmButtonText: "Ok",
           });
         })
-         .finally(() => {
+        .finally(() => {
           setapiloading(false);
         });
     } else if (attachmentDocEntry > "0") {
@@ -8228,9 +8422,10 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
                 icon: "warning",
                 confirmButtonText: "Ok",
               });
-            }).finally(() => {
-          setapiloading(false);
-        });
+            })
+            .finally(() => {
+              setapiloading(false);
+            });
         } else {
           Swal.fire({
             text: "Attachment Purchase Invoice Not Updated",
@@ -8976,7 +9171,6 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
         calculateDiscountAmt(LineDiscount);
         setValue("Comments", CopyformData.Comments);
         setValue("SlpCode", CopyformData.SlpCode);
-
         setValue("PayToCode", CopyformData.PayToCode);
         setValue("ShipType", CopyformData.TrnspCode);
         setValue("Currency", CopyformData?.DocCur ?? "");
@@ -9075,6 +9269,13 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
     setSelectionDownpaymentModel([]);
     // setGetListPageCopyFrom([]);
     // setHasMorePOList(true);
+    if (openListquery?.trim()) {
+      handleOpenListClear();
+    } else if (closedListquery?.trim()) {
+      handleClosedListClear();
+    } else if (cancelledListquery?.trim()) {
+      handleCancelListClear();
+    }
     setSelectData([]);
     setoExpLines([]);
     companyAddresss();
@@ -9678,7 +9879,7 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
                   disableRowSelectionOnClick // 🔥 IMPORTANT
                   rowSelectionModel={selectionDownpaymentModel}
                   onRowSelectionModelChange={handleDownPaymentCheckboxChange}
-                  isRowSelectable={(params) => !params.row.parentId} // ✅ checkbox only for parents
+                  isRowSelectable={(params) => !params.row.parentId}
                   groupingColDef={{ headerName: "Group" }}
                   defaultGroupingExpansionDepth={1}
                   getRowClassName={(params) => {
@@ -9693,24 +9894,25 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
                     }
                     return className;
                   }}
-                 
-     pagination
-  paginationMode="server"
-  rowCount={rowCount}
-  pageSizeOptions={[20, 50, 100]}
-  paginationModel={paginationModel}
-  onPaginationModelChange={setPaginationModel} 
-      slots={{ toolbar: GridToolbar }}
-  slotProps={{
-    toolbar: {
-      showQuickFilter: true,
-      quickFilterProps: { debounceMs: 500 },
-    },
-  }}
-  onFilterModelChange={(model) => {
-    const quickFilterValue = (model.quickFilterValues || []).join(" ");
-    setSearchText(quickFilterValue);
-  }}
+                  pagination
+                  paginationMode="server"
+                  rowCount={rowCount}
+                  pageSizeOptions={[20, 50, 100]}
+                  paginationModel={paginationModel}
+                  onPaginationModelChange={setPaginationModel}
+                  slots={{ toolbar: GridToolbar }}
+                  slotProps={{
+                    toolbar: {
+                      showQuickFilter: true,
+                      quickFilterProps: { debounceMs: 500 },
+                    },
+                  }}
+                  onFilterModelChange={(model) => {
+                    const quickFilterValue = (
+                      model.quickFilterValues || []
+                    ).join(" ");
+                    setSearchText(quickFilterValue);
+                  }}
                   sx={(theme) => ({
                     // "& .child-selected": {
                     //   backgroundColor:
@@ -9723,8 +9925,6 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
                       visibility: "hidden",
                     },
                   })}
-
-
                 />
 
                 {/* <DataGridPremium
@@ -9756,7 +9956,6 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
     setSearchText(quickFilterValue);
   }}
 /> */}
-
               </Paper>
             </Grid>
 
@@ -10080,7 +10279,7 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
                       { key: "20", value: "Goods Receipt PO" },
                     ]}
                     onChange={(e) => {
-                      // field.onChange(e); 
+                      // field.onChange(e);
                       setCheckedItems({});
                       // handleGetListClearCopyFrom();
                       // // fetchCopyFromData(0, "", type);
@@ -11391,13 +11590,12 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
                                   multiline
                                   label="SHIP TO"
                                   readOnly={true}
-                                                                   onKeyDown={(e) => {
-                                  
-        if (e.key === "Enter") {    
-          e.preventDefault();  
-          DialogOpenCompany();
-        }
-      }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                      e.preventDefault();
+                                      DialogOpenCompany();
+                                    }
+                                  }}
                                   type="text"
                                   {...field}
                                   error={!!error}
@@ -11487,13 +11685,12 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
                                   {...field}
                                   readOnly={true}
                                   error={!!error}
-                                                                     onKeyDown={(e) => {
-                                  
-        if (e.key === "Enter") {
-          e.preventDefault();  
-          DialogOpenPayto();
-        }
-      }}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") {
+                                      e.preventDefault();
+                                      DialogOpenPayto();
+                                    }
+                                  }}
                                   helperText={error ? error.message : null}
                                   InputProps={{
                                     endAdornment: (
@@ -11889,12 +12086,12 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
                         label="TOTAL BEF DISC"
                         value={
                           curSource === "L"
-                            ? ValueFormatter(TotalBefDisc)
+                            ? ValueFormatter(totals.TotalBefDisc)
                             : curSource === "S"
-                              ? ValueFormatter(totalBefDiscSy)
+                              ? ValueFormatter(totals.totalBefDiscSy)
                               : getValues("Currency") === companyData.MainCurncy
-                                ? ValueFormatter(TotalBefDisc)
-                                : ValueFormatter(totalBefDiscFrgn)
+                                ? ValueFormatter(totals.TotalBefDisc)
+                                : ValueFormatter(totals.totalBefDiscFrgn)
                         }
                       />
                     </Grid>
@@ -12010,6 +12207,12 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
                           endAdornment: (
                             <InputAdornment position="end">
                               <IconButton
+                                disabled={
+                                  !allFormData.CardCode ||
+                                  allFormData.Status === "Closed" ||
+                                  allFormData.Status === "Cancelled" ||
+                                  oLines.length === 0
+                                }
                                 onClick={handleDownPay}
                                 size="small"
                                 style={{
@@ -12019,7 +12222,9 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
                                   padding: 2,
                                 }}
                               >
-                                <ViewListIcon />
+                                <ViewListIcon
+                                  disabled={allFormData.CardCode === ""}
+                                />
                               </IconButton>
                             </InputAdornment>
                           ),
@@ -12289,7 +12494,7 @@ const processRowUpdateDownPayment = (newRow, oldRow) => {
               </Grid>
               <Grid item>
                 <PrintMenu
-                  disabled={ SaveUpdateName === "SAVE"}
+                  disabled={SaveUpdateName === "SAVE"}
                   type={type}
                   DocEntry={DocEntry}
                   PrintData={PrintData}
