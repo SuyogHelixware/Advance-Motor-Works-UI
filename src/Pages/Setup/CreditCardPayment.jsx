@@ -92,7 +92,7 @@ export default function CreditCardPayment() {
         setHasMoreOpen(newData.length === 20);
 
         setOpenListData((prev) =>
-          pageNum === 0 ? newData : [...prev, ...newData]
+          pageNum === 0 ? newData : [...prev, ...newData],
         );
       }
     } catch (error) {
@@ -139,9 +139,7 @@ export default function CreditCardPayment() {
     setSaveUpdateName("UPDATE");
 
     try {
-      const { data } = await apiClient.get(
-        `/CreditCardPaymentS/${DocEntry}`
-      );
+      const { data } = await apiClient.get(`/CreditCardPaymentS/${DocEntry}`);
       const { values } = data;
       console.log(data);
       // reset(values);
@@ -168,7 +166,7 @@ export default function CreditCardPayment() {
         setHasMoreClosed(false);
 
         setClosedListData((prev) =>
-          pageNum === 0 ? newData : [...prev, ...newData]
+          pageNum === 0 ? newData : [...prev, ...newData],
         );
       }
     } catch (error) {
@@ -201,7 +199,7 @@ export default function CreditCardPayment() {
   const fetchMoreClosedListData = () => {
     fetchClosedListData(
       closedListPage + 1,
-      closedListSearching ? closedListquery : ""
+      closedListSearching ? closedListquery : "",
     );
     setClosedListPage((prev) => prev + 1);
   };

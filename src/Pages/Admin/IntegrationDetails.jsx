@@ -12,7 +12,7 @@ import {
 import { DataGrid } from "@mui/x-data-grid";
 import {
   InputSelectTextField,
-  InputTextSearchField
+  InputTextSearchField,
 } from "../Components/formComponents";
 
 const columns = [
@@ -98,8 +98,6 @@ const rows = [
 
 export default function IntegrationDetails() {
   const theme = useTheme();
-
-
 
   return (
     <>

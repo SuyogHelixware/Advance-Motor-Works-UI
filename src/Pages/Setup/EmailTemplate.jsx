@@ -2154,7 +2154,7 @@ export default function EmailTemplate() {
                             sx={{ mb: 1, MT: 1, alignSelf: "flex-start" }}
                             onClick={() => setAppliedParams(draftParams)}
                           >
-                           Preview
+                            Preview
                           </Button>
 
                           <Divider sx={{ mb: 1 }} />
@@ -2236,11 +2236,11 @@ export default function EmailTemplate() {
                 alignItems: "center",
                 position: "sticky",
                 bottom: 0,
-                background: theme.palette.mode === "light" ? "#fff" : "#080D2B",
+                // background: theme.palette.mode === "light" ? "#fff" : "#080D2B",
 
                 // py: 2,
-                borderTop: "1px solid #e0e0e0",
-                boxShadow: "0 -2px 4px rgba(0,0,0,0.1)",
+                // borderTop: "1px solid #e0e0e0",
+                // boxShadow: "0 -2px 4px rgba(0,0,0,0.1)",
               }}
             >
               <Box sx={{ display: "flex", gap: 2 }}>

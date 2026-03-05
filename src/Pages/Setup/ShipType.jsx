@@ -60,7 +60,7 @@ export default function ShipType() {
   const removeEmojis = (str) =>
     str.replace(
       /([\u2700-\u27BF]|[\uE000-\uF8FF]|[\uD83C-\uDBFF\uDC00-\uDFFF]+|[\u2011-\u26FF]|[\uFE00-\uFE0F])/g,
-      ""
+      "",
     );
   // ===============Main list handlesearch====================================
 
@@ -100,52 +100,52 @@ export default function ShipType() {
     setOpenListPage((prev) => prev + 1);
   };
   const fetchOpenListData = async (pageNum = 0, searchTerm = "") => {
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const url = searchTerm
-      ? `/ShippingType/Search/${searchTerm}/1/${pageNum}/20`
-      : `/ShippingType/Pages/1/${pageNum}/20`;
+      const url = searchTerm
+        ? `/ShippingType/Search/${searchTerm}/1/${pageNum}/20`
+        : `/ShippingType/Pages/1/${pageNum}/20`;
 
-    const response = await apiClient.get(url);
-    const { success, values, message } = response.data || {};
+      const response = await apiClient.get(url);
+      const { success, values, message } = response.data || {};
 
-    if (success) {
-      const newData = Array.isArray(values) ? values : [];
+      if (success) {
+        const newData = Array.isArray(values) ? values : [];
 
-      setHasMoreOpen(newData.length === 20);
-      setOpenListData((prev) =>
-        pageNum === 0 ? newData : [...prev, ...newData]
-      );
-    } else {
+        setHasMoreOpen(newData.length === 20);
+        setOpenListData((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+      } else {
+        await Swal.fire({
+          title: "Error!",
+          text: message || "Failed to fetch Shipping Type data.",
+          icon: "warning",
+          confirmButtonText: "Ok",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching Shipping Type data:", error);
+
       await Swal.fire({
         title: "Error!",
-        text: message || "Failed to fetch Shipping Type data.",
-        icon: "warning",
+        text:
+          error.response?.data?.message ||
+          "Something went wrong while fetching Shipping Type data.",
+        icon: "error",
         confirmButtonText: "Ok",
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching Shipping Type data:", error);
-
-    await Swal.fire({
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        "Something went wrong while fetching Shipping Type data.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   useEffect(
     () => {
       fetchOpenListData(0);
     }, // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [],
   );
   // ===============API for Setting specific Cards data====================================
   const setOldOpenData = async (DocEntry, CardCode, CntctCode) => {
@@ -182,45 +182,44 @@ export default function ShipType() {
       });
     }
   };
- const setShippingTypeDataList = async (DocEntry) => {
-  if (!DocEntry) return;
+  const setShippingTypeDataList = async (DocEntry) => {
+    if (!DocEntry) return;
 
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const response = await apiClient.get(`/ShippingType/${DocEntry}`);
-    const { success, values, message } = response.data || {};
+      const response = await apiClient.get(`/ShippingType/${DocEntry}`);
+      const { success, values, message } = response.data || {};
 
-    if (success && values) {
-      toggleDrawer();
-      reset(values);
-      setSaveUpdateName("UPDATE");
-      setDocEntry(DocEntry);
-      setSelectedData(DocEntry);
-    } else {
+      if (success && values) {
+        toggleDrawer();
+        reset(values);
+        setSaveUpdateName("UPDATE");
+        setDocEntry(DocEntry);
+        setSelectedData(DocEntry);
+      } else {
+        await Swal.fire({
+          title: "Error!",
+          text: message || "Failed to fetch Shipping Type details.",
+          icon: "warning",
+          confirmButtonText: "Ok",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching Shipping Type data:", error);
+
       await Swal.fire({
         title: "Error!",
-        text: message || "Failed to fetch Shipping Type details.",
-        icon: "warning",
+        text:
+          error.response?.data?.message ||
+          "An error occurred while fetching the Shipping Type data.",
+        icon: "error",
         confirmButtonText: "Ok",
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching Shipping Type data:", error);
-
-    await Swal.fire({
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        "An error occurred while fetching the Shipping Type data.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   // ==============useForm====================================
   const { control, handleSubmit, reset, watch } = useForm({
@@ -284,7 +283,7 @@ export default function ShipType() {
           setLoading(true);
           const response = await apiClient.put(
             `/ShippingType/${DocEntry}`,
-            obj
+            obj,
           );
           const { success, message } = response.data;
 
@@ -333,66 +332,65 @@ export default function ShipType() {
   };
   // ===============Delete API ===================================
   const handleOnDelete = async () => {
-  try {
-    const result = await Swal.fire({
-      text: "Do You Want to Delete?",
-      icon: "question",
-      confirmButtonText: "YES",
-      cancelButtonText: "No",
-      showConfirmButton: true,
-      showDenyButton: true,
-    });
-
-    if (!result.isConfirmed) {
-      await Swal.fire({
-        text: "Shipping Type is Not Deleted",
-        icon: "info",
-        confirmButtonText: "Ok",
+    try {
+      const result = await Swal.fire({
+        text: "Do You Want to Delete?",
+        icon: "question",
+        confirmButtonText: "YES",
+        cancelButtonText: "No",
+        showConfirmButton: true,
+        showDenyButton: true,
       });
-      return;
-    }
 
-    setLoading(true);
+      if (!result.isConfirmed) {
+        await Swal.fire({
+          text: "Shipping Type is Not Deleted",
+          icon: "info",
+          confirmButtonText: "Ok",
+        });
+        return;
+      }
 
-    const response = await apiClient.delete(`/ShippingType/${DocEntry}`);
-    const { success, message } = response.data || {};
+      setLoading(true);
 
-    if (success) {
-      clearFormData();
-      setOpenListPage(0);
-      setOpenListData([]);
-      fetchOpenListData(0);
+      const response = await apiClient.delete(`/ShippingType/${DocEntry}`);
+      const { success, message } = response.data || {};
 
-      await Swal.fire({
-        text: "Shipping Type Deleted",
-        icon: "success",
-        confirmButtonText: "Ok",
-        timer: 1500,
-      });
-    } else {
+      if (success) {
+        clearFormData();
+        setOpenListPage(0);
+        setOpenListData([]);
+        fetchOpenListData(0);
+
+        await Swal.fire({
+          text: "Shipping Type Deleted",
+          icon: "success",
+          confirmButtonText: "Ok",
+          timer: 1500,
+        });
+      } else {
+        await Swal.fire({
+          title: "Error!",
+          text: message || "Shipping Type not deleted.",
+          icon: "warning",
+          confirmButtonText: "Ok",
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting Shipping Type:", error);
+
       await Swal.fire({
         title: "Error!",
-        text: message || "Shipping Type not deleted.",
-        icon: "warning",
+        text:
+          error.response?.data?.message ||
+          "An error occurred while deleting the Shipping Type.",
+        icon: "error",
         confirmButtonText: "Ok",
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error deleting Shipping Type:", error);
-
-    await Swal.fire({
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        "An error occurred while deleting the Shipping Type.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const sidebarContent = (
     <>

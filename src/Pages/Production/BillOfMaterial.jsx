@@ -81,27 +81,27 @@ const modelColumns = [
     width: 120,
     editable: false,
   },
-   {
-      field: "OnHand",
-      headerName: "IN STOCK",
-      width: 100,
-      sortable: false,
-      renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
-    },
-    {
-      field: "IsCommited",
-      headerName: "RESERVE",
-      width: 100,
-      sortable: false,
-      renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
-    },
-    {
-      field: "OnOrder",
-      headerName: "ORDERED",
-      width: 100,
-      sortable: false,
-      renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
-    },
+  {
+    field: "OnHand",
+    headerName: "IN STOCK",
+    width: 100,
+    sortable: false,
+    renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
+  },
+  {
+    field: "IsCommited",
+    headerName: "RESERVE",
+    width: 100,
+    sortable: false,
+    renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
+  },
+  {
+    field: "OnOrder",
+    headerName: "ORDERED",
+    width: 100,
+    sortable: false,
+    renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
+  },
 ];
 const RoutestageColumn = [
   {
@@ -526,6 +526,9 @@ export default function BillOfMaterial() {
       ...initialFormData,
       oLines: [],
     });
+    if (openListquery?.trim()) {
+      handleOpenListClear();
+    }
     clearFiles();
     setValue("TreeType", "P");
     setSaveUpdateName("SAVE");
@@ -2120,7 +2123,7 @@ export default function BillOfMaterial() {
       editable: true,
       headerAlign: "center",
       align: "center",
-       renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
+      renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
     },
     {
       field: "AddQuantit",
@@ -2129,7 +2132,7 @@ export default function BillOfMaterial() {
       editable: true,
       headerAlign: "center",
       align: "center",
-       renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
+      renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
     },
     {
       field: "Uom",
@@ -2304,7 +2307,7 @@ export default function BillOfMaterial() {
       editable: true,
       headerAlign: "center",
       align: "center",
-       renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
+      renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
     },
     {
       field: "Total",
@@ -2315,7 +2318,7 @@ export default function BillOfMaterial() {
       editable: false,
       headerAlign: "center",
       align: "center",
-       renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
+      renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
     },
 
     {

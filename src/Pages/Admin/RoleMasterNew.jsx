@@ -92,91 +92,90 @@ export default function RoleMasterNew() {
     fetchOpenListData(openListPage + 1, openListSearching ? openListquery : "");
     setOpenListPage((prev) => prev + 1);
   };
- const fetchOpenListData = async (pageNum, searchTerm = "") => {
+  const fetchOpenListData = async (pageNum, searchTerm = "") => {
+    try {
+      const url = searchTerm
+        ? `/Role/Search/${searchTerm}/1/${pageNum}/20`
+        : `/Role/Pages/1/${pageNum}/20`;
 
-  try {
-    const url = searchTerm
-      ? `/Role/Search/${searchTerm}/1/${pageNum}`
-      : `/Role/Pages/1/${pageNum}`;
+      const response = await apiClient.get(url);
+      const { success, values = [], message } = response?.data || {};
 
-    const response = await apiClient.get(url);
-    const { success, values = [], message } = response?.data || {};
+      if (!success) {
+        Swal.fire({
+          text: message || "Failed to fetch records",
+          icon: "warning",
+          toast: true,
+          showConfirmButton: false,
+          timer: 2000,
+        });
+        return;
+      }
 
-    if (!success) {
+      setHasMoreOpen(values.length === 20);
+
+      setOpenListData((prev) =>
+        pageNum === 0 ? values : [...prev, ...values],
+      );
+    } catch (error) {
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Error fetching data";
+
+      console.error("Error fetching data:", error);
+
       Swal.fire({
-        text: message || "Failed to fetch records",
-        icon: "warning",
+        text: errorMessage,
+        icon: "error",
         toast: true,
         showConfirmButton: false,
         timer: 2000,
       });
-      return;
     }
-
-    setHasMoreOpen(values.length === 20);
-
-    setOpenListData((prev) =>
-      pageNum === 0 ? values : [...prev, ...values]
-    );
-  } catch (error) {
-    const errorMessage =
-      error?.response?.data?.message ||
-      error?.message ||
-      "Error fetching data";
-
-    console.error("Error fetching data:", error);
-
-    Swal.fire({
-      text: errorMessage,
-      icon: "error",
-      toast: true,
-      showConfirmButton: false,
-      timer: 2000,
-    });
-  } 
-};
+  };
 
   useEffect(() => {
     fetchOpenListData(0); // Load first page on mount
   }, []);
   // ===============API for Setting specific Cards data====================================
 
-const setDatalist = async (DocEntry) => {
-  if (!DocEntry) return;
+  const setDatalist = async (DocEntry) => {
+    if (!DocEntry) return;
 
-  setLoading(true);
+    setLoading(true);
 
-  try {
-    const response = await apiClient.get(`/Role/${DocEntry}`);
-    const data = response?.data?.values;
+    try {
+      const response = await apiClient.get(`/Role/${DocEntry}`);
+      const data = response?.data?.values;
 
-    if (!data) {
-      throw new Error("No data returned from server");
+      if (!data) {
+        throw new Error("No data returned from server");
+      }
+
+      toggleDrawer();
+      reset(data);
+      setSaveUpdateName("UPDATE");
+      setDocEntry(DocEntry);
+      setSelectedData(DocEntry);
+    } catch (error) {
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Something went wrong while fetching data";
+
+      console.error("Error fetching data:", error);
+
+      // Optional: user feedback
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: errorMessage,
+      });
+    } finally {
+      setLoading(false);
     }
-
-    toggleDrawer();
-    reset(data);
-    setSaveUpdateName("UPDATE");
-    setDocEntry(DocEntry);
-    setSelectedData(DocEntry);
-  } catch (error) {
-    const errorMessage =
-      error?.response?.data?.message ||
-      error?.message ||
-      "Something went wrong while fetching data";
-
-    console.error("Error fetching data:", error);
-
-    // Optional: user feedback
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: errorMessage,
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   // ==============useForm====================================
 
@@ -186,127 +185,108 @@ const setDatalist = async (DocEntry) => {
 
   // ===============PUT and POST API ===================================
 
- const handleSubmitForm = async (data) => {
-  const obj = {
-    DocEntry: String(data.DocEntry || ""),
-    UserId: "1",
-    CreatedBy: user?.UserName || "",
-    CreatedDate: dayjs().format("YYYY/MM/DD"),
-    ModifiedBy: user?.UserName || "",
-    ModifiedDate: dayjs().format("YYYY/MM/DD"),
-    Status: "1",
-    RoleName: String(data.RoleName || ""),
-    Remarks: String(data.Remarks || ""),
-  };
+  const handleSubmitForm = async (data) => {
+    const obj = {
+      DocEntry: String(data.DocEntry || ""),
+      UserId: "1",
+      CreatedBy: user?.UserName || "",
+      CreatedDate: dayjs().format("YYYY/MM/DD"),
+      ModifiedBy: user?.UserName || "",
+      ModifiedDate: dayjs().format("YYYY/MM/DD"),
+      Status: "1",
+      RoleName: String(data.RoleName || ""),
+      Remarks: String(data.Remarks || ""),
+    };
 
-  
-  try {
-    setLoading(true);
-    let response;
+    try {
+      setLoading(true);
+      let response;
 
-    if (SaveUpdateName === "SAVE") {
-      response = await apiClient.post(`/Role`, obj);
-    } else {
-      const result = await Swal.fire({
-        text: `Do You Want to Update "${data.RoleName}"`,
-        icon: "question",
-        showConfirmButton: true,
-        showDenyButton: true,
-        confirmButtonText: "YES",
-        cancelButtonText: "No",
-      });
+      if (SaveUpdateName === "SAVE") {
+        response = await apiClient.post(`/Role`, obj);
+      } else {
+        const result = await Swal.fire({
+          text: `Do You Want to Update "${data.RoleName}"`,
+          icon: "question",
+          showConfirmButton: true,
+          showDenyButton: true,
+          confirmButtonText: "YES",
+          cancelButtonText: "No",
+        });
 
-      if (!result.isConfirmed) {
+        if (!result.isConfirmed) {
+          Swal.fire({
+            text: "Role is not Updated!",
+            icon: "info",
+            toast: true,
+            showConfirmButton: false,
+            timer: 1500,
+          });
+          return;
+        }
+
+        response = await apiClient.put(`/Role/${DocEntry}`, obj);
+      }
+
+      const { success, message } = response?.data || {};
+
+      if (!success) {
         Swal.fire({
-          text: "Role is not Updated!",
-          icon: "info",
-          toast: true,
-          showConfirmButton: false,
-          timer: 1500,
+          title: "Error!",
+          text: message || "Operation failed",
+          icon: "warning",
+          confirmButtonText: "Ok",
         });
         return;
       }
 
-      response = await apiClient.put(`/Role/${DocEntry}`, obj);
-    }
+      // ✅ Common success handling
+      clearFormData();
+      setOpenListPage(0);
+      setOpenListData([]);
+      fetchOpenListData(0);
 
-    const { success, message } = response?.data || {};
+      Swal.fire({
+        title: "Success!",
+        text: SaveUpdateName === "SAVE" ? "Role Added" : "Role Updated",
+        icon: "success",
+        confirmButtonText: "Ok",
+        timer: 1000,
+      });
+    } catch (error) {
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "Something went wrong";
 
-    if (!success) {
+      console.error("Error:", error);
+
       Swal.fire({
         title: "Error!",
-        text: message || "Operation failed",
+        text: errorMessage,
         icon: "warning",
         confirmButtonText: "Ok",
       });
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    // ✅ Common success handling
-    clearFormData();
-    setOpenListPage(0);
-    setOpenListData([]);
-    fetchOpenListData(0);
-
-    Swal.fire({
-      title: "Success!",
-      text: SaveUpdateName === "SAVE" ? "Role Added" : "Role Updated",
-      icon: "success",
-      confirmButtonText: "Ok",
-      timer: 1000,
-    });
-  } catch (error) {
-    const errorMessage =
-      error?.response?.data?.message ||
-      error?.message ||
-      "Something went wrong";
-
-    console.error("Error:", error);
-
-    Swal.fire({
-      title: "Error!",
-      text: errorMessage,
-      icon: "warning",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   // ===============Delete API ===================================
 
- const handleOnDelete = async () => {
-  const result = await Swal.fire({
-    text: "Do You Want to Delete?",
-    icon: "question",
-    showConfirmButton: true,
-    showDenyButton: true,
-    confirmButtonText: "YES",
-    cancelButtonText: "No",
-  });
-
-  if (!result.isConfirmed) {
-    Swal.fire({
-      text: "Role is Not Deleted",
-      icon: "info",
-      toast: true,
-      showConfirmButton: false,
-      timer: 1500,
+  const handleOnDelete = async () => {
+    const result = await Swal.fire({
+      text: "Do You Want to Delete?",
+      icon: "question",
+      showConfirmButton: true,
+      showDenyButton: true,
+      confirmButtonText: "YES",
+      cancelButtonText: "No",
     });
-    return;
-  }
 
-  setLoading(true);
-
-  try {
-    const response = await apiClient.delete(`/Role/${DocEntry}`);
-    const { success, message } = response?.data || {};
-
-    if (!success) {
+    if (!result.isConfirmed) {
       Swal.fire({
-        text: message || "Delete failed",
+        text: "Role is Not Deleted",
         icon: "info",
         toast: true,
         showConfirmButton: false,
@@ -315,39 +295,55 @@ const setDatalist = async (DocEntry) => {
       return;
     }
 
-    // ✅ Common success handling
-    clearFormData();
-    setOpenListPage(0);
-    setOpenListData([]);
-    fetchOpenListData(0);
+    setLoading(true);
 
-    Swal.fire({
-      text: "Role Deleted",
-      icon: "success",
-      toast: true,
-      showConfirmButton: false,
-      timer: 1000,
-    });
-  } catch (error) {
-    const errorMessage =
-      error?.response?.data?.message ||
-      error?.message ||
-      "An error occurred while deleting the role";
+    try {
+      const response = await apiClient.delete(`/Role/${DocEntry}`);
+      const { success, message } = response?.data || {};
 
-    console.error("Error deleting role:", error);
+      if (!success) {
+        Swal.fire({
+          text: message || "Delete failed",
+          icon: "info",
+          toast: true,
+          showConfirmButton: false,
+          timer: 1500,
+        });
+        return;
+      }
 
-    Swal.fire({
-      text: errorMessage,
-      icon: "error",
-      toast: true,
-      showConfirmButton: false,
-      timer: 1500,
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+      // ✅ Common success handling
+      clearFormData();
+      setOpenListPage(0);
+      setOpenListData([]);
+      fetchOpenListData(0);
 
+      Swal.fire({
+        text: "Role Deleted",
+        icon: "success",
+        toast: true,
+        showConfirmButton: false,
+        timer: 1000,
+      });
+    } catch (error) {
+      const errorMessage =
+        error?.response?.data?.message ||
+        error?.message ||
+        "An error occurred while deleting the role";
+
+      console.error("Error deleting role:", error);
+
+      Swal.fire({
+        text: errorMessage,
+        icon: "error",
+        toast: true,
+        showConfirmButton: false,
+        timer: 1500,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const sidebarContent = (
     <>

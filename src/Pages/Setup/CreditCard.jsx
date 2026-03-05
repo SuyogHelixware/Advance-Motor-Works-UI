@@ -81,7 +81,7 @@ export default function CreditCard() {
   const removeEmojis = (str) =>
     str.replace(
       /([\u2700-\u27BF]|[\uE000-\uF8FF]|[\uD83C-\uDBFF\uDC00-\uDFFF]+|[\u2011-\u26FF]|[\uFE00-\uFE0F])/g,
-      ""
+      "",
     );
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
   const handleTabChangeRight = (e, newvalue1) => settab(newvalue1);
@@ -162,7 +162,7 @@ export default function CreditCard() {
   // };
   const handleRowSelection = (params) => {
     const selectedAccount = LCAcctRows.find(
-      (row) => row.DocEntry === params.id
+      (row) => row.DocEntry === params.id,
     );
 
     if (selectedAccount) {
@@ -174,7 +174,6 @@ export default function CreditCard() {
   };
 
   const fetchInitialLCAccts = async ({ page = 0, limit = 20, search = "" }) => {
-    
     try {
       setLoading(true);
       const params = new URLSearchParams();
@@ -211,16 +210,16 @@ export default function CreditCard() {
         });
       }
     } catch (error) {
-       Swal.fire({
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.response?.data?.error ||
-        error?.message ||
-        "Failed to fetch G/L Account data.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
+      Swal.fire({
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          error?.response?.data?.error ||
+          error?.message ||
+          "Failed to fetch G/L Account data.",
+        icon: "error",
+        confirmButtonText: "Ok",
+      });
     } finally {
       setLoading(false);
     }
@@ -232,7 +231,7 @@ export default function CreditCard() {
         setCurrentPage(model.page);
       }
     },
-    [currentPage]
+    [currentPage],
   );
   const handleSearchChange = useCallback((searchText) => {
     setSearchText(searchText);
@@ -275,7 +274,7 @@ export default function CreditCard() {
         setHasMoreOpen(newData.length === 20);
 
         setOpenListData((prev) =>
-          pageNum === 0 ? newData : [...prev, ...newData]
+          pageNum === 0 ? newData : [...prev, ...newData],
         );
       }
     } catch (error) {
@@ -368,18 +367,17 @@ export default function CreditCard() {
       //     // Email: item.Email,
       // });
     } catch (error) {
-        Swal.fire({
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.response?.data?.error ||
-        error?.message ||
-        "Failed to set Credit Card data.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-    }
-    finally{
+      Swal.fire({
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          error?.response?.data?.error ||
+          error?.message ||
+          "Failed to set Credit Card data.",
+        icon: "error",
+        confirmButtonText: "Ok",
+      });
+    } finally {
       setLoading(false);
     }
   };
@@ -399,7 +397,7 @@ export default function CreditCard() {
         setHasMoreClosed(newData.length === 20);
 
         setClosedListData((prev) =>
-          pageNum === 0 ? newData : [...prev, ...newData]
+          pageNum === 0 ? newData : [...prev, ...newData],
         );
       }
     } catch (error) {
@@ -429,7 +427,7 @@ export default function CreditCard() {
   const fetchMoreClosedListData = () => {
     fetchClosedListData(
       closedListPage + 1,
-      closedListSearching ? closedListquery : ""
+      closedListSearching ? closedListquery : "",
     );
     setClosedListPage((prev) => prev + 1);
   };
@@ -467,53 +465,122 @@ export default function CreditCard() {
   // };
 
   //====================================post and put api binding=========================
- const onsubmit = async (data) => {
-  const StatusValue = watch("Status");
+  const onsubmit = async (data) => {
+    const StatusValue = watch("Status");
 
-  const crecard = {
-    UserId: user.UserId,
-    CreatedBy: user.UserName,
-    CreatedDate: dayjs().format("YYYY/MM/DD"),
-    ModifiedBy: user.UserName,
-    ModifiedDate: dayjs().format("YYYY/MM/DD"),
-    DocEntry: data.DocEntry || "",
-    CreditCard: data.CreditCard,
-    CardName: data.CardName,
-    AcctCode: data.AcctCode,
-    Phone: data.Phone,
-    Status: StatusValue === "1" ? "1" : "0",
-  };
+    const crecard = {
+      UserId: user.UserId,
+      CreatedBy: user.UserName,
+      CreatedDate: dayjs().format("YYYY/MM/DD"),
+      ModifiedBy: user.UserName,
+      ModifiedDate: dayjs().format("YYYY/MM/DD"),
+      DocEntry: data.DocEntry || "",
+      CreditCard: data.CreditCard,
+      CardName: data.CardName,
+      AcctCode: data.AcctCode,
+      Phone: data.Phone,
+      Status: StatusValue === "1" ? "1" : "0",
+    };
 
-  const normalizeString = (str) =>
-    str.replace(/\s+/g, "").toLowerCase();
+    const normalizeString = (str) => str.replace(/\s+/g, "").toLowerCase();
 
-  // ================= SAVE =================
-  if (SaveUpdateName === "SAVE") {
-    if (Array.isArray(openListData)) {
-      const isExisting = openListData.some(
-        (item) =>
-          normalizeString(item.CardName) ===
-          normalizeString(data.CardName)
-      );
+    // ================= SAVE =================
+    if (SaveUpdateName === "SAVE") {
+      if (Array.isArray(openListData)) {
+        const isExisting = openListData.some(
+          (item) =>
+            normalizeString(item.CardName) === normalizeString(data.CardName),
+        );
 
-      if (isExisting) {
-        Swal.fire({
-          text: "Credit Card Name Already Exist!",
-          icon: "info",
-          confirmButtonText: "Ok",
-        });
+        if (isExisting) {
+          Swal.fire({
+            text: "Credit Card Name Already Exist!",
+            icon: "info",
+            confirmButtonText: "Ok",
+          });
+          return;
+        }
+      } else {
         return;
       }
-    } else {
+
+      try {
+        setLoading(true);
+
+        const response = await apiClient.post(`/CreditCardSetup`, crecard);
+
+        if (response.data?.success) {
+          ClearForm();
+
+          setOpenListPage(0);
+          setOpenListData([]);
+          fetchOpenListData(0);
+
+          setClosedListPage(0);
+          setClosedListData([]);
+          fetchClosedListData(0);
+
+          Swal.fire({
+            title: "Success!",
+            text: "Credit Card Successfully Added",
+            icon: "success",
+            confirmButtonText: "Ok",
+            timer: 1000,
+          });
+        } else {
+          Swal.fire({
+            title: "Error!",
+            text: response.data?.message || "Save failed",
+            icon: "warning",
+            confirmButtonText: "Ok",
+          });
+        }
+      } catch (error) {
+        console.error("Credit card save error:", error);
+
+        Swal.fire({
+          title: "Error!",
+          text:
+            error?.response?.data?.message ||
+            error?.message ||
+            "Something went wrong while saving credit card.",
+          icon: "error",
+          confirmButtonText: "Ok",
+        });
+      } finally {
+        setLoading(false);
+      }
+
+      return;
+    }
+
+    // ================= UPDATE =================
+    const confirm = await Swal.fire({
+      text: `Do You Want to Update "${crecard.CardName}"`,
+      icon: "question",
+      confirmButtonText: "YES",
+      cancelButtonText: "No",
+      showConfirmButton: true,
+      showCancelButton: true,
+    });
+
+    if (!confirm.isConfirmed) {
+      Swal.fire({
+        text: "Credit Card Not Updated",
+        icon: "info",
+        toast: true,
+        showConfirmButton: false,
+        timer: 1500,
+      });
       return;
     }
 
     try {
       setLoading(true);
 
-      const response = await apiClient.post(
-        `/CreditCardSetup`,
-        crecard
+      const response = await apiClient.put(
+        `/CreditCardSetup/${data.DocEntry}`,
+        crecard,
       );
 
       if (response.data?.success) {
@@ -529,7 +596,7 @@ export default function CreditCard() {
 
         Swal.fire({
           title: "Success!",
-          text: "Credit Card Successfully Added",
+          text: "Credit Card is Updated",
           icon: "success",
           confirmButtonText: "Ok",
           timer: 1000,
@@ -537,173 +604,97 @@ export default function CreditCard() {
       } else {
         Swal.fire({
           title: "Error!",
-          text: response.data?.message || "Save failed",
+          text: response.data?.message || "Update failed",
           icon: "warning",
           confirmButtonText: "Ok",
         });
       }
     } catch (error) {
-      console.error("Credit card save error:", error);
+      console.error("Credit card update error:", error);
 
       Swal.fire({
         title: "Error!",
         text:
           error?.response?.data?.message ||
           error?.message ||
-          "Something went wrong while saving credit card.",
+          "Something went wrong while updating credit card.",
         icon: "error",
         confirmButtonText: "Ok",
       });
     } finally {
       setLoading(false);
     }
-
-    return;
-  }
-
-  // ================= UPDATE =================
-  const confirm = await Swal.fire({
-    text: `Do You Want to Update "${crecard.CardName}"`,
-    icon: "question",
-    confirmButtonText: "YES",
-    cancelButtonText: "No",
-    showConfirmButton: true,
-    showCancelButton: true,
-  });
-
-  if (!confirm.isConfirmed) {
-    Swal.fire({
-      text: "Credit Card Not Updated",
-      icon: "info",
-      toast: true,
-      showConfirmButton: false,
-      timer: 1500,
-    });
-    return;
-  }
-
-  try {
-    setLoading(true);
-
-    const response = await apiClient.put(
-      `/CreditCardSetup/${data.DocEntry}`,
-      crecard
-    );
-
-    if (response.data?.success) {
-      ClearForm();
-
-      setOpenListPage(0);
-      setOpenListData([]);
-      fetchOpenListData(0);
-
-      setClosedListPage(0);
-      setClosedListData([]);
-      fetchClosedListData(0);
-
-      Swal.fire({
-        title: "Success!",
-        text: "Credit Card is Updated",
-        icon: "success",
-        confirmButtonText: "Ok",
-        timer: 1000,
-      });
-    } else {
-      Swal.fire({
-        title: "Error!",
-        text: response.data?.message || "Update failed",
-        icon: "warning",
-        confirmButtonText: "Ok",
-      });
-    }
-  } catch (error) {
-    console.error("Credit card update error:", error);
-
-    Swal.fire({
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong while updating credit card.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   //==========================================delete api===============================
-const handleOnDelete = async () => {
-  const result = await Swal.fire({
-    text: `Do you want to delete "${allformdata.CardName}"`,
-    icon: "question",
-    confirmButtonText: "YES",
-    cancelButtonText: "No",
-    showConfirmButton: true,
-    showCancelButton: true,
-  });
-
-  if (!result.isConfirmed) {
-    Swal.fire({
-      text: "Credit Card not Deleted",
-      icon: "info",
-      toast: true,
-      showConfirmButton: false,
-      timer: 1500,
+  const handleOnDelete = async () => {
+    const result = await Swal.fire({
+      text: `Do you want to delete "${allformdata.CardName}"`,
+      icon: "question",
+      confirmButtonText: "YES",
+      cancelButtonText: "No",
+      showConfirmButton: true,
+      showCancelButton: true,
     });
-    return;
-  }
 
-  try {
-    setLoading(true);
-
-    const resp = await apiClient.delete(
-      `/CreditCardSetup/${allformdata.DocEntry}`
-    );
-
-    if (resp.data?.success) {
-      ClearForm();
-      setOpenListPage(0);
-      setOpenListData([]);
-      fetchOpenListData(0);
-
+    if (!result.isConfirmed) {
       Swal.fire({
-        text: "Credit Card Deleted",
-        icon: "success",
-        toast: true,
-        showConfirmButton: false,
-        timer: 1000,
-      });
-    } else {
-      // ✅ business error (200 but success=false)
-      Swal.fire({
-        title: "Info",
-        text: resp.data?.message || "Delete failed",
+        text: "Credit Card not Deleted",
         icon: "info",
         toast: true,
         showConfirmButton: false,
         timer: 1500,
       });
+      return;
     }
-  } catch (error) {
-    console.error("Credit card delete error:", error);
 
-    Swal.fire({
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong while deleting credit card.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+    try {
+      setLoading(true);
 
+      const resp = await apiClient.delete(
+        `/CreditCardSetup/${allformdata.DocEntry}`,
+      );
+
+      if (resp.data?.success) {
+        ClearForm();
+        setOpenListPage(0);
+        setOpenListData([]);
+        fetchOpenListData(0);
+
+        Swal.fire({
+          text: "Credit Card Deleted",
+          icon: "success",
+          toast: true,
+          showConfirmButton: false,
+          timer: 1000,
+        });
+      } else {
+        // ✅ business error (200 but success=false)
+        Swal.fire({
+          title: "Info",
+          text: resp.data?.message || "Delete failed",
+          icon: "info",
+          toast: true,
+          showConfirmButton: false,
+          timer: 1500,
+        });
+      }
+    } catch (error) {
+      console.error("Credit card delete error:", error);
+
+      Swal.fire({
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong while deleting credit card.",
+        icon: "error",
+        confirmButtonText: "Ok",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const sidebarContent = (
     <>
@@ -904,8 +895,8 @@ const handleOnDelete = async () => {
 
   return (
     <>
-          {loading && <Loader open={loading} />}
-    
+      {loading && <Loader open={loading} />}
+
       <Grid
         container
         width="100%"

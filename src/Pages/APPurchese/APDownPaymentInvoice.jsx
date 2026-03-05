@@ -61,7 +61,10 @@ import { useItemServiceList } from "../../Hooks/useItemServiceList";
 import DynamicLoader from "../../Loaders/DynamicLoader";
 import useAuth from "../../Routing/AuthContext";
 import apiClient from "../../services/apiClient";
-import { fetchExchangeRateStore } from "../../slices/exchangeRateSlice";
+import {
+  clearAllCache,
+  fetchExchangeRateStore,
+} from "../../slices/exchangeRateSlice";
 import { dataGridSx } from "../../Styles/dataGridStyles";
 import { getUniqueCount } from "../Components/calculateExpenseTotals";
 import CalCulation, { toMinOne } from "../Components/CalCulation";
@@ -81,7 +84,10 @@ import {
 import LogisticAddress from "../Components/LogisticAddress";
 import PrintMenu from "../Components/PrintMenu";
 import SearchInputField from "../Components/SearchInputField";
-import SearchModel, { CopyFromSearchModel, SearchBPModel } from "../Components/SearchModel";
+import SearchModel, {
+  CopyFromSearchModel,
+  SearchBPModel,
+} from "../Components/SearchModel";
 import { getStatus } from "../Components/status";
 import TaxCategoryModel from "../Components/TaxCategoryModel";
 import TaxDatagridCellModel from "../Components/TaxDatagridCellModel";
@@ -472,12 +478,14 @@ function APDownPaymentInvoice() {
   const [hasMoreCancelled, setHasMoreCancelled] = useState(true);
   const [anchorEl, setAnchorEl] = React.useState(null);
   const Openmenu = Boolean(anchorEl);
+
   const handleClickCancelClosed = (event) => {
     setAnchorEl(event.currentTarget);
   };
   let handleCloseCancelClosed = () => {
     setAnchorEl(null);
   };
+
   // ===============================Ware House======================================================
   const [openWhsc, setWhscOpen] = useState(false);
   const [WhscgetListData, setWhscGetListData] = useState([]);
@@ -891,8 +899,16 @@ function APDownPaymentInvoice() {
     clearFiles();
     companyAddresss();
     setSelectedRows([]);
+
     // setGetListPageCopyFrom([]);
     // setHasMorePOList(true);
+    if (openListquery?.trim()) {
+      handleOpenListClear();
+    } else if (closedListquery?.trim()) {
+      handleClosedListClear();
+    } else if (cancelledListquery?.trim()) {
+      handleCancelListClear();
+    }
     setValue("Series", DocSeries[0]?.SeriesId ?? "");
     setValue("DocNum", DocSeries[0]?.DocNum ?? "");
     setValue("FinncPriod", DocSeries[0]?.FinncPriod ?? "");
@@ -1144,9 +1160,10 @@ function APDownPaymentInvoice() {
     setGetListPage((prev) => prev + 1);
   };
   useEffect(() => {
-       if(searchmodelOpen===true){
-    fetchGetListData(0); 
-     }
+    if (searchmodelOpen === true) {
+      fetchGetListData(0);
+      setGetListQuery("");
+    }
   }, [searchmodelOpen]);
   const companyAddresss = useCallback(() => {
     setValue("CompnyAddr", companyData.CompnyAddr || "");
@@ -1180,6 +1197,9 @@ function APDownPaymentInvoice() {
     const { data: dataBP } = await apiClient.get(`/BPV2/V2/${DocEntry}`);
     const { values } = dataBP;
     setBusinessPartnerData(values);
+    dispatchRedux(clearAllCache());
+
+    dispatchRedux(fetchExchangeRateStore(docDate));
     let selectedAddress =
       (values?.oLines || []).find(
         (item) => item.LineNum === values.DfltBilled,
@@ -1192,7 +1212,9 @@ function APDownPaymentInvoice() {
       selectedAddress.State,
       selectedAddress.Zipcode,
       selectedAddress.Country,
-    ].filter(v => v?.trim()).join(", ");
+    ]
+      .filter((v) => v?.trim())
+      .join(", ");
     setValue("PayToCode", values.DfltBilled || "");
     setValue("ShipToCode", values?.DfltShiped || "");
     setValue("DfltAddress", DfltAddress || "");
@@ -1211,7 +1233,11 @@ function APDownPaymentInvoice() {
     setValue("CountryS", companyData.Country);
     setValue("CardCode", values.CardCode);
     setValue("CardName", values.CardName);
-    setValue("CntctCode", values.CntctPrsn || "");
+
+    setValue(
+      "CntctCode",
+      values?.CntctPrsn == 0 ? "" : (values?.CntctPrsn ?? ""),
+    );
     setValue("NumAtCard", values?.NumAtCard || "");
     setValue("DpmClear", values.DpmClear);
     setValue("CurSource", "C");
@@ -1304,22 +1330,22 @@ function APDownPaymentInvoice() {
   };
 
   const CardCode = getValues("CardCode");
-   const baseType = watch("baseType")
-    const {
-      data: getListPOData,
-      hasMore: hasMorePOList,
-      query: getListqueryCopyFrom,
-      onSearch: handleGetListSearchCopyFrom,
-      onClear: handleGetListClearCopyFrom,
-      fetchMore: fetchMoreGetListCopyFrom,
-    } = useCopyFromList({
-      BasePoint:"/APDownPayment",
-      open: openDialog,
-      CardCode,
-      baseType,
-      type,
-    });
-  
+  const baseType = watch("baseType");
+  const {
+    data: getListPOData,
+    hasMore: hasMorePOList,
+    query: getListqueryCopyFrom,
+    onSearch: handleGetListSearchCopyFrom,
+    onClear: handleGetListClearCopyFrom,
+    fetchMore: fetchMoreGetListCopyFrom,
+  } = useCopyFromList({
+    BasePoint: "/APDownPayment",
+    open: openDialog,
+    CardCode,
+    baseType,
+    type,
+  });
+
   const fetchWhscGetListData = async (pageNum, searchTerm = "") => {
     try {
       const url = searchTerm
@@ -1466,17 +1492,6 @@ function APDownPaymentInvoice() {
     }));
     setValue("CompnyAddr", CompnyAddr || "");
     setValue("oTaxExtLines", updatedData);
-  };
-
-  const onSubmitCurrency = (data) => {
-    const UpdatedRate = oLines.map((item) => ({
-      ...item,
-      Rate: data,
-      LineTotal: data * item.Price,
-      TotalFrgn: (data * item.Price) / data,
-      TotalSumSy: (data * item.Price) / SysRate,
-    }));
-    setValue("oLines", UpdatedRate);
   };
 
   // ------------------------------------------------------------------------------------------------------------------------
@@ -1642,14 +1657,23 @@ function APDownPaymentInvoice() {
   const handleDeleteRow = (id) => {
     const updatedLines = getValues("oLines").filter((_, index) => index !== id);
     setok("UPDATE");
-    const updatedData = {
-      ...getValues(),
-      oLines: updatedLines,
-    };
-    // Reset the form with the updated data
-    reset(updatedData);
+    // const updatedData = {
+    //   ...getValues(),
+    //   oLines: updatedLines,
+    // };
 
-    calculateDiscountAmt(parseFloat(getValues("Discount")) || 0);
+    setValue("oLines", updatedLines, {
+      shouldDirty: true,
+      shouldValidate: false,
+    });
+
+    if (discPercent > 0) {
+      calculateDiscountAmt(discPercent);
+    }
+    // Reset the form with the updated data
+    // reset(updatedData);
+
+    // calculateDiscountAmt(parseFloat(getValues("Discount")) || 0);
   };
   const handleClose = () => {
     setServiceOpen(false);
@@ -1833,7 +1857,7 @@ function APDownPaymentInvoice() {
       const response = res.data;
       if (response.success === true) {
         setBusinessPartnerData(response.values);
-        setValue("CntctCode", LineNum || "");
+        setValue("CntctCode", LineNum || " ");
       } else if (response.success === false) {
         setBusinessPartnerData([]);
         Swal.fire({
@@ -1966,7 +1990,6 @@ function APDownPaymentInvoice() {
         const records = data[docDate] || [];
         const rec = records.find((item) => item.Currency === currency);
         const rate = parseFloat(rec?.Rate || 0);
-
         if (rate === 0) {
           const missingRates = [
             {
@@ -1999,11 +2022,11 @@ function APDownPaymentInvoice() {
         );
         if (curSource === "C") {
           if (isMainCurrency) {
-            LineTotal = priceLineRatio * (parseFloat(newPrice) || 0);
+            LineTotal = priceLineRatio * CalcLines.LineTotal;
             TotalSumSy = LineTotal / SysRate;
             TotalFrgn = 0;
           } else {
-            TotalFrgn = priceLineRatio * (parseFloat(newPrice) || 0);
+            TotalFrgn = priceLineRatio * CalcLines.TotalFrgn;
             TotalSumSy = TotalFrgn / SysRate;
             LineTotal = TotalFrgn * DocRate;
           }
@@ -3749,47 +3772,10 @@ function APDownPaymentInvoice() {
   };
 
   // 1️⃣ Find Rate by Currency
-  const findRate = (data, curr) => {
-    return parseFloat(data.find((ex) => ex.Currency === curr)?.Rate) || 0;
-  };
-
-  // 2️⃣ Validate Rate & Show Modal
-  const validateRate = (rate, modalName, docEntry = "", message) => {
-    if (rate <= 0) {
-      if (docEntry) setValue("DocEntryCur", docEntry);
-      dispatch({ type: "OPEN", modal: modalName });
-
-      Swal.fire({
-        title: "Rate Not Found",
-        text: `No ${message} exchange rate available for the selected currency/date.`,
-        icon: "warning",
-        confirmButtonText: "Ok",
-      });
-    }
-  };
-  // 3️⃣ Check Line-wise Zero Rate for oLines
-  const checkLineZeroRate = (data) => {
-    const currencySet = new Set(oLines.map((x) => x.Currency));
-    const recordRateWise = data
-      .filter((ex) => currencySet.has(ex.Currency))
-      .map((ex) => ({
-        RateDate: docDate,
-        Currency: ex.Currency,
-        DocEntry: ex.DocEntry,
-        Rate: ex.Rate ?? "0",
-      }));
-    const hasZeroRate = recordRateWise.some((x) => String(x.Rate) === "0");
-    if (hasZeroRate) {
-      dispatch({ type: "OPEN", modal: "exchaneRateLineCpyform" });
-      setAllDataCopyRateLine(recordRateWise);
-      Swal.fire({
-        title: "Rate Not Found",
-        text: "No rate available for some line-level currency.",
-        icon: "warning",
-        confirmButtonText: "Ok",
-      });
-    }
-  };
+  const findRate = (data, curr) =>
+    companyData?.MainCurncy === curr
+      ? 1
+      : parseFloat(data?.find((ex) => ex.Currency === curr)?.Rate) || 0;
 
   const onSubmitLineCurrency = (data) => {
     // If lines already exist → open purchase modal
@@ -3912,61 +3898,12 @@ function APDownPaymentInvoice() {
           confirmButtonText: "Ok",
         });
       }
-      const UpdatedLines = updatedLines.map((item) => {
-        let LineTotal = item.LineTotal || 0;
-        let TotalSumSy = item.TotalSumSy || 0;
-        let TotalFrgn = item.TotalFrgn || 0;
-        let Price = type === "S" ? item.Price : item.Price * item.Quantity;
-        switch (curSource) {
-          case "L":
-            LineTotal = Price * DocRateLine;
-            TotalFrgn = LineTotal / DocRate;
-            TotalSumSy = LineTotal / SysRate;
-            break;
-          case "S":
-            LineTotal = Price * DocRateLine;
-            TotalSumSy = ValueFormatter(LineTotal / SysRate, 3);
-            TotalFrgn = LineTotal / DocRate;
-            break;
-          case "C":
-            if (currency === companyData.MainCurncy) {
-              LineTotal = Price * DocRateLine;
-              TotalFrgn = LineTotal / DocRate;
-              TotalSumSy = LineTotal / SysRate;
-            } else {
-              if (type === "S") {
-                TotalFrgn =
-                  currency === item.Currency
-                    ? ValueFormatter(Price)
-                    : ValueFormatter(item.LineTotal / DocRate);
-                LineTotal = ValueFormatter(TotalFrgn * DocRate);
-                TotalSumSy = ValueFormatter(LineTotal / SysRate);
-              } else {
-                const latestDocRate = getValues("DocRate");
-                LineTotal = ValueFormatter(Price * DocRateLine);
-                TotalFrgn =
-                  currency === item.Currency
-                    ? ValueFormatter(Price)
-                    : ValueFormatter(LineTotal / latestDocRate);
-                TotalSumSy =
-                  currency === companyData.SysCurrncy
-                    ? ValueFormatter(LineTotal / latestDocRate)
-                    : ValueFormatter(LineTotal / SysRate);
-              }
-            }
-            break;
-          default:
-        }
-        return {
-          ...item,
-          LineTotal,
-          TotalSumSy,
-          TotalFrgn,
-          Rate: DocRateLine,
-        };
-      });
+      const UpdatedLines = updatedLines.map((item) => ({
+        ...item,
+        Rate: findRate(records, item.Currency),
+      }));
       setValue("oLines", UpdatedLines);
-      console.log("oLines", UpdatedLines);
+
       const WHSCode = UpdatedLines?.[0]?.WHSCode ?? "";
       const warehouse = warehouseData.find((w) => w.WHSCode === WHSCode);
       if (warehouse) {
@@ -4000,10 +3937,15 @@ function APDownPaymentInvoice() {
       }
       // ✅ Discount recalculation
       const discountValue = parseFloat(currentData.Discount) || 0;
-      if (Array.isArray(UpdatedLines) && UpdatedLines.length > 0) {
+      if (
+        Array.isArray(UpdatedLines) &&
+        UpdatedLines.length > 0 &&
+        Number(discountValue) > 0
+      ) {
         calculateDiscountAmt(discountValue);
       }
       closeModel();
+      CalculateRate();
     } catch (error) {
       console.error("Error in onSubmit:", error);
     }
@@ -4453,26 +4395,49 @@ function APDownPaymentInvoice() {
         const oBaseNum = line.UOMFactor;
         const oInvNumPerMsr = ValueFormatter(oBaseNum / newnum, 6);
         const InvQty = ValueFormatter(oInvNumPerMsr * line.Quantity, 6);
-        let newQuantity =
-          line.BaseType > 1 ? originalQuantity / oInvNumPerMsr : line.Quantity;
-        const newLineTotal = newQuantity * line.Price;
-        let oTaxLine = line.oTaxLines;
-        let VatPrcnt = line.VatPrcnt;
-        let VatSum = line.VatSum;
         if (line.BaseType > 1) {
-          const taxLines = taxCalculation(
-            newLineTotal,
-            line.AssblValue,
-            getValues("DocTotal"),
-            line.PriceBefDi,
-            line.Quantity,
-            line.TaxCode,
+          let newQuantity = originalQuantity / oInvNumPerMsr;
+          const isMainCurrency = currency === companyData.MainCurncy;
+          const CalcLines = CalCulation(
+            newQuantity,
+            line.Price,
+            line.Discount,
+            line.Rate,
           );
-          oTaxLine = taxLines.oTaxLines;
-          VatPrcnt = taxLines.VatPrcnt;
-          VatSum = ValueFormatter(
-            taxLines.oTaxLines.reduce((sum, curr) => sum + curr.TaxSum, 0),
-          );
+          if (curSource === "C") {
+            if (isMainCurrency) {
+              line.LineTotal = line.Rate * CalcLines.LineTotal;
+              line.TotalSumSy = line.LineTotal / SysRate;
+              line.TotalFrgn = 0;
+            } else {
+              line.TotalFrgn = line.Rate * CalcLines.TotalFrgn;
+              line.TotalSumSy = line.TotalFrgn / SysRate;
+              line.LineTotal = line.TotalFrgn * DocRate;
+            }
+          } else {
+            line.LineTotal = line.LineTotal || 0;
+            line.TotalSumSy = line.TotalSumSy || 0;
+            line.TotalFrgn = line.TotalFrgn || 0;
+          }
+          if (line.TaxCode > 0) {
+            const taxLines = taxCalculation(
+              line.LineTotal,
+              line.AssblValue,
+              getValues("DocTotal"),
+              line.PriceBefDi,
+              line.Quantity,
+              line.TaxCode,
+            );
+            line.Quantity = newQuantity;
+            line.oTaxLines = taxLines.oTaxLines;
+            line.VatPrcnt = taxLines.VatPrcnt;
+            line.VatSum = taxLines.VatSum;
+            line.VatSumSy = taxLines.VatSumSy;
+            line.VatSumFrgn = taxLines.VatSumFrgn;
+            line.PriceAfVAT = ValueFormatter(
+              line.Price + line.Price * (line.VatPrcnt / 100),
+            );
+          }
         }
         return {
           ...line,
@@ -4482,32 +4447,24 @@ function APDownPaymentInvoice() {
           NumPerMsr: oInvNumPerMsr,
           InvQty: InvQty,
           OpenInvQty: InvQty,
-          Quantity: newQuantity,
-          OpenQuantity: originalRow?.OpenQuantity ?? newQuantity,
-          // PriceBefDi: newPriceBefDi.toFixed(3),
-          // Price: Price.toFixed(3),
-          LineTotal: newLineTotal.toFixed(3),
-          // Discount: "",
-          oTaxLines: oTaxLine,
-          VatPrcnt: VatPrcnt,
-          VatSum: VatSum,
-          // PriceAfVAT: priceWithVAT,
+          // OpenQuantity: originalRow?.OpenQuantity ?? newQuantity,
+          // LineTotal: newLineTotal.toFixed(3),
+          // oTaxLines: oTaxLine,
+          // VatPrcnt: VatPrcnt,
+          // VatSum: VatSum,
         };
       }
       return line;
     });
 
-    // Reset form with updated lines
-    reset({
-      ...allFormData,
-      oLines: updatedLines,
-      // AssblValue: getValues("AssblValue"),
-      // NumAtCard: getValues("NumAtCard"),
-      // Comments: getValues("Comments"),
-      // DiscountAmt: getValues("DiscountAmt"),
+    setValue("oLines", updatedLines, {
+      shouldDirty: true,
+      shouldValidate: false,
     });
-    console.log("upmcode inv", updatedLines);
-    calculateDiscountAmt(discPercent);
+
+    if (discPercent > 0) {
+      calculateDiscountAmt(discPercent);
+    }
 
     setUomcodeOpen(false);
   };
@@ -4539,6 +4496,7 @@ function APDownPaymentInvoice() {
       (allFormData?.oLines?.length > 0 && curSource === "C") ||
       curSource === "S"
     ) {
+      debugger;
       updatedData.oLines = allFormData.oLines.map((line) => {
         let TotalFrgn,
           LineTotal,
@@ -4624,7 +4582,7 @@ function APDownPaymentInvoice() {
       const percent = useFormatter
         ? ValueFormatter(ratio) * 100
         : ValueFormatter(ratio);
-      setValue("DpmPrcnt", percent.toFixed(3));
+      setValue("DpmPrcnt", percent);
       calculateDiscountAmt(percent);
     };
     if (curSource === "C") {
@@ -4726,176 +4684,176 @@ function APDownPaymentInvoice() {
     }
   };
 
-  const handleChange = (e, row) => {
-    const { name, value } = e.target;
-    setok("UPDATE");
-    const quantity = selectedRowsPurchase.map((item) => item.Quantity);
-    const updatedLines = getValues("oLines").map((data, index) => {
-      if (row.id !== index) return data;
-      const updatedData = { ...data, [name]: value };
-      const originalQuantity = quantity[index];
-      if (parseFloat(updatedData.BaseType) >= 1) {
-        if (
-          name === "Quantity" &&
-          parseFloat(value) > parseFloat(originalQuantity)
-        ) {
-          return data;
-        }
-      }
-      if (allFormData.DocEntry) {
-        if (name === "Quantity") {
-          updatedData.OpenQuantity =
-            parseFloat(updatedData.Quantity) -
-            parseFloat(data.Quantity) +
-            parseFloat(data.OpenQuantity);
-        }
-      } else {
-        if (name === "Quantity") {
-          updatedData.OpenQuantity = value;
-          updatedData.Quantity = Math.min(Math.max(value, 0));
-          updatedData.InvQty = ValueFormatter(value * updatedData.NumPerMsr, 6);
-        }
-      }
-      if (name === "PriceBefDi") {
-        updatedData.PriceBefDi = Math.min(Math.max(value, 0));
-        updatedData.Currency = currency;
-        const Rate = companyData.MainCurncy === currency ? "1" : DocRate;
-        updatedData.Rate = Rate;
-      }
-      if (name === "Discount") {
-        updatedData.Discount = Math.min(Math.max(value, 0), 100);
-      }
+  // const handleChange = (e, row) => {
+  //   const { name, value } = e.target;
+  //   setok("UPDATE");
+  //   const quantity = selectedRowsPurchase.map((item) => item.Quantity);
+  //   const updatedLines = getValues("oLines").map((data, index) => {
+  //     if (row.id !== index) return data;
+  //     const updatedData = { ...data, [name]: value };
+  //     const originalQuantity = quantity[index];
+  //     if (parseFloat(updatedData.BaseType) >= 1) {
+  //       if (
+  //         name === "Quantity" &&
+  //         parseFloat(value) > parseFloat(originalQuantity)
+  //       ) {
+  //         return data;
+  //       }
+  //     }
+  //     if (allFormData.DocEntry) {
+  //       if (name === "Quantity") {
+  //         updatedData.OpenQuantity =
+  //           parseFloat(updatedData.Quantity) -
+  //           parseFloat(data.Quantity) +
+  //           parseFloat(data.OpenQuantity);
+  //       }
+  //     } else {
+  //       if (name === "Quantity") {
+  //         updatedData.OpenQuantity = value;
+  //         updatedData.Quantity = Math.min(Math.max(value, 0));
+  //         updatedData.InvQty = ValueFormatter(value * updatedData.NumPerMsr, 6);
+  //       }
+  //     }
+  //     if (name === "PriceBefDi") {
+  //       updatedData.PriceBefDi = Math.min(Math.max(value, 0));
+  //       updatedData.Currency = currency;
+  //       const Rate = companyData.MainCurncy === currency ? "1" : DocRate;
+  //       updatedData.Rate = Rate;
+  //     }
+  //     if (name === "Discount") {
+  //       updatedData.Discount = Math.min(Math.max(value, 0), 100);
+  //     }
 
-      if (updatedData.GSTRelevnt === "Y") {
-        if (name === "AssblValue") {
-          updatedData.AssblValue = Math.min(Math.max(value, 0));
-        }
-      } else {
-        updatedData.AssblValue = data.AssblValue;
-      }
-      const CalcLines = CalCulation(
-        updatedData.Quantity,
-        updatedData.PriceBefDi,
-        updatedData.Discount,
-      );
-      updatedData.Price = CalcLines.discountedPrice;
-      updatedData.INMPrice = CalcLines.discountedPrice;
-      switch (curSource) {
-        case "L":
-          updatedData.LineTotal =
-            companyData.MainCurncy === updatedData.Currency
-              ? CalcLines.LineTotal
-              : CalcLines.LineTotal * updatedData.Rate;
-          updatedData.TotalFrgn =
-            currency === updatedData.Currency
-              ? CalcLines.TotalFrgn
-              : ValueFormatter(updatedData.LineTotal / DocRate);
-          updatedData.TotalSumSy = ValueFormatter(
-            updatedData.LineTotal / SysRate,
-          );
-          break;
-        case "S":
-          if (companyData.SysCurrncy === updatedData.Currency) {
-            updatedData.TotalSumSy = CalcLines.TotalSumSy;
-            updatedData.LineTotal = ValueFormatter(
-              updatedData.TotalSumSy * updatedData.Rate,
-            );
-            updatedData.TotalFrgn = ValueFormatter(
-              updatedData.LineTotal / DocRate,
-            );
-          } else {
-            updatedData.LineTotal =
-              updatedData.Price * updatedData.Quantity * updatedData.Rate;
-            updatedData.TotalSumSy = updatedData.LineTotal / SysRate;
-            updatedData.TotalFrgn = ValueFormatter(
-              updatedData.LineTotal / DocRate,
-            );
-          }
-          break;
-        case "C":
-          if (currency === companyData.MainCurncy) {
-            if (type === "S") {
-              updatedData.TotalFrgn = ValueFormatter(0);
-              updatedData.LineTotal = CalcLines.LineTotal;
-              updatedData.TotalSumSy = ValueFormatter(
-                updatedData.LineTotal / SysRate,
-              );
-            } else {
-              updatedData.TotalFrgn = ValueFormatter(0);
-              updatedData.LineTotal =
-                currency === updatedData.Currency
-                  ? CalcLines.LineTotal
-                  : CalcLines.LineTotal * updatedData.Rate;
-              updatedData.TotalSumSy = ValueFormatter(
-                updatedData.LineTotal / SysRate,
-              );
-            }
-          } else {
-            const TotalFrgn =
-              currency === data.Currency
-                ? (updatedData.Price * updatedData.Rate) / DocRate
-                : (updatedData.Price *
-                    updatedData.Quantity *
-                    updatedData.Rate) /
-                  DocRate;
-            updatedData.TotalFrgn =
-              currency === data.Currency
-                ? ValueFormatter(CalcLines.TotalFrgn)
-                : TotalFrgn;
-            updatedData.LineTotal = ValueFormatter(
-              updatedData.TotalFrgn * DocRate,
-            );
-            updatedData.TotalSumSy = ValueFormatter(
-              updatedData.LineTotal / SysRate,
-            );
-          }
-          break;
-        default:
-          console.log("ff");
-      }
+  //     if (updatedData.GSTRelevnt === "Y") {
+  //       if (name === "AssblValue") {
+  //         updatedData.AssblValue = Math.min(Math.max(value, 0));
+  //       }
+  //     } else {
+  //       updatedData.AssblValue = data.AssblValue;
+  //     }
+  //     const CalcLines = CalCulation(
+  //       updatedData.Quantity,
+  //       updatedData.PriceBefDi,
+  //       updatedData.Discount,
+  //     );
+  //     updatedData.Price = CalcLines.discountedPrice;
+  //     updatedData.INMPrice = CalcLines.discountedPrice;
+  //     switch (curSource) {
+  //       case "L":
+  //         updatedData.LineTotal =
+  //           companyData.MainCurncy === updatedData.Currency
+  //             ? CalcLines.LineTotal
+  //             : CalcLines.LineTotal * updatedData.Rate;
+  //         updatedData.TotalFrgn =
+  //           currency === updatedData.Currency
+  //             ? CalcLines.TotalFrgn
+  //             : ValueFormatter(updatedData.LineTotal / DocRate);
+  //         updatedData.TotalSumSy = ValueFormatter(
+  //           updatedData.LineTotal / SysRate,
+  //         );
+  //         break;
+  //       case "S":
+  //         if (companyData.SysCurrncy === updatedData.Currency) {
+  //           updatedData.TotalSumSy = CalcLines.TotalSumSy;
+  //           updatedData.LineTotal = ValueFormatter(
+  //             updatedData.TotalSumSy * updatedData.Rate,
+  //           );
+  //           updatedData.TotalFrgn = ValueFormatter(
+  //             updatedData.LineTotal / DocRate,
+  //           );
+  //         } else {
+  //           updatedData.LineTotal =
+  //             updatedData.Price * updatedData.Quantity * updatedData.Rate;
+  //           updatedData.TotalSumSy = updatedData.LineTotal / SysRate;
+  //           updatedData.TotalFrgn = ValueFormatter(
+  //             updatedData.LineTotal / DocRate,
+  //           );
+  //         }
+  //         break;
+  //       case "C":
+  //         if (currency === companyData.MainCurncy) {
+  //           if (type === "S") {
+  //             updatedData.TotalFrgn = ValueFormatter(0);
+  //             updatedData.LineTotal = CalcLines.LineTotal;
+  //             updatedData.TotalSumSy = ValueFormatter(
+  //               updatedData.LineTotal / SysRate,
+  //             );
+  //           } else {
+  //             updatedData.TotalFrgn = ValueFormatter(0);
+  //             updatedData.LineTotal =
+  //               currency === updatedData.Currency
+  //                 ? CalcLines.LineTotal
+  //                 : CalcLines.LineTotal * updatedData.Rate;
+  //             updatedData.TotalSumSy = ValueFormatter(
+  //               updatedData.LineTotal / SysRate,
+  //             );
+  //           }
+  //         } else {
+  //           const TotalFrgn =
+  //             currency === data.Currency
+  //               ? (updatedData.Price * updatedData.Rate) / DocRate
+  //               : (updatedData.Price *
+  //                   updatedData.Quantity *
+  //                   updatedData.Rate) /
+  //                 DocRate;
+  //           updatedData.TotalFrgn =
+  //             currency === data.Currency
+  //               ? ValueFormatter(CalcLines.TotalFrgn)
+  //               : TotalFrgn;
+  //           updatedData.LineTotal = ValueFormatter(
+  //             updatedData.TotalFrgn * DocRate,
+  //           );
+  //           updatedData.TotalSumSy = ValueFormatter(
+  //             updatedData.LineTotal / SysRate,
+  //           );
+  //         }
+  //         break;
+  //       default:
+  //         console.log("ff");
+  //     }
 
-      updatedData.StockSum = ValueFormatter(
-        updatedData.INMPrice * updatedData.Quantity,
-      );
-      updatedData.StockSumSc = ValueFormatter(updatedData.StockSum / SysRate);
-      updatedData.StockSumFc = ValueFormatter(updatedData.StockSum / DocRate);
+  //     updatedData.StockSum = ValueFormatter(
+  //       updatedData.INMPrice * updatedData.Quantity,
+  //     );
+  //     updatedData.StockSumSc = ValueFormatter(updatedData.StockSum / SysRate);
+  //     updatedData.StockSumFc = ValueFormatter(updatedData.StockSum / DocRate);
 
-      if (name === "TaxCode") {
-        updatedData.TaxCode = "";
-        updatedData.VatGroup = "";
-      }
-      const taxLines = taxCalculation(
-        updatedData.LineTotal,
-        updatedData.AssblValue,
-        row.DocTotal,
-        updatedData.PriceBefDi,
-        updatedData.Quantity,
-        updatedData.TaxCode,
-      );
-      updatedData.oTaxLines = taxLines.oTaxLines;
-      updatedData.VatPrcnt = taxLines.VatPrcnt;
-      updatedData.VatSum = taxLines.VatSum;
-      updatedData.VatSumSy = taxLines.VatSumSy;
-      updatedData.VatSumFrgn = taxLines.VatSumFrgn;
-      let PriceAfVAT =
-        updatedData.Price + updatedData.Price * (updatedData.VatPrcnt / 100);
-      updatedData.PriceAfVAT = ValueFormatter(PriceAfVAT);
-      return updatedData;
-    });
+  //     if (name === "TaxCode") {
+  //       updatedData.TaxCode = "";
+  //       updatedData.VatGroup = "";
+  //     }
+  //     const taxLines = taxCalculation(
+  //       updatedData.LineTotal,
+  //       updatedData.AssblValue,
+  //       row.DocTotal,
+  //       updatedData.PriceBefDi,
+  //       updatedData.Quantity,
+  //       updatedData.TaxCode,
+  //     );
+  //     updatedData.oTaxLines = taxLines.oTaxLines;
+  //     updatedData.VatPrcnt = taxLines.VatPrcnt;
+  //     updatedData.VatSum = taxLines.VatSum;
+  //     updatedData.VatSumSy = taxLines.VatSumSy;
+  //     updatedData.VatSumFrgn = taxLines.VatSumFrgn;
+  //     let PriceAfVAT =
+  //       updatedData.Price + updatedData.Price * (updatedData.VatPrcnt / 100);
+  //     updatedData.PriceAfVAT = ValueFormatter(PriceAfVAT);
+  //     return updatedData;
+  //   });
 
-    reset({
-      ...allFormData,
-      oLines: updatedLines,
-      AssblValue: getValues("AssblValue"),
-      NumAtCard: getValues("NumAtCard"),
-      Comments: getValues("Comments"),
-      DpmAmnt: getValues("DiscountAmt"),
-      DocTotal: getValues("DocTotal"),
-      DpmPrcnt: getValues("DpmPrcnt"),
-    });
-    // recalculateHeaderDiscount();
-    calculateDiscountAmt(discPercent);
-  };
+  //   reset({
+  //     ...allFormData,
+  //     oLines: updatedLines,
+  //     AssblValue: getValues("AssblValue"),
+  //     NumAtCard: getValues("NumAtCard"),
+  //     Comments: getValues("Comments"),
+  //     DpmAmnt: getValues("DiscountAmt"),
+  //     DocTotal: getValues("DocTotal"),
+  //     DpmPrcnt: getValues("DpmPrcnt"),
+  //   });
+  //   // recalculateHeaderDiscount();
+  //   calculateDiscountAmt(discPercent);
+  // };
 
   const handleCellKeyDown = (params, event) => {
     const api = apiRef.current;
@@ -5044,7 +5002,6 @@ function APDownPaymentInvoice() {
     // }
     if (newRow.PriceBefDi !== undefined && newRow._priceEdited) {
       updatedData.PriceBefDi = Math.max(newRow.PriceBefDi, 0);
-
       if (curSource === "L") {
         updatedData.Currency = companyData.MainCurncy;
         updatedData.Rate = "1";
@@ -5057,7 +5014,6 @@ function APDownPaymentInvoice() {
         updatedData.Rate = Rate;
       }
 
-      // Clean up the flag
       delete updatedData._priceEdited;
     }
     if (newRow.Discount !== undefined) {
@@ -5074,7 +5030,6 @@ function APDownPaymentInvoice() {
       updatedData.Discount,
       updatedData.Rate,
     );
-
     updatedData.Price = CalcLines.discountedPrice;
     updatedData.INMPrice = CalcLines.discountedPrice;
 
@@ -5083,13 +5038,11 @@ function APDownPaymentInvoice() {
         updatedData.LineTotal =
           companyData.MainCurncy === updatedData.Currency
             ? CalcLines.LineTotal
-            : CalcLines.LineTotal * updatedData.Rate;
-
+            : CalcLines.TotalFrgn * updatedData.Rate;
         updatedData.TotalFrgn =
           currency === updatedData.Currency
             ? CalcLines.TotalFrgn
             : ValueFormatter(updatedData.LineTotal / DocRate);
-
         updatedData.TotalSumSy = ValueFormatter(
           updatedData.LineTotal / SysRate,
         );
@@ -5172,40 +5125,44 @@ function APDownPaymentInvoice() {
     const updatedLines = getValues("oLines").map((d, i) =>
       i === oldRow.id ? updatedData : d,
     );
-
-    reset({ ...allFormData, oLines: updatedLines });
+    setValue("oLines", updatedLines, {
+      shouldDirty: true,
+      shouldValidate: false,
+    });
+    // reset({ ...allFormData, oLines: updatedLines });
     calculateDiscountAmt(discPercent);
 
     return updatedData;
   };
   //! Header Level CalCaculation
-  const oLines = getValues("oLines") || []; // Ensure it's an array
-  const { TotalBefDisc, totalBefDiscSy, totalBefDiscFrgn } = useMemo(() => {
-    let TotalBefDisc = 0;
-    let totalBefDiscSy = 0;
-    let totalBefDiscFrgn = 0;
-    oLines.forEach((line) => {
-      TotalBefDisc += parseFloat(line?.LineTotal) || 0;
-      totalBefDiscSy += parseFloat(line?.TotalSumSy) || 0;
-      totalBefDiscFrgn += parseFloat(line?.TotalFrgn) || 0;
-    });
-
-    return { TotalBefDisc, totalBefDiscSy, totalBefDiscFrgn };
+  const oLines = watch("oLines") || [];
+  const totals = useMemo(() => {
+    return oLines.reduce(
+      (acc, line) => {
+        acc.TotalBefDisc += Number(line?.LineTotal) || 0;
+        acc.totalBefDiscSy += Number(line?.TotalSumSy) || 0;
+        acc.totalBefDiscFrgn += Number(line?.TotalFrgn) || 0;
+        return acc;
+      },
+      {
+        TotalBefDisc: 0,
+        totalBefDiscSy: 0,
+        totalBefDiscFrgn: 0,
+      },
+    );
   }, [oLines]);
 
   useEffect(() => {
-    setValue("TotalBefDisc", ValueFormatter(TotalBefDisc));
-    setValue("TotalBefDiscSy", ValueFormatter(totalBefDiscSy));
-    setValue("TotalBefDiscFrgn", ValueFormatter(totalBefDiscFrgn));
-    const Discount = getValues("DpmPrcnt");
-    calculateDiscountAmt(Discount);
+    setValue("TotalBefDisc", ValueFormatter(totals.TotalBefDisc));
+    setValue("TotalBefDiscSy", ValueFormatter(totals.totalBefDiscSy));
+    setValue("TotalBefDiscFrgn", ValueFormatter(totals.totalBefDiscFrgn));
+    const discountPercent = getValues("DpmPrcnt") || 0;
+    calculateDiscountAmt(discountPercent);
   }, [
-    calculateDiscountAmt,
-    TotalBefDisc,
-    totalBefDiscSy,
-    GroupNum,
-    totalBefDiscFrgn,
-    setValue,
+    totals.TotalBefDisc,
+    totals.totalBefDiscSy,
+    totals.totalBefDiscFrgn,
+    currency,
   ]);
 
   //! Local Currency Calculation
@@ -5221,7 +5178,6 @@ function APDownPaymentInvoice() {
   const PaidToDate = parseFloat(getValues("PaidToDate")) || 0;
   const DueAmnt = DocTotal - PaidToDate;
   setValue("DueAmnt", ValueFormatter(DueAmnt));
-  // end
 
   //! System Currency Calculation
   const LineVatSumSys = oLines.reduce((sum, current) => {
@@ -5251,7 +5207,6 @@ function APDownPaymentInvoice() {
   const PaidFC = parseFloat(getValues("PaidFC")) || 0;
   const DueAmntFC = DocTotalFC - PaidFC;
   setValue("DueAmntFC", ValueFormatter(DueAmntFC));
-  //#endregion
   // ------------------------------------------------------------------------------------------------------------------------
 
   //#region Post Api
@@ -5302,7 +5257,7 @@ function APDownPaymentInvoice() {
         VatSumSc: VatSumSc.toFixed(3),
         DctSum: vatSum.toFixed(3),
         DctSumFc: VatSumFc.toFixed(3),
-        DctSumSc:  VatSumSc.toFixed(3),
+        DctSumSc: VatSumSc.toFixed(3),
         ApplNet: "0",
         ApplNetFc: "0",
         ApplNetSc: "0",
@@ -5348,9 +5303,6 @@ function APDownPaymentInvoice() {
         PaidFrgn: "0",
       };
     });
-    console.log(DownLines);
-    // reset("oDPMLines", DownLines);
-
     const formData = new FormData();
     formData.append("DocEntry", allFormData.AttcEntry || "");
     formData.append("UserId", user.UserId);
@@ -7699,7 +7651,8 @@ function APDownPaymentInvoice() {
               disabled={
                 !(OpenQuantity === Quantity) ||
                 SaveUpdateName === "SAVE" ||
-                tab === "2"
+                tab === "2" ||
+                PaidToDate > 0
               }
               onClick={() => {
                 handleOnCancelDocument();
@@ -7925,6 +7878,7 @@ function APDownPaymentInvoice() {
                       control={control}
                       render={({ field, fieldState: { error } }) => (
                         <InputSelectTextField
+                          name="CntctCode"
                           {...field}
                           error={!!error}
                           helperText={error ? error.message : null}
@@ -9042,12 +8996,12 @@ function APDownPaymentInvoice() {
                         label="TOTAL BEF DISC"
                         value={
                           curSource === "L"
-                            ? ValueFormatter(TotalBefDisc)
+                            ? ValueFormatter(totals.TotalBefDisc)
                             : curSource === "S"
-                              ? ValueFormatter(totalBefDiscSy)
+                              ? ValueFormatter(totals.totalBefDiscSy)
                               : getValues("Currency") === companyData.MainCurncy
-                                ? ValueFormatter(TotalBefDisc)
-                                : ValueFormatter(totalBefDiscFrgn)
+                                ? ValueFormatter(totals.TotalBefDisc)
+                                : ValueFormatter(totals.totalBefDiscFrgn)
                         }
                       />
                     </Grid>
@@ -9079,7 +9033,7 @@ function APDownPaymentInvoice() {
                       textAlign={"center"}
                     >
                       <SmallInputTextField
-                        label="DISC AMOUNT"
+                        label="DPM AMOUNT"
                         type="number"
                         disabled={
                           allFormData.Status === "Closed" ||

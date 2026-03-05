@@ -22,7 +22,7 @@ import CardComponent from "../Components/CardComponent";
 import {
   InputSearchSelectTextField,
   InputSelectTextField,
-  InputTextField
+  InputTextField,
 } from "../Components/formComponents";
 import { Loader } from "../Components/Loader";
 import SearchInputField from "../Components/SearchInputField";
@@ -468,8 +468,7 @@ export default function Location() {
         text: errorMessage,
         confirmButtonText: "Ok",
       });
-    }
-    finally{
+    } finally {
       setIsLoading(false);
     }
   };
@@ -477,80 +476,77 @@ export default function Location() {
   // ===============Delete API ===================================
 
   const handleOnDelete = async () => {
-  if (!DocEntry) return;
+    if (!DocEntry) return;
 
-  const confirmation = await Swal.fire({
-    text: "Do you want to delete?",
-    icon: "question",
-    showCancelButton: true,
-    confirmButtonText: "YES",
-    cancelButtonText: "NO",
-  });
-
-  if (!confirmation.isConfirmed) {
-    Swal.fire({
-      text: "Location not deleted",
-      icon: "info",
-      confirmButtonText: "OK",
+    const confirmation = await Swal.fire({
+      text: "Do you want to delete?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "YES",
+      cancelButtonText: "NO",
     });
-    return;
-  }
 
-  try {
-    setIsLoading(true);
-    const response = await apiClient.delete(`/WHSLocation/${DocEntry}`);
-
-    const { success, message } = response?.data || {};
-
-    // ❌ API responded but delete failed
-    if (!success) {
+    if (!confirmation.isConfirmed) {
       Swal.fire({
-        icon: "error",
-        text: message || "Failed to delete location",
+        text: "Location not deleted",
+        icon: "info",
         confirmButtonText: "OK",
       });
       return;
     }
 
-    // ✅ Delete success
-    clearFormData();
-   setOpenListPage(0);
-          setOpenListData([]);
-          fetchOpenListData(0);
+    try {
+      setIsLoading(true);
+      const response = await apiClient.delete(`/WHSLocation/${DocEntry}`);
 
-    Swal.fire({
-      icon: "success",
-      text: "Location deleted successfully",
-      confirmButtonText: "OK",
-      timer:1500
-    });
+      const { success, message } = response?.data || {};
 
-  } catch (error) {
-    let errorMessage = "Something went wrong while deleting.";
+      // ❌ API responded but delete failed
+      if (!success) {
+        Swal.fire({
+          icon: "error",
+          text: message || "Failed to delete location",
+          confirmButtonText: "OK",
+        });
+        return;
+      }
 
-    if (error.response) {
-      errorMessage =
-        error.response.data?.message ||
-        `Server error (${error.response.status})`;
-    } else if (error.request) {
-      errorMessage = "Unable to connect to server.";
-    } else {
-      errorMessage = error.message;
+      // ✅ Delete success
+      clearFormData();
+      setOpenListPage(0);
+      setOpenListData([]);
+      fetchOpenListData(0);
+
+      Swal.fire({
+        icon: "success",
+        text: "Location deleted successfully",
+        confirmButtonText: "OK",
+        timer: 1500,
+      });
+    } catch (error) {
+      let errorMessage = "Something went wrong while deleting.";
+
+      if (error.response) {
+        errorMessage =
+          error.response.data?.message ||
+          `Server error (${error.response.status})`;
+      } else if (error.request) {
+        errorMessage = "Unable to connect to server.";
+      } else {
+        errorMessage = error.message;
+      }
+
+      Swal.fire({
+        icon: "error",
+        text: errorMessage,
+        confirmButtonText: "OK",
+      });
+
+      console.error("Delete error:", error);
+    } finally {
+      setIsLoading(false);
     }
-
-    Swal.fire({
-      icon: "error",
-      text: errorMessage,
-      confirmButtonText: "OK",
-    });
-
-    console.error("Delete error:", error);
-  }
-  finally{
-    setIsLoading(false);
-  }
-};
-
+  };
 
   // ===============API  for Country value ===================================
   const ListofCountry = async () => {
@@ -575,8 +571,7 @@ export default function Location() {
         icon: "error",
         confirmButtonText: "Ok",
       });
-    }
-    finally{
+    } finally {
       setIsLoading(false);
     }
   };
@@ -604,8 +599,7 @@ export default function Location() {
         icon: "error",
         confirmButtonText: "Ok",
       });
-    }
-    finally{
+    } finally {
       setIsLoading(false);
     }
   };

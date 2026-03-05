@@ -20,7 +20,7 @@ import apiClient from "../../services/apiClient";
 import CardComponent from "../Components/CardComponent";
 import {
   InputSearchSelectTextField,
-  InputTextField
+  InputTextField,
 } from "../Components/formComponents";
 import { Loader } from "../Components/Loader";
 import SearchInputField from "../Components/SearchInputField";
@@ -42,7 +42,7 @@ export default function TaxType() {
 
   const timeoutRef = useRef(null);
   const { user } = useAuth();
- const perms = usePermissions(27);
+  const perms = usePermissions(27);
   let [ok, setok] = useState("OK");
   const [loading, setLoading] = useState(false);
   const [selectedData, setSelectedData] = useState([]);
@@ -61,14 +61,13 @@ export default function TaxType() {
     reset(initial);
     setSaveUpdateName("SAVE");
     setDocEntry("");
-    
+
     setSelectedData([]);
   };
 
   // ===============API for Setting specific Cards data==============================================
   const setOldOpenData = async (DocEntry, CardCode, CntctCode) => {
     setok("");
-    
 
     try {
       // await setbusinessPartner(CardCode, CntctCode);
@@ -104,45 +103,46 @@ export default function TaxType() {
   };
 
   //=============================================set data to fields====================================
- const setTaxDataList = async (DocEntry) => {
-  if (!DocEntry) return;
+  const setTaxDataList = async (DocEntry) => {
+    if (!DocEntry) return;
 
-  try {
-    setLoading(true); // Show loader
+    try {
+      setLoading(true); // Show loader
 
-    const response = await apiClient.get(`/TaxType/${DocEntry}`);
+      const response = await apiClient.get(`/TaxType/${DocEntry}`);
 
-    const data = response?.data?.values;
+      const data = response?.data?.values;
 
-    if (!data) {
+      if (!data) {
+        Swal.fire({
+          title: "Warning!",
+          text: "No Tax Data found for the selected entry.",
+          icon: "warning",
+          confirmButtonText: "Ok",
+        });
+        return;
+      }
+
+      // Open drawer and populate form
+      toggleDrawer();
+      reset(data);
+      setSaveUpdateName("UPDATE");
+      setDocEntry(DocEntry);
+      setSelectedData(DocEntry);
+    } catch (error) {
+      console.error("Error fetching Tax Data:", error);
       Swal.fire({
-        title: "Warning!",
-        text: "No Tax Data found for the selected entry.",
-        icon: "warning",
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          "An error occurred while fetching Tax Data",
+        icon: "error",
         confirmButtonText: "Ok",
       });
-      return;
+    } finally {
+      setLoading(false); // Hide loader
     }
-
-    // Open drawer and populate form
-    toggleDrawer();
-    reset(data);
-    setSaveUpdateName("UPDATE");
-    setDocEntry(DocEntry);
-    setSelectedData(DocEntry);
-  } catch (error) {
-    console.error("Error fetching Tax Data:", error);
-    Swal.fire({
-      title: "Error!",
-      text: error?.response?.data?.message || "An error occurred while fetching Tax Data",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false); // Hide loader
-  }
-};
-
+  };
 
   //===============================================Active list=========================================
   const handleOpenListSearch = (res) => {
@@ -174,58 +174,59 @@ export default function TaxType() {
     setOpenListPage((prev) => prev + 1);
   };
   const fetchOpenListData = async (pageNum = 0, searchTerm = "") => {
-  try {
-    setLoading(true); // Show loader
+    try {
+      setLoading(true); // Show loader
 
-    const url = searchTerm
-      ? `/TaxType/Search/${searchTerm}/1/${pageNum}/20`
-      : `/TaxType/Pages/1/${pageNum}/20`;
+      const url = searchTerm
+        ? `/TaxType/Search/${searchTerm}/1/${pageNum}/20`
+        : `/TaxType/Pages/1/${pageNum}/20`;
 
-    const response = await apiClient.get(url);
-    const data = response?.data;
+      const response = await apiClient.get(url);
+      const data = response?.data;
 
-    if (data?.success) {
-      const newData = data.values || [];
+      if (data?.success) {
+        const newData = data.values || [];
 
-      // Update hasMoreOpen flag for infinite scrolling
-      setHasMoreOpen(newData.length === 20);
+        // Update hasMoreOpen flag for infinite scrolling
+        setHasMoreOpen(newData.length === 20);
 
-      // Append or replace data depending on pageNum
-      setOpenListData((prev) =>
-        pageNum === 0 ? newData : [...prev, ...newData]
-      );
+        // Append or replace data depending on pageNum
+        setOpenListData((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
 
-      // Optional: alert if no records found on first page
-      if (pageNum === 0 && newData.length === 0) {
+        // Optional: alert if no records found on first page
+        if (pageNum === 0 && newData.length === 0) {
+          Swal.fire({
+            text: "No records found",
+            icon: "info",
+            toast: true,
+            showConfirmButton: false,
+            timer: 1500,
+          });
+        }
+      } else {
         Swal.fire({
-          text: "No records found",
-          icon: "info",
-          toast: true,
-          showConfirmButton: false,
-          timer: 1500,
+          title: "Warning!",
+          text: data?.message || "Failed to fetch data.",
+          icon: "warning",
+          confirmButtonText: "Ok",
         });
       }
-    } else {
+    } catch (error) {
+      console.error("Error fetching Tax Type data:", error);
       Swal.fire({
-        title: "Warning!",
-        text: data?.message || "Failed to fetch data.",
-        icon: "warning",
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          "Something went wrong while fetching data.",
+        icon: "error",
         confirmButtonText: "Ok",
       });
+    } finally {
+      setLoading(false); // Hide loader
     }
-  } catch (error) {
-    console.error("Error fetching Tax Type data:", error);
-    Swal.fire({
-      title: "Error!",
-      text: error?.response?.data?.message || "Something went wrong while fetching data.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false); // Hide loader
-  }
-};
-
+  };
 
   // ==============useForm====================================
 
@@ -237,52 +238,116 @@ export default function TaxType() {
   // ===============PUT and POST API =====================================================
 
   const handleSubmitForm = async (data) => {
-  const obj = {
-    DocEntry: String(data.DocEntry || ""),
-    UserId: user.UserId,
-    CreatedBy: user.UserName || "",
-    CreatedDate: dayjs().format("YYYY/MM/DD"),
-    ModifiedBy: user.UserName || "",
-    ModifiedDate: dayjs().format("YYYY/MM/DD"),
-    Name: String(data.Name || ""),
-    Description: String(data.Description || ""),
-    Status: "1",
-    TaxCategory: String(data.TaxCategory || ""),
-    TaxAmtKey: String(data.TaxAmtKey || ""),
+    const obj = {
+      DocEntry: String(data.DocEntry || ""),
+      UserId: user.UserId,
+      CreatedBy: user.UserName || "",
+      CreatedDate: dayjs().format("YYYY/MM/DD"),
+      ModifiedBy: user.UserName || "",
+      ModifiedDate: dayjs().format("YYYY/MM/DD"),
+      Name: String(data.Name || ""),
+      Description: String(data.Description || ""),
+      Status: "1",
+      TaxCategory: String(data.TaxCategory || ""),
+      TaxAmtKey: String(data.TaxAmtKey || ""),
+    };
+
+    try {
+      setLoading(true);
+
+      if (SaveUpdateName === "SAVE") {
+        // CREATE
+        const response = await apiClient.post(`/TaxType`, obj);
+
+        if (response.data.success) {
+          clearFormData();
+          setOpenListPage(0);
+          setOpenListData([]);
+          fetchOpenListData(0);
+
+          Swal.fire({
+            title: "Success!",
+            text: "Tax Type is Added",
+            icon: "success",
+            timer: 1000,
+            showConfirmButton: false,
+          });
+        } else {
+          Swal.fire({
+            title: "Error!",
+            text: response.data.message,
+            icon: "warning",
+            confirmButtonText: "Ok",
+          });
+        }
+      } else {
+        // UPDATE
+        const result = await Swal.fire({
+          text: `Do you want to update "${data.Name}"?`,
+          icon: "question",
+          showConfirmButton: true,
+          showCancelButton: true,
+          confirmButtonText: "Yes",
+          cancelButtonText: "No",
+        });
+
+        if (!result.isConfirmed) {
+          Swal.fire({
+            text: "Tax Type is not Updated",
+            icon: "info",
+            toast: true,
+            showConfirmButton: false,
+            timer: 1500,
+          });
+          return;
+        }
+
+        const response = await apiClient.put(`/TaxType/${DocEntry}`, obj);
+
+        if (response.data.success) {
+          clearFormData();
+          setOpenListPage(0);
+          setOpenListData([]);
+          fetchOpenListData(0);
+
+          Swal.fire({
+            title: "Success!",
+            text: "Tax Type is Updated",
+            icon: "success",
+            timer: 1000,
+            showConfirmButton: false,
+          });
+        } else {
+          Swal.fire({
+            title: "Error!",
+            text: response.data.message,
+            icon: "warning",
+            confirmButtonText: "Ok",
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error submitting Tax Type:", error);
+
+      Swal.fire({
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          "Something went wrong while saving the Tax Type.",
+        icon: "error",
+        confirmButtonText: "Ok",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
-  try {
-    setLoading(true);
+  // ===============Delete API ==========================================================
 
-    if (SaveUpdateName === "SAVE") {
-      // CREATE
-      const response = await apiClient.post(`/TaxType`, obj);
-
-      if (response.data.success) {
-        clearFormData();
-        setOpenListPage(0);
-        setOpenListData([]);
-        fetchOpenListData(0);
-
-        Swal.fire({
-          title: "Success!",
-          text: "Tax Type is Added",
-          icon: "success",
-          timer: 1000,
-          showConfirmButton: false,
-        });
-      } else {
-        Swal.fire({
-          title: "Error!",
-          text: response.data.message,
-          icon: "warning",
-          confirmButtonText: "Ok",
-        });
-      }
-    } else {
-      // UPDATE
+  const handleOnDelete = async () => {
+    try {
       const result = await Swal.fire({
-        text: `Do you want to update "${data.Name}"?`,
+        text: `Do you want to delete this Tax Type?`,
         icon: "question",
         showConfirmButton: true,
         showCancelButton: true,
@@ -292,7 +357,7 @@ export default function TaxType() {
 
       if (!result.isConfirmed) {
         Swal.fire({
-          text: "Tax Type is not Updated",
+          text: "Tax Type is not deleted",
           icon: "info",
           toast: true,
           showConfirmButton: false,
@@ -301,152 +366,89 @@ export default function TaxType() {
         return;
       }
 
-      const response = await apiClient.put(`/TaxType/${DocEntry}`, obj);
+      setLoading(true);
 
-      if (response.data.success) {
+      const resp = await apiClient.delete(`/TaxType/${DocEntry}`);
+      setLoading(false);
+
+      if (resp.data.success) {
         clearFormData();
         setOpenListPage(0);
         setOpenListData([]);
         fetchOpenListData(0);
 
         Swal.fire({
-          title: "Success!",
-          text: "Tax Type is Updated",
+          text: "Tax Type deleted successfully",
           icon: "success",
-          timer: 1000,
+          toast: true,
           showConfirmButton: false,
+          timer: 1000,
         });
       } else {
         Swal.fire({
-          title: "Error!",
-          text: response.data.message,
+          text: resp.data.message || "Failed to delete Tax Type",
+          icon: "info",
+          toast: true,
+          showConfirmButton: false,
+          timer: 1500,
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting Tax Type:", error);
+      setLoading(false);
+
+      Swal.fire({
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          "Something went wrong during deletion.",
+        icon: "error",
+        confirmButtonText: "Ok",
+      });
+    }
+  };
+
+  // ===============API  for Tax category dropdown value===================================
+
+  const getTaxCategoryDataList = async () => {
+    try {
+      setLoading(true); // Optional: show loading while fetching
+
+      const response = await apiClient.get(`/TaxCategory/All`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (response.data.success) {
+        const values = response.data.values || [];
+        const formattedData = values.map((item) => ({
+          key: item.DocEntry, // Unique identifier
+          value: item.Name, // Display value
+        }));
+        setTaxCategories(formattedData);
+      } else {
+        Swal.fire({
+          title: "Warning!",
+          text: response.data.message || "Failed to fetch Tax Categories.",
           icon: "warning",
           confirmButtonText: "Ok",
         });
       }
-    }
-  } catch (error) {
-    console.error("Error submitting Tax Type:", error);
-
-    Swal.fire({
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        "Something went wrong while saving the Tax Type.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
-
-  // ===============Delete API ==========================================================
-
- const handleOnDelete = async () => {
-  try {
-    const result = await Swal.fire({
-      text: `Do you want to delete this Tax Type?`,
-      icon: "question",
-      showConfirmButton: true,
-      showCancelButton: true,
-      confirmButtonText: "Yes",
-      cancelButtonText: "No",
-    });
-
-    if (!result.isConfirmed) {
+    } catch (error) {
+      console.error("Error fetching tax data:", error);
       Swal.fire({
-        text: "Tax Type is not deleted",
-        icon: "info",
-        toast: true,
-        showConfirmButton: false,
-        timer: 1500,
-      });
-      return;
-    }
-
-    setLoading(true);
-
-    const resp = await apiClient.delete(`/TaxType/${DocEntry}`);
-    setLoading(false);
-
-    if (resp.data.success) {
-      clearFormData();
-      setOpenListPage(0);
-      setOpenListData([]);
-      fetchOpenListData(0);
-
-      Swal.fire({
-        text: "Tax Type deleted successfully",
-        icon: "success",
-        toast: true,
-        showConfirmButton: false,
-        timer: 1000,
-      });
-    } else {
-      Swal.fire({
-        text: resp.data.message || "Failed to delete Tax Type",
-        icon: "info",
-        toast: true,
-        showConfirmButton: false,
-        timer: 1500,
-      });
-    }
-  } catch (error) {
-    console.error("Error deleting Tax Type:", error);
-    setLoading(false);
-
-    Swal.fire({
-      title: "Error!",
-      text: error?.response?.data?.message || "Something went wrong during deletion.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  }
-};
-
-
-  // ===============API  for Tax category dropdown value===================================
-
- const getTaxCategoryDataList = async () => {
-  try {
-    setLoading(true); // Optional: show loading while fetching
-
-    const response = await apiClient.get(`/TaxCategory/All`, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (response.data.success) {
-      const values = response.data.values || [];
-      const formattedData = values.map((item) => ({
-        key: item.DocEntry, // Unique identifier
-        value: item.Name,    // Display value
-      }));
-      setTaxCategories(formattedData);
-    } else {
-      Swal.fire({
-        title: "Warning!",
-        text: response.data.message || "Failed to fetch Tax Categories.",
-        icon: "warning",
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          "An error occurred while fetching Tax Categories.",
+        icon: "error",
         confirmButtonText: "Ok",
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching tax data:", error);
-    Swal.fire({
-      title: "Error!",
-      text: error?.response?.data?.message || "An error occurred while fetching Tax Categories.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   useEffect(() => {
     getTaxCategoryDataList();
@@ -573,7 +575,7 @@ export default function TaxType() {
         position={"relative"}
         component={"form"}
         onSubmit={handleSubmit(handleSubmitForm)}
-         onKeyDown={(e) => {
+        onKeyDown={(e) => {
           if (e.key === "Enter") {
             e.preventDefault();
           }
@@ -811,7 +813,6 @@ export default function TaxType() {
               <Button
                 variant="contained"
                 disabled={!perms.IsDelete}
-
                 color="error"
                 onClick={handleOnDelete}
               >

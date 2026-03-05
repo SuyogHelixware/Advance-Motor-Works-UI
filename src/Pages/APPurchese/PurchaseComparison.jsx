@@ -38,12 +38,14 @@ import usePermissions from "../Components/usePermissions";
 import { useDocumentSeries } from "../Components/useSearchInfiniteScroll";
 import DynamicLoader from "../../Loaders/DynamicLoader";
 import { TwoFormatter } from "../Components/ValueFormatter";
+import Item from "antd/es/list/Item";
+import { cleanFilterItem } from "@mui/x-data-grid/hooks/features/filter/gridFilterUtils";
 
 export default function PurchaseComparison() {
   useEffect(() => {
     const hideWarning = () => {
       const warningDiv = document.querySelector(
-        'div[style*="color: rgba(130, 130, 130, 0.62)"][style*="position: absolute"]'
+        'div[style*="color: rgba(130, 130, 130, 0.62)"][style*="position: absolute"]',
       );
       if (
         warningDiv &&
@@ -70,13 +72,14 @@ export default function PurchaseComparison() {
   const [hasMoreOpen, setHasMoreOpen] = useState(true);
   const [openListquery, setOpenListQuery] = useState("");
   const [openListSearching, setOpenListSearching] = useState(false);
+  const [CopyformData, setAllDAtaCopyform] = useState([]);
   const [OlinesData, setOlines] = useState([]);
   const [selectedRowsData, setSelectedRow] = useState([]);
   const [type, setType] = useState("I");
   const [allRowData, setrowData] = useState([]);
-   const [clearCache, setClearCache] = useState(false);
+  const [clearCache, setClearCache] = useState(false);
   // const [DocSeries, setDocumentSeries] = useState([]);
-    const [apiloading, setapiloading] = useState(false);
+  const [apiloading, setapiloading] = useState(false);
   const timeoutRef = useRef(null);
   const { control, handleSubmit, getValues, watch, setValue } = useForm({
     defaultValues: {
@@ -86,13 +89,17 @@ export default function PurchaseComparison() {
       Quantity: true,
     },
   });
-    const { DocSeries } = useDocumentSeries(
-      "22",
-      dayjs(undefined).format("YYYY-MM-DD"),
-      setValue,
-      clearCache,
-      "SAVE",
-    );
+  const { DocSeries } = useDocumentSeries(
+    "22",
+    dayjs(undefined).format("YYYY-MM-DD"),
+    setValue,
+    clearCache,
+    "SAVE",
+  );
+  const handleOpenCp = () => {
+    setOpenDialog(true);
+    fetchOpenListData(0);
+  };
   const fetchOpenListData = async (pageNum, searchTerm = "") => {
     const isOpenFilter = getValues("isOpenFilter");
     try {
@@ -102,7 +109,7 @@ export default function PurchaseComparison() {
         const newData = response.data.values;
         setHasMoreOpen(newData.length === 20);
         setOpenListData((prev) =>
-          pageNum === 0 ? newData : [...prev, ...newData]
+          pageNum === 0 ? newData : [...prev, ...newData],
         );
       } else if (response.data.success === false) {
         Swal.fire({
@@ -176,16 +183,12 @@ export default function PurchaseComparison() {
   // };
   // Initial fetch
 
-  
-
-
   useEffect(() => {
-    // Reset openListData to an empty array when filters change
     setCheckedItems({});
     setOlines([]);
     setrowData([]);
+    setAllDAtaCopyform([]);
     setOpenListData([]);
-    // DocumentSeries();
     setHasMoreOpen(true); // Ensure that infinite scroll shows more records again
     fetchOpenListData(0); // Load the first page of data when filters change
   }, [type, watch("isOpenFilter")]);
@@ -206,175 +209,187 @@ export default function PurchaseComparison() {
     });
 
     if (checked) {
-      
       setOlines((prevOlines) => {
         const newOlines = [
-          
           ...prevOlines,
-          
+          //  ...item.oLines
           ...item.oLines.map((obj) => ({
             ...obj,
             CardCode: item.CardCode,
             CardName: item.CardName,
-            DocType: item.DocType,
-        //         Series:
-        // isFirstRow && index === 0
-        //   ? DocSeries?.[0]?.DocEntry ?? "0"
-        //   : "0",
+            BaseDocNum: item.DocNum,
+            BaseEntry: item.DocEntry,
 
-        //        PoDocNum:
-        // isFirstRow && index === 0
-        //   ? DocSeries?.[0]?.DocNum ?? "0"
-        //   : "0",
+            BaseType: "540000006",
+            //     DocType: item.DocType,
+            // //         Series:
+            // // isFirstRow && index === 0
+            // //   ? DocSeries?.[0]?.DocEntry ?? "0"
+            // //   : "0",
+            // //        PoDocNum:
+            // // isFirstRow && index === 0
+            // //   ? DocSeries?.[0]?.DocNum ?? "0"
+            // //   : "0",
             DocNum: item.DocNum,
-            UserId: item.UserId,
-            CreatedBy: item.CreatedBy,
-            ModifiedBy: item.ModifiedBy,
-            Status: item.Status,
-            NumAtCard: item.NumAtCard,
+            //     UserId: item.UserId,
+            //     CreatedBy: item.CreatedBy,
+            //     ModifiedBy: item.ModifiedBy,
+            //     Status: item.Status,
+            //     NumAtCard: item.NumAtCard,
             DocDate: item.DocDate,
             DocDueDate: item.DocDueDate,
             TaxDate: item.TaxDate,
-            CurSource: item.CurSource,
-            DocCur: item.DocCur,
-            DocRate: item.DocRate,
-            PaidToDate: item.PaidToDate,
-            Address2: item.Address2,
-            Address: item.Address,
-            PayToCode: item.PayToCode,
-            TrnspCode: item.TrnspCode,
-            AttcEntry: item.AttcEntry,
-            TotalBefDisc: item.TotalBefDisc,
-            TotalBefDiscSy: item.TotalBefDiscSy,
-            TotalBefDiscFrgn: item.TotalBefDiscFrgn,
-            Discount: item.Discount,
-            DiscountAmt: item.DiscountAmt,
-            RoundDif: item.RoundDif,
-            VatSum: item.VatSum,
-            TotalExpns: item.TotalExpns,
-            CntctCode: item.CntctCode,
-            SlpCode: item.SlpCode,
-            TaxOnExp: item.TaxOnExp,
+            //     CurSource: item.CurSource,
+            //     DocCur: item.DocCur,
+            //     DocRate: item.DocRate,
+            //     PaidToDate: item.PaidToDate,
+            //     Address2: item.Address2,
+            //     Address: item.Address,
+            //     PayToCode: item.PayToCode,
+            //     TrnspCode: item.TrnspCode,
+            //     AttcEntry: item.AttcEntry,
+            //     TotalBefDisc: item.TotalBefDisc,
+            //     TotalBefDiscSy: item.TotalBefDiscSy,
+            //     TotalBefDiscFrgn: item.TotalBefDiscFrgn,
+            //     Discount: item.Discount,
+            //     DiscountAmt: item.DiscountAmt,
+            //     RoundDif: item.RoundDif,
+            //     VatSum: item.VatSum,
+            //     TotalExpns: item.TotalExpns,
+            //     CntctCode: item.CntctCode,
+            //     SlpCode: item.SlpCode,
+            //     TaxOnExp: item.TaxOnExp,
             Comments: item.Comments,
-            DocTotalSy: item.DocTotalSy,
-            DocTotal: item.DocTotal,
-            DocTotalFC: item.DocTotalFC,
-            DpmVat: item.DpmVat,
-            PaidFC: item.PaidFC,
-            Serial: item.Serial,
-            DpmAppl: item.DpmAppl,
-            PaidDpm: item.PaidDpm,
-            PaidSum: item.PaidSum,
-            SysRate: item.SysRate,
-            TransId: item.TransId,
-            CANCELED: item.CANCELED,
-            PORevise: item.PORevise,
-            VatPaid: item.VatPaid,
-            BankCode: item.BankCode,
-            BaseDisc: item.BaseDisc,
-            BnkCntry: item.BnkCntry,
-            DpmDrawn: item.DpmDrawn,
-            DpmPrcnt: item.DpmPrcnt,
-            DpmVatFc: item.DpmVatFc,
-            DpmVatSc: item.DpmVatSc,
-            FolioNum: item.FolioNum,
-            GroupNum: item.GroupNum,
-            JrnlMemo: item.JrnlMemo,
-            PaidDpmF: item.PaidDpmF,
-            PaidDpmS: item.PaidDpmS,
-            VatSumFC: item.VatSumFC,
-            VatSumSy: item.VatSumSy,
-            BnkBranch: item.BnkBranch,
-            DiscSumFC: item.DiscSumFC,
-            DiscSumSy: item.DiscSumSy,
-            DpmAmntSC: item.DpmAmntSC,
-            DpmApplFc: item.DpmApplFc,
-            DpmApplSc: item.DpmApplSc,
-            DpmAppVat: item.DpmAppVat,
-            DpmStatus: item.DpmStatus,
-            ExtraDays: item.ExtraDays,
-            FolioPref: item.FolioPref,
-            PaidSumFc: item.PaidSumFc,
-            PaidSumSc: item.PaidSumSc,
-            TaxOnExAp: item.TaxOnExAp,
-            ToBinCode: item.ToBinCode,
-            VatPaidFC: item.VatPaidFC,
-            BaseDiscFc: item.BaseDiscFc,
-            BaseDiscPr: item.BaseDiscPr,
-            BaseDiscSc: item.BaseDiscSc,
-            BnkAccount: item.BnkAccount,
-            CheckDigit: item.CheckDigit,
-            FC: item.FC,
-            DpmAppVatF: item.DpmAppVatF,
-            DpmAppVatS: item.DpmAppVatS,
-            ExtraMonth: item.ExtraMonth,
-            GrosProfFC: item.GrosProfFC,
-            GrosProfit: item.GrosProfit,
-            PayDuMonth: item.PayDuMonth,
-            ReceiptNum: item.ReceiptNum,
-            RoundDifFC: item.RoundDifFC,
-            RoundDifSy: item.RoundDifSy,
-            ShipToCode: item.ShipToCode,
-            TaxOnExApF: item.TaxOnExApF,
-            TaxOnExApS: item.TaxOnExApS,
-            TaxOnExpFc: item.TaxOnExpFc,
-            TaxOnExpSc: item.TaxOnExpSc,
-            TotalExpFC: item.TotalExpFC,
-            TotalExpSC: item.TotalExpSC,
-            VatPaidSys: item.VatPaidSys,
-            ShipMode: item.ShipMode || "0",
-            SAPDocNum: item.SAPDocNum,
-            Sy: item.Sy || "0",
-            SAPDocEntry: item.SAPDocEntry,
-            WeightUnit: item.WeightUnit,
-            oLines: item.oLines,
-            oExpLines: item.oExpLines,
-            oTaxExtLines: item.oTaxExtLines,
-            oPaymentLines: item.oPaymentLines,
-            oDPLines: item.oDPLines,
+            //     DocTotalSy: item.DocTotalSy,
+            //     DocTotal: item.DocTotal,
+            //     DocTotalFC: item.DocTotalFC,
+            //     DpmVat: item.DpmVat,
+            //     PaidFC: item.PaidFC,
+            //     Serial: item.Serial,
+            //     DpmAppl: item.DpmAppl,
+            //     PaidDpm: item.PaidDpm,
+            //     PaidSum: item.PaidSum,
+            //     SysRate: item.SysRate,
+            //     TransId: item.TransId,
+            //     CANCELED: item.CANCELED,
+            //     PORevise: item.PORevise,
+            //     VatPaid: item.VatPaid,
+            //     BankCode: item.BankCode,
+            //     BaseDisc: item.BaseDisc,
+            //     BnkCntry: item.BnkCntry,
+            //     DpmDrawn: item.DpmDrawn,
+            //     DpmPrcnt: item.DpmPrcnt,
+            //     DpmVatFc: item.DpmVatFc,
+            //     DpmVatSc: item.DpmVatSc,
+            //     FolioNum: item.FolioNum,
+            //     GroupNum: item.GroupNum,
+            //     JrnlMemo: item.JrnlMemo,
+            //     PaidDpmF: item.PaidDpmF,
+            //     PaidDpmS: item.PaidDpmS,
+            //     VatSumFC: item.VatSumFC,
+            //     VatSumSy: item.VatSumSy,
+            //     BnkBranch: item.BnkBranch,
+            //     DiscSumFC: item.DiscSumFC,
+            //     DiscSumSy: item.DiscSumSy,
+            //     DpmAmntSC: item.DpmAmntSC,
+            //     DpmApplFc: item.DpmApplFc,
+            //     DpmApplSc: item.DpmApplSc,
+            //     DpmAppVat: item.DpmAppVat,
+            //     DpmStatus: item.DpmStatus,
+            //     ExtraDays: item.ExtraDays,
+            //     FolioPref: item.FolioPref,
+            //     PaidSumFc: item.PaidSumFc,
+            //     PaidSumSc: item.PaidSumSc,
+            //     TaxOnExAp: item.TaxOnExAp,
+            //     ToBinCode: item.ToBinCode,
+            //     VatPaidFC: item.VatPaidFC,
+            //     BaseDiscFc: item.BaseDiscFc,
+            //     BaseDiscPr: item.BaseDiscPr,
+            //     BaseDiscSc: item.BaseDiscSc,
+            //     BnkAccount: item.BnkAccount,
+            //     CheckDigit: item.CheckDigit,
+            //     FC: item.FC,
+            //     DpmAppVatF: item.DpmAppVatF,
+            //     DpmAppVatS: item.DpmAppVatS,
+            //     ExtraMonth: item.ExtraMonth,
+            //     GrosProfFC: item.GrosProfFC,
+            //     GrosProfit: item.GrosProfit,
+            //     PayDuMonth: item.PayDuMonth,
+            //     ReceiptNum: item.ReceiptNum,
+            //     RoundDifFC: item.RoundDifFC,
+            //     RoundDifSy: item.RoundDifSy,
+            //     ShipToCode: item.ShipToCode,
+            //     TaxOnExApF: item.TaxOnExApF,
+            //     TaxOnExApS: item.TaxOnExApS,
+            //     TaxOnExpFc: item.TaxOnExpFc,
+            //     TaxOnExpSc: item.TaxOnExpSc,
+            //     TotalExpFC: item.TotalExpFC,
+            //     TotalExpSC: item.TotalExpSC,
+            //     VatPaidSys: item.VatPaidSys,
+            //     ShipMode: item.ShipMode || "0",
+            //     SAPDocNum: item.SAPDocNum,
+            //     Sy: item.Sy || "0",
+            //     SAPDocEntry: item.SAPDocEntry,
+            //     WeightUnit: item.WeightUnit,
+            //     // oLines: item.oLines,
+            //     oExpLines: item.oExpLines,
+            //     oTaxExtLines: item.oTaxExtLines,
+            //     oPaymentLines: item.oPaymentLines,
+            //     oDPLines: item.oDPLines,
           })),
         ];
         return Array.from(
-          new Map(newOlines.map((obj) => [JSON.stringify(obj), obj])).values()
+          new Map(newOlines.map((obj) => [JSON.stringify(obj), obj])).values(),
         );
       });
+      setAllDAtaCopyform((prev) => ({
+        ...prev,
+        item: [...(prev.item || []), item],
+      }));
     } else {
       setOlines((prevOlines) =>
         prevOlines.filter(
-          (line) => !item.oLines.some((ol) => ol.LineNum === line.LineNum)
-        )
+          (line) => !item.oLines.some((ol) => ol.LineNum === line.LineNum),
+        ),
       );
+      setAllDAtaCopyform((prev) => ({
+        ...prev,
+        item: (prev.item || []).filter(
+          (existing) => existing.DocEntry !== item.DocEntry,
+        ),
+      }));
     }
   }, []);
 
+  console.log("CopyformData", CopyformData);
   const ClearForm = () => {
     setOlines([]);
     setrowData([]);
+    setAllDAtaCopyform([]);
     setCheckedItems({});
   };
   const apiRef = useGridApiRef();
 
   const CustomToolbar = () => (
-  <GridToolbarContainer>
-    <GridToolbarFilterButton />
-    <GridToolbarExport />
-  </GridToolbarContainer>
-);
+    <GridToolbarContainer>
+      <GridToolbarFilterButton />
+      <GridToolbarExport />
+    </GridToolbarContainer>
+  );
   const initialState = useKeepGroupedColumnsHidden({
     apiRef,
     initialState: {
       rowGrouping: {
-        model: ["ItemCode", "ServCode"], // Set initial grouping by ItemCode
+        model: ["CardCode"], // Set initial grouping by ItemCode
       },
     },
   });
 
-
   const Items = [
     {
       id: 1,
-      field: "ItemCode",
-      headerName: "ITEM NO",
+      field: "CardCode",
+      headerName: "VENDOR CODE",
       width: 100,
       headerClassName: "bold-itemcode-header",
       groupable: true,
@@ -400,14 +415,14 @@ export default function PurchaseComparison() {
       type: "text",
       sortable: false,
     },
-    {
-      field: "CardCode",
-      headerName: "VENDOR CODE",
-      width: 100,
-      type: "text",
-      sortable: false,
-      groupable: true, // Enable grouping
-    },
+    // {
+    //   field: "CardCode",
+    //   headerName: "VENDOR CODE",
+    //   width: 100,
+    //   type: "text",
+    //   sortable: false,
+    //   groupable: true, // Enable grouping
+    // },
     {
       field: "CardName",
       headerName: "VENDOR NAME",
@@ -482,12 +497,12 @@ export default function PurchaseComparison() {
       // sortable: false,
       width: 100,
       editable: false,
-   renderCell: (params) =>
-  params.value == null || params.value === "" ? (
-    <span style={{ opacity: 0.6 }}>-</span>
-  ) : (
-    `${params.row.Currency} ${Number(params.value).toFixed(2)}`
-  )
+      renderCell: (params) =>
+        params.value == null || params.value === "" ? (
+          <span style={{ opacity: 0.6 }}>-</span>
+        ) : (
+          `${params.row.Currency} ${Number(params.value).toFixed(2)}`
+        ),
     },
     {
       field: "LineTotal",
@@ -562,13 +577,23 @@ export default function PurchaseComparison() {
           {params.value === "1"
             ? "open"
             : params.value === "0"
-            ? "closed"
-            : "-"}
+              ? "closed"
+              : "-"}
         </span>
       ),
     },
   ];
+
   const Services = [
+    {
+      id: 1,
+      field: "CardCode",
+      headerName: "VENDOR CODE",
+      width: 100,
+      headerClassName: "bold-itemcode-header",
+      groupable: true,
+    },
+
     { id: 1, field: "ServCode", headerName: "SERVICE CODE", width: 100 },
 
     {
@@ -591,6 +616,14 @@ export default function PurchaseComparison() {
       ),
     },
     {
+      field: "CardName",
+      headerName: "VENDOR NAME",
+      width: 100,
+      type: "text",
+      sortable: false,
+      // groupable: true, // Enable grouping
+    },
+    {
       field: "shipDate",
       headerName: "DELIVERY DATE",
       width: 170,
@@ -607,12 +640,12 @@ export default function PurchaseComparison() {
       // sortable: false,
       width: 100,
       editable: false,
-       renderCell: (params) =>
-  params.value == null || params.value === "" ? (
-    <span style={{ opacity: 0.6 }}>-</span>
-  ) : (
-    `${params.row.Currency} ${Number(params.value).toFixed(2)}`
-  )
+      renderCell: (params) =>
+        params.value == null || params.value === "" ? (
+          <span style={{ opacity: 0.6 }}>-</span>
+        ) : (
+          `${params.row.Currency} ${Number(params.value).toFixed(2)}`
+        ),
       // renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
     },
     {
@@ -638,7 +671,7 @@ export default function PurchaseComparison() {
       width: 100,
       sortable: false,
       editable: false,
-    renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
+      renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
       // renderCell: ({ value }) => (value == null ? "" : TwoFormatter(value, 2)),
     },
     // {
@@ -714,49 +747,65 @@ export default function PurchaseComparison() {
   //   setrowData(updatedRows);
   // };
 
-
   const processRowUpdate = (newRow, oldRow) => {
-  const updatedRow = { ...newRow };
+    const updatedRow = { ...newRow };
 
-  // ✅ OpenQuantity validation
-  if ("OpenQuantity" in newRow) {
-    const value = Number(newRow.OpenQuantity) || 0;
-    const maxQty = Number(oldRow.Quantity) || 0;
+    // ✅ OpenQuantity validation
+    if ("OpenQuantity" in newRow) {
+      const value = Number(newRow.OpenQuantity) || 0;
+      const maxQty = Number(oldRow.Quantity) || 0;
 
-    if (value > maxQty) {
-      return oldRow; // ❌ reject update
+      if (value > maxQty) {
+        return oldRow; // ❌ reject update
+      }
+
+      updatedRow.OpenQuantity = Math.max(0, value);
     }
 
+    // ✅ Series → auto set PoDocNum
+    // if (newRow.Series !== oldRow.Series) {
+    //   const seriesData = DocSeries.find(
+    //     (s) => String(s.DocEntry) === String(newRow.Series)
+    //   );
 
-    
-    updatedRow.OpenQuantity = Math.max(0, value);
+    //   updatedRow.PoDocNum = seriesData?.DocNum ?? "0";
+    // }
 
-    
-  }
-
-  // ✅ Series → auto set PoDocNum
-  // if (newRow.Series !== oldRow.Series) {
-  //   const seriesData = DocSeries.find(
-  //     (s) => String(s.DocEntry) === String(newRow.Series)
-  //   );
-
-  //   updatedRow.PoDocNum = seriesData?.DocNum ?? "0";
-  // }
-
-  return updatedRow;
-};
+    return updatedRow;
+  };
 
   const handleSelectionChange = (selectedIDs) => {
-    console.log(selectedIDs);
-    const selectedRows = allRowData.filter((row) =>
-      selectedIDs.includes(row.LineNum)
+    const selectedLines = allRowData.filter((row) =>
+      selectedIDs.includes(row.LineNum),
     );
-    console.log("======", selectedRows);
-    setSelectedRow(selectedRows);
+    console.log("selectedLines", selectedLines);
+    const groupedByDoc = selectedLines.reduce((acc, row) => {
+      if (!acc[row.DocNum]) {
+        acc[row.DocNum] = [];
+      }
+      acc[row.DocNum].push(row);
+      return acc;
+    }, {});
+
+    console.log("selectedLines", selectedLines);
+
+    console.log("CopyformData", CopyformData);
+    const finalObjects = Object.keys(groupedByDoc).map((docNum) => {
+      const headerData = (CopyformData.item || []).find(
+        (doc) => String(doc.DocNum) === String(docNum),
+      );
+      return {
+        ...headerData,
+        // DocNum: docNum,
+        oLines: groupedByDoc[docNum],
+      };
+    });
+
+    console.log("saveObject", finalObjects);
+    setSelectedRow(finalObjects);
   };
 
   const CreatePOSubmit = () => {
-        // const allHaveWhs = obj.some((line) => line.DocNum !== "");
     if (selectedRowsData.length <= 0) {
       Swal.fire({
         title: "Document",
@@ -804,8 +853,8 @@ export default function PurchaseComparison() {
       DocTotalSy: data.DocTotalSy,
       Series: String("-1"),
       DocNum: data.PoDocNum || "0",
-      FinncPriod:data.FinncPriod || "0",
-      PIndicator:data.PIndicator || "0",
+      FinncPriod: data.FinncPriod || "0",
+      PIndicator: data.PIndicator || "0",
       DocTotal: data.DocTotal,
       DocTotalFC: data.DocTotalFC,
       DpmVat: data.DpmVat,
@@ -871,7 +920,6 @@ export default function PurchaseComparison() {
       TotalExpFC: data.TotalExpFC,
       TotalExpSC: data.TotalExpSC,
       VatPaidSys: data.VatPaidSys,
-      ShipMode: data.ShipMode,
       DpmAmntFC: data.DpmAmntFC || "0",
       Sy: data.Sy,
       SAPDocEntry: data.SAPDocEntry || "0",
@@ -885,6 +933,7 @@ export default function PurchaseComparison() {
       ExpApplFC: data.ExpApplFC || "0",
       ExpAppl: data.ExpAppl || "0",
       PaidSys: data.PaidSys || "0",
+      ShipMode: data.ShipMode || "0",
       oLines: data.oLines.map((item) => ({
         ...item,
         UserId: user.UserId,
@@ -892,10 +941,12 @@ export default function PurchaseComparison() {
         CreatedDate: dayjs(undefined).format("YYYY-MM-DD"),
         ModifiedDate: dayjs(undefined).format("YYYY-MM-DD"),
         ModifiedBy: user.UserName,
-        Quantity: String(data.OpenQuantity),
+        Quantity: String(item.OpenQuantity),
+        OpenQuantity: String(item.OpenQuantity),
         ETA: dayjs(undefined).format("YYYY-MM-DD"),
         LastGRNDt: dayjs(undefined).format("YYYY-MM-DD"),
         LineNum: "",
+        BaseLine: item.LineNum,
         ReqDate: item.ReqDate || dayjs(undefined).format("YYYY-MM-DD"),
         DeliveredQty: item?.DeliveredQty ?? "0",
         CdcOffset: item?.CdcOffset ?? "0",
@@ -903,7 +954,6 @@ export default function PurchaseComparison() {
         OpenInvQty: item.OpenInvQty || "0",
         LastPurPr: item.LastPurPr || "0",
         Rate: String(item.LastPurPr || "0"),
-        BaseDocNum: data.DocNum || "0",
         oTaxLines: (item.oTaxLines || []).map((taxItem) => ({
           UserId: user.UserId,
           CreatedBy: user.UserName,
@@ -970,6 +1020,8 @@ export default function PurchaseComparison() {
       })),
     }));
 
+    console.log("object", obj);
+    return;
     const objpost = Object(obj);
     console.log("selected Data Create Po", objpost);
 
@@ -985,7 +1037,7 @@ export default function PurchaseComparison() {
     //   return;
     // }
 
-        // const allHaveWhs = obj.some((line) => line.DocNum !== "");
+    // const allHaveWhs = obj.some((line) => line.DocNum !== "");
     // if (allHaveWhs === false) {
     //   Swal.fire({
     //     title: "Select Series",
@@ -996,6 +1048,7 @@ export default function PurchaseComparison() {
     //   });
     //   return;
     // }
+
     console.log("pod", ...objpost);
     if (obj.length >= 1) {
       apiClient
@@ -1003,6 +1056,8 @@ export default function PurchaseComparison() {
         .then((res) => {
           if (res.data.success) {
             setClearCache(true);
+            ClearForm();
+
             Swal.fire({
               title: "Success!",
               text: "Purchase Order saved Successfully",
@@ -1034,8 +1089,7 @@ export default function PurchaseComparison() {
 
   return (
     <>
-
-<DynamicLoader open={apiloading} />
+      <DynamicLoader open={apiloading} />
       <CopyFromSearchModel
         open={openDialog}
         onClose={() => {
@@ -1300,8 +1354,10 @@ export default function PurchaseComparison() {
                         onRowSelectionModelChange={(selectedIDs) =>
                           handleSelectionChange(selectedIDs)
                         }
-                          processRowUpdate={processRowUpdate}
-  onProcessRowUpdateError={(error) => console.error(error)}
+                        processRowUpdate={processRowUpdate}
+                        onProcessRowUpdateError={(error) =>
+                          console.error(error)
+                        }
                         defaultGroupingExpansionDepth={-1}
                         checkboxSelection
                         initialState={initialState}
@@ -1330,13 +1386,13 @@ export default function PurchaseComparison() {
                                   .map((f) => row[f])
                                   .join("||");
                                 return rowGroupKey === currentGroupKey;
-                              }
+                              },
                             );
 
                             // ---- Handle PriceBefDi ----
                             if (field === "PriceBefDi") {
                               const prices = rowsInCurrentGroup.map(
-                                (row) => parseFloat(row.PriceBefDi) || 0
+                                (row) => parseFloat(row.PriceBefDi) || 0,
                               );
                               const minPrice = Math.min(...prices);
                               const value = params.value;
@@ -1390,7 +1446,9 @@ export default function PurchaseComparison() {
 
                               if (shipDates.length > 0 && params.value) {
                                 const earliest = new Date(
-                                  Math.min(...shipDates.map((d) => d.getTime()))
+                                  Math.min(
+                                    ...shipDates.map((d) => d.getTime()),
+                                  ),
                                 );
                                 const current = new Date(params.value);
 
@@ -1398,7 +1456,7 @@ export default function PurchaseComparison() {
                                   if (
                                     dayjs(current).isSame(
                                       dayjs(earliest),
-                                      "day"
+                                      "day",
                                     )
                                   ) {
                                     return "earliest-shipdate-cell";
@@ -1491,7 +1549,7 @@ export default function PurchaseComparison() {
                   <Button
                     variant="contained"
                     color="primary"
-                    onClick={() => setOpenDialog(true)}
+                    onClick={handleOpenCp}
                   >
                     Back
                   </Button>
@@ -1504,7 +1562,6 @@ export default function PurchaseComparison() {
                     disabled={!perms.IsAdd || !perms.IsEdit}
                     onClick={CreatePOSubmit}
                   >
-                 
                     Create PO
                   </Button>
                 </Grid>

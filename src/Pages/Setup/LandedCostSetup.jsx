@@ -360,40 +360,89 @@ export default function UoMMaster() {
     setSelectedData([]);
   };
 
-const handleSubmitForm = async (data) => {
-  const obj = {
-    ...data,
-    Status: "1",
-  };
+  const handleSubmitForm = async (data) => {
+    const obj = {
+      ...data,
+      Status: "1",
+    };
 
-  const normalizeString = (str = "") =>
-    str.replace(/\s+/g, "").toLowerCase();
+    const normalizeString = (str = "") => str.replace(/\s+/g, "").toLowerCase();
 
-  try {
-    setIsLoading(true);
+    try {
+      setIsLoading(true);
 
-    /* ================= SAVE ================= */
-    if (SaveUpdateName === "SAVE") {
-      if (!Array.isArray(openListData)) return;
+      /* ================= SAVE ================= */
+      if (SaveUpdateName === "SAVE") {
+        if (!Array.isArray(openListData)) return;
 
-      const isExistingSAC = openListData.some(
-        (item) =>
-          normalizeString(item.AlcName) ===
-          normalizeString(data.AlcName)
-      );
+        const isExistingSAC = openListData.some(
+          (item) =>
+            normalizeString(item.AlcName) === normalizeString(data.AlcName),
+        );
 
-      if (isExistingSAC) {
+        if (isExistingSAC) {
+          Swal.fire({
+            text: "Landed Cost Name Already Exist !",
+            icon: "info",
+            confirmButtonText: "Ok",
+          });
+          return;
+        }
+
+        const response = await apiClient.post(`/LandedCostSetup`, obj);
+
+        const { success, message } = response?.data || {};
+
+        if (!success) {
+          Swal.fire({
+            title: "Error!",
+            text: message || "Failed to save Landed Cost.",
+            icon: "error",
+            confirmButtonText: "Ok",
+          });
+          return;
+        }
+
+        clearFormData();
+        setOpenListPage(0);
+        setOpenListData([]);
+        fetchOpenListData(0);
+
         Swal.fire({
-          text: "Landed Cost Name Already Exist !",
+          title: "Success!",
+          text: "Landed Cost Added Successfully",
+          icon: "success",
+          timer: 1000,
+          showConfirmButton: false,
+        });
+
+        return;
+      }
+
+      /* ================= UPDATE ================= */
+      const result = await Swal.fire({
+        text: `Do You Want to Update "${obj.AlcName}"`,
+        icon: "question",
+        confirmButtonText: "YES",
+        cancelButtonText: "No",
+        showConfirmButton: true,
+        showDenyButton: true,
+      });
+
+      if (!result.isConfirmed) {
+        Swal.fire({
+          text: "Landed Cost Setup Not Updated",
           icon: "info",
-          confirmButtonText: "Ok",
+          toast: true,
+          showConfirmButton: false,
+          timer: 1500,
         });
         return;
       }
 
-      const response = await apiClient.post(
-        `/LandedCostSetup`,
-        obj
+      const response = await apiClient.put(
+        `/LandedCostSetup/${data.DocEntry}`,
+        obj,
       );
 
       const { success, message } = response?.data || {};
@@ -401,8 +450,8 @@ const handleSubmitForm = async (data) => {
       if (!success) {
         Swal.fire({
           title: "Error!",
-          text: message || "Failed to save Landed Cost.",
-          icon: "error",
+          text: message || "Failed to update Landed Cost.",
+          icon: "warning",
           confirmButtonText: "Ok",
         });
         return;
@@ -415,157 +464,98 @@ const handleSubmitForm = async (data) => {
 
       Swal.fire({
         title: "Success!",
-        text: "Landed Cost Added Successfully",
+        text: "Landed Cost Setup Updated",
         icon: "success",
         timer: 1000,
         showConfirmButton: false,
       });
+    } catch (error) {
+      console.error("Landed Cost submit error:", error);
 
-      return;
-    }
-
-    /* ================= UPDATE ================= */
-    const result = await Swal.fire({
-      text: `Do You Want to Update "${obj.AlcName}"`,
-      icon: "question",
-      confirmButtonText: "YES",
-      cancelButtonText: "No",
-      showConfirmButton: true,
-      showDenyButton: true,
-    });
-
-    if (!result.isConfirmed) {
-      Swal.fire({
-        text: "Landed Cost Setup Not Updated",
-        icon: "info",
-        toast: true,
-        showConfirmButton: false,
-        timer: 1500,
-      });
-      return;
-    }
-
-    const response = await apiClient.put(
-      `/LandedCostSetup/${data.DocEntry}`,
-      obj
-    );
-
-    const { success, message } = response?.data || {};
-
-    if (!success) {
       Swal.fire({
         title: "Error!",
-        text: message || "Failed to update Landed Cost.",
-        icon: "warning",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong. Please try again.",
+        icon: "error",
         confirmButtonText: "Ok",
       });
-      return;
+    } finally {
+      setIsLoading(false);
     }
+  };
 
-    clearFormData();
-    setOpenListPage(0);
-    setOpenListData([]);
-    fetchOpenListData(0);
+  const handleOnDelete = async () => {
+    if (!AllData?.DocEntry) return;
 
-    Swal.fire({
-      title: "Success!",
-      text: "Landed Cost Setup Updated",
-      icon: "success",
-      timer: 1000,
-      showConfirmButton: false,
-    });
+    try {
+      const result = await Swal.fire({
+        text: `Do You Want to delete "${AllData.AlcName}"`,
+        icon: "question",
+        confirmButtonText: "YES",
+        cancelButtonText: "No",
+        showConfirmButton: true,
+        showDenyButton: true,
+      });
 
-  } catch (error) {
-    console.error("Landed Cost submit error:", error);
+      if (!result.isConfirmed) {
+        Swal.fire({
+          text: "Landed Cost Setup Not Deleted",
+          icon: "info",
+          toast: true,
+          showConfirmButton: false,
+          timer: 1500,
+        });
+        return;
+      }
 
-    Swal.fire({
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong. Please try again.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
+      setIsLoading(true);
 
-  } finally {
-    setIsLoading(false);
-  }
-};
+      const response = await apiClient.delete(
+        `/LandedCostSetup/${AllData.DocEntry}`,
+      );
 
+      const { success, message } = response?.data || {};
 
-const handleOnDelete = async () => {
-  if (!AllData?.DocEntry) return;
+      if (!success) {
+        Swal.fire({
+          title: "Error!",
+          text: message || "Failed to delete Landed Cost.",
+          icon: "warning",
+          confirmButtonText: "Ok",
+        });
+        return;
+      }
 
-  try {
-    const result = await Swal.fire({
-      text: `Do You Want to delete "${AllData.AlcName}"`,
-      icon: "question",
-      confirmButtonText: "YES",
-      cancelButtonText: "No",
-      showConfirmButton: true,
-      showDenyButton: true,
-    });
+      clearFormData();
+      setOpenListPage(0);
+      setOpenListData([]);
+      fetchOpenListData(0);
 
-    if (!result.isConfirmed) {
       Swal.fire({
-        text: "Landed Cost Setup Not Deleted",
-        icon: "info",
+        text: "Landed Cost Deleted",
+        icon: "success",
         toast: true,
         showConfirmButton: false,
-        timer: 1500,
+        timer: 1000,
       });
-      return;
-    }
+    } catch (error) {
+      console.error("Landed Cost delete error:", error);
 
-    setIsLoading(true);
-
-    const response = await apiClient.delete(
-      `/LandedCostSetup/${AllData.DocEntry}`
-    );
-
-    const { success, message } = response?.data || {};
-
-    if (!success) {
       Swal.fire({
         title: "Error!",
-        text: message || "Failed to delete Landed Cost.",
-        icon: "warning",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong while deleting Landed Cost.",
+        icon: "error",
         confirmButtonText: "Ok",
       });
-      return;
+    } finally {
+      setIsLoading(false);
     }
-
-    clearFormData();
-    setOpenListPage(0);
-    setOpenListData([]);
-    fetchOpenListData(0);
-
-    Swal.fire({
-      text: "Landed Cost Deleted",
-      icon: "success",
-      toast: true,
-      showConfirmButton: false,
-      timer: 1000,
-    });
-
-  } catch (error) {
-    console.error("Landed Cost delete error:", error);
-
-    Swal.fire({
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong while deleting Landed Cost.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   const sidebarContent = (
     <>
@@ -680,8 +670,8 @@ const handleOnDelete = async () => {
 
   return (
     <>
-          {isLoading && <Loader open={isLoading} />}
-    
+      {isLoading && <Loader open={isLoading} />}
+
       {/* ============== */}
 
       {/* <GLAccountDialog

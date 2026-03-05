@@ -7,13 +7,6 @@ import MenuIcon from "@mui/icons-material/Menu";
 import PersonAddAlt1OutlinedIcon from "@mui/icons-material/PersonAddAlt1Outlined";
 import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
 import ViewListIcon from "@mui/icons-material/ViewList";
-import InfoIcon from "@mui/icons-material/Info";
-import PersonIcon from "@mui/icons-material/Person";
-import LocationOnIcon from "@mui/icons-material/LocationOn";
-import PaymentsIcon from "@mui/icons-material/Payments";
-import AccountBalanceIcon from "@mui/icons-material/AccountBalance";
-import AttachFileIcon from "@mui/icons-material/AttachFile";
-import CommentIcon from "@mui/icons-material/Comment";
 
 import {
   Box,
@@ -57,7 +50,10 @@ import { Controller, useForm, useFormState, useWatch } from "react-hook-form";
 import InfiniteScroll from "react-infinite-scroll-component";
 import Swal from "sweetalert2";
 import useAuth from "../../Routing/AuthContext";
+import apiClient from "../../services/apiClient";
 import CardComponent from "../Components/CardComponent";
+import CurrencySelector from "../Components/currencyCode";
+import DataGridCellClickModel from "../Components/DataGridCellClickModel";
 import {
   InputDatePickerField,
   InputSearchableSelect,
@@ -71,14 +67,11 @@ import {
 } from "../Components/formComponents";
 import PhoneNumberInput from "../Components/PhoneNumber1";
 import SearchInputField from "../Components/SearchInputField";
-import usePermissions from "../Components/usePermissions";
-import apiClient from "../../services/apiClient";
 import SearchModel from "../Components/SearchModel";
-import DataGridCellClickModel from "../Components/DataGridCellClickModel";
+import usePermissions from "../Components/usePermissions";
 import { Base64FileinNewTab } from "../FileUpload/EditFilePreview";
 import { openFileinNewTab } from "../FileUpload/filePreview";
 import { useFileUpload } from "../FileUpload/useFileUpload";
-import CurrencySelector from "../Components/currencyCode";
 
 export default function BusinessPartner() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -155,109 +148,109 @@ export default function BusinessPartner() {
   const handleGroupClose = () => setopenCreateGroupDialog(false);
   const [openCreateCurrencyDialog, setopenCreateCurrencyDialog] =
     useState(false);
-    const handleCurrencyClose = () => setopenCreateCurrencyDialog(false);
-     const initialCurrencyData = {
-        DocEntry: "",
-        UserId: user.UserId,
-        CreatedBy: user.UserName,
-        CreatedDate: dayjs(undefined).format("YYYY-MM-DD"),
-        ModifiedDate: dayjs(undefined).format("YYYY-MM-DD"),
-        ModifiedBy: user.UserName,
-        Status: 1,
-        CurrCode: "",
-        CurrName: "",
-        CountryCode: "",
-        DocCurrCod: "",
-        ChkName: "",
-        Chk100Name: "",
-        FrgnName: "",
-        F100Name: "",
-        ISOCurrCod: "",
-        RoundSys: "0",
-        Decimals: "-1",
-        RoundPym: "",
-      };
-      const {
-        handleSubmit: HandleCurrencyForm,
-        control: ControlCurrency,
-        reset: resetCurrency,
-        watch: watchCurrency,
-        // getValues: getValues1,
-        setValue: setValueCurrency,
-      } = useForm({
-        defaultValues: initialCurrencyData,
-      });
-      const RoundPym = watchCurrency("RoundPym");
-      const ClearCurrencyForm = () => {
-        resetCurrency(initialCurrencyData);
-      };
-      const handleAddCurrency = async (data) => {
-  const obj = {
-    DocEntry: String(data.DocEntry || ""),
+  const handleCurrencyClose = () => setopenCreateCurrencyDialog(false);
+  const initialCurrencyData = {
+    DocEntry: "",
     UserId: user.UserId,
     CreatedBy: user.UserName,
-    CreatedDate: dayjs().format("YYYY/MM/DD"),
+    CreatedDate: dayjs(undefined).format("YYYY-MM-DD"),
+    ModifiedDate: dayjs(undefined).format("YYYY-MM-DD"),
     ModifiedBy: user.UserName,
-    ModifiedDate: dayjs().format("YYYY/MM/DD"),
-    Status: "1",
-    CurrCode: String(data.CurrCode || ""),
-    CurrName: String(data.CurrName || ""),
-    CountryCode: String(data.CountryCode || ""),
-    DocCurrCod: String(data.DocCurrCod || ""),
-    ChkName: String(data.ChkName || ""),
-    Chk100Name: String(data.Chk100Name || ""),
-    FrgnName: String(data.FrgnName || ""),
-    F100Name: String(data.F100Name || ""),
-    ISOCurrCod: String(data.ISOCurrCod || ""),
-    RoundSys: String(data.RoundSys || ""),
-    Decimals: String(data.Decimals || ""),
-    RoundPym: RoundPym === "Y" ? "Y" : "N",
+    Status: 1,
+    CurrCode: "",
+    CurrName: "",
+    CountryCode: "",
+    DocCurrCod: "",
+    ChkName: "",
+    Chk100Name: "",
+    FrgnName: "",
+    F100Name: "",
+    ISOCurrCod: "",
+    RoundSys: "0",
+    Decimals: "-1",
+    RoundPym: "",
   };
+  const {
+    handleSubmit: HandleCurrencyForm,
+    control: ControlCurrency,
+    reset: resetCurrency,
+    watch: watchCurrency,
+    // getValues: getValues1,
+    setValue: setValueCurrency,
+  } = useForm({
+    defaultValues: initialCurrencyData,
+  });
+  const RoundPym = watchCurrency("RoundPym");
+  const ClearCurrencyForm = () => {
+    resetCurrency(initialCurrencyData);
+  };
+  const handleAddCurrency = async (data) => {
+    const obj = {
+      DocEntry: String(data.DocEntry || ""),
+      UserId: user.UserId,
+      CreatedBy: user.UserName,
+      CreatedDate: dayjs().format("YYYY/MM/DD"),
+      ModifiedBy: user.UserName,
+      ModifiedDate: dayjs().format("YYYY/MM/DD"),
+      Status: "1",
+      CurrCode: String(data.CurrCode || ""),
+      CurrName: String(data.CurrName || ""),
+      CountryCode: String(data.CountryCode || ""),
+      DocCurrCod: String(data.DocCurrCod || ""),
+      ChkName: String(data.ChkName || ""),
+      Chk100Name: String(data.Chk100Name || ""),
+      FrgnName: String(data.FrgnName || ""),
+      F100Name: String(data.F100Name || ""),
+      ISOCurrCod: String(data.ISOCurrCod || ""),
+      RoundSys: String(data.RoundSys || ""),
+      Decimals: String(data.Decimals || ""),
+      RoundPym: RoundPym === "Y" ? "Y" : "N",
+    };
 
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const response = await apiClient.post(`/CurrenciesV2`, obj);
-    const { success, message } = response.data || {};
+      const response = await apiClient.post(`/CurrenciesV2`, obj);
+      const { success, message } = response.data || {};
 
-    if (success) {
-      ClearCurrencyForm();
-      setOpenListPage(0);
-      setOpenListData([]);
-      fetchOpenListData(0);
-      CurrencyData();
-      handleCurrencyClose();
+      if (success) {
+        ClearCurrencyForm();
+        setOpenListPage(0);
+        setOpenListData([]);
+        fetchOpenListData(0);
+        CurrencyData();
+        handleCurrencyClose();
+
+        Swal.fire({
+          title: "Success!",
+          text: "Currency added successfully",
+          icon: "success",
+          confirmButtonText: "Ok",
+          timer: 1000,
+        });
+      } else {
+        Swal.fire({
+          title: "Failed",
+          text: message || "Currency not added",
+          icon: "warning",
+          confirmButtonText: "Ok",
+        });
+      }
+    } catch (error) {
+      console.error("Error saving currency:", error);
 
       Swal.fire({
-        title: "Success!",
-        text: "Currency added successfully",
-        icon: "success",
-        confirmButtonText: "Ok",
-        timer: 1000,
-      });
-    } else {
-      Swal.fire({
-        title: "Failed",
-        text: message || "Currency not added",
-        icon: "warning",
+        title: "Error!",
+        text:
+          error.response?.data?.message ||
+          "Failed to save Currency data. Please try again.",
+        icon: "error",
         confirmButtonText: "Ok",
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error saving currency:", error);
-
-    Swal.fire({
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        "Failed to save Currency data. Please try again.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const initialGroupData = {
     DocEntry: "",
@@ -287,59 +280,59 @@ export default function BusinessPartner() {
   const ClearGroupForm = () => {
     resetGroup(initialGroupData);
   };
- const handleAddGroup = async (data) => {
-  console.log(data);
+  const handleAddGroup = async (data) => {
+    console.log(data);
 
-  const obj = {
-    ...data,
-    Status: "1",
-    PriceList: String(data.PriceList),
-  };
+    const obj = {
+      ...data,
+      Status: "1",
+      PriceList: String(data.PriceList),
+    };
 
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const res = await apiClient.post(`/BusinessPartnerGroup`, obj);
-    const { success, message } = res.data || {};
+      const res = await apiClient.post(`/BusinessPartnerGroup`, obj);
+      const { success, message } = res.data || {};
 
-    if (success) {
-      ClearGroupForm();
-      setOpenListPage(0);
-      setOpenListData([]);
-      fetchOpenListData(0);
-      customerGroup(cardType);
-      handleGroupClose();
+      if (success) {
+        ClearGroupForm();
+        setOpenListPage(0);
+        setOpenListData([]);
+        fetchOpenListData(0);
+        customerGroup(cardType);
+        handleGroupClose();
 
-      Swal.fire({
-        title: "Success!",
-        text: "Business Partner Group added successfully",
-        icon: "success",
-        confirmButtonText: "Ok",
-        timer: 1000,
-      });
-    } else {
+        Swal.fire({
+          title: "Success!",
+          text: "Business Partner Group added successfully",
+          icon: "success",
+          confirmButtonText: "Ok",
+          timer: 1000,
+        });
+      } else {
+        Swal.fire({
+          title: "Error!",
+          text: message || "Failed to add Business Partner Group",
+          icon: "error",
+          confirmButtonText: "Ok",
+        });
+      }
+    } catch (error) {
+      console.error("Error while adding BP Group:", error);
+
       Swal.fire({
         title: "Error!",
-        text: message || "Failed to add Business Partner Group",
+        text:
+          error.response?.data?.message ||
+          "Something went wrong while saving Business Partner Group.",
         icon: "error",
         confirmButtonText: "Ok",
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error while adding BP Group:", error);
-
-    Swal.fire({
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        "Something went wrong while saving Business Partner Group.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const initialFormDataBP = {
     Status: "1",
@@ -477,51 +470,51 @@ export default function BusinessPartner() {
     }, 600);
   };
   const fetchGetListData = async (
-  pageNum,
-  searchTerm = "",
-  cardType,
-  selectedCurrency,
-) => {
-  try {
-    setLoading(true);
+    pageNum,
+    searchTerm = "",
+    cardType,
+    selectedCurrency,
+  ) => {
+    try {
+      setLoading(true);
 
-    const url = searchTerm
-      ? `/BPV2/V2/ByCardType/Search/${searchTerm}/${cardType}/1/${pageNum}/20`
-      : `/BPV2/V2/ByCardType/Pages/${cardType}/1/${pageNum}/20`;
+      const url = searchTerm
+        ? `/BPV2/V2/ByCardType/Search/${searchTerm}/${cardType}/1/${pageNum}/20`
+        : `/BPV2/V2/ByCardType/Pages/${cardType}/1/${pageNum}/20`;
 
-    const response = await apiClient.get(url);
+      const response = await apiClient.get(url);
 
-    if (response.data?.success) {
-      const newData = response.data.values || [];
+      if (response.data?.success) {
+        const newData = response.data.values || [];
 
-      const filteredData = selectedCurrency
-        ? newData.filter((item) => item.Currency === selectedCurrency)
-        : newData;
+        const filteredData = selectedCurrency
+          ? newData.filter((item) => item.Currency === selectedCurrency)
+          : newData;
 
-      setHasMoreGetList(filteredData.length === 20);
+        setHasMoreGetList(filteredData.length === 20);
 
-      setGetListData((prev) =>
-        pageNum === 0 ? filteredData : [...prev, ...filteredData],
-      );
-    } else {
+        setGetListData((prev) =>
+          pageNum === 0 ? filteredData : [...prev, ...filteredData],
+        );
+      } else {
+        Swal.fire({
+          icon: "warning",
+          text: response.data?.message || "No data found",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching Business Partner list:", error);
+
       Swal.fire({
-        icon: "warning",
-        text: response.data?.message || "No data found",
+        icon: "error",
+        text:
+          error.response?.data?.message ||
+          "Failed to fetch Business Partner data!",
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching Business Partner list:", error);
-
-    Swal.fire({
-      icon: "error",
-      text:
-        error.response?.data?.message ||
-        "Failed to fetch Business Partner data!",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const fetchMoreGetListData = () => {
     fetchGetListData(
@@ -538,39 +531,38 @@ export default function BusinessPartner() {
     setGetListData([]); // Clear current data
     fetchGetListData(0, "", cardType); // optional: reset to default
   };
-const onSelectBusinessPartner = async (DocEntry) => {
-  if (!DocEntry) return;
+  const onSelectBusinessPartner = async (DocEntry) => {
+    if (!DocEntry) return;
 
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const response = await apiClient.get(`/BPV2/V2/${DocEntry}`);
-    const values = response?.data?.values;
+      const response = await apiClient.get(`/BPV2/V2/${DocEntry}`);
+      const values = response?.data?.values;
 
-    if (!values) {
+      if (!values) {
+        Swal.fire({
+          icon: "warning",
+          text: "Business Partner data not found",
+        });
+        return;
+      }
+
+      setValueAcctGeneral("FatherCard", values.CardCode);
+      handleCloseDialog();
+    } catch (error) {
+      console.error("Error fetching Business Partner:", error);
+
       Swal.fire({
-        icon: "warning",
-        text: "Business Partner data not found",
+        icon: "error",
+        text:
+          error.response?.data?.message ||
+          "Failed to fetch Business Partner details",
       });
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    setValueAcctGeneral("FatherCard", values.CardCode);
-    handleCloseDialog();
-  } catch (error) {
-    console.error("Error fetching Business Partner:", error);
-
-    Swal.fire({
-      icon: "error",
-      text:
-        error.response?.data?.message ||
-        "Failed to fetch Business Partner details",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const DatagridAcctCodeList = [
     // {
@@ -654,62 +646,62 @@ const onSelectBusinessPartner = async (DocEntry) => {
         : { locManTran: "Y", groupMask: [1, 2], postable: "Y" },
   });
 
- const getChartOfAccounts = async () => {
-  try {
-    setLoading(true); // start loader
+  const getChartOfAccounts = async () => {
+    try {
+      setLoading(true); // start loader
 
-    const res = await apiClient.get(`/ChartOfAccounts/All`);
-    const data = res?.data?.values || [];
+      const res = await apiClient.get(`/ChartOfAccounts/All`);
+      const data = res?.data?.values || [];
 
-    setChartOfAccounts(data);
-  } catch (error) {
-    console.error("Error fetching Chart of Accounts:", error);
+      setChartOfAccounts(data);
+    } catch (error) {
+      console.error("Error fetching Chart of Accounts:", error);
 
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text:
-        error.response?.data?.message ||
-        "Failed to fetch Chart of Accounts.",
-      confirmButtonColor: "#d33",
-    });
-  } finally {
-    setLoading(false); // stop loader
-  }
-};
-
- const GLAcctData = async () => {
-  try {
-    setLoading(true); // Start loader
-
-    const res = await apiClient.get(`/GLAccDetermination/All`);
-    const data = res?.data?.values || [];
-    const success = res?.data?.success;
-
-    if (success) {
-      setGLAcctDeterminationData(data);
-    } else {
       Swal.fire({
-        icon: "warning",
-        title: "Warning!",
-        text: res?.data?.message || "Failed to fetch GL Account Determination.",
+        icon: "error",
+        title: "Error",
+        text:
+          error.response?.data?.message || "Failed to fetch Chart of Accounts.",
         confirmButtonColor: "#d33",
       });
+    } finally {
+      setLoading(false); // stop loader
     }
-  } catch (error) {
-    console.error("Error fetching GL Account Determination:", error);
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        "An unexpected error occurred while fetching GL Account Determination.",
-      confirmButtonColor: "#d33",
-    });
-  } finally {
-    setLoading(false); // Stop loader
-  }
-};
+  };
+
+  const GLAcctData = async () => {
+    try {
+      setLoading(true); // Start loader
+
+      const res = await apiClient.get(`/GLAccDetermination/All`);
+      const data = res?.data?.values || [];
+      const success = res?.data?.success;
+
+      if (success) {
+        setGLAcctDeterminationData(data);
+      } else {
+        Swal.fire({
+          icon: "warning",
+          title: "Warning!",
+          text:
+            res?.data?.message || "Failed to fetch GL Account Determination.",
+          confirmButtonColor: "#d33",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching GL Account Determination:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error!",
+        text:
+          error.response?.data?.message ||
+          "An unexpected error occurred while fetching GL Account Determination.",
+        confirmButtonColor: "#d33",
+      });
+    } finally {
+      setLoading(false); // Stop loader
+    }
+  };
 
   const fetchAccountsAndSetDefaults = async (useCacheOnly = false) => {
     if (!cardType) return;
@@ -802,8 +794,10 @@ const onSelectBusinessPartner = async (DocEntry) => {
   };
 
   useEffect(() => {
-    fetchAccountsAndSetDefaults();
-  }, [cardType, GLAcctDeterminationData, chartOfAccounts]);
+    if (GLAcctDeterminationData.length > 0 && chartOfAccounts.length > 0) {
+      fetchAccountsAndSetDefaults();
+    }
+  }, [cardType, GLAcctDeterminationData.length, chartOfAccounts.length]);
 
   const AccountField = ({
     name,
@@ -1577,42 +1571,40 @@ const onSelectBusinessPartner = async (DocEntry) => {
     defaultValues: initialFormDataAddBank,
   });
   const FetchBankCode = async () => {
-  try {
-    setLoading(true); // Start loader
+    try {
+      setLoading(true); // Start loader
 
-    const res = await apiClient.get(`/BankSetup/All`);
-    const success = res?.data?.success;
-    const values = res?.data?.values || [];
+      const res = await apiClient.get(`/BankSetup/All`);
+      const success = res?.data?.success;
+      const values = res?.data?.values || [];
 
-    if (success) {
-      setBankCode(values);
-    } else {
+      if (success) {
+        setBankCode(values);
+      } else {
+        Swal.fire({
+          icon: "warning",
+          title: "Warning!",
+          text: res?.data?.message || "Failed to fetch bank data.",
+          confirmButtonColor: "#d33",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching bank data:", error);
       Swal.fire({
-        icon: "warning",
-        title: "Warning!",
-        text: res?.data?.message || "Failed to fetch bank data.",
+        icon: "error",
+        title: "Error!",
+        text:
+          error.response?.data?.message ||
+          "An unexpected error occurred while fetching bank data.",
         confirmButtonColor: "#d33",
       });
+    } finally {
+      setLoading(false); // Stop loader
     }
-  } catch (error) {
-    console.error("Error fetching bank data:", error);
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        "An unexpected error occurred while fetching bank data.",
-      confirmButtonColor: "#d33",
-    });
-  } finally {
-    setLoading(false); // Stop loader
-  }
-};
+  };
 
   const ClearForm = async () => {
     resetFormBP(initialFormDataBP);
-    resetFormBP(initialFormDataBP.FreeTexts);
-
     // 👇 Grab current defaults before reset
     const defaults = getValuesAcctGeneral([
       "DpmOpnDebAct",
@@ -1648,10 +1640,12 @@ const onSelectBusinessPartner = async (DocEntry) => {
     // setFormBPValue(
     //   "GroupCode",
     //   customergroup.length > 0 ? customergroup[0].DocEntry : ""
+
     // );
     await FetchPaymentTerms();
     // Optional: refresh accounts, but defaults are already restored above
     await fetchAccountsAndSetDefaults(true);
+    setFormBPValue("CardName", "");
   };
 
   const handleAddOpen1 = () => {
@@ -1664,102 +1658,100 @@ const onSelectBusinessPartner = async (DocEntry) => {
   };
   //===========================Payment Terms====================
 
-const FetchPaymentTerms = async () => {
-  try {
-    setLoading(true); // Start loader
+  const FetchPaymentTerms = async () => {
+    try {
+      setLoading(true); // Start loader
 
-    const res = await apiClient.get(`/PaymentTerms/All`);
-    const success = res?.data?.success;
-    const resp = res?.data?.values || [];
+      const res = await apiClient.get(`/PaymentTerms/All`);
+      const success = res?.data?.success;
+      const resp = res?.data?.values || [];
 
-    if (!success) {
+      if (!success) {
+        Swal.fire({
+          icon: "warning",
+          title: "Warning!",
+          text: res?.data?.message || "Failed to fetch Payment Terms.",
+          confirmButtonColor: "#d33",
+        });
+        return;
+      }
+
+      setPaymentTerms(resp);
+
+      // ---------------------------
+      // IF NO PAYMENT TERMS RECORDS
+      // ---------------------------
+      if (resp.length === 0) {
+        Swal.fire({
+          icon: "warning",
+          title: "No Payment Terms Found",
+          text: "Please add a Payment Term first!",
+          confirmButtonColor: "#d33",
+        });
+        return; // ⛔ stop further execution
+      }
+
+      // ---------------------------
+      // IF SAVE MODE → SET DEFAULT
+      // ---------------------------
+      if (saveUpdateNameBP === "SAVE") {
+        const defaultTerm = resp[0];
+        setFormBPValue("GroupNum", defaultTerm.DocEntry, {
+          shouldValidate: true,
+        });
+
+        updatePriceList(defaultTerm.DocEntry);
+      }
+    } catch (error) {
+      console.error("Error fetching Payment Terms:", error);
       Swal.fire({
-        icon: "warning",
-        title: "Warning!",
-        text: res?.data?.message || "Failed to fetch Payment Terms.",
+        icon: "error",
+        title: "Error!",
+        text:
+          error.response?.data?.message ||
+          "An unexpected error occurred while fetching Payment Terms.",
         confirmButtonColor: "#d33",
       });
-      return;
+    } finally {
+      setLoading(false); // Stop loader
     }
+  };
 
-    setPaymentTerms(resp);
+  const FetchPriceList = async () => {
+    try {
+      setLoading(true); // Start loader
 
-    // ---------------------------
-    // IF NO PAYMENT TERMS RECORDS
-    // ---------------------------
-    if (resp.length === 0) {
+      const res = await apiClient.get(`/PriceList/All`);
+      const success = res?.data?.success;
+      const values = res?.data?.values || [];
+
+      if (!success) {
+        Swal.fire({
+          icon: "warning",
+          title: "Warning!",
+          text: res?.data?.message || "Failed to fetch Price List data.",
+          confirmButtonColor: "#d33",
+        });
+        return;
+      }
+
+      // Filter active price lists
+      const filteredResponse = values.filter((item) => item.Status === "1");
+      setPriceList(filteredResponse);
+    } catch (error) {
+      console.error("Error fetching Price List:", error);
       Swal.fire({
-        icon: "warning",
-        title: "No Payment Terms Found",
-        text: "Please add a Payment Term first!",
+        icon: "error",
+        title: "Error!",
+        text:
+          error.response?.data?.message ||
+          "An unexpected error occurred while fetching Price List.",
         confirmButtonColor: "#d33",
       });
-      return; // ⛔ stop further execution
+    } finally {
+      setLoading(false); // Stop loader
     }
-
-    // ---------------------------
-    // IF SAVE MODE → SET DEFAULT
-    // ---------------------------
-    if (saveUpdateNameBP === "SAVE") {
-      const defaultTerm = resp[0];
-      setFormBPValue("GroupNum", defaultTerm.DocEntry, {
-        shouldValidate: true,
-      });
-
-      updatePriceList(defaultTerm.DocEntry);
-    }
-  } catch (error) {
-    console.error("Error fetching Payment Terms:", error);
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        "An unexpected error occurred while fetching Payment Terms.",
-      confirmButtonColor: "#d33",
-    });
-  } finally {
-    setLoading(false); // Stop loader
-  }
-};
-
-
- const FetchPriceList = async () => {
-  try {
-    setLoading(true); // Start loader
-
-    const res = await apiClient.get(`/PriceList/All`);
-    const success = res?.data?.success;
-    const values = res?.data?.values || [];
-
-    if (!success) {
-      Swal.fire({
-        icon: "warning",
-        title: "Warning!",
-        text: res?.data?.message || "Failed to fetch Price List data.",
-        confirmButtonColor: "#d33",
-      });
-      return;
-    }
-
-    // Filter active price lists
-    const filteredResponse = values.filter((item) => item.Status === "1");
-    setPriceList(filteredResponse);
-
-  } catch (error) {
-    console.error("Error fetching Price List:", error);
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        "An unexpected error occurred while fetching Price List.",
-      confirmButtonColor: "#d33",
-    });
-  } finally {
-    setLoading(false); // Stop loader
-  }
-};
+  };
 
   const toggleDrawer = () => {
     setSidebarOpen(!sidebarOpen);
@@ -1847,46 +1839,46 @@ const FetchPaymentTerms = async () => {
 
   //====================================Active Tab API Binding for BP====================================================================
   const fetchOpenListData = async (pageNum, searchTerm = "") => {
-  try {
-    setLoading(true); // Start loader
+    try {
+      setLoading(true); // Start loader
 
-    const url = searchTerm
-      ? `/BPV2/V2/Search/${searchTerm}/1/${pageNum}/20`
-      : `/BPV2/V2/Pages/1/${pageNum}/20`;
+      const url = searchTerm
+        ? `/BPV2/V2/Search/${searchTerm}/1/${pageNum}/20`
+        : `/BPV2/V2/Pages/1/${pageNum}/20`;
 
-    const response = await apiClient.get(url);
+      const response = await apiClient.get(url);
 
-    if (response.data.success) {
-      const newData = response.data.values || [];
+      if (response.data.success) {
+        const newData = response.data.values || [];
 
-      setHasMoreOpen(newData.length === 20);
+        setHasMoreOpen(newData.length === 20);
 
-      setOpenListData((prev) =>
-        pageNum === 0 ? newData : [...prev, ...newData]
-      );
-    } else {
-      // Backend returned success: false
+        setOpenListData((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+      } else {
+        // Backend returned success: false
+        Swal.fire({
+          icon: "warning",
+          title: "Warning!",
+          text: response.data.message || "Failed to fetch Active List data!",
+          confirmButtonColor: "#d33",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching Active List:", error);
       Swal.fire({
-        icon: "warning",
-        title: "Warning!",
-        text: response.data.message || "Failed to fetch Active List data!",
+        icon: "error",
+        title: "Error!",
+        text:
+          error.response?.data?.message ||
+          "An unexpected error occurred while fetching Active List data.",
         confirmButtonColor: "#d33",
       });
+    } finally {
+      setLoading(false); // Stop loader
     }
-  } catch (error) {
-    console.error("Error fetching Active List:", error);
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        "An unexpected error occurred while fetching Active List data.",
-      confirmButtonColor: "#d33",
-    });
-  } finally {
-    setLoading(false); // Stop loader
-  }
-};
+  };
 
   const handleOpenListSearch = (res) => {
     setOpenListQuery(res);
@@ -2123,47 +2115,46 @@ const FetchPaymentTerms = async () => {
 
   // ============================================InActive List Start ==================================================================
   const fetchClosedListData = async (pageNum, searchTerm = "") => {
-  try {
-    setLoading(true); // start loader
+    try {
+      setLoading(true); // start loader
 
-    const url = searchTerm
-      ? `/BPV2/V2/Search/${searchTerm}/0/${pageNum}/20`
-      : `/BPV2/V2/Pages/0/${pageNum}/20`;
+      const url = searchTerm
+        ? `/BPV2/V2/Search/${searchTerm}/0/${pageNum}/20`
+        : `/BPV2/V2/Pages/0/${pageNum}/20`;
 
-    const response = await apiClient.get(url);
+      const response = await apiClient.get(url);
 
-    if (response.data.success) {
-      const newData = response.data.values || [];
+      if (response.data.success) {
+        const newData = response.data.values || [];
 
-      setHasMoreClosed(newData.length === 20);
+        setHasMoreClosed(newData.length === 20);
 
-      setClosedListData((prev) =>
-        pageNum === 0 ? newData : [...prev, ...newData]
-      );
-    } else {
-      // Backend returned success: false
+        setClosedListData((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+      } else {
+        // Backend returned success: false
+        Swal.fire({
+          icon: "warning",
+          title: "Warning!",
+          text: response.data.message || "Failed to fetch Inactive List data!",
+          confirmButtonColor: "#d33",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching Inactive List:", error);
       Swal.fire({
-        icon: "warning",
-        title: "Warning!",
-        text: response.data.message || "Failed to fetch Inactive List data!",
+        icon: "error",
+        title: "Error!",
+        text:
+          error.response?.data?.message ||
+          "An unexpected error occurred while fetching Inactive List data.",
         confirmButtonColor: "#d33",
       });
+    } finally {
+      setLoading(false); // stop loader
     }
-  } catch (error) {
-    console.error("Error fetching Inactive List:", error);
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        "An unexpected error occurred while fetching Inactive List data.",
-      confirmButtonColor: "#d33",
-    });
-  } finally {
-    setLoading(false); // stop loader
-  }
-};
-
+  };
 
   const handleClosedListSearch = (res) => {
     setClosedListQuery(res);
@@ -2196,209 +2187,220 @@ const FetchPaymentTerms = async () => {
   };
 
   // ==========================================================================================================================
-const customerGroup = async (groupType) => {
-  try {
-    setLoading(true); // start loader
+  const customerGroup = async (groupType) => {
+    try {
+      setLoading(true); // start loader
 
-    const res = await apiClient.get(`/BusinessPartnerGroup/ByGroupType/${groupType}`);
-
-    // Filter active groups
-    const response = (res.data.values || []).filter((item) => item.Status === "1");
-
-    if (response.length === 0) {
-      setCustomerGroup([]);
-      setFormBPValue("GroupCode", ""); // clear the field
-      return;
-    }
-
-    setCustomerGroup(response);
-
-    // Set default value if in SAVE mode
-    if (saveUpdateNameBP === "SAVE") {
-      setFormBPValue("GroupCode", response[0].DocEntry);
-    }
-  } catch (error) {
-    console.error("Error fetching Customer Group:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text:
-        error.response?.data?.message ||
-        "Failed to fetch Customer Group data!",
-      confirmButtonColor: "#d33",
-    });
-  } finally {
-    setLoading(false); // stop loader
-  }
-};
-
-const CurrencyData = async () => {
-  try {
-    setLoading(true); // start loader
-
-    // Fetch all currencies
-    const currencyRes = await apiClient.get(`/Currency/all`);
-    const currencyList = currencyRes.data.values || [];
-    setCurrencydata(currencyList);
-
-    // If in SAVE mode, set default currency
-    if (saveUpdateNameBP === "SAVE") {
-      const mainCurrency = companyData?.MainCurncy;
-      const matchedCurrency = currencyList.find(
-        (item) => item.CurrCode === mainCurrency
+      const res = await apiClient.get(
+        `/BusinessPartnerGroup/ByGroupType/${groupType}`,
       );
 
-      if (matchedCurrency) {
-        setFormBPValue("Currency", matchedCurrency.CurrCode, {
-          shouldValidate: true,
-        });
-      } else if (mainCurrency) {
-        // fallback if not found in list
-        setFormBPValue("Currency", mainCurrency, {
-          shouldValidate: true,
-        });
-      }
-    }
-  } catch (error) {
-    console.error("Error fetching Currency data:", error);
+      // Filter active groups
+      const response = (res.data.values || []).filter(
+        (item) => item.Status === "1",
+      );
 
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text: error.response?.data?.message || "Failed to fetch Currency list!",
-      confirmButtonColor: "#d33",
-    });
-  } finally {
-    setLoading(false); // stop loader
-  }
-};
+      if (response.length === 0) {
+        setCustomerGroup([]);
+        setFormBPValue("GroupCode", ""); // clear the field
+        return;
+      }
+
+      setCustomerGroup(response);
+
+      // Set default value if in SAVE mode
+      if (saveUpdateNameBP === "SAVE") {
+        setFormBPValue("GroupCode", response[0].DocEntry);
+      }
+    } catch (error) {
+      console.error("Error fetching Customer Group:", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error!",
+        text:
+          error.response?.data?.message ||
+          "Failed to fetch Customer Group data!",
+        confirmButtonColor: "#d33",
+      });
+    } finally {
+      setLoading(false); // stop loader
+    }
+  };
+
+  const CurrencyData = async () => {
+    try {
+      setLoading(true); // start loader
+
+      // Fetch all currencies
+      const currencyRes = await apiClient.get(`/Currency/all`);
+      const currencyList = currencyRes.data.values || [];
+      setCurrencydata(currencyList);
+
+      // If in SAVE mode, set default currency
+      if (saveUpdateNameBP === "SAVE") {
+        const mainCurrency = companyData?.MainCurncy;
+        const matchedCurrency = currencyList.find(
+          (item) => item.CurrCode === mainCurrency,
+        );
+
+        if (matchedCurrency) {
+          setFormBPValue("Currency", matchedCurrency.CurrCode, {
+            shouldValidate: true,
+          });
+        } else if (mainCurrency) {
+          // fallback if not found in list
+          setFormBPValue("Currency", mainCurrency, {
+            shouldValidate: true,
+          });
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching Currency data:", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error!",
+        text: error.response?.data?.message || "Failed to fetch Currency list!",
+        confirmButtonColor: "#d33",
+      });
+    } finally {
+      setLoading(false); // stop loader
+    }
+  };
 
   const shippingData = async () => {
-  try {
-    setLoading(true); // start loader
+    try {
+      setLoading(true); // start loader
 
-    const res = await apiClient.get(`/ShippingType/all`);
-    const response = res.data.values || [];
-    setShippingData(response);
+      const res = await apiClient.get(`/ShippingType/all`);
+      const response = res.data.values || [];
+      setShippingData(response);
 
-    // Optionally set default in SAVE mode
-    if (saveUpdateNameBP === "SAVE" && response.length > 0) {
-      setFormBPValue("ShipType", response[0].DocEntry, { shouldValidate: true });
-    }
-
-  } catch (error) {
-    console.error("Error fetching Shipping Type:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text: error.response?.data?.message || "Failed to fetch Shipping Type!",
-      confirmButtonColor: "#d33",
-    });
-  } finally {
-    setLoading(false); // stop loader
-  }
-};
-
-const SeriesData = async () => {
-  try {
-    setLoading(true); // start loader
-
-    const res = await apiClient.get(
-      `/DocSeriesV2/ForTrans?ObjType=2&DocDate=${dayjs().format("YYYY-MM-DD")}`
-    );
-    const response = res.data;
-
-    if (response.success === true || saveUpdateNameBP === "SAVE") {
-      const values = response.values || [];
-      setSeriesdata(values);
-
-      // Set default form values if available
-      if (values.length > 0) {
-        setFormBPValue("Series", values[0]?.SeriesId ?? "", { shouldValidate: true });
-        setFormBPValue("CardCode", values[0]?.DocNum ?? "", { shouldValidate: true });
+      // Optionally set default in SAVE mode
+      if (saveUpdateNameBP === "SAVE" && response.length > 0) {
+        setFormBPValue("ShipType", response[0].DocEntry, {
+          shouldValidate: true,
+        });
       }
-    } else {
+    } catch (error) {
+      console.error("Error fetching Shipping Type:", error);
+
       Swal.fire({
+        icon: "error",
         title: "Error!",
-        text: response.message || "Unable to fetch document series",
-        icon: "warning",
+        text: error.response?.data?.message || "Failed to fetch Shipping Type!",
         confirmButtonColor: "#d33",
       });
+    } finally {
+      setLoading(false); // stop loader
     }
-  } catch (error) {
-    console.error("Error fetching Document Series:", error);
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text: error.response?.data?.message || "Failed to fetch Document Series Data!",
-      confirmButtonColor: "#d33",
-    });
-  } finally {
-    setLoading(false); // stop loader
-  }
-};
+  };
 
- const ListofCountry = async () => {
-  try {
-    setLoading(true); // Start loader
+  const SeriesData = async () => {
+    try {
+      setLoading(true); // start loader
 
-    const res = await apiClient.get(`/Country/all`);
-    let values = res.data.values || [];
+      const res = await apiClient.get(
+        `/DocSeriesV2/ForTrans?ObjType=2&DocDate=${dayjs().format("YYYY-MM-DD")}`,
+      );
+      const response = res.data;
 
-    // Optional filtering logic
-    // values = values.filter((item) => item.Code === item.Code);
+      if (response.success === true || saveUpdateNameBP === "SAVE") {
+        const values = response.values || [];
+        setSeriesdata(values);
 
-    setListofCountry(values);
-  } catch (error) {
-    console.error("Error fetching country list:", error);
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text: error.response?.data?.message || "Failed to fetch country list!",
-      confirmButtonColor: "#d33",
-    });
-  } finally {
-    setLoading(false); // Stop loader
-  }
-};
+        // Set default form values if available
+        if (values.length > 0) {
+          setFormBPValue("Series", values[0]?.SeriesId ?? "", {
+            shouldValidate: true,
+          });
+          setFormBPValue("CardCode", values[0]?.DocNum ?? "", {
+            shouldValidate: true,
+          });
+        }
+      } else {
+        Swal.fire({
+          title: "Error!",
+          text: response.message || "Unable to fetch document series",
+          icon: "warning",
+          confirmButtonColor: "#d33",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching Document Series:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error!",
+        text:
+          error.response?.data?.message ||
+          "Failed to fetch Document Series Data!",
+        confirmButtonColor: "#d33",
+      });
+    } finally {
+      setLoading(false); // stop loader
+    }
+  };
+
+  const ListofCountry = async () => {
+    try {
+      setLoading(true); // Start loader
+
+      const res = await apiClient.get(`/Country/all`);
+      let values = res.data.values || [];
+
+      // Optional filtering logic
+      // values = values.filter((item) => item.Code === item.Code);
+
+      setListofCountry(values);
+    } catch (error) {
+      console.error("Error fetching country list:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error!",
+        text: error.response?.data?.message || "Failed to fetch country list!",
+        confirmButtonColor: "#d33",
+      });
+    } finally {
+      setLoading(false); // Stop loader
+    }
+  };
 
   const ListofState = async (CountryCode) => {
-  if (!CountryCode) return; // early exit if no country code
+    if (!CountryCode) return; // early exit if no country code
 
-  try {
-    setLoading(true); // start loader
+    try {
+      setLoading(true); // start loader
 
-    const res = await apiClient.get(
-      `/ListofStates/GetByCountryCode/${CountryCode}`
-    );
+      const res = await apiClient.get(
+        `/ListofStates/GetByCountryCode/${CountryCode}`,
+      );
 
-    if (res.data.success) {
-      const values = res.data.values || [];
-      setListofState(values);
-    } else {
-      // show error if success is false
+      if (res.data.success) {
+        const values = res.data.values || [];
+        setListofState(values);
+      } else {
+        // show error if success is false
+        Swal.fire({
+          icon: "warning",
+          title: "Warning!",
+          text: res.data.message || "Failed to fetch List of States!",
+          confirmButtonColor: "#d33",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching List of States:", error);
       Swal.fire({
-        icon: "warning",
-        title: "Warning!",
-        text: res.data.message || "Failed to fetch List of States!",
+        icon: "error",
+        title: "Error!",
+        text:
+          error.response?.data?.message || "Failed to fetch List of States!",
         confirmButtonColor: "#d33",
       });
+    } finally {
+      setLoading(false); // stop loader
     }
-  } catch (error) {
-    console.error("Error fetching List of States:", error);
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text: error.response?.data?.message || "Failed to fetch List of States!",
-      confirmButtonColor: "#d33",
-    });
-  } finally {
-    setLoading(false); // stop loader
-  }
-};
-
+  };
 
   const Country = watch4("Country");
 
@@ -2765,8 +2767,8 @@ const SeriesData = async () => {
         Status: "1",
         Address1: element.Address1,
         Address2: element.Address2,
-        Block: String(element.Block || ""),
-        Street: String(element.Street || ""),
+        Block: String(element.Address1 || ""),
+        Street: String(element.Address2 || ""),
         Building: String(element.Building || ""),
         StreetNo: String(element.StreetNo || ""),
         AdresType: String(element.AdresType || ""),
@@ -2984,67 +2986,68 @@ const SeriesData = async () => {
     }
   };
   //=================================================delete api========================================
- const handleOnDelete = async () => {
-  const confirmation = await Swal.fire({
-    text: `Do You Want to Delete "${allFormData?.CardName || ""}"?`,
-    icon: "question",
-    confirmButtonText: "YES",
-    cancelButtonText: "No",
-    showConfirmButton: true,
-    showDenyButton: true,
-  });
-
-  if (!confirmation.isConfirmed) {
-    Swal.fire({
-      text: "Business Partner Not Deleted",
-      icon: "info",
-      toast: true,
-      showConfirmButton: false,
-      timer: 1500,
+  const handleOnDelete = async () => {
+    const confirmation = await Swal.fire({
+      text: `Do You Want to Delete "${allFormData?.CardName || ""}"?`,
+      icon: "question",
+      confirmButtonText: "YES",
+      cancelButtonText: "No",
+      showConfirmButton: true,
+      showDenyButton: true,
     });
-    return;
-  }
 
-  try {
-    setLoading(true);
-
-    const response = await apiClient.delete(`/BPV2/V2/${allFormData.DocEntry}`);
-    const { success, message } = response.data;
-
-    if (success) {
-      ClearForm();
-      fetchOpenListData(0);
-      fetchClosedListData(0);
-
+    if (!confirmation.isConfirmed) {
       Swal.fire({
-        title: "Success!",
-        text: "Business Partner Deleted",
-        icon: "success",
-        confirmButtonText: "Ok",
-        timer: 1000,
-      });
-    } else {
-      Swal.fire({
-        text: message || "Failed to delete Business Partner!",
+        text: "Business Partner Not Deleted",
         icon: "info",
         toast: true,
         showConfirmButton: false,
         timer: 1500,
       });
+      return;
     }
-  } catch (error) {
-    console.error("Error deleting Business Partner:", error);
-    Swal.fire({
-      icon: "error",
-      text:
-        error.response?.data?.message ||
-        "Failed to delete Business Partner!",
-      confirmButtonColor: "#d33",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+
+    try {
+      setLoading(true);
+
+      const response = await apiClient.delete(
+        `/BPV2/V2/${allFormData.DocEntry}`,
+      );
+      const { success, message } = response.data;
+
+      if (success) {
+        ClearForm();
+        fetchOpenListData(0);
+        fetchClosedListData(0);
+
+        Swal.fire({
+          title: "Success!",
+          text: "Business Partner Deleted",
+          icon: "success",
+          confirmButtonText: "Ok",
+          timer: 1000,
+        });
+      } else {
+        Swal.fire({
+          text: message || "Failed to delete Business Partner!",
+          icon: "info",
+          toast: true,
+          showConfirmButton: false,
+          timer: 1500,
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting Business Partner:", error);
+      Swal.fire({
+        icon: "error",
+        text:
+          error.response?.data?.message || "Failed to delete Business Partner!",
+        confirmButtonColor: "#d33",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const sidebarContent = (
     <>
@@ -3254,295 +3257,295 @@ const SeriesData = async () => {
   return (
     <>
       {loading && <Loader open={loading} />}
-        <Dialog
-              open={openCreateCurrencyDialog}
-              onClose={handleCurrencyClose}
-              maxWidth={false}
-              sx={{
-                "& .MuiDialog-paper": {
-                  width: "70vw", // dialog width
-                  maxWidth: "1200px", // optional limit
-                  height: "auto",
-                },
-              }}
+      <Dialog
+        open={openCreateCurrencyDialog}
+        onClose={handleCurrencyClose}
+        maxWidth={false}
+        sx={{
+          "& .MuiDialog-paper": {
+            width: "70vw", // dialog width
+            maxWidth: "1200px", // optional limit
+            height: "auto",
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            textAlign: "center",
+            position: "relative",
+            fontWeight: "bold",
+          }}
+        >
+          {/* 🔹 Add Icon at Top-Left */}
+          Currency
+          {/* 🔹 Close Icon at Top-Right */}
+          <IconButton
+            onClick={() => {
+              resetCurrency(initialCurrencyData);
+            }}
+            sx={{
+              position: "absolute",
+              left: 8,
+              top: 8,
+            }}
+            size="small"
+          >
+            <AddIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <DialogContent
+          sx={{ display: "flex", flexDirection: "column", height: "100%" }}
+        >
+          <form
+            id="user-form-id"
+            onSubmit={HandleCurrencyForm(handleAddCurrency)}
+            autoComplete="off"
+          >
+            <Grid
+              container
+              spacing={2} // 👈 adds space between fields
+              textTransform="uppercase"
+              sx={{ mt: 2 }}
             >
-              <DialogTitle
-                sx={{
-                  textAlign: "center",
-                  position: "relative",
-                  fontWeight: "bold",
-                }}
-              >
-                {/* 🔹 Add Icon at Top-Left */}
-                Currency
-                {/* 🔹 Close Icon at Top-Right */}
-                <IconButton
-                  onClick={() => {
-                    resetCurrency(initialCurrencyData);
+              <Grid item sm={6} xs={12} md={4} lg={4} textAlign={"center"}>
+                <Controller
+                  name="CurrCode"
+                  control={ControlCurrency}
+                  rules={{
+                    required: "Currency Code is required",
+                    validate: (value) =>
+                      value.trim() !== "" || "Currency Code cannot be empty",
                   }}
-                  sx={{
-                    position: "absolute",
-                    left: 8,
-                    top: 8,
+                  render={({ field, fieldState: { error } }) => (
+                    <InputTextField
+                      label="Code"
+                      type="text"
+                      {...field}
+                      error={!!error} // Pass error state to the FormComponent if needed
+                      helperText={error ? error.message : null} // Show the validation message
+                      inputProps={{ maxLength: 3 }}
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid item sm={6} xs={12} md={4} lg={4} textAlign={"center"}>
+                <Controller
+                  name="CurrName"
+                  control={ControlCurrency}
+                  rules={{
+                    required: "Currency Name is required",
+                    validate: (value) =>
+                      value.trim() !== "" || "Currency Name cannot be empty",
                   }}
-                  size="small"
-                >
-                  <AddIcon />
-                </IconButton>
-              </DialogTitle>
-      
-              <DialogContent
-                sx={{ display: "flex", flexDirection: "column", height: "100%" }}
-              >
-                <form
-                  id="user-form-id"
-                  onSubmit={HandleCurrencyForm(handleAddCurrency)}
-                  autoComplete="off"
-                >
-                  <Grid
-                    container
-                    spacing={2} // 👈 adds space between fields
-                    textTransform="uppercase"
-                    sx={{ mt: 2 }}
-                  >
-                    <Grid item sm={6} xs={12} md={4} lg={4} textAlign={"center"}>
-                      <Controller
-                        name="CurrCode"
-                        control={ControlCurrency}
-                        rules={{
-                          required: "Currency Code is required",
-                          validate: (value) =>
-                            value.trim() !== "" || "Currency Code cannot be empty",
-                        }}
-                        render={({ field, fieldState: { error } }) => (
-                          <InputTextField
-                            label="Code"
-                            type="text"
-                            {...field}
-                            error={!!error} // Pass error state to the FormComponent if needed
-                            helperText={error ? error.message : null} // Show the validation message
-                            inputProps={{ maxLength: 3 }}
-                          />
-                        )}
-                      />
-                    </Grid>
-                    <Grid item sm={6} xs={12} md={4} lg={4} textAlign={"center"}>
-                      <Controller
-                        name="CurrName"
-                        control={ControlCurrency}
-                        rules={{
-                          required: "Currency Name is required",
-                          validate: (value) =>
-                            value.trim() !== "" || "Currency Name cannot be empty",
-                        }}
-                        render={({ field, fieldState: { error } }) => (
-                          <InputTextField
-                            label="Currency"
-                            type="text"
-                            inputProps={{ maxLength: 20 }}
-                            {...field}
-                            error={!!error}
-                            helperText={error ? error.message : null}
-                          />
-                        )}
-                      />
-                    </Grid>
-                    <Grid item sm={6} xs={12} md={4} lg={4} textAlign={"center"}>
-                      <Controller
-                        name="DocCurrCod"
-                        control={ControlCurrency}
-                        rules={{
-                          required: "International Code is required",
-                          validate: (value) =>
-                            value.trim() !== "" ||
-                            "International Code cannot be empty",
-                        }}
-                        render={({ field, fieldState: { error } }) => (
-                          <InputTextField
-                            label="INTERNATIONAL CODE"
-                            type="text"
-                            {...field}
-                            inputProps={{ maxLength: 3 }}
-                            error={!!error} // Pass error state to the FormComponent if needed
-                            helperText={error ? error.message : null} // Show the validation message
-                          />
-                        )}
-                      />
-                    </Grid>
-                    <Grid item sm={6} xs={12} md={4} lg={4} textAlign={"center"}>
-                      <Controller
-                        name="ChkName"
-                        control={ControlCurrency}
-                        rules={{
-                          required: "International Description is required",
-                          validate: (value) =>
-                            value.trim() !== "" || "Group Name cannot be empty",
-                        }}
-                        render={({ field, fieldState: { error } }) => (
-                          <InputTextField
-                            label="International Description"
-                            type="text"
-                            {...field}
-                            inputProps={{ maxLength: 20 }}
-                            error={!!error} // Pass error state to the FormComponent if needed
-                            helperText={error ? error.message : null} // Show the validation message
-                          />
-                        )}
-                      />
-                    </Grid>
-                    <Grid item sm={6} xs={12} md={4} lg={4} textAlign={"center"}>
-                      <Controller
-                        name="Chk100Name"
-                        control={ControlCurrency}
-                        // rules={{
-                        //   required: "Hundredth Name is required", // Field is required
-                        // }}
-                        render={({ field, fieldState: { error } }) => (
-                          <InputTextField
-                            label="Hundredth Name"
-                            type="text"
-                            {...field}
-                            inputProps={{ maxLength: 20 }}
-                            error={!!error} // Pass error state to the FormComponent if needed
-                            helperText={error ? error.message : null} // Show the validation message
-                          />
-                        )}
-                      />
-                    </Grid>
-                    <Grid item sm={6} xs={12} md={4} lg={4} textAlign={"center"}>
-                      <Controller
-                        name="FrgnName"
-                        control={ControlCurrency}
-                        // rules={{
-                        //   required: "English is required", // Field is required
-                        // }}
-                        render={({ field, fieldState: { error } }) => (
-                          <InputTextField
-                            label="English"
-                            type="text"
-                            {...field}
-                            inputProps={{ maxLength: 20 }}
-                            error={!!error} // Pass error state to the FormComponent if needed
-                            helperText={error ? error.message : null} // Show the validation message
-                          />
-                        )}
-                      />
-                    </Grid>
-                    <Grid item sm={6} xs={12} md={4} lg={4} textAlign={"center"}>
-                      <Controller
-                        name="F100Name"
-                        control={ControlCurrency}
-                        // rules={{
-                        //   required: "English Hundredth Name is required", // Field is required
-                        // }}
-                        render={({ field, fieldState: { error } }) => (
-                          <InputTextField
-                            label="English Hundredth Name"
-                            type="text"
-                            {...field}
-                            inputProps={{ maxLength: 20 }}
-                            error={!!error} // Pass error state to the FormComponent if needed
-                            helperText={error ? error.message : null} // Show the validation message
-                          />
-                        )}
-                      />
-                    </Grid>
-      
-                    <Grid item sm={6} xs={12} md={4} lg={4} textAlign={"center"}>
-                      <Controller
-                        name="ISOCurrCod"
-                        control={ControlCurrency}
-                        defaultValue=""
-                        render={({ field }) => (
-                          <CurrencySelector
-                            label="ISO CURRENCY CODE"
-                            // disabled={isCurrencyDisabled}
-                            readOnly
-                            value={field.value}
-                            onChange={(currency) => field.onChange(currency)}
-                          />
-                        )}
-                      />
-                    </Grid>
-      
-                    <Grid item sm={6} xs={12} md={4} lg={4} textAlign={"center"}>
-                      <Controller
-                        name="RoundSys"
-                        control={ControlCurrency}
-                        // rules={{
-                        //   required: "Technician NAME is required", // Field is required
-                        // }}
-                        defaultValue="0"
-                        render={({ field, fieldState: { error } }) => (
-                          <InputSelectTextField
-                            label="Rounding"
-                            {...field}
-                            data={[
-                              { key: "0", value: "No Rounding" },
-                              { key: "1", value: "Round to One" },
-                              { key: "2", value: "Round to Ten" },
-                              { key: "3", value: "Round to Ten Hundredth" },
-                              { key: "4", value: "Round to Five Hundredth" },
-                            ]}
-                            error={!!error}
-                            helperText={error ? error.message : null}
-                          />
-                        )}
-                      />
-                    </Grid>
-                    <Grid item sm={6} xs={12} md={4} lg={4} textAlign={"center"}>
-                      <Controller
-                        name="Decimals"
-                        control={ControlCurrency}
-                        // rules={{
-                        //   required: "Technician NAME is required", // Field is required
-                        // }}
-                        defaultValue="0" // Provide a default value here
-                        render={({ field, fieldState: { error } }) => (
-                          <InputSelectTextField
-                            label="Decimals"
-                            {...field}
-                            data={[
-                              { key: "-1", value: "Default" },
-                              { key: "0", value: "Without Decimals" },
-                              { key: "1", value: "1 Digit" },
-                              { key: "2", value: "2 Digit" },
-                              { key: "3", value: "3 Digit" },
-                              { key: "4", value: "4 Digit" },
-                              { key: "5", value: "5 Digit" },
-                            ]}
-                            error={!!error}
-                            helperText={error ? error.message : null}
-                          />
-                        )}
-                      />
-                    </Grid>
-      
-                    <Grid item md={4} xs={12} textAlign={"center"}>
-                      <Controller
-                        name="RoundPym"
-                        control={ControlCurrency}
-                        defaultValue="N"
-                        render={({ field }) => (
-                          <FormControlLabel
-                            control={
-                              <Checkbox
-                                {...field}
-                                checked={field.value === "Y"}
-                                onChange={(e) => {
-                                  const RoundPymValue = e.target.checked ? "Y" : "N";
-                                  field.onChange(RoundPymValue);
-                                  setValue("Rounding in Pmnt", RoundPymValue);
-                                }}
-                              />
-                            }
-                            label="Rounding in Pmnt" // Set the label next to the checkbox
-                          />
-                        )}
-                      />
-                    </Grid>
-                  </Grid>
-                  {/* <Grid container spacing={2} sx={{ mt: 2 }}>
+                  render={({ field, fieldState: { error } }) => (
+                    <InputTextField
+                      label="Currency"
+                      type="text"
+                      inputProps={{ maxLength: 20 }}
+                      {...field}
+                      error={!!error}
+                      helperText={error ? error.message : null}
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid item sm={6} xs={12} md={4} lg={4} textAlign={"center"}>
+                <Controller
+                  name="DocCurrCod"
+                  control={ControlCurrency}
+                  rules={{
+                    required: "International Code is required",
+                    validate: (value) =>
+                      value.trim() !== "" ||
+                      "International Code cannot be empty",
+                  }}
+                  render={({ field, fieldState: { error } }) => (
+                    <InputTextField
+                      label="INTERNATIONAL CODE"
+                      type="text"
+                      {...field}
+                      inputProps={{ maxLength: 3 }}
+                      error={!!error} // Pass error state to the FormComponent if needed
+                      helperText={error ? error.message : null} // Show the validation message
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid item sm={6} xs={12} md={4} lg={4} textAlign={"center"}>
+                <Controller
+                  name="ChkName"
+                  control={ControlCurrency}
+                  rules={{
+                    required: "International Description is required",
+                    validate: (value) =>
+                      value.trim() !== "" || "Group Name cannot be empty",
+                  }}
+                  render={({ field, fieldState: { error } }) => (
+                    <InputTextField
+                      label="International Description"
+                      type="text"
+                      {...field}
+                      inputProps={{ maxLength: 20 }}
+                      error={!!error} // Pass error state to the FormComponent if needed
+                      helperText={error ? error.message : null} // Show the validation message
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid item sm={6} xs={12} md={4} lg={4} textAlign={"center"}>
+                <Controller
+                  name="Chk100Name"
+                  control={ControlCurrency}
+                  // rules={{
+                  //   required: "Hundredth Name is required", // Field is required
+                  // }}
+                  render={({ field, fieldState: { error } }) => (
+                    <InputTextField
+                      label="Hundredth Name"
+                      type="text"
+                      {...field}
+                      inputProps={{ maxLength: 20 }}
+                      error={!!error} // Pass error state to the FormComponent if needed
+                      helperText={error ? error.message : null} // Show the validation message
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid item sm={6} xs={12} md={4} lg={4} textAlign={"center"}>
+                <Controller
+                  name="FrgnName"
+                  control={ControlCurrency}
+                  // rules={{
+                  //   required: "English is required", // Field is required
+                  // }}
+                  render={({ field, fieldState: { error } }) => (
+                    <InputTextField
+                      label="English"
+                      type="text"
+                      {...field}
+                      inputProps={{ maxLength: 20 }}
+                      error={!!error} // Pass error state to the FormComponent if needed
+                      helperText={error ? error.message : null} // Show the validation message
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid item sm={6} xs={12} md={4} lg={4} textAlign={"center"}>
+                <Controller
+                  name="F100Name"
+                  control={ControlCurrency}
+                  // rules={{
+                  //   required: "English Hundredth Name is required", // Field is required
+                  // }}
+                  render={({ field, fieldState: { error } }) => (
+                    <InputTextField
+                      label="English Hundredth Name"
+                      type="text"
+                      {...field}
+                      inputProps={{ maxLength: 20 }}
+                      error={!!error} // Pass error state to the FormComponent if needed
+                      helperText={error ? error.message : null} // Show the validation message
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid item sm={6} xs={12} md={4} lg={4} textAlign={"center"}>
+                <Controller
+                  name="ISOCurrCod"
+                  control={ControlCurrency}
+                  defaultValue=""
+                  render={({ field }) => (
+                    <CurrencySelector
+                      label="ISO CURRENCY CODE"
+                      // disabled={isCurrencyDisabled}
+                      readOnly
+                      value={field.value}
+                      onChange={(currency) => field.onChange(currency)}
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid item sm={6} xs={12} md={4} lg={4} textAlign={"center"}>
+                <Controller
+                  name="RoundSys"
+                  control={ControlCurrency}
+                  // rules={{
+                  //   required: "Technician NAME is required", // Field is required
+                  // }}
+                  defaultValue="0"
+                  render={({ field, fieldState: { error } }) => (
+                    <InputSelectTextField
+                      label="Rounding"
+                      {...field}
+                      data={[
+                        { key: "0", value: "No Rounding" },
+                        { key: "1", value: "Round to One" },
+                        { key: "2", value: "Round to Ten" },
+                        { key: "3", value: "Round to Ten Hundredth" },
+                        { key: "4", value: "Round to Five Hundredth" },
+                      ]}
+                      error={!!error}
+                      helperText={error ? error.message : null}
+                    />
+                  )}
+                />
+              </Grid>
+              <Grid item sm={6} xs={12} md={4} lg={4} textAlign={"center"}>
+                <Controller
+                  name="Decimals"
+                  control={ControlCurrency}
+                  // rules={{
+                  //   required: "Technician NAME is required", // Field is required
+                  // }}
+                  defaultValue="0" // Provide a default value here
+                  render={({ field, fieldState: { error } }) => (
+                    <InputSelectTextField
+                      label="Decimals"
+                      {...field}
+                      data={[
+                        { key: "-1", value: "Default" },
+                        { key: "0", value: "Without Decimals" },
+                        { key: "1", value: "1 Digit" },
+                        { key: "2", value: "2 Digit" },
+                        { key: "3", value: "3 Digit" },
+                        { key: "4", value: "4 Digit" },
+                        { key: "5", value: "5 Digit" },
+                      ]}
+                      error={!!error}
+                      helperText={error ? error.message : null}
+                    />
+                  )}
+                />
+              </Grid>
+
+              <Grid item md={4} xs={12} textAlign={"center"}>
+                <Controller
+                  name="RoundPym"
+                  control={ControlCurrency}
+                  defaultValue="N"
+                  render={({ field }) => (
+                    <FormControlLabel
+                      control={
+                        <Checkbox
+                          {...field}
+                          checked={field.value === "Y"}
+                          onChange={(e) => {
+                            const RoundPymValue = e.target.checked ? "Y" : "N";
+                            field.onChange(RoundPymValue);
+                            setValue("Rounding in Pmnt", RoundPymValue);
+                          }}
+                        />
+                      }
+                      label="Rounding in Pmnt" // Set the label next to the checkbox
+                    />
+                  )}
+                />
+              </Grid>
+            </Grid>
+            {/* <Grid container spacing={2} sx={{ mt: 2 }}>
                         <Grid item md={6} xs={12} textAlign="center">
                           <Controller
                             name="UserName"
@@ -3569,49 +3572,49 @@ const SeriesData = async () => {
           
                        
                       </Grid> */}
-                </form>
-              </DialogContent>
-      
-              {/* LEFT ALIGNED SAVE BUTTON */}
-              <DialogActions
-                sx={{
-                  px: 3,
-                  pb: 2,
-                  display: "flex",
-                  justifyContent: "space-between",
-                  width: "100%",
-                }}
-              >
-                {/* LEFT SIDE - SAVE BUTTON */}
-                <Button
-                  variant="contained"
-                  type="submit"
-                  form="user-form-id"
-                  color="success"
-                  sx={{
-                    width: "170px",
-                    fontWeight: "bold",
-                    letterSpacing: "1px",
-                  }}
-                >
-                  SAVE
-                </Button>
-      
-                {/* RIGHT SIDE - CANCEL BUTTON */}
-                <Button
-                  variant="contained"
-                  color="error"
-                  sx={{
-                    width: "170px",
-                    fontWeight: "bold",
-                    letterSpacing: "1px",
-                  }}
-                  onClick={() => setopenCreateCurrencyDialog(false)}
-                >
-                  CANCEL
-                </Button>
-              </DialogActions>
-            </Dialog>
+          </form>
+        </DialogContent>
+
+        {/* LEFT ALIGNED SAVE BUTTON */}
+        <DialogActions
+          sx={{
+            px: 3,
+            pb: 2,
+            display: "flex",
+            justifyContent: "space-between",
+            width: "100%",
+          }}
+        >
+          {/* LEFT SIDE - SAVE BUTTON */}
+          <Button
+            variant="contained"
+            type="submit"
+            form="user-form-id"
+            color="success"
+            sx={{
+              width: "170px",
+              fontWeight: "bold",
+              letterSpacing: "1px",
+            }}
+          >
+            SAVE
+          </Button>
+
+          {/* RIGHT SIDE - CANCEL BUTTON */}
+          <Button
+            variant="contained"
+            color="error"
+            sx={{
+              width: "170px",
+              fontWeight: "bold",
+              letterSpacing: "1px",
+            }}
+            onClick={() => setopenCreateCurrencyDialog(false)}
+          >
+            CANCEL
+          </Button>
+        </DialogActions>
+      </Dialog>
       <Dialog
         open={openCreateGroupDialog}
         onClose={handleGroupClose}
@@ -3661,7 +3664,7 @@ const SeriesData = async () => {
               container
               spacing={2} // 👈 adds space between fields
               textTransform="uppercase"
-              sx={{alignItems:"center"}}
+              sx={{ alignItems: "center" }}
             >
               <Grid item lg={4} md={6} xs={12} textAlign={"center"}>
                 <Controller
@@ -3673,7 +3676,6 @@ const SeriesData = async () => {
                       value.trim() !== "" || "Group Name cannot be empty",
                   }}
                   render={({ field, fieldState: { error } }) => {
-                   
                     return (
                       <InputTextField
                         label="GROUP NAME"
@@ -4074,7 +4076,6 @@ const SeriesData = async () => {
                       inputProps={{
                         maxLength: 6,
                         onInput: (e) => {
-                         
                           if (e.target.value.length > 6) {
                             e.target.value = e.target.value.slice(0, 6);
                           }
@@ -5360,7 +5361,7 @@ const SeriesData = async () => {
                         )}
                       />
                     </Grid> */}
- <Grid
+                    <Grid
                       item
                       lg={4}
                       md={6}
@@ -5380,16 +5381,16 @@ const SeriesData = async () => {
                               label="CURRENCY"
                               error={!!error}
                               helperText={error?.message}
-                                data={[
-                              {
-                                key: "AC",
-                                value: "All Currency",
-                              },
-                              ...currencydata.map((item) => ({
-                                key: item.CurrCode,
-                                value: item.CurrName,
-                              })),
-                            ]}
+                              data={[
+                                {
+                                  key: "AC",
+                                  value: "All Currency",
+                                },
+                                ...currencydata.map((item) => ({
+                                  key: item.CurrCode,
+                                  value: item.CurrName,
+                                })),
+                              ]}
                             />
                           )}
                         />

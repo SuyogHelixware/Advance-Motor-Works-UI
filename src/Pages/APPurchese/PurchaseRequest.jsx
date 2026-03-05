@@ -330,7 +330,7 @@ function PurchaseRequest() {
   const [cancelListSearching, setCancelListSearching] = useState(false);
   const [cancelledListquery, setCancelledListQuery] = useState("");
   const [hasMoreCancelled, setHasMoreCancelled] = useState(true);
-  const [PrintData,  setPrintData] = useState([]);
+  const [PrintData, setPrintData] = useState([]);
 
   const [anchorEl, setAnchorEl] = React.useState(null);
   const Openmenu = Boolean(anchorEl);
@@ -487,7 +487,7 @@ function PurchaseRequest() {
         );
         if (dataPrint.success) {
           const OlinesDataPrint = dataPrint.values.oLines;
-           setPrintData(OlinesDataPrint);
+          setPrintData(OlinesDataPrint);
         } else {
           Swal.fire({
             text: dataPrint.message,
@@ -1342,7 +1342,8 @@ function PurchaseRequest() {
       headerAlign: "center",
       align: "center",
       type: "number",
-      valueFormatter: (value, row) => ` ${Number(value).toFixed(2)}`,
+      valueFormatter: (value, row) =>
+        `${companyData.MainCurncy} ${Number(value).toFixed(2)}`,
     },
 
     {
@@ -1409,7 +1410,6 @@ function PurchaseRequest() {
               </Typography>
             </Grid>
 
-            {/* ICON AREA (fixed width like UOM) */}
             <Grid item sx={{ width: 28, textAlign: "center" }}>
               <IconButton
                 size="small"
@@ -2635,9 +2635,10 @@ function PurchaseRequest() {
     setGetListPage((prev) => prev + 1);
   };
   useEffect(() => {
-         if(searchmodelOpen===true){
-    fetchGetListData(0); 
-     }
+    if (searchmodelOpen === true) {
+      fetchGetListData(0);
+      setGetListQuery("");
+    }
   }, [searchmodelOpen]);
   const fetchVendorGetListData = async (pageNum, searchTerm = "") => {
     try {
@@ -2817,12 +2818,14 @@ function PurchaseRequest() {
   const handleDeleteRow = (id) => {
     const updatedLines = getValues("oLines").filter((_, index) => index !== id);
     setok("UPDATE");
-    const updatedData = {
-      ...getValues(),
-      oLines: updatedLines,
-    };
-    // Reset the form with the updated data
-    reset(updatedData);
+    setValue("oLines", updatedLines, {
+      shouldDirty: true,
+      shouldValidate: false,
+    });
+
+    //  if (discPercent > 0) {
+    //     calculateDiscountAmt(discPercent);
+    //   }
   };
   const handleClose = () => {
     setServiceOpen(false);
@@ -3941,18 +3944,38 @@ function PurchaseRequest() {
     const updatedLines = getValues("oLines").map((d, i) =>
       i === oldRow.id ? updatedData : d,
     );
-    reset({ ...allFormData, oLines: updatedLines });
+    setValue("oLines", updatedLines, {
+      shouldDirty: true,
+      shouldValidate: false,
+    });
+    // reset({ ...allFormData, oLines: updatedLines });
     return updatedData;
   };
   //! Header Level CalCaculation
-  const oLines = getValues("oLines") || []; // Ensure it's an array
+  const oLines = watch("oLines") || []; // Ensure it's an array
   // const oExpLines = getValues("oExpLines") || []; // Ensure it's an array
-  const TotalBefDisc = oLines.reduce((sum, current) => {
-    const TotalBefDisc = parseFloat(current?.LineTotal) || 0; // Handle NaN, null, undefined
-    return sum + TotalBefDisc;
-  }, 0);
 
-  setValue("TotalBefDisc", ValueFormatter(TotalBefDisc));
+  const totals = useMemo(() => {
+    return oLines.reduce(
+      (acc, line) => {
+        acc.TotalBefDisc += Number(line?.LineTotal) || 0;
+        return acc;
+      },
+      {
+        TotalBefDisc: 0,
+      },
+    );
+  }, [oLines]);
+
+  useEffect(() => {
+    setValue("TotalBefDisc", ValueFormatter(totals.TotalBefDisc));
+  }, [totals.TotalBefDisc]);
+  // const TotalBefDisc = oLines.reduce((sum, current) => {
+  //   const TotalBefDisc = parseFloat(current?.LineTotal) || 0; // Handle NaN, null, undefined
+  //   return sum + TotalBefDisc;
+  // }, 0);
+
+  // setValue("TotalBefDisc", ValueFormatter(TotalBefDisc));
   const LineVatSum = oLines.reduce((sum, current) => {
     const vat = parseFloat(current?.VatSum) || 0; // Handle NaN, null, undefined
     return sum + vat;
@@ -3961,7 +3984,7 @@ function PurchaseRequest() {
   const VatSum = LineVatSum + TaxOnExp;
   setValue("VatSum", VatSum.toFixed(3));
   let TotalExpns = parseFloat(getValues("TotalExpns")) || 0;
-  const DocTotal = TotalBefDisc + TotalExpns + VatSum;
+  const DocTotal = totals.TotalBefDisc + TotalExpns + VatSum;
   setValue("DocTotal", ValueFormatter(DocTotal));
 
   // ===========Header Calculation===========
@@ -3974,6 +3997,13 @@ function PurchaseRequest() {
     clearFiles();
     setSelectData([]);
     setSelectedRows([]);
+    if (openListquery?.trim()) {
+      handleOpenListClear();
+    } else if (closedListquery?.trim()) {
+      handleClosedListClear();
+    } else if (cancelledListquery?.trim()) {
+      handleCancelListClear();
+    }
     setValue("Series", DocSeries[0]?.SeriesId ?? "");
     setValue("DocNum", DocSeries[0]?.DocNum ?? "");
     setValue("FinncPriod", DocSeries[0]?.FinncPriod ?? "");
@@ -4171,7 +4201,7 @@ function PurchaseRequest() {
       TotalExpFC: data.TotalExpFC || "0",
       SysRate: data.SysRate || "1",
       CurSource: "S",
-      DocCur:  companyData.MainCurncy,
+      DocCur: companyData.MainCurncy,
       DocRate: "1",
       PaidToDate: data.PaidToDate || "0",
       DocType: type,
@@ -4281,8 +4311,8 @@ function PurchaseRequest() {
         BaseEntry: item.BaseEntry || "-1",
         BaseLine: item.BaseLine || "-1",
         LineNum: item.LineNum || "0",
-        Currency:  companyData.MainCurncy,
-        Rate:  "1",
+        Currency: companyData.MainCurncy,
+        Rate: "1",
         GTotal: item.GTotal || "0",
         LineVat: item.LineVat || "0",
         OpenSum: item.OpenSum || "0",
@@ -4558,13 +4588,13 @@ function PurchaseRequest() {
                 timer: 1000,
               });
             } else {
-                 Swal.fire({
-                              title: "warning!",
-                                text: resp.data.message,
-                              icon: "warning",
-                              confirmButtonText: "Ok",
-                              // timer: 1000,
-                            });
+              Swal.fire({
+                title: "warning!",
+                text: resp.data.message,
+                icon: "warning",
+                confirmButtonText: "Ok",
+                // timer: 1000,
+              });
             }
           });
       } else {
@@ -4607,13 +4637,13 @@ function PurchaseRequest() {
                 timer: 1000,
               });
             } else {
-                Swal.fire({
-                             title: "warning!",
-                               text: resp.data.message,
-                             icon: "warning",
-                             confirmButtonText: "Ok",
-                             // timer: 1000,
-                           });
+              Swal.fire({
+                title: "warning!",
+                text: resp.data.message,
+                icon: "warning",
+                confirmButtonText: "Ok",
+                // timer: 1000,
+              });
             }
           });
       } else {
@@ -6530,7 +6560,7 @@ function PurchaseRequest() {
               </Grid>
               <Grid item>
                 <PrintMenu
-                  disabled={ SaveUpdateName === "SAVE"}
+                  disabled={SaveUpdateName === "SAVE"}
                   type={type}
                   DocEntry={allFormData.DocEntry}
                   PrintData={PrintData}

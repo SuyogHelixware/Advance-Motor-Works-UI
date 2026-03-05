@@ -74,7 +74,7 @@ export default function HSN() {
     () => {
       fetchOpenListData(0); // Load first page on mount
     }, // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [],
   );
   // ===============API for Setting specific Cards data====================================
   const setOldOpenData = async (DocEntry, CardCode, CntctCode) => {
@@ -111,56 +111,53 @@ export default function HSN() {
       });
     }
   };
-const setHSNDataList = async (DocEntry) => {
-  if (!DocEntry) return;
+  const setHSNDataList = async (DocEntry) => {
+    if (!DocEntry) return;
 
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const response = await apiClient.get(`/HSN/${DocEntry}`);
-    const { success, message, values } = response?.data || {};
+      const response = await apiClient.get(`/HSN/${DocEntry}`);
+      const { success, message, values } = response?.data || {};
 
-    if (success === false) {
+      if (success === false) {
+        Swal.fire({
+          title: "Warning!",
+          text: message || "Failed to fetch HSN data.",
+          icon: "warning",
+          confirmButtonText: "Ok",
+        });
+        return;
+      }
+
+      if (!values) return;
+
+      toggleDrawer();
+      reset(values);
+      setSaveUpdateName("UPDATE");
+      setDocEntry(DocEntry);
+      setSelectedData(DocEntry);
+    } catch (error) {
+      console.error("HSN fetch error:", error);
+
+      let errorMessage = "Something went wrong while fetching HSN data.";
+
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+
       Swal.fire({
-        title: "Warning!",
-        text: message || "Failed to fetch HSN data.",
-        icon: "warning",
+        title: "Error!",
+        text: errorMessage,
+        icon: "error",
         confirmButtonText: "Ok",
       });
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    if (!values) return;
-
-    toggleDrawer();
-    reset(values);
-    setSaveUpdateName("UPDATE");
-    setDocEntry(DocEntry);
-    setSelectedData(DocEntry);
-
-  } catch (error) {
-    console.error("HSN fetch error:", error);
-
-    let errorMessage = "Something went wrong while fetching HSN data.";
-
-    if (error?.response?.data?.message) {
-      errorMessage = error.response.data.message;
-    } else if (error?.message) {
-      errorMessage = error.message;
-    }
-
-    Swal.fire({
-      title: "Error!",
-      text: errorMessage,
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   // ===============API for Pagination ==================================
   const handleOpenListSearch = (res) => {
@@ -192,49 +189,49 @@ const setHSNDataList = async (DocEntry) => {
     setOpenListPage((prev) => prev + 1);
   };
   const fetchOpenListData = async (pageNum, searchTerm = "") => {
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const url = searchTerm
-      ? `/HSN/Search/${searchTerm}/1/${pageNum}/20`
-      : `/HSN/Pages/1/${pageNum}/20`;
+      const url = searchTerm
+        ? `/HSN/Search/${searchTerm}/1/${pageNum}/20`
+        : `/HSN/Pages/1/${pageNum}/20`;
 
-    const response = await apiClient.get(url);
-    const { success, values, message } = response.data;
+      const response = await apiClient.get(url);
+      const { success, values, message } = response.data;
 
-    if (success) {
-      setHasMoreOpen(values.length === 20);
+      if (success) {
+        setHasMoreOpen(values.length === 20);
 
-      setOpenListData((prev) =>
-        pageNum === 0 ? values : [...prev, ...values]
-      );
-    } else {
+        setOpenListData((prev) =>
+          pageNum === 0 ? values : [...prev, ...values],
+        );
+      } else {
+        Swal.fire({
+          title: "Error!",
+          text: message || "Failed to fetch HSN list.",
+          icon: "warning",
+          confirmButtonText: "Ok",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching HSN list:", error);
+
+      const apiMessage =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        "An unexpected error occurred while fetching HSN data.";
+
       Swal.fire({
         title: "Error!",
-        text: message || "Failed to fetch HSN list.",
-        icon: "warning",
+        text: apiMessage,
+        icon: "error",
         confirmButtonText: "Ok",
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching HSN list:", error);
-
-    const apiMessage =
-      error?.response?.data?.message ||
-      error?.response?.data?.error ||
-      error?.message ||
-      "An unexpected error occurred while fetching HSN data.";
-
-    Swal.fire({
-      title: "Error!",
-      text: apiMessage,
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   useEffect(() => {
     fetchOpenListData(0); // Load first page on mount
@@ -278,7 +275,7 @@ const setHSNDataList = async (DocEntry) => {
               normalizeString(item.Chapter) === normalizeString(data.Chapter) &&
               normalizeString(item.Heading) === normalizeString(data.Heading) &&
               normalizeString(item.SubHeading || "") ===
-                normalizeString(data.SubHeading || "")
+                normalizeString(data.SubHeading || ""),
           );
 
           if (isExistingHSN) {
@@ -328,10 +325,7 @@ const setHSNDataList = async (DocEntry) => {
         });
 
         if (result.isConfirmed) {
-          const response = await apiClient.put(
-            `/HSN/${data.DocEntry}`,
-            obj
-          );
+          const response = await apiClient.put(`/HSN/${data.DocEntry}`, obj);
           const { success, message } = response.data;
           if (success) {
             clearFormData();
@@ -394,74 +388,73 @@ const setHSNDataList = async (DocEntry) => {
   };
   // ===============Delete API ===================================
   const handleOnDelete = async (data) => {
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const result = await Swal.fire({
-      text: "Do You Want to Delete?",
-      icon: "question",
-      confirmButtonText: "YES",
-      cancelButtonText: "No",
-      showConfirmButton: true,
-      showDenyButton: true,
-    });
+      const result = await Swal.fire({
+        text: "Do You Want to Delete?",
+        icon: "question",
+        confirmButtonText: "YES",
+        cancelButtonText: "No",
+        showConfirmButton: true,
+        showDenyButton: true,
+      });
 
-    if (result.isConfirmed) {
-      const response = await apiClient.delete(`/HSN/${DocEntry}`);
-      const { success, message } = response.data;
+      if (result.isConfirmed) {
+        const response = await apiClient.delete(`/HSN/${DocEntry}`);
+        const { success, message } = response.data;
 
-      if (success) {
-        clearFormData();
-        setOpenListPage(0);
-        setOpenListData([]);
-        fetchOpenListData(0);
+        if (success) {
+          clearFormData();
+          setOpenListPage(0);
+          setOpenListData([]);
+          fetchOpenListData(0);
 
-        Swal.fire({
-          text: "HSN Deleted",
-          icon: "success",
-          toast: true,
-          showConfirmButton: false,
-          timer: 1000,
-        });
+          Swal.fire({
+            text: "HSN Deleted",
+            icon: "success",
+            toast: true,
+            showConfirmButton: false,
+            timer: 1000,
+          });
+        } else {
+          Swal.fire({
+            title: "Error!",
+            text: message,
+            icon: "info",
+            toast: true,
+            showConfirmButton: false,
+            timer: 1500,
+          });
+        }
       } else {
         Swal.fire({
-          title: "Error!",
-          text: message,
+          text: "HSN is Not Deleted",
           icon: "info",
           toast: true,
           showConfirmButton: false,
           timer: 1500,
         });
       }
-    } else {
+    } catch (error) {
+      console.error("Error deleting HSN:", error);
+
+      const apiMessage =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        "An unexpected error occurred while deleting the HSN.";
+
       Swal.fire({
-        text: "HSN is Not Deleted",
-        icon: "info",
-        toast: true,
-        showConfirmButton: false,
-        timer: 1500,
+        title: "Error!",
+        text: apiMessage,
+        icon: "error",
+        confirmButtonText: "Ok",
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error deleting HSN:", error);
-
-    const apiMessage =
-      error?.response?.data?.message ||
-      error?.response?.data?.error ||
-      error?.message ||
-      "An unexpected error occurred while deleting the HSN.";
-
-    Swal.fire({
-      title: "Error!",
-      text: apiMessage,
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const sidebarContent = (
     <>
@@ -554,45 +547,42 @@ const setHSNDataList = async (DocEntry) => {
                   onClickClear={handleOpenListClear}
                 />
               </Grid>
-            <InfiniteScroll
-  style={{ textAlign: "center", justifyContent: "center" }}
-  dataLength={openListData.length}
-  hasMore={hasMoreOpen}
-  next={fetchMoreOpenListData}
-  loader={
-    <BeatLoader
-      color={theme.palette.mode === "light" ? "black" : "white"}
-    />
-  }
-  scrollableTarget="ListScroll"
-  endMessage={<Typography>No More Records</Typography>}
->
-  {openListData.map((item, i) => {
-    
-    // Build title dynamically
-   const titleParts = [];
+              <InfiniteScroll
+                style={{ textAlign: "center", justifyContent: "center" }}
+                dataLength={openListData.length}
+                hasMore={hasMoreOpen}
+                next={fetchMoreOpenListData}
+                loader={
+                  <BeatLoader
+                    color={theme.palette.mode === "light" ? "black" : "white"}
+                  />
+                }
+                scrollableTarget="ListScroll"
+                endMessage={<Typography>No More Records</Typography>}
+              >
+                {openListData.map((item, i) => {
+                  // Build title dynamically
+                  const titleParts = [];
 
-if (item.Chapter) titleParts.push(item.Chapter);
-if (item.Heading) titleParts.push(item.Heading);
-if (item.SubHeading) titleParts.push(item.SubHeading);
+                  if (item.Chapter) titleParts.push(item.Chapter);
+                  if (item.Heading) titleParts.push(item.Heading);
+                  if (item.SubHeading) titleParts.push(item.SubHeading);
 
-// Join with ". " but do NOT add trailing dot
-const title = titleParts.join(". ");
+                  // Join with ". " but do NOT add trailing dot
+                  const title = titleParts.join(". ");
 
-
-    return (
-      <CardComponent
-        key={i}
-        title={title}
-        subtitle={item.Description}
-        isSelected={selectedData === item.DocEntry}
-        searchResult={openListquery}
-        onClick={() => setOldOpenData(item.DocEntry)}
-      />
-    );
-  })}
-</InfiniteScroll>
-
+                  return (
+                    <CardComponent
+                      key={i}
+                      title={title}
+                      subtitle={item.Description}
+                      isSelected={selectedData === item.DocEntry}
+                      searchResult={openListquery}
+                      onClick={() => setOldOpenData(item.DocEntry)}
+                    />
+                  );
+                })}
+              </InfiniteScroll>
             </Box>
           </Grid>
         </Grid>
@@ -738,7 +728,7 @@ const title = titleParts.join(". ");
                         const removeEmojis = (str) =>
                           str.replace(
                             /([\u2700-\u27BF]|[\uE000-\uF8FF]|[\uD83C-\uDBFF\uDC00-\uDFFF])+/g,
-                            ""
+                            "",
                           );
                         return (
                           <InputTextField

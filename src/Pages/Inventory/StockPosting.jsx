@@ -303,41 +303,41 @@ export default function StockPosting() {
     console.log("Selected Key:", event.target.value);
   };
   const GLAcctData = async () => {
-  try {
-    setIsLoading(true); // 🔄 start loader (if available)
+    try {
+      setIsLoading(true); // 🔄 start loader (if available)
 
-    const res = await apiClient.get("/GLAccDetermination/All");
+      const res = await apiClient.get("/GLAccDetermination/All");
 
-    if (res?.data?.success) {
-      const data = res.data.values ?? [];
-      setGLAcctDeterminationData(data);
-    } else {
+      if (res?.data?.success) {
+        const data = res.data.values ?? [];
+        setGLAcctDeterminationData(data);
+      } else {
+        Swal.fire({
+          icon: "info",
+          text:
+            res?.data?.message ||
+            "Unable to load GL Account Determination data.",
+          toast: true,
+          showConfirmButton: false,
+          timer: 2000,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching GL Account Determination:", error);
+
       Swal.fire({
-        icon: "info",
+        icon: "error",
+        title: "Error",
         text:
-          res?.data?.message ||
-          "Unable to load GL Account Determination data.",
-        toast: true,
-        showConfirmButton: false,
-        timer: 2000,
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to fetch Chart of Accounts. Please try again later.",
+        confirmButtonText: "Ok",
       });
+    } finally {
+      setIsLoading(false); // ✅ stop loader always
     }
-  } catch (error) {
-    console.error("Error fetching GL Account Determination:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to fetch Chart of Accounts. Please try again later.",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setIsLoading(false); // ✅ stop loader always
-  }
-};
+  };
 
   const getDefaultGLAccounts = () => {
     if (!GLAcctDeterminationData?.length) return null;
@@ -537,69 +537,67 @@ export default function StockPosting() {
     );
   };
 
- const fetchgetListDataIncAccount = async (pageNum = 0, searchTerm = "") => {
-  try {
-    setIsLoading(true); // 🔄 start loader (if available)
+  const fetchgetListDataIncAccount = async (pageNum = 0, searchTerm = "") => {
+    try {
+      setIsLoading(true); // 🔄 start loader (if available)
 
-    // Build query parameters
-    const query = new URLSearchParams({
-      Status: 1,
-      Page: pageNum,
-      Limit: 20,
-      LocManTran: "N",
-      Postable: "Y",
-    });
+      // Build query parameters
+      const query = new URLSearchParams({
+        Status: 1,
+        Page: pageNum,
+        Limit: 20,
+        LocManTran: "N",
+        Postable: "Y",
+      });
 
-    if (searchTerm?.trim()) {
-      query.append("SearchText", searchTerm.trim());
-    }
-
-    const url = `/ChartOfAccounts?${query.toString()}`;
-    const response = await apiClient.get(url);
-
-    if (response?.data?.success) {
-      const newData = response.data.values ?? [];
-
-      // Set default account only on first page load
-      if (pageNum === 0 && newData.length > 0) {
-        setValue("AcctCode", newData[0]?.AcctCode ?? "");
+      if (searchTerm?.trim()) {
+        query.append("SearchText", searchTerm.trim());
       }
 
-      sethasMoreGetListIncAccount(newData.length === 20);
+      const url = `/ChartOfAccounts?${query.toString()}`;
+      const response = await apiClient.get(url);
 
-      setgetListDataIncAccount((prev) =>
-        pageNum === 0 ? newData : [...prev, ...newData]
-      );
+      if (response?.data?.success) {
+        const newData = response.data.values ?? [];
 
-      setgetListPageIncAccount(pageNum);
-    } else {
+        // Set default account only on first page load
+        if (pageNum === 0 && newData.length > 0) {
+          setValue("AcctCode", newData[0]?.AcctCode ?? "");
+        }
+
+        sethasMoreGetListIncAccount(newData.length === 20);
+
+        setgetListDataIncAccount((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+
+        setgetListPageIncAccount(pageNum);
+      } else {
+        Swal.fire({
+          icon: "info",
+          text:
+            response?.data?.message || "Failed to load income account list.",
+          toast: true,
+          showConfirmButton: false,
+          timer: 2000,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching income accounts:", error);
+
       Swal.fire({
-        icon: "info",
+        title: "Error",
         text:
-          response?.data?.message ||
-          "Failed to load income account list.",
-        toast: true,
-        showConfirmButton: false,
-        timer: 2000,
+          error?.response?.data?.message ||
+          error?.message ||
+          "Unable to fetch income account data.",
+        icon: "error",
+        confirmButtonText: "Ok",
       });
+    } finally {
+      setIsLoading(false); // ✅ stop loader always
     }
-  } catch (error) {
-    console.error("Error fetching income accounts:", error);
-
-    Swal.fire({
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Unable to fetch income account data.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setIsLoading(false); // ✅ stop loader always
-  }
-};
-
+  };
 
   const handleSelectIncreaseAccount = (selectedAccount) => {
     const rowIndex = getValues("selectedRowIndex");
@@ -663,68 +661,67 @@ export default function StockPosting() {
       getListSearchingDecAccount ? getListqueryDecAccount : "",
     );
   };
- const fetchgetListDataDecAccount = async (pageNum = 0, searchTerm = "") => {
-  try {
-    setIsLoading(true); // 🔄 start loader (if available)
+  const fetchgetListDataDecAccount = async (pageNum = 0, searchTerm = "") => {
+    try {
+      setIsLoading(true); // 🔄 start loader (if available)
 
-    // Build query parameters
-    const query = new URLSearchParams({
-      Status: 1,
-      Page: pageNum,
-      Limit: 20,
-      LocManTran: "N",
-      Postable: "Y",
-    });
+      // Build query parameters
+      const query = new URLSearchParams({
+        Status: 1,
+        Page: pageNum,
+        Limit: 20,
+        LocManTran: "N",
+        Postable: "Y",
+      });
 
-    if (searchTerm?.trim()) {
-      query.append("SearchText", searchTerm.trim());
-    }
-
-    const url = `/ChartOfAccounts?${query.toString()}`;
-    const response = await apiClient.get(url);
-
-    if (response?.data?.success) {
-      const newData = response.data.values ?? [];
-
-      // Set default account only on first page
-      if (pageNum === 0 && newData.length > 0) {
-        setValue("AcctCode", newData[0]?.AcctCode ?? "");
+      if (searchTerm?.trim()) {
+        query.append("SearchText", searchTerm.trim());
       }
 
-      sethasMoreGetListDecAccount(newData.length === 20);
+      const url = `/ChartOfAccounts?${query.toString()}`;
+      const response = await apiClient.get(url);
 
-      setgetListDataDecAccount((prev) =>
-        pageNum === 0 ? newData : [...prev, ...newData]
-      );
+      if (response?.data?.success) {
+        const newData = response.data.values ?? [];
 
-      setgetListPageDecAccount(pageNum);
-    } else {
+        // Set default account only on first page
+        if (pageNum === 0 && newData.length > 0) {
+          setValue("AcctCode", newData[0]?.AcctCode ?? "");
+        }
+
+        sethasMoreGetListDecAccount(newData.length === 20);
+
+        setgetListDataDecAccount((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+
+        setgetListPageDecAccount(pageNum);
+      } else {
+        Swal.fire({
+          icon: "info",
+          text:
+            response?.data?.message || "Failed to load deduction account list.",
+          toast: true,
+          showConfirmButton: false,
+          timer: 2000,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching deduction accounts:", error);
+
       Swal.fire({
-        icon: "info",
+        title: "Error",
         text:
-          response?.data?.message ||
-          "Failed to load deduction account list.",
-        toast: true,
-        showConfirmButton: false,
-        timer: 2000,
+          error?.response?.data?.message ||
+          error?.message ||
+          "Unable to fetch deduction account data.",
+        icon: "error",
+        confirmButtonText: "Ok",
       });
+    } finally {
+      setIsLoading(false); // ✅ stop loader always
     }
-  } catch (error) {
-    console.error("Error fetching deduction accounts:", error);
-
-    Swal.fire({
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Unable to fetch deduction account data.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setIsLoading(false); // ✅ stop loader always
-  }
-};
+  };
 
   const handleSelectDecreaseAccount = (selectedAccount) => {
     const rowIndex = getValues("selectedRowIndex");
@@ -759,65 +756,63 @@ export default function StockPosting() {
     setsearchmodelOpenDecAccount(false);
   };
 
- const fetchUomByGroup = async (ugpEntry) => {
-  try {
-    setIsLoading(true); // 🔄 start loader (if available)
+  const fetchUomByGroup = async (ugpEntry) => {
+    try {
+      setIsLoading(true); // 🔄 start loader (if available)
 
-    if (!ugpEntry && ugpEntry !== 0) {
-      setUomRows([]);
-      return;
-    }
+      if (!ugpEntry && ugpEntry !== 0) {
+        setUomRows([]);
+        return;
+      }
 
-    const res = await apiClient.get(`/UGP/${ugpEntry}`);
-    const response = res?.data;
+      const res = await apiClient.get(`/UGP/${ugpEntry}`);
+      const response = res?.data;
 
-    if (response?.success && Array.isArray(response?.values?.oLines)) {
-      const formatted = response.values.oLines.map((item, idx) => {
-        const baseQty = Number(item?.BaseQty) || 0;
-        const altQty = Number(item?.AltQty) || 1; // prevent divide-by-zero
+      if (response?.success && Array.isArray(response?.values?.oLines)) {
+        const formatted = response.values.oLines.map((item, idx) => {
+          const baseQty = Number(item?.BaseQty) || 0;
+          const altQty = Number(item?.AltQty) || 1; // prevent divide-by-zero
 
-        return {
-          id: idx + 1,
-          UomCode: item?.UomCode ?? "",
-          ItmsPerUnt: altQty ? baseQty / altQty : 0,
-          UomQty: 0,
-          CountQty: 0,
-          checked: false,
-        };
-      });
+          return {
+            id: idx + 1,
+            UomCode: item?.UomCode ?? "",
+            ItmsPerUnt: altQty ? baseQty / altQty : 0,
+            UomQty: 0,
+            CountQty: 0,
+            checked: false,
+          };
+        });
 
-      setUomRows(formatted);
-    } else {
-      setUomRows([]);
+        setUomRows(formatted);
+      } else {
+        setUomRows([]);
+
+        Swal.fire({
+          icon: "info",
+          text: response?.message || "No UOMs found for the selected group.",
+          toast: true,
+          showConfirmButton: false,
+          timer: 2000,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching UOMs:", error);
 
       Swal.fire({
-        icon: "info",
+        title: "Error",
         text:
-          response?.message || "No UOMs found for the selected group.",
-        toast: true,
-        showConfirmButton: false,
-        timer: 2000,
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to fetch UOMs.",
+        icon: "error",
+        confirmButtonText: "Ok",
       });
+
+      setUomRows([]);
+    } finally {
+      setIsLoading(false); // ✅ stop loader always
     }
-  } catch (error) {
-    console.error("Error fetching UOMs:", error);
-
-    Swal.fire({
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to fetch UOMs.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-
-    setUomRows([]);
-  } finally {
-    setIsLoading(false); // ✅ stop loader always
-  }
-};
-
+  };
 
   // 🔹 Open Modal from parent DataGrid row
   const openUomModal = async (rowIndex, ugpEntry, oInvPostUomsLines) => {
@@ -964,73 +959,73 @@ export default function StockPosting() {
       getListSearchingAccount ? getListqueryAccount : "",
     );
   };
- const fetchgetListDataAccount = async (
-  ItemCode,
-  WHSCode,
-  pageNum = 0,
-  searchTerm = ""
-) => {
-  try {
-    setIsLoading(true); // 🔄 start loader (if available)
+  const fetchgetListDataAccount = async (
+    ItemCode,
+    WHSCode,
+    pageNum = 0,
+    searchTerm = "",
+  ) => {
+    try {
+      setIsLoading(true); // 🔄 start loader (if available)
 
-    if (!ItemCode || !WHSCode) {
-      setgetListDataAccount([]);
-      sethasMoreGetListAccount(false);
-      return;
-    }
+      if (!ItemCode || !WHSCode) {
+        setgetListDataAccount([]);
+        sethasMoreGetListAccount(false);
+        return;
+      }
 
-    const query = new URLSearchParams({
-      Status: 1,
-      Page: pageNum,
-      Limit: 20,
-      ItemCode,
-      WHSCode,
-    });
-
-    if (searchTerm?.trim()) {
-      query.append("SearchText", searchTerm.trim());
-    }
-
-    const url = `/BinLocationV2/GetByWHSCode?${query.toString()}`;
-    const response = await apiClient.get(url);
-
-    if (response?.data?.success) {
-      const newData = response.data.values ?? [];
-
-      sethasMoreGetListAccount(newData.length === 20);
-
-      setgetListDataAccount((prev) =>
-        pageNum === 0 ? newData : [...prev, ...newData]
-      );
-
-      setgetListPageAccount(pageNum);
-    } else {
-      Swal.fire({
-        icon: "info",
-        text:
-          response?.data?.message ||
-          "No bin locations found for the selected item and warehouse.",
-        toast: true,
-        showConfirmButton: false,
-        timer: 2000,
+      const query = new URLSearchParams({
+        Status: 1,
+        Page: pageNum,
+        Limit: 20,
+        ItemCode,
+        WHSCode,
       });
-    }
-  } catch (error) {
-    console.error("❌ Error fetching Bin Location:", error);
 
-    Swal.fire({
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to fetch bin location data.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setIsLoading(false); // ✅ stop loader always
-  }
-};
+      if (searchTerm?.trim()) {
+        query.append("SearchText", searchTerm.trim());
+      }
+
+      const url = `/BinLocationV2/GetByWHSCode?${query.toString()}`;
+      const response = await apiClient.get(url);
+
+      if (response?.data?.success) {
+        const newData = response.data.values ?? [];
+
+        sethasMoreGetListAccount(newData.length === 20);
+
+        setgetListDataAccount((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+
+        setgetListPageAccount(pageNum);
+      } else {
+        Swal.fire({
+          icon: "info",
+          text:
+            response?.data?.message ||
+            "No bin locations found for the selected item and warehouse.",
+          toast: true,
+          showConfirmButton: false,
+          timer: 2000,
+        });
+      }
+    } catch (error) {
+      console.error("❌ Error fetching Bin Location:", error);
+
+      Swal.fire({
+        title: "Error",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to fetch bin location data.",
+        icon: "error",
+        confirmButtonText: "Ok",
+      });
+    } finally {
+      setIsLoading(false); // ✅ stop loader always
+    }
+  };
 
   const handleSelectBinLocation = (item) => {
     const index = getValues("selectedRowIndex");
@@ -2248,54 +2243,52 @@ export default function StockPosting() {
   };
   // ======================WHSCode Logic=============================
   const fetchWhscGetListData = async (pageNum = 0, searchTerm = "") => {
-  try {
-    setIsLoading(true); // 🔄 start loader (if you have one)
+    try {
+      setIsLoading(true); // 🔄 start loader (if you have one)
 
-    let response;
+      let response;
 
-    if (searchTerm?.trim()) {
-      response = await apiClient.get(
-        `/WarehouseV2/search/${searchTerm.trim()}/1/${pageNum}`
-      );
-    } else {
-      response = await apiClient.get(`/WarehouseV2/pages/1/${pageNum}`);
-    }
+      if (searchTerm?.trim()) {
+        response = await apiClient.get(
+          `/WarehouseV2/search/${searchTerm.trim()}/1/${pageNum}`,
+        );
+      } else {
+        response = await apiClient.get(`/WarehouseV2/pages/1/${pageNum}`);
+      }
 
-    if (response?.data?.success) {
-      const newData = response.data.values ?? [];
+      if (response?.data?.success) {
+        const newData = response.data.values ?? [];
 
-      setWhsHasMoreGetList(newData.length === 20);
+        setWhsHasMoreGetList(newData.length === 20);
 
-      setWhscGetListData((prev) =>
-        pageNum === 0 ? newData : [...prev, ...newData]
-      );
-    } else {
+        setWhscGetListData((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+      } else {
+        Swal.fire({
+          icon: "info",
+          text: response?.data?.message || "Failed to load warehouse list.",
+          toast: true,
+          showConfirmButton: false,
+          timer: 2000,
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching warehouse list:", error);
+
       Swal.fire({
-        icon: "info",
+        title: "Error",
         text:
-          response?.data?.message ||
-          "Failed to load warehouse list.",
-        toast: true,
-        showConfirmButton: false,
-        timer: 2000,
+          error?.response?.data?.message ||
+          error?.message ||
+          "Unable to fetch warehouse data.",
+        icon: "error",
+        confirmButtonText: "Ok",
       });
+    } finally {
+      setIsLoading(false); // ✅ stop loader always
     }
-  } catch (error) {
-    console.error("Error fetching warehouse list:", error);
-
-    Swal.fire({
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Unable to fetch warehouse data.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setIsLoading(false); // ✅ stop loader always
-  }
-};
+  };
 
   const handleWhscGetListSearch = (res) => {
     setWhsGetListQuery(res);
@@ -2349,51 +2342,51 @@ export default function StockPosting() {
   );
 
   const FetchPriceList = async () => {
-  try {
-    setIsLoading(true); // 🔄 start loader
+    try {
+      setIsLoading(true); // 🔄 start loader
 
-    const res = await apiClient.get(`/PriceList/All`);
+      const res = await apiClient.get(`/PriceList/All`);
 
-    if (res?.data?.success) {
-      const filteredResponse = (res.data.values || []).filter(
-        (item) => item.Status === "1"
-      );
+      if (res?.data?.success) {
+        const filteredResponse = (res.data.values || []).filter(
+          (item) => item.Status === "1",
+        );
 
-      setPriceList(filteredResponse);
+        setPriceList(filteredResponse);
 
-      if (filteredResponse.length > 0) {
-        const defaultDocEntry = filteredResponse[0]?.DocEntry ?? "";
+        if (filteredResponse.length > 0) {
+          const defaultDocEntry = filteredResponse[0]?.DocEntry ?? "";
 
-        setValue("PriceList", defaultDocEntry);
+          setValue("PriceList", defaultDocEntry);
 
-        // Optional: trigger dependent logic
-        // handlePriceListChange(defaultDocEntry);
+          // Optional: trigger dependent logic
+          // handlePriceListChange(defaultDocEntry);
+        }
+      } else {
+        Swal.fire({
+          icon: "info",
+          text: res?.data?.message || "No active PriceList found.",
+          toast: true,
+          showConfirmButton: false,
+          timer: 2000,
+        });
       }
-    } else {
-      Swal.fire({
-        icon: "info",
-        text: res?.data?.message || "No active PriceList found.",
-        toast: true,
-        showConfirmButton: false,
-        timer: 2000,
-      });
-    }
-  } catch (error) {
-    console.error("❌ Error fetching PriceList:", error);
+    } catch (error) {
+      console.error("❌ Error fetching PriceList:", error);
 
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to fetch PriceList data.",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setIsLoading(false); // ✅ stop loader always
-  }
-};
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to fetch PriceList data.",
+        confirmButtonText: "Ok",
+      });
+    } finally {
+      setIsLoading(false); // ✅ stop loader always
+    }
+  };
 
   useEffect(() => {
     FetchPriceList();
@@ -2709,70 +2702,68 @@ export default function StockPosting() {
   const closeModel = () => {
     setOpen(false);
   };
- const fetchItems = useCallback(
-  async (page = 0, search = "") => {
-    const cacheKey = `${search}_${page}`;
+  const fetchItems = useCallback(
+    async (page = 0, search = "") => {
+      const cacheKey = `${search}_${page}`;
 
-    // ✅ Use cache if available (skip loader & API)
-    if (itemCache[cacheKey]) {
-      setItemList(itemCache[cacheKey]);
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-
-      const { data } = await apiClient.get("/ItemsV2", {
-        params: {
-          InventoryItem: "Y",
-          Status: 1,
-          SearchText: search?.trim() || undefined, // avoid empty string
-          Page: page,
-          Limit: LIMIT,
-        },
-      });
-
-      if (data?.success) {
-        const items = data?.values || [];
-
-        // ✅ Cache result
-        setItemCache((prev) => ({
-          ...prev,
-          [cacheKey]: items,
-        }));
-
-        setItemList(items);
-
-        // ✅ Safer estimated row count (for infinite scroll / DataGrid)
-        setRowCount(
-          page === 0
-            ? items.length + 1
-            : page * LIMIT + items.length + 1
-        );
-      } else {
-        Swal.fire({
-          icon: "warning",
-          title: "Warning",
-          text: data?.message || "No items found.",
-        });
+      // ✅ Use cache if available (skip loader & API)
+      if (itemCache[cacheKey]) {
+        setItemList(itemCache[cacheKey]);
+        return;
       }
-    } catch (err) {
-      console.error("❌ Error fetching items:", err);
 
-      Swal.fire({
-        icon: "error",
-        title: "Error",
-        text:
-          err?.response?.data?.message ||
-          err?.message ||
-          "Failed to fetch items.",
-      });
-    } finally {
-      setIsLoading(false); // ✅ always stop loader
-    }
-  },
-  [itemCache],
-);
+      try {
+        setIsLoading(true);
+
+        const { data } = await apiClient.get("/ItemsV2", {
+          params: {
+            InventoryItem: "Y",
+            Status: 1,
+            SearchText: search?.trim() || undefined, // avoid empty string
+            Page: page,
+            Limit: LIMIT,
+          },
+        });
+
+        if (data?.success) {
+          const items = data?.values || [];
+
+          // ✅ Cache result
+          setItemCache((prev) => ({
+            ...prev,
+            [cacheKey]: items,
+          }));
+
+          setItemList(items);
+
+          // ✅ Safer estimated row count (for infinite scroll / DataGrid)
+          setRowCount(
+            page === 0 ? items.length + 1 : page * LIMIT + items.length + 1,
+          );
+        } else {
+          Swal.fire({
+            icon: "warning",
+            title: "Warning",
+            text: data?.message || "No items found.",
+          });
+        }
+      } catch (err) {
+        console.error("❌ Error fetching items:", err);
+
+        Swal.fire({
+          icon: "error",
+          title: "Error",
+          text:
+            err?.response?.data?.message ||
+            err?.message ||
+            "Failed to fetch items.",
+        });
+      } finally {
+        setIsLoading(false); // ✅ always stop loader
+      }
+    },
+    [itemCache],
+  );
 
   useEffect(() => {
     fetchItems(currentPage, searchText);
@@ -2821,50 +2812,49 @@ export default function StockPosting() {
     fetchOpenListData(openListPage + 1, openListSearching ? openListquery : "");
     setOpenListPage((prev) => prev + 1);
   };
- const fetchOpenListData = async (pageNum = 0, searchTerm = "") => {
-  try {
-    setIsLoading(true); // 🔄 start loader
+  const fetchOpenListData = async (pageNum = 0, searchTerm = "") => {
+    try {
+      setIsLoading(true); // 🔄 start loader
 
-    const params = {
-      Status: 1,
-      Page: pageNum,
-      Limit: 20,
-      ...(searchTerm?.trim() && { SearchText: searchTerm.trim() }),
-    };
+      const params = {
+        Status: 1,
+        Page: pageNum,
+        Limit: 20,
+        ...(searchTerm?.trim() && { SearchText: searchTerm.trim() }),
+      };
 
-    const response = await apiClient.get("/InventoryPosting", { params });
+      const response = await apiClient.get("/InventoryPosting", { params });
 
-    if (response.data?.success) {
-      const newData = response.data.values || [];
+      if (response.data?.success) {
+        const newData = response.data.values || [];
 
-      setHasMoreOpen(newData.length === 20);
+        setHasMoreOpen(newData.length === 20);
 
-      setOpenListData((prev) =>
-        pageNum === 0 ? newData : [...prev, ...newData],
-      );
-    } else {
+        setOpenListData((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+      } else {
+        Swal.fire({
+          icon: "warning",
+          title: "Warning",
+          text: response.data?.message || "No records found.",
+        });
+      }
+    } catch (error) {
+      console.error("❌ Error fetching InventoryPosting:", error);
+
       Swal.fire({
-        icon: "warning",
-        title: "Warning",
-        text: response.data?.message || "No records found.",
+        icon: "error",
+        title: "Error",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to fetch Inventory Posting data.",
       });
+    } finally {
+      setIsLoading(false); // ✅ stop loader (always)
     }
-  } catch (error) {
-    console.error("❌ Error fetching InventoryPosting:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to fetch Inventory Posting data.",
-    });
-  } finally {
-    setIsLoading(false); // ✅ stop loader (always)
-  }
-};
-
+  };
 
   const handleSubmitForm = async (data) => {
     try {
@@ -3295,8 +3285,7 @@ export default function StockPosting() {
         text: error || "Unexpected error occurred during form submission.",
         icon: "error",
       });
-    }
-    finally{
+    } finally {
       setIsLoading(false);
     }
   };
@@ -3335,71 +3324,71 @@ export default function StockPosting() {
     }
   };
   const setStockPostingData = async (DocEntry) => {
-  if (!DocEntry) return;
+    if (!DocEntry) return;
 
-  // 🔹 Reset local/UI states first
-  setSelectedRows([]);
-  setSelectedData([]);
-  setItemCache({});
-  setValue("oLines", []);
+    // 🔹 Reset local/UI states first
+    setSelectedRows([]);
+    setSelectedData([]);
+    setItemCache({});
+    setValue("oLines", []);
 
-  try {
-    setIsLoading(true); // 🔄 start loader
+    try {
+      setIsLoading(true); // 🔄 start loader
 
-    const response = await apiClient.get("/InventoryPosting", {
-      params: { DocEntry },
-    });
-
-    if (!response.data?.success) {
-      Swal.fire({
-        icon: "warning",
-        title: "Warning",
-        text: response.data?.message || "Record not found.",
+      const response = await apiClient.get("/InventoryPosting", {
+        params: { DocEntry },
       });
-      return;
-    }
 
-    const data = response.data.values;
+      if (!response.data?.success) {
+        Swal.fire({
+          icon: "warning",
+          title: "Warning",
+          text: response.data?.message || "Record not found.",
+        });
+        return;
+      }
 
-    if (!data?.oLines?.length) {
+      const data = response.data.values;
+
+      if (!data?.oLines?.length) {
+        Swal.fire({
+          icon: "info",
+          title: "Info",
+          text: "No line items found for this document.",
+        });
+        return;
+      }
+
+      // 🔹 Format lines safely
+      const formattedLines = data.oLines.map((line) => ({
+        ...line,
+        id: line.LineNum, // stable unique key
+      }));
+
+      const updatedData = { ...data, oLines: formattedLines };
+
+      // ✅ Update UI + form states
+      toggleDrawer();
+      reset(updatedData);
+      setOlineRows(formattedLines);
+      setFilesFromApi(data.AttcEntry || null);
+      setSaveUpdateName("UPDATE");
+      setSelectedData(DocEntry);
+    } catch (error) {
+      console.error("❌ Error fetching Inventory Posting:", error);
+
       Swal.fire({
-        icon: "info",
-        title: "Info",
-        text: "No line items found for this document.",
+        icon: "error",
+        title: "Error",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to fetch Inventory Posting data.",
       });
-      return;
+    } finally {
+      setIsLoading(false); // ✅ stop loader always
     }
-
-    // 🔹 Format lines safely
-    const formattedLines = data.oLines.map((line) => ({
-      ...line,
-      id: line.LineNum, // stable unique key
-    }));
-
-    const updatedData = { ...data, oLines: formattedLines };
-
-    // ✅ Update UI + form states
-    toggleDrawer();
-    reset(updatedData);
-    setOlineRows(formattedLines);
-    setFilesFromApi(data.AttcEntry || null);
-    setSaveUpdateName("UPDATE");
-    setSelectedData(DocEntry);
-  } catch (error) {
-    console.error("❌ Error fetching Inventory Posting:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to fetch Inventory Posting data.",
-    });
-  } finally {
-    setIsLoading(false); // ✅ stop loader always
-  }
-};
+  };
 
   const toggleDrawer = () => {
     setDrawerOpen(!drawerOpen);
@@ -3409,48 +3398,48 @@ export default function StockPosting() {
     settabvalue(newValue);
   };
 
- const fetchCopyFromData = async (pageNum = 0, searchTerm = "") => {
-  try {
-    setIsLoading(true); // 🔄 start loader
+  const fetchCopyFromData = async (pageNum = 0, searchTerm = "") => {
+    try {
+      setIsLoading(true); // 🔄 start loader
 
-    const response = await apiClient.get("/InventoryPosting/CopyFrom", {
-      params: {
-        Status: 1,
-        Page: pageNum,
-        Limit: 20,
-        ...(searchTerm?.trim() && { SearchText: searchTerm.trim() }),
-      },
-    });
-
-    if (response.data?.success) {
-      const newData = response.data.values || [];
-
-      setHasMorePOList(newData.length === 20);
-      setGetListPOData((prev) =>
-        pageNum === 0 ? newData : [...prev, ...newData],
-      );
-    } else {
-      Swal.fire({
-        icon: "warning",
-        title: "Warning",
-        text: response.data?.message || "No records found.",
+      const response = await apiClient.get("/InventoryPosting/CopyFrom", {
+        params: {
+          Status: 1,
+          Page: pageNum,
+          Limit: 20,
+          ...(searchTerm?.trim() && { SearchText: searchTerm.trim() }),
+        },
       });
-    }
-  } catch (error) {
-    console.error("❌ Error fetching Copy From data:", error);
 
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to fetch Copy From data.",
-    });
-  } finally {
-    setIsLoading(false); // ✅ stop loader always
-  }
-};
+      if (response.data?.success) {
+        const newData = response.data.values || [];
+
+        setHasMorePOList(newData.length === 20);
+        setGetListPOData((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+      } else {
+        Swal.fire({
+          icon: "warning",
+          title: "Warning",
+          text: response.data?.message || "No records found.",
+        });
+      }
+    } catch (error) {
+      console.error("❌ Error fetching Copy From data:", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to fetch Copy From data.",
+      });
+    } finally {
+      setIsLoading(false); // ✅ stop loader always
+    }
+  };
 
   const handleGetListSearchCopyFrom = (resp) => {
     setGetLIstQueryCopyFrom(resp);
@@ -3573,85 +3562,82 @@ export default function StockPosting() {
 
   console.log("fdfdsfsdfdsf", olineRows);
 
- const handleSubmitMultiple = async () => {
-  try {
-    setIsLoading(true); // 🔄 start loader
+  const handleSubmitMultiple = async () => {
+    try {
+      setIsLoading(true); // 🔄 start loader
 
-    // 🔹 Build params safely
-    const params = {};
+      // 🔹 Build params safely
+      const params = {};
 
-    if (selectedValue === "TMC") {
-      params.TeamCounted = "TMC";
-    } else if (!isNaN(selectedValue) && Number(selectedValue) >= 1) {
-      params.CounterID = Number(selectedValue);
-    } else if (selectedValue === "-1") {
-      params.ItmWithDiffQty = "-1";
-    }
-
-    console.log("📌 CopyFrom params:", params);
-
-    const response = await apiClient.get("/InventoryPosting/CopyFrom", {
-      params,
-    });
-
-    if (response.data?.success) {
-      const newData = response.data.values || [];
-
-      if (!newData.length || !newData[0]?.oLines?.length) {
-        Swal.fire({
-          icon: "info",
-          title: "Info",
-          text: "No data available to copy.",
-        });
-        return;
+      if (selectedValue === "TMC") {
+        params.TeamCounted = "TMC";
+      } else if (!isNaN(selectedValue) && Number(selectedValue) >= 1) {
+        params.CounterID = Number(selectedValue);
+      } else if (selectedValue === "-1") {
+        params.ItmWithDiffQty = "-1";
       }
 
-      const UpdatedCopyData = newData[0].oLines.map((item, index) => ({
-        ...item,
-        id: `${Date.now()}_${index}`, // ✅ stable unique id
-        ItemName: item.ItemDesc,
-        OnHandBef: item.InWhsQty,
-        Quantity: item.Difference,
-        DiffPercnt: item.DiffPercent,
-        ItmsPerUnt:
-          item.oUomLines?.length === 1
-            ? item.oUomLines[0]?.ItmsPerUnt
-            : "",
-        DOffDecAcc: item.IncreasAc,
-        IOffIncAcc: item.DecreasAc,
-        oInvPostUomsLines: item.oUomLines || [],
-      }));
+      console.log("📌 CopyFrom params:", params);
 
-      setOlineRows((prev) => {
-        const updated = [...prev, ...UpdatedCopyData];
-        setValue("oLines", updated);
-        return updated;
+      const response = await apiClient.get("/InventoryPosting/CopyFrom", {
+        params,
       });
-    } else {
+
+      if (response.data?.success) {
+        const newData = response.data.values || [];
+
+        if (!newData.length || !newData[0]?.oLines?.length) {
+          Swal.fire({
+            icon: "info",
+            title: "Info",
+            text: "No data available to copy.",
+          });
+          return;
+        }
+
+        const UpdatedCopyData = newData[0].oLines.map((item, index) => ({
+          ...item,
+          id: `${Date.now()}_${index}`, // ✅ stable unique id
+          ItemName: item.ItemDesc,
+          OnHandBef: item.InWhsQty,
+          Quantity: item.Difference,
+          DiffPercnt: item.DiffPercent,
+          ItmsPerUnt:
+            item.oUomLines?.length === 1 ? item.oUomLines[0]?.ItmsPerUnt : "",
+          DOffDecAcc: item.IncreasAc,
+          IOffIncAcc: item.DecreasAc,
+          oInvPostUomsLines: item.oUomLines || [],
+        }));
+
+        setOlineRows((prev) => {
+          const updated = [...prev, ...UpdatedCopyData];
+          setValue("oLines", updated);
+          return updated;
+        });
+      } else {
+        Swal.fire({
+          icon: "warning",
+          title: "Warning",
+          text: response.data?.message || "Failed to copy data.",
+        });
+      }
+    } catch (error) {
+      console.error("❌ Error in handleSubmitMultiple:", error);
+
       Swal.fire({
-        icon: "warning",
-        title: "Warning",
-        text: response.data?.message || "Failed to copy data.",
+        icon: "error",
+        title: "Error",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong while copying data.",
       });
+    } finally {
+      setIsLoading(false); // ✅ stop loader always
+      setOpenCopyForm(false);
+      setopenCopyCheck(false);
     }
-  } catch (error) {
-    console.error("❌ Error in handleSubmitMultiple:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong while copying data.",
-    });
-  } finally {
-    setIsLoading(false); // ✅ stop loader always
-    setOpenCopyForm(false);
-    setopenCopyCheck(false);
-  }
-};
-
+  };
 
   const sidebarContent = (
     <>
@@ -3847,7 +3833,7 @@ export default function StockPosting() {
       )}
       <Dialog
         open={exchangeRateModalOpen}
-        onClose={() => setExchangeRateModalOpen(false)}
+        // onClose={() => setExchangeRateModalOpen(false)}
         maxWidth="sm" // smaller width
         fullWidth
       >
@@ -3903,13 +3889,13 @@ export default function StockPosting() {
             {isSavingManualRate ? "Saving..." : "Save Rate"}
           </Button>
 
-          <Button
+          {/* <Button
             variant="outlined"
             color="error"
             onClick={() => setExchangeRateModalOpen(false)}
           >
             Cancel
-          </Button>
+          </Button> */}
         </DialogActions>
       </Dialog>
       <Dialog open={uomModalOpen} maxWidth="md" fullWidth>

@@ -40,7 +40,7 @@ export default function Barcode() {
   const perms = usePermissions(47);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [SaveUpdateName, setSaveUpdateName] = useState("SAVE");
-  const [DocEntry, setDocEntry] = useState("");
+  // const [DocEntry, setDocEntry] = useState("");
   //=====================================open List State====================================================================
   const [openListData, setOpenListData] = useState([]);
   const [openListPage, setOpenListPage] = useState(0);
@@ -225,7 +225,6 @@ export default function Barcode() {
         UgpEntry: row.UgpEntry || 0,
       };
 
-
       // API URL: /api/Barcode/{DocEntry}
       const url = `/Barcode/${row.DocEntry}`;
 
@@ -252,15 +251,15 @@ export default function Barcode() {
       }
     } catch (error) {
       Swal.fire({
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.response?.data?.error ||
-        error?.message ||
-        "Failed to update bank data.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          error?.response?.data?.error ||
+          error?.message ||
+          "Failed to update bank data.",
+        icon: "error",
+        confirmButtonText: "Ok",
+      });
     } finally {
       setLoading(false);
     }
@@ -696,7 +695,10 @@ export default function Barcode() {
         });
 
         if (result.isConfirmed) {
-          const response = await apiClient.put(`/Barcode/${DocEntry}`, obj);
+          const response = await apiClient.put(
+            `/Barcode/${data.DocEntry}`,
+            obj,
+          );
           if (response.data.success) {
             clearFormData();
             setOpenListPage(0);
@@ -742,7 +744,7 @@ export default function Barcode() {
 
   // ===============Delete API ===================================
 
-  const handleOnDelete = async (data) => {
+  const handleOnDelete = async (DocEntry) => {
     const result = await Swal.fire({
       text: `Do You Want to Delete ?`,
       icon: "question",

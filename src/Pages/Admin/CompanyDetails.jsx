@@ -85,7 +85,7 @@ export default function CompanyDetails() {
         setCurrentGLPage(model.page);
       }
     },
-    [currentGLPage]
+    [currentGLPage],
   );
 
   const handleGLSearchChange = useCallback((text) => {
@@ -537,7 +537,7 @@ export default function CompanyDetails() {
     const fetchPrintData = async () => {
       try {
         const { data: dataPrint } = await apiClient.get(
-          `/ReportLayout/GetByTransId/39`
+          `/ReportLayout/GetByTransId/39`,
         );
         if (dataPrint.success) {
           const OlinesDataPrint = dataPrint.values.oLines;
@@ -568,24 +568,24 @@ export default function CompanyDetails() {
 
     const cleanedInitial = JSON.parse(
       JSON.stringify(initialValues.current, (_, value) =>
-        typeof value === "string" ? value.trim() : value
-      )
+        typeof value === "string" ? value.trim() : value,
+      ),
     );
     const cleanedCurrent = JSON.parse(
       JSON.stringify(currentValues, (_, value) =>
-        typeof value === "string" ? value.trim() : value
-      )
+        typeof value === "string" ? value.trim() : value,
+      ),
     );
 
     const cleanedInitialBank = JSON.parse(
       JSON.stringify(initialValuesAddBank.current, (_, value) =>
-        typeof value === "string" ? value.trim() : value
-      )
+        typeof value === "string" ? value.trim() : value,
+      ),
     );
     const cleanedCurrentBank = JSON.parse(
       JSON.stringify(bankValues, (_, value) =>
-        typeof value === "string" ? value.trim() : value
-      )
+        typeof value === "string" ? value.trim() : value,
+      ),
     );
 
     const isFormModified = !isEqual(cleanedInitial, cleanedCurrent);
@@ -692,7 +692,7 @@ export default function CompanyDetails() {
 
       // ✅ Step 5: Select default bank row if available
       const defaultBank = bankLines.find(
-        (bank) => bank.BankCode === companyDetails.DfltBankCode
+        (bank) => bank.BankCode === companyDetails.DfltBankCode,
       );
 
       setSelectedRow(defaultBank ? defaultBank.Account : null);
@@ -710,8 +710,7 @@ export default function CompanyDetails() {
     } catch (error) {
       console.error("Error fetching company details:", error);
       handleApiError(error, "Failed to fetch company details!");
-    }
-    finally{
+    } finally {
       setLoading(false);
     }
   };
@@ -926,7 +925,7 @@ export default function CompanyDetails() {
   const ListofState = async (CountryCode) => {
     try {
       const { data } = await apiClient.get(
-        `/ListofStates/GetByCountryCode/${CountryCode}`
+        `/ListofStates/GetByCountryCode/${CountryCode}`,
       );
       const { values } = data;
       console.log("All States:", values);
@@ -946,7 +945,7 @@ export default function CompanyDetails() {
   const OuterListofState = async (CountryCode) => {
     try {
       const { data } = await apiClient.get(
-        `/ListofStates/GetByCountryCode/${CountryCode}`
+        `/ListofStates/GetByCountryCode/${CountryCode}`,
       );
       const { values } = data;
       console.log("All States:", values);
@@ -961,42 +960,41 @@ export default function CompanyDetails() {
     }
   };
 
-const getGLAccountData = async () => {
-  try {
-    setLoading(true);
+  const getGLAccountData = async () => {
+    try {
+      setLoading(true);
 
-    const response = await apiClient.get(`/ChartOfAccounts/All`, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (response?.data?.success) {
-      const { values = [] } = response.data;
-      setGLAccount(values);
-    } else {
-      Swal.fire({
-        icon: "warning",
-        title: "Warning!",
-        text: response?.data?.message || "No data found",
+      const response = await apiClient.get(`/ChartOfAccounts/All`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
+
+      if (response?.data?.success) {
+        const { values = [] } = response.data;
+        setGLAccount(values);
+      } else {
+        Swal.fire({
+          icon: "warning",
+          title: "Warning!",
+          text: response?.data?.message || "No data found",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching GL account data:", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to fetch GL account data. Please try again later.",
+      });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching GL account data:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to fetch GL account data. Please try again later.",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const CurrencyData = async () => {
     try {
@@ -1073,13 +1071,13 @@ const getGLAccountData = async () => {
     }
 
     const selectedBank = bankCode.find(
-      (item) => item.BankCode === data.BankCode
+      (item) => item.BankCode === data.BankCode,
     );
     const selectedGLAccount = glAccount.find(
-      (item) => item.AcctName === data.GLAccount
+      (item) => item.AcctName === data.GLAccount,
     );
     const selectedGLIntriAct = glAccount.find(
-      (item) => item.AcctName === data.GLIntriAct
+      (item) => item.AcctName === data.GLIntriAct,
     );
 
     const selectedState = states.find((s) => s.Code === data.State);
@@ -1127,11 +1125,10 @@ const getGLAccountData = async () => {
       getBankCodeDataList();
       getGLAccountData();
       ListofCountry();
-      ListofCountry();
       CurrencyData();
       setOldDataOPen(); // Pass `obj` in the function call
     }, // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [],
   );
 
   const handleCheckboxChange = (rowId) => {
@@ -1143,7 +1140,7 @@ const getGLAccountData = async () => {
   useEffect(() => {
     if (values?.values?.DfltBankCode && values?.values?.oHBankLines) {
       const defaultBank = values.values.oHBankLines.find(
-        (bank) => bank.BankCode === values.values.DfltBankCode
+        (bank) => bank.BankCode === values.values.DfltBankCode,
       );
       if (defaultBank) {
         setSelectedRow(defaultBank.BankCode);
@@ -1165,15 +1162,15 @@ const getGLAccountData = async () => {
 
     // Map State code → Name using currentStates
     const selectedState = currentStates.current.find(
-      (s) => s.Code === formData.State
+      (s) => s.Code === formData.State,
     ) || { Code: formData.State, Name: formData.State };
 
     const selectedBank = bankCode.find((b) => b.DocEntry === formData.BankCode);
     const selectedGLAccount = glAccount.find(
-      (g) => g.DocEntry === formData.GLAccount
+      (g) => g.DocEntry === formData.GLAccount,
     );
     const selectedGLIntriAct = glAccount.find(
-      (g) => g.DocEntry === formData.GLIntriAct
+      (g) => g.DocEntry === formData.GLIntriAct,
     );
 
     const updatedRow = {
@@ -1203,8 +1200,8 @@ const getGLAccountData = async () => {
       // Update row in DataGrid
       setAddBank((prev) =>
         prev.map((row) =>
-          row.Account === formData.Account ? { ...updatedRow } : row
-        )
+          row.Account === formData.Account ? { ...updatedRow } : row,
+        ),
       );
     }
     resetAddBank();
@@ -1613,7 +1610,7 @@ const getGLAccountData = async () => {
                                         if (e.target.value.length > 6) {
                                           e.target.value = e.target.value.slice(
                                             0,
-                                            6
+                                            6,
                                           );
                                         }
                                       },
@@ -2704,22 +2701,22 @@ const getGLAccountData = async () => {
 
                                           const selectedBank = bankCode.find(
                                             (bank) =>
-                                              bank.DocEntry === selectedValue
+                                              bank.DocEntry === selectedValue,
                                           );
                                           field.onChange(e);
                                           if (selectedBank) {
                                             setValueAddBank(
                                               "BankName",
-                                              selectedBank.BankName || ""
+                                              selectedBank.BankName || "",
                                             );
                                             setValueAddBank(
                                               "Country",
-                                              selectedBank.CountryCode || ""
+                                              selectedBank.CountryCode || "",
                                             );
                                           }
                                           if (selectedBank.CountryCode) {
                                             await ListofState(
-                                              selectedBank.CountryCode
+                                              selectedBank.CountryCode,
                                             );
                                           }
                                         }}
@@ -3058,7 +3055,7 @@ const getGLAccountData = async () => {
                                                 }}
                                                 onClick={() => {
                                                   setActiveGLField(
-                                                    "GLIntriAct"
+                                                    "GLIntriAct",
                                                   );
                                                   setOpenGLModal(true);
                                                 }}
@@ -3265,7 +3262,7 @@ const getGLAccountData = async () => {
                                               field.onChange(newValue);
                                               setValueAddBank(
                                                 "PostOffice",
-                                                newValue
+                                                newValue,
                                               );
                                             }}
                                           />

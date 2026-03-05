@@ -18,7 +18,7 @@ import {
   TableRow,
   Tabs,
   TextField,
-  Typography
+  Typography,
 } from "@mui/material";
 import CardComponent from "../Components/CardComponent";
 
@@ -87,7 +87,7 @@ export default function LandedCost() {
   const [fileData, setFileData] = useState([]);
   const theme = useTheme();
   const [tab, settab] = useState("0");
- const perms = usePermissions(139);
+  const perms = usePermissions(139);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchTextOpen, setSearchTextOpen] = useState("");
   const [openPosts, setOpenPosts] = useState([]);
@@ -106,9 +106,7 @@ export default function LandedCost() {
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
-  
 
-   
   const handleTabChange = (event, newValue) => {
     settabvalue(newValue);
   };
@@ -170,7 +168,7 @@ export default function LandedCost() {
   };
   const handleRemove = (indexToRemove) => {
     const updatedFileData = fileData.filter(
-      (_, index) => index !== indexToRemove
+      (_, index) => index !== indexToRemove,
     );
     setFileData(updatedFileData);
   };
@@ -413,8 +411,7 @@ export default function LandedCost() {
     }
   };
 
-  const { control} = useForm({
-  });
+  const { control } = useForm({});
   const sidebarContent = (
     <>
       <Grid
@@ -624,11 +621,11 @@ export default function LandedCost() {
 
   return (
     <>
-      <Grid container width={"100%"} height="calc(100vh - 110px)"
-      
-      position={"relative"}
-      
-      
+      <Grid
+        container
+        width={"100%"}
+        height="calc(100vh - 110px)"
+        position={"relative"}
       >
         <Grid
           container
@@ -750,7 +747,7 @@ export default function LandedCost() {
                 width={"100%"}
               >
                 <Grid container>
-                  <Grid item  xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
+                  <Grid item xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
                     <InputTextSearchButton
                       label="VENDOR CODE"
                       onClick={handleInputChange}
@@ -765,20 +762,20 @@ export default function LandedCost() {
                       title="SELECT VENDOR"
                     />
                   </Grid>
-                  <Grid item  xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
+                  <Grid item xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
                     <InputFields label="VENDOR NAME" name="" id="" />
                   </Grid>
-                  <Grid item  xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
+                  <Grid item xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
                     <InputFields label="DOC NO." name="" id="" />
                   </Grid>
-                  <Grid item  xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
+                  <Grid item xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
                     <InputDatePickerFields label="POSTING DATE " />
                   </Grid>
-                  <Grid item  xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
+                  <Grid item xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
                     <InputDatePickerFields label="DUE DATE " />
                   </Grid>
-                  <Grid item  xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
-                  <Controller
+                  <Grid item xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
+                    <Controller
                       name="Currency"
                       control={control}
                       render={({ field, fieldState: { error } }) => (
@@ -797,8 +794,22 @@ export default function LandedCost() {
                       )}
                     />
                   </Grid>
-                  <Grid item  xs={12} sm={6} md={4} lg={4} textAlign={"center"}></Grid>
-                  <Grid item  xs={12} sm={6} md={4} lg={4} textAlign={"center"}></Grid>
+                  <Grid
+                    item
+                    xs={12}
+                    sm={6}
+                    md={4}
+                    lg={4}
+                    textAlign={"center"}
+                  ></Grid>
+                  <Grid
+                    item
+                    xs={12}
+                    sm={6}
+                    md={4}
+                    lg={4}
+                    textAlign={"center"}
+                  ></Grid>
                   <Grid item xs={12} sm={6} md={4} lg={4} textAlign={"center"}>
                     <FormControlLabel
                       control={<Checkbox defaultChecked />}
@@ -953,7 +964,7 @@ export default function LandedCost() {
                                         <RemoveCircleOutlineIcon
                                           onClick={(e) => {
                                             e.stopPropagation();
-                                            handleRemove(index,);
+                                            handleRemove(index);
                                           }}
                                           style={{ cursor: "pointer" }}
                                         />
@@ -1001,7 +1012,14 @@ export default function LandedCost() {
                         multiline
                       />
                     </Grid>
-                    <Grid item xs={12} sm={6} md={4} lg={6} textAlign={"center"}>
+                    <Grid
+                      item
+                      xs={12}
+                      sm={6}
+                      md={4}
+                      lg={6}
+                      textAlign={"center"}
+                    >
                       <FormControlLabel
                         control={<Checkbox defaultChecked />}
                         label="CUSTOMS AFFECTS INVENTORY"
@@ -1027,10 +1045,12 @@ export default function LandedCost() {
               }}
             >
               <Grid item>
-                <Button variant="contained" color="success" sx={{color:"white"}} disabled={
-                  (!perms.IsAdd) ||
-                  ( !perms.IsEdit)
-                }>
+                <Button
+                  variant="contained"
+                  color="success"
+                  sx={{ color: "white" }}
+                  disabled={!perms.IsAdd || !perms.IsEdit}
+                >
                   SAVE
                 </Button>
               </Grid>
@@ -1044,8 +1064,6 @@ export default function LandedCost() {
           </Grid>
         </Grid>
       </Grid>
-
-     
     </>
   );
 }
