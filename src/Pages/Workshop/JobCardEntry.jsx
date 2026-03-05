@@ -1483,6 +1483,7 @@ export default function IssueMaterial() {
           setClosedListData([]);
           fetchClosedListData(0);
           handleGetListClear();
+          ClearForm();
           Swal.fire({
             title: "Success!",
             text: "JobCard Closed!",
@@ -1942,7 +1943,7 @@ export default function IssueMaterial() {
                   sx={{
                     overflow: "auto",
                     width: "100%",
-                    height: "23%",
+                    height: "40%",
                     padding: 2,
                     marginBottom: 3,
                     marginTop: 2,
@@ -2052,7 +2053,8 @@ export default function IssueMaterial() {
                 disabled={
                   (SaveUpdateName === "SAVE" && !perms.IsAdd) ||
                   (SaveUpdateName === "UPDATE" && !perms.IsEdit) ||
-                  allFormData.Status === "0" || watch("OrderNo") === ""
+                  allFormData.Status === "0" ||
+                  watch("OrderNo") === ""
                 }
               >
                 {SaveUpdateName}
@@ -2060,9 +2062,10 @@ export default function IssueMaterial() {
               <Button
                 type="button"
                 variant="contained"
-                color="primary"
+                color="error"
                 disabled={
-                  SaveUpdateName === "SAVE" || allFormData.Status === "0" ||
+                  SaveUpdateName === "SAVE" ||
+                  allFormData.Status === "0" ||
                   (SaveUpdateName === "UPDATE" && !perms.IsEdit)
                 }
                 onClick={closeJobCard}

@@ -623,11 +623,11 @@ export default function IssueMaterial() {
           >
             <Typography variant="body2">{params.value}</Typography>
 
-            <Tooltip title="Copy Item Code">
+            {/* <Tooltip title="Copy Item Code">
               <IconButton size="small" onClick={copyText}>
                 <ContentCopyIcon fontSize="inherit" />
               </IconButton>
-            </Tooltip>
+            </Tooltip> */}
           </Box>
         );
       },
@@ -1757,7 +1757,7 @@ export default function IssueMaterial() {
                 disabled={
                   (SaveUpdateName === "SAVE" && !perms.IsAdd) ||
                   !watch("DocNum") ||
-                  Disabled            
+                  Disabled
                 }
               >
                 {SaveUpdateName}

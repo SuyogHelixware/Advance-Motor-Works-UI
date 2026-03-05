@@ -2331,7 +2331,7 @@ export default function CashInvoice() {
                 type="submit"
                 disabled={
                   (processinv && !perms.IsAdd) ||
-                  processinv === false || 
+                  processinv === false ||
                   watch("Job_SO_DocEntry") === ""
                 }
               >

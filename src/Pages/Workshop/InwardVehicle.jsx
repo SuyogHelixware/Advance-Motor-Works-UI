@@ -1027,7 +1027,7 @@ export default function InwardVehicle() {
                         </Tooltip>
                       </Grid>
 
-                      <Grid item textAlign="center">
+                      {/* <Grid item textAlign="center">
                         <Tooltip
                           title={(watch("Vehicle") || "").toUpperCase()}
                           arrow
@@ -1046,7 +1046,7 @@ export default function InwardVehicle() {
                             />
                           </div>
                         </Tooltip>
-                      </Grid>
+                      </Grid> */}
                     </Grid>
                   </Grid>
 

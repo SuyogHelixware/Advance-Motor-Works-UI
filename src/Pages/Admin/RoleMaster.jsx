@@ -1064,10 +1064,12 @@ export default function RoleMaster() {
   useEffect(() => {
     const rows = getValues("oLines") || [];
 
-    if (rows.length > 0) {
-      // Preselect Add + Read for all rows
-      setSelectedAddIds(new Set(rows.map((r) => r.tempKey)));
-      setSelectedReadIds(new Set(rows.map((r) => r.tempKey)));
+    if (SaveUpdateName === "SAVE") {
+      if (rows.length > 0) {
+        // Preselect Add + Read for all rows
+        setSelectedAddIds(new Set(rows.map((r) => r.tempKey)));
+        setSelectedReadIds(new Set(rows.map((r) => r.tempKey)));
+      }
     }
   }, [watch("oLines")]);
 

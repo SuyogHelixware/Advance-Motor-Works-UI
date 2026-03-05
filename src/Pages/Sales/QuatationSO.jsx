@@ -178,7 +178,7 @@ export default function QuatationSO() {
     GroupCode: "100",
     SalesHistory: 0,
     CustomerBalance: 0,
-    SpecialOrder: false,
+    DirectInvoice: true,
     CNC: false,
     DeliveredLater: false,
     ServiceOrder: false,
@@ -192,7 +192,6 @@ export default function QuatationSO() {
     WalkIn: false,
     InvoiceStatus: "4",
     CountryCode: "KWD",
-    DirectInvoice: "0",
     TaxCode: "",
     TaxAmt: "0",
     CustomsDutyPer: "0",
@@ -462,7 +461,7 @@ export default function QuatationSO() {
         Shipping: data.Shipping !== "0",
         WalkIn: data.WalkIn !== "0",
         DeliveredLater: data.DeliveredLater === "1",
-        SpecialOrder: data.SpecialOrder !== "0",
+        DirectInvoice: data.DirectInvoice !== "0",
         Approver: data.Approver,
         InvoiceStatus: data.InvoiceStatus,
         Status: data.Status,
@@ -1608,21 +1607,23 @@ export default function QuatationSO() {
         timerProgressBar: true,
       });
       return;
-    } else if (
-      watch("SpecialOrder") === true &&
-      allFormData.AdvancePayment > 0 &&
-      allFormData.AdvancePayment < 100
-    ) {
-      Swal.fire({
-        text: "100% Payment Compulsory for this customer",
-        icon: "warning",
-        toast: true,
-        showConfirmButton: false,
-        timer: 2000,
-        timerProgressBar: true,
-      });
-      return;
-    } else if (Number(allFormData.TotalDocAmt || 0) === 0) {
+    }
+    // else if (
+    //   watch("DirectInvoice") === true &&
+    //   allFormData.AdvancePayment > 0 &&
+    //   allFormData.AdvancePayment < 100
+    // ) {
+    //   Swal.fire({
+    //     text: "100% Payment Compulsory for this customer",
+    //     icon: "warning",
+    //     toast: true,
+    //     showConfirmButton: false,
+    //     timer: 2000,
+    //     timerProgressBar: true,
+    //   });
+    //   return;
+    // }
+    else if (Number(allFormData.TotalDocAmt || 0) === 0) {
       Swal.fire({
         text: "Total Document value should not be zero !",
         icon: "warning",
@@ -1698,6 +1699,7 @@ export default function QuatationSO() {
       GroupCode: String(data.GroupCode),
       SalesHistory: String(data.SalesHistory),
       CustomerBalance: String(data.CustomerBalance),
+      DirectInvoice: data.DirectInvoice === true ? "1" : "0",
       SpecialOrder: data.SpecialOrder === true ? "1" : "0",
       DeliveredLater: data.DeliveredLater === true ? "1" : "0",
       CNC: data.CNC === true ? "1" : "0",
@@ -1724,7 +1726,7 @@ export default function QuatationSO() {
 
       VehicleDocEntry: String(data.VehicleDocEntry),
       CountryCode: "KW",
-      DirectInvoice: String("0"),
+      // DirectInvoice: String("0"),
       TaxAmt: "0",
       TaxCode: "",
       CustomsDutyPer: "0",
@@ -2112,6 +2114,7 @@ export default function QuatationSO() {
             name={`oLines.${index}.Quantity`}
             control={control}
             inputProps={{ style: { textAlign: "right" } }}
+            readOnly={watch("ServiceOrder")}
             sx={{
               m: 0,
               p: 0,
@@ -2136,7 +2139,7 @@ export default function QuatationSO() {
       headerName: "PRICE",
       width: 100,
       align: "right",
-      editable: true,
+      // editable: true,
       headerAlign: "right",
     },
     {
@@ -2239,18 +2242,18 @@ export default function QuatationSO() {
       width: 700,
       editable: true,
     },
-    {
-      field: "D_FTS",
-      headerName: "D-FTS",
-      width: 120,
-      editable: true,
-      align: "right",
-      headerAlign: "right",
-    },
+    // {
+    //   field: "D_FTS",
+    //   headerName: "D-FTS",
+    //   width: 120,
+    //   editable: true,
+    //   align: "right",
+    //   headerAlign: "right",
+    // },
 
     {
       field: "OH_KWT",
-      headerName: "OH-KWT",
+      headerName: "ON HAND",
       width: 110,
       editable: true,
       align: "right",
@@ -2258,7 +2261,8 @@ export default function QuatationSO() {
     },
     {
       field: "RSVD_KWT",
-      headerName: "RSVD-KWT",
+      // reserved
+      headerName: "RESERVED",
       width: 120,
       editable: true,
       align: "right",
@@ -2266,7 +2270,7 @@ export default function QuatationSO() {
     },
     {
       field: "FTS_KWT",
-      headerName: "FTS-KWT",
+      headerName: "FREE TO SALE",
       width: 110,
       editable: true,
       align: "right",
@@ -2280,18 +2284,18 @@ export default function QuatationSO() {
       align: "right",
       headerAlign: "right",
     },
-    {
-      field: "FittingCharge",
-      headerName: "FITING",
-      width: 120,
-      editable: true,
-      align: "right",
-      headerAlign: "right",
-    },
+    // {
+    //   field: "FittingCharge",
+    //   headerName: "FITING",
+    //   width: 120,
+    //   editable: true,
+    //   align: "right",
+    //   headerAlign: "right",
+    // },
 
     {
       field: "OrderQty",
-      headerName: "ORDRD",
+      headerName: "ORDERED",
       width: 110,
       editable: true,
       align: "right",
@@ -3214,7 +3218,7 @@ export default function QuatationSO() {
                 <Grid container lg={11} md={12} px={2} py={2}>
                   <Grid item xs={12} md={2} sm={4} lg={2} textAlign={"center"}>
                     <Controller
-                      name="SpecialOrder"
+                      name="DirectInvoice"
                       control={control}
                       defaultValue={false}
                       render={({ field: { value, onChange } }) => (
@@ -3230,7 +3234,7 @@ export default function QuatationSO() {
                               }}
                             />
                           }
-                          label="Special Order"
+                          label="Direct Invoice"
                           sx={{ textAlign: "center", width: 140 }}
                         />
                       )}

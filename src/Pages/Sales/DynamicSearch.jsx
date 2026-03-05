@@ -100,14 +100,14 @@ export default function DynamicSearch() {
       width: 700,
       editable: true,
     },
-    {
-      field: "D_FTS",
-      headerName: "D-FTS",
-      width: 110,
-      editable: true,
-      align: "right",
-      headerAlign: "right",
-    },
+    // {
+    //   field: "D_FTS",
+    //   headerName: "D-FTS",
+    //   width: 110,
+    //   editable: true,
+    //   align: "right",
+    //   headerAlign: "right",
+    // },
     // {
     //   field: "UAE_TO_KWT",
     //   headerName: "INTRANS",
@@ -116,7 +116,7 @@ export default function DynamicSearch() {
     // },
     {
       field: "OH_KWT",
-      headerName: "OH-KWT",
+      headerName: "ON HAND",
       width: 110,
       editable: true,
       align: "right",
@@ -124,7 +124,7 @@ export default function DynamicSearch() {
     },
     {
       field: "RSVD_KWT",
-      headerName: "RSVD-KWT",
+      headerName: "RESERVED",
       width: 110,
       editable: true,
       align: "right",
@@ -132,7 +132,7 @@ export default function DynamicSearch() {
     },
     {
       field: "FTS_KWT",
-      headerName: "FTS-KWT",
+      headerName: "FREE TO SALE",
       width: 100,
       editable: true,
       align: "right",
@@ -146,14 +146,14 @@ export default function DynamicSearch() {
       align: "right",
       headerAlign: "right",
     },
-    {
-      field: "FittingCharge",
-      headerName: "FITING",
-      width: 110,
-      editable: true,
-      align: "right",
-      headerAlign: "right",
-    },
+    // {
+    //   field: "FittingCharge",
+    //   headerName: "FITING",
+    //   width: 110,
+    //   editable: true,
+    //   align: "right",
+    //   headerAlign: "right",
+    // },
     // {
     //   field: "InTransit",
     //   headerName: "GIT",
@@ -162,7 +162,7 @@ export default function DynamicSearch() {
     // },
     {
       field: "OrderQty",
-      headerName: "ORDRD",
+      headerName: "ORDERED",
       width: 110,
       editable: true,
       align: "right",
