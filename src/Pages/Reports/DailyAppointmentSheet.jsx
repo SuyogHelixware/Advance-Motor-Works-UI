@@ -1,4 +1,6 @@
+import AddIcon from "@mui/icons-material/Add";
 import PrintIcon from "@mui/icons-material/Print";
+import SaveAltOutlinedIcon from "@mui/icons-material/SaveAltOutlined";
 import SearchOutlinedIcon from "@mui/icons-material/SearchOutlined";
 import {
   Box,
@@ -6,155 +8,229 @@ import {
   Grid,
   IconButton,
   Paper,
-  Typography,
+  Tooltip,
+  Typography
 } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 import { DataGrid } from "@mui/x-data-grid";
-import { LocalizationProvider } from "@mui/x-date-pickers";
+import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs from "dayjs";
-import { InputDatePickerFields } from "../Components/formComponents";
-import RefreshIcon from "@mui/icons-material/Refresh";
-
-const columns = [
-  { field: "OrderNo", headerName: "SORDER", width: 120, sortable: false },
-  {
-    field: "InvoiceNo",
-    headerName: "INVOICE",
-    width: 100,
-    sortable: false,
-  },
-  {
-    field: "RCTNO",
-    headerName: "RECEIPT",
-    width: 100,
-    sortable: false,
-  },
-  { field: "DP", headerName: "DP", width: 100, sortable: false },
-  {
-    field: "CardName",
-    headerName: "CUSTOMER",
-    width: 120,
-    flex: 1,
-    sortable: false,
-  },
-  {
-    field: "PhoneNumber1",
-    headerName: "PHONE",
-    width: 100,
-    sortable: false,
-  },
-  {
-    field: "PAYMethod",
-    headerName: "METHOD",
-    width: 120,
-    sortable: false,
-  },
-  {
-    field: "partsAmt",
-    headerName: "PARTS AMT",
-    width: 120,
-    sortable: false,
-  },
-];
-
-const rows = [
-  { id: 1, SN: "Snow", firstName: "Jon", age: 14 },
-  { id: 2, lastName: "Lannister", firstName: "Cersei", age: 31 },
-  { id: 3, lastName: "Lannister", firstName: "Jaime", age: 31 },
-  { id: 4, lastName: "Stark", firstName: "Arya", age: 11 },
-  { id: 5, lastName: "Targaryen", firstName: "Daenerys", age: null },
-  { id: 1, SN: "Snow", firstName: "Jon", age: 14 },
-  { id: 2, lastName: "Lannister", firstName: "Cersei", age: 31 },
-  { id: 3, lastName: "Lannister", firstName: "Jaime", age: 31 },
-  { id: 4, lastName: "Stark", firstName: "Arya", age: 11 },
-  { id: 5, lastName: "Targaryen", firstName: "Daenerys", age: null },
-  { id: 1, SN: "Snow", firstName: "Jon", age: 14 },
-  { id: 2, lastName: "Lannister", firstName: "Cersei", age: 31 },
-  { id: 3, lastName: "Lannister", firstName: "Jaime", age: 31 },
-  { id: 4, lastName: "Stark", firstName: "Arya", age: 11 },
-  { id: 5, lastName: "Targaryen", firstName: "Daenerys", age: null },
-  { id: 1, SN: "Snow", firstName: "Jon", age: 14 },
-  { id: 2, lastName: "Lannister", firstName: "Cersei", age: 31 },
-  { id: 3, lastName: "Lannister", firstName: "Jaime", age: 31 },
-  { id: 4, lastName: "Stark", firstName: "Arya", age: 11 },
-  { id: 5, lastName: "Targaryen", firstName: "Daenerys", age: null },
-  { id: 1, SN: "Snow", firstName: "Jon", age: 14 },
-  { id: 2, lastName: "Lannister", firstName: "Cersei", age: 31 },
-  { id: 3, lastName: "Lannister", firstName: "Jaime", age: 31 },
-  { id: 4, lastName: "Stark", firstName: "Arya", age: 11 },
-  { id: 5, lastName: "Targaryen", firstName: "Daenerys", age: null },
-];
-
-// const columns1 = [
-//   { field: "OrderNo", headerName: "SORDER", width: 120 },
-//   {
-//     field: "InvoiceNo",
-//     headerName: "INVOICE",
-//     width: 100,
-//   },
-//   {
-//     field: "RCTNO",
-//     headerName: "RECEIPT",
-//     width: 100,
-//   },
-//   { field: "DP", headerName: "DP", width: 100 },
-//   {
-//     field: "CardName",
-//     headerName: "CUSTOMER",
-//     width: 120,
-//   },
-//   {
-//     field: "PhoneNumber1",
-//     headerName: "PHONE",
-//     width: 120,
-//   },
-//   {
-//     field: "PAYMethod",
-//     headerName: "METHOD",
-//     width: 100,
-//   },
-//   {
-//     field: "serviceamt",
-//     headerName: "SERVICE AMT",
-//     width: 120,
-//   },
-// ];
-
-// const rows1 = [
-//   { id: 1, SN: "Snow", firstName: "Jon", age: 14 },
-//   { id: 2, lastName: "Lannister", firstName: "Cersei", age: 31 },
-//   { id: 3, lastName: "Lannister", firstName: "Jaime", age: 31 },
-//   { id: 4, lastName: "Stark", firstName: "Arya", age: 11 },
-//   { id: 5, lastName: "Targaryen", firstName: "Daenerys", age: null },
-// ];
+import { useEffect, useMemo, useState } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { BeatLoader } from "react-spinners";
+import apiClient from "../../services/apiClient";
+import { dataGridSx } from "../../Styles/dataGridStyles";
 
 export default function DailyAppointmentSheet() {
-  
+  const theme = useTheme();
+  const gridSx = useMemo(() => dataGridSx(theme), [theme]);
+
+  const [loading, setLoading] = useState(false);
+  const [appointmentTableData, setappointmentTableData] = useState([]);
+  const { control, setValue, getValues } = useForm({
+    defaultValues: {
+      fromDate: new Date(),
+      toDate: new Date(),
+    },
+  });
+
+  const appointmenColumns = [
+    {
+      field: "AppointDate",
+      headerName: "APPOINTMENT",
+      width: 200,
+      sortable: false,
+      renderCell: (params) => {
+        if (params.row.isHeader) {
+          return (
+            <Box display="flex" flexDirection="column" lineHeight={1.3}>
+              <span>{dayjs(params.row.AppointDate).format("YYYY-MM-DD")}</span>
+              <span>TOTAL APPOINTMENT: {params.row.Total}</span>
+            </Box>
+          );
+        }
+        return params.row.DocNum;
+      },
+    },
+    {
+      field: "AppointTimeFrom",
+      headerName: "TIME",
+      width: 70,
+      sortable: false,
+      renderCell: (params) =>
+        params.row.isHeader
+          ? ""
+          : dayjs(params.row.AppointTimeFrom).format("HH:mm"),
+    },
+    {
+      field: "CardName",
+      headerName: "CUSTOMER",
+      width: 180,
+      sortable: false,
+      renderCell: (params) =>
+        params.row.isHeader ? null : (
+          <Tooltip title={params.row.CardName || ""} arrow>
+            <span>{params.row.CardName}</span>
+          </Tooltip>
+        ),
+    },
+    {
+      field: "PhoneNumber1",
+      headerName: "PHONE",
+      width: 140,
+      sortable: false,
+      renderCell: (params) =>
+        params.row.isHeader ? "" : params.row.PhoneNumber1,
+    },
+    {
+      field: "JobRemarks",
+      headerName: "JOB DESCRIPTION",
+      width: 400,
+      flex: 1,
+      sortable: false,
+      renderCell: (params) =>
+        params.row.isHeader ? null : (
+          <Tooltip title={params.row.JobRemarks || ""} arrow>
+            <span
+              style={{
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "normal",
+                maxWidth: "380px",
+                lineHeight: 1.5,
+              }}
+            >
+              {params.row.JobRemarks}
+            </span>
+          </Tooltip>
+        ),
+    },
+    {
+      field: "SlpName",
+      headerName: "SALES EMP",
+      sortable: false,
+      renderCell: (params) => (params.row.isHeader ? "" : params.row.SlpName),
+    },
+    {
+      field: "OrderNo",
+      headerName: "SO NO",
+      sortable: false,
+      renderCell: (params) => (params.row.isHeader ? "" : params.row.OrderNo),
+      width: 120,
+    },
+    {
+      field: "CreatedDate",
+      headerName: "DATE & TIME",
+      width: 170,
+      sortable: false,
+      renderCell: (params) =>
+        params.row.isHeader
+          ? ""
+          : dayjs(params.row.CreatedDate).format("YYYY:MM:DD : HH:mm A"),
+    },
+    {
+      field: "YMM",
+      headerName: "YMM",
+      width: 300,
+      sortable: false,
+      renderCell: (params) =>
+        params.row.isHeader ? null : (
+          <Tooltip title={params.row.YMM || ""} arrow>
+            <span
+              style={{
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "normal",
+                maxWidth: "380px",
+                lineHeight: 1.5,
+              }}
+            >
+              {params.row.YMM}
+            </span>
+          </Tooltip>
+        ),
+    },
+  ];
+
+  const handleonDailyAppointment = async () => {
+    setLoading(true);
+    try {
+      const from = dayjs(getValues("fromDate")).format("YYYY-MM-DD");
+      const to = dayjs(getValues("toDate")).format("YYYY-MM-DD");
+
+      const res = await apiClient.get(
+        `/Reports/DailyAppointmentSheet/${from}/${to}`,
+      );
+
+      const values = res.data.values || [];
+
+      const tableData = values.flatMap((item) => {
+        const headerRow = {
+          isHeader: true,
+          AppointDate: item.AppointDate,
+          Total: item.Total,
+        };
+
+        const childRows = (item.oLines || []).map((line) => ({
+          ...line,
+          isHeader: false,
+        }));
+
+        return [headerRow, ...childRows];
+      });
+
+      setappointmentTableData(tableData);
+    } catch (err) {
+      console.error("Error fetching salesman sales report:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  /* eslint-disable react-hooks/exhaustive-deps */
+  useEffect(() => {
+    handleonDailyAppointment();
+  }, []);
+  /* eslint-disable react-hooks/exhaustive-deps */
+
+  const ClearForm = () => {
+    const today = new Date();
+    setValue("fromDate", today);
+    setValue("toDate", today);
+    handleonDailyAppointment();
+  };
+
   return (
     <>
       <Grid
         container
         xs={12}
         md={12}
-        sx={{ border: "1px silver solid" }}
-        height="calc(100vh - 90px)"
+        sx={{ border: "1px silver solid", position: "relative" }}
+        height="calc(100% - 70px)"
+        overflow={"scroll"}
+        style={{ overflowY: "hidden" }}
       >
-        {/* <Grid item xs={12} md={12} height={"40px"}>
-          
-
-        </Grid> */}
-
         <IconButton
           edge="start"
           color="inherit"
           aria-label="menu"
+          onClick={ClearForm}
           sx={{
             display: {},
             position: "absolute",
             right: "10px",
+            zIndex: 11,
           }}
         >
-          <RefreshIcon />
+          <AddIcon />
         </IconButton>
 
         <Grid
@@ -166,15 +242,13 @@ export default function DailyAppointmentSheet() {
         >
           <Typography
             alignContent={"center"}
+            borderBottom={"1px solid silver"}
             sx={{
-              // bgcolor: "gainsboro",
               width: "100%",
               height: "40px",
               textAlign: "center",
-              borderBottom: "1px solid silver",
             }}
           >
-            {/* <PageSubTitle title="Daily Inward Sheet" /> */}
             Daily Appointment Sheet
           </Typography>
           <Grid
@@ -186,7 +260,13 @@ export default function DailyAppointmentSheet() {
             py={2}
             columnGap={2}
             rowGap={2}
-            sx={{}}
+            sx={{
+              width: "100%",
+              position: "sticky",
+              top: 0,
+              zIndex: 10,
+              borderBottom: "1px solid #ccc",
+            }}
           >
             <Box
               width={"100%"}
@@ -203,26 +283,57 @@ export default function DailyAppointmentSheet() {
                 width={"100%"}
                 display={"flex"}
                 flexDirection={"row"}
-                justifyContent={"space-evenly"}
+                justifyContent={"flex-end"}
                 alignContent={"center"}
                 alignItems={"center"}
+                paddingRight={2}
               >
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <InputDatePickerFields
-                    label="FROM DATE"
-                    // defaultValue={dayjs(undefined).format('YYYY-DD-MM')}
-                    value={dayjs(undefined)}
+                  <Controller
+                    name="fromDate"
+                    control={control}
+                    render={({ field }) => (
+                      <DatePicker
+                        label="FROM DATE"
+                        value={field.value ? dayjs(field.value) : null}
+                        format="DD-MMM-YYYY"
+                        onChange={(date) => {
+                          field.onChange(date);
+                        }}
+                        slotProps={{
+                          textField: {
+                            size: "small",
+                            fullWidth: true,
+                          },
+                        }}
+                        sx={{ width: "100%", maxWidth: 220 }}
+                      />
+                    )}
                   />
                 </LocalizationProvider>
-
                 <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <InputDatePickerFields
-                    label="TO DATE"
-                    // defaultValue={dayjs(undefined).format('YYYY-DD-MM')}
-                    value={dayjs(undefined)}
+                  <Controller
+                    name="toDate"
+                    control={control}
+                    render={({ field }) => (
+                      <DatePicker
+                        label="TO DATE"
+                        value={field.value ? dayjs(field.value) : null}
+                        format="DD-MMM-YYYY"
+                        onChange={(date) => {
+                          field.onChange(date);
+                        }}
+                        slotProps={{
+                          textField: {
+                            size: "small",
+                            fullWidth: true,
+                          },
+                        }}
+                        sx={{ width: "100%", maxWidth: 220 }}
+                      />
+                    )}
                   />
                 </LocalizationProvider>
-
                 <Button
                   variant="contained"
                   size="small"
@@ -232,13 +343,14 @@ export default function DailyAppointmentSheet() {
                     alignItems: "center",
                     alignContent: "center",
                     alignSelf: "center",
-                    ml: 3,
+                    ml: 1,
+                    width: 100,
                   }}
+                  onClick={handleonDailyAppointment}
                   startIcon={<SearchOutlinedIcon />}
                 >
                   SEARCH
                 </Button>
-
                 <Button
                   variant="contained"
                   size="small"
@@ -247,64 +359,87 @@ export default function DailyAppointmentSheet() {
                     alignItems: "center",
                     alignContent: "center",
                     alignSelf: "center",
+                    marginLeft: 2,
+                    width: 100,
                   }}
                   startIcon={<PrintIcon />}
                 >
                   Print
                 </Button>
               </Grid>
-
-              <Grid
-                container
-                item
-                width={"100%"}
-                p={2}
-                pt={0}
-                my={2}
-                minHeight={"300px"}
-                maxHeight={"690px"}
-                overflow={"scroll"}
-                component={Paper}
-                style={{
-                  overflowX: "hidden",
-                  fontWeight: "700",
-                  fontSize: "12px",
-                }}
-              >
-                <Box
-                  sx={{
-                    height: 600, // Adjust this height as needed
-                    width: "100%",
-                    "& .MuiDataGrid-root": {
-                      border: "none",
-                      overflowX: "scroll",
-                    },
-                    "& .MuiDataGrid-columnHeaders": {
-                      position: "sticky",
-                      top: 0,
-                      backgroundColor: "white",
-                      zIndex: 1,
-                    },
-                    "& .MuiDataGrid-virtualScroller": {
-                      overflowY: "auto",
-                    },
-                    "& .MuiDataGrid-footer": {
-                      display: "none",
-                    },
-                  }}
-                >
-                  <DataGrid
-                    columns={columns}
-                    rows={rows}
-                    columnHeaderHeight={35}
-                    rowHeight={45}
-                    pagination={false}
-                    hideFooter
-                    disableColumnMenu
-                  />
-                </Box>
-              </Grid>
             </Box>
+          </Grid>
+
+          <Grid
+            item
+            xs={12}
+            md={12}
+            flex={1}
+            overflow="auto"
+            sx={{ height: "calc(100vh - 230px)" }}
+          >
+            <Paper
+              elevation={5}
+              sx={{
+                borderRadius: 2,
+                marginBottom: 2,
+                m: 2,
+                display: "flex",
+                flexDirection: "column",
+                height: 650,
+              }}
+            >
+              <Button
+                sx={{
+                  fontSize: "13px",
+                  margin: 2,
+                  marginBottom: 1,
+                  width: 120,
+                }}
+                variant="outlined"
+                startIcon={<SaveAltOutlinedIcon />}
+                // onClick={exportData}
+              >
+                EXPORT
+              </Button>
+
+              <Box flex={1} overflow="auto" px={2} py={1}>
+                {loading ? (
+                  <Box
+                    display="flex"
+                    justifyContent="center"
+                    alignItems="center"
+                    height="100%"
+                  >
+                    <BeatLoader loading={loading} />
+                  </Box>
+                ) : (
+                  <DataGrid
+                    columns={appointmenColumns}
+                    rows={appointmentTableData}
+                    loading={loading}
+                    getRowId={(row) =>
+                      row.isHeader ? `header-${Math.random()}` : Math.random()
+                    }
+                    getRowClassName={(params) =>
+                      params.row.isHeader ? "appointment-header-row" : ""
+                    }
+                    columnHeaderHeight={35}
+                    // hideFooter
+                    rowHeight={48}
+                    autoHeight={false}
+                    sx={{
+                      ...gridSx,
+                      "& .appointment-header-row": {
+                        backgroundColor: "#e0e0e0",
+                        fontWeight: 600,
+                        fontSize: 10,
+                      },
+                    }}
+                  />
+                )}
+              </Box>
+            </Paper>
           </Grid>
         </Grid>
       </Grid>
