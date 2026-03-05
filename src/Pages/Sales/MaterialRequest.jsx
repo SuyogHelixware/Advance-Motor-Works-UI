@@ -896,9 +896,9 @@ export default function MaterialRequest() {
                                 {getListData.map((item, index) => (
                                   <CardComponent
                                     key={item.DocEntry}
-                                    title={item.CardCode}
-                                    subtitle={item.CardName}
-                                    description={item.Cellular}
+                                    title={`${item.DocNum} | ${item.OrderNo}`}
+                                    subtitle={item.PhoneNumber1}
+                                    description={item.CardName}
                                     searchResult={getListquery}
                                     isSelected={
                                       allFormData.CardCode === item.CardCode
