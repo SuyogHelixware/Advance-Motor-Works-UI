@@ -23,18 +23,18 @@ export default function Reports() {
     //   Count: 20,
     //   ReDirect: "sales-analysis-report",
     // },
-    // {
-    //   id: 371,
-    //   Name: "Salesman sales Report",
-    //   Count: 20,
-    //   ReDirect: "salesman-sales-report",
-    // },
-    // {
-    //   id: 372,
-    //   Name: "Daily Appointment Sheet",
-    //   Count: 20,
-    //   ReDirect: "daily-appointment-sheet",
-    // },
+    {
+      id: 371,
+      Name: "Salesman sales Report",
+      Count: 20,
+      ReDirect: "salesman-sales-report",
+    },
+    {
+      id: 372,
+      Name: "Daily Appointment Sheet",
+      Count: 20,
+      ReDirect: "daily-appointment-sheet",
+    },
     // {
     //   id: 30,
     //   Name: "Daily Inward Sheet",
@@ -47,12 +47,12 @@ export default function Reports() {
     //   Count: 20,
     //   ReDirect: "open-quotation-sheet",
     // },
-    // {
-    //   id: 373,
-    //   Name: "Open Quotation Summary",
-    //   Count: 20,
-    //   ReDirect: "open-quotation-summary",
-    // },
+    {
+      id: 373,
+      Name: "Open Quotation Summary",
+      Count: 20,
+      ReDirect: "open-quotation-summary",
+    },
     // {
     //   id: 32,
     //   Name: "Open SO Report",
@@ -77,12 +77,12 @@ export default function Reports() {
     //   Count: 20,
     //   ReDirect: "open-so-update-report",
     // },
-    // {
-    //   id: 374,
-    //   Name: "Open SO By Salesman",
-    //   Count: 20,
-    //   ReDirect: "open-so-salesman",
-    // },
+    {
+      id: 374,
+      Name: "Open SO By Salesman",
+      Count: 20,
+      ReDirect: "open-so-salesman",
+    },
     // {
     //   id: 37,
     //   Name: "Open SO With DP Summary",
@@ -95,12 +95,12 @@ export default function Reports() {
     //   Count: 20,
     //   ReDirect: "replenishment-report",
     // },
-    // {
-    //   id: 375,
-    //   Name: "Vehicle Outward Sheet",
-    //   Count: 20,
-    //   ReDirect: "vehicle-outward-sheet",
-    // },
+    {
+      id: 375,
+      Name: "Vehicle Outward Sheet",
+      Count: 20,
+      ReDirect: "vehicle-outward-sheet",
+    },
     //  {
     //   id: "172",
     //   Name: "Query Generator",
