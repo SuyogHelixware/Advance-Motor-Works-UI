@@ -117,7 +117,7 @@ export default function DynamicSearch() {
     {
       field: "OH_KWT",
       headerName: "ON HAND",
-      width: 110,
+      width: 120,
       editable: true,
       align: "right",
       headerAlign: "right",
@@ -133,7 +133,7 @@ export default function DynamicSearch() {
     {
       field: "FTS_KWT",
       headerName: "FREE TO SALE",
-      width: 100,
+      width: 130,
       editable: true,
       align: "right",
       headerAlign: "right",

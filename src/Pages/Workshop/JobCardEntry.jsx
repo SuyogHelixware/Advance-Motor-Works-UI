@@ -468,7 +468,7 @@ export default function IssueMaterial() {
       });
     }
     setValue("oLines", allValues, { shouldValidate: true, shouldDirty: true });
-    if (SaveUpdateName === "Update") {
+    if (SaveUpdateName === "UPDATE") {
       setBeforeCloseUpdateFlag(true);
     }
   };
@@ -527,16 +527,29 @@ export default function IssueMaterial() {
     {
       field: "ItemCode",
       headerName: "ITEM CODE",
-      width: 140,
+      width: 160,
       editable: true,
       sortable: false,
     },
     {
       field: "ItemName",
       headerName: "DESCRIPTION",
-      width: 390,
+      width: 420,
       editable: true,
       sortable: false,
+      renderCell: (params) => (
+        <Tooltip title={params.value || ""}>
+          <span
+            style={{
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {params.value}
+          </span>
+        </Tooltip>
+      ),
     },
     {
       field: "ReqQuantity",
@@ -544,6 +557,8 @@ export default function IssueMaterial() {
       width: 140,
       editable: true,
       sortable: false,
+      headerAlign: "right",
+      align: "right",
     },
 
     {
@@ -1307,6 +1322,7 @@ export default function IssueMaterial() {
             });
             setOpenListPage(0);
             setOpenListData([]);
+            setBeforeCloseUpdateFlag(false);
             fetchOpenListData(0);
             handleGetListClear();
             ClearForm();
@@ -1461,7 +1477,7 @@ export default function IssueMaterial() {
     }
 
     const result = await Swal.fire({
-      text: `Do You Want Closed JobCard ${formData.JobCardNo}`,
+      text: `Do You Want Close JobCard ${formData.JobCardNo}`,
       icon: "question",
       confirmButtonText: "YES",
       cancelButtonText: "No",
@@ -1737,8 +1753,17 @@ export default function IssueMaterial() {
                           render={({ field }) => (
                             <InputTextField
                               label="Before LH"
-                              readOnly={allFormData.Status === "0"}
+                              readOnly={
+                                SaveUpdateName === "UPDATE" &&
+                                allFormData.Status === "0"
+                              }
                               {...field}
+                              onChange={(e) => {
+                                field.onChange(e);
+                                if (SaveUpdateName === "UPDATE") {
+                                  setBeforeCloseUpdateFlag(true);
+                                }
+                              }}
                             />
                           )}
                         />
@@ -1750,8 +1775,17 @@ export default function IssueMaterial() {
                           render={({ field }) => (
                             <InputTextField
                               label="Before RH"
-                              readOnly={allFormData.Status === "0"}
+                              readOnly={
+                                SaveUpdateName === "UPDATE" &&
+                                allFormData.Status === "0"
+                              }
                               {...field}
+                              onChange={(e) => {
+                                field.onChange(e);
+                                if (SaveUpdateName === "UPDATE") {
+                                  setBeforeCloseUpdateFlag(true);
+                                }
+                              }}
                             />
                           )}
                         />
@@ -1816,8 +1850,17 @@ export default function IssueMaterial() {
                           render={({ field }) => (
                             <InputTextField
                               label="Total Height"
-                              readOnly={allFormData.Status === "0"}
+                              readOnly={
+                                SaveUpdateName === "UPDATE" &&
+                                allFormData.Status === "0"
+                              }
                               {...field}
+                              onChange={(e) => {
+                                field.onChange(e);
+                                if (SaveUpdateName === "UPDATE") {
+                                  setBeforeCloseUpdateFlag(true);
+                                }
+                              }}
                             />
                           )}
                         />
@@ -1829,8 +1872,17 @@ export default function IssueMaterial() {
                           render={({ field }) => (
                             <InputTextField
                               label="After LH"
-                              readOnly={allFormData.Status === "0"}
+                              readOnly={
+                                SaveUpdateName === "UPDATE" &&
+                                allFormData.Status === "0"
+                              }
                               {...field}
+                              onChange={(e) => {
+                                field.onChange(e);
+                                if (SaveUpdateName === "UPDATE") {
+                                  setBeforeCloseUpdateFlag(true);
+                                }
+                              }}
                             />
                           )}
                         />
@@ -1842,8 +1894,17 @@ export default function IssueMaterial() {
                           render={({ field }) => (
                             <InputTextField
                               label="After RH"
-                              readOnly={allFormData.Status === "0"}
+                              readOnly={
+                                SaveUpdateName === "UPDATE" &&
+                                allFormData.Status === "0"
+                              }
                               {...field}
+                              onChange={(e) => {
+                                field.onChange(e);
+                                if (SaveUpdateName === "UPDATE") {
+                                  setBeforeCloseUpdateFlag(true);
+                                }
+                              }}
                             />
                           )}
                         />
@@ -1943,7 +2004,8 @@ export default function IssueMaterial() {
                   sx={{
                     overflow: "auto",
                     width: "100%",
-                    height: "40%",
+                    maxHeight: "40%",
+                    minHeight: "10%",
                     padding: 2,
                     marginBottom: 3,
                     marginTop: 2,
