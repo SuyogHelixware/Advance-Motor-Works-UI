@@ -48,6 +48,8 @@ import { Loader } from "../Components/Loader";
 import SearchInputField from "../Components/SearchInputField";
 import SearchModel from "../Components/SearchModel";
 import usePermissions from "../Components/usePermissions";
+import PrintMenu from "../Components/PrintMenu";
+import axios from "axios";
 
 const initialFormData = {
   DocEntry: "",
@@ -218,7 +220,6 @@ export default function CashInvoice() {
   });
 
   useEffect(() => {
-    getListForCreate();
     getAllOpenList();
     getAllCloseList();
   }, []);
@@ -627,6 +628,35 @@ export default function CashInvoice() {
       onClickClearGetListCreateSearch();
     }, 10);
   };
+
+  const [PrintData, setPrintData] = useState([]);
+
+  useEffect(() => {
+    const fetchPrintData = async () => {
+      try {
+        const { data: dataPrint } = await apiClient.get(
+          `/ReportLayout/GetByTransId/13`,
+        );
+        // const { data: dataPrint } = await axios.get(
+        //   `http://20.203.85.32:8071/api/ReportLayout/GetByTransId/13`,
+        // );
+        if (dataPrint.success) {
+          const OlinesDataPrint = dataPrint.values.oLines;
+          setPrintData(OlinesDataPrint);
+        } else {
+          Swal.fire({
+            text: dataPrint.message,
+            icon: "question",
+            confirmButtonText: "YES",
+          });
+        }
+      } catch (err) {
+        console.log(err);
+      }
+    };
+
+    fetchPrintData(); // runs once
+  }, []);
 
   const onSelectRequest = async (selectedItem) => {
     try {
@@ -1424,6 +1454,7 @@ export default function CashInvoice() {
                               label="JOB CARD/SO NO"
                               onClick={() => {
                                 OpenDailog();
+                                getListForCreate();
                               }}
                               readOnly={true}
                               disabled={!!DocEntry}
@@ -2370,9 +2401,14 @@ export default function CashInvoice() {
                 PROCESS INVOICE
               </Button>
 
-              <Button variant="contained" color="primary">
-                PRINT
-              </Button>
+              <Grid item>
+                <PrintMenu
+                  disabled={!watch("DocEntry")}
+                  type={"IN"}
+                  DocEntry={watch("DocEntry")}
+                  PrintData={PrintData}
+                />
+              </Grid>
             </Grid>
           </Grid>
         </Grid>
