@@ -1040,7 +1040,7 @@ export default function QuatationSO() {
     const oCCPayList = getValues("oCCPay") || [];
     const creditSumTotal = oCCPayList.reduce((sum, item) => {
       return sum + parseFloat(item.CreditSum || 0);
-    }, 0); 
+    }, 0);
 
     const cashPaid = parseFloat(watch("CashPaid")) || 0;
     const transferSum = parseFloat(watch("TransferSum")) || 0;
@@ -1062,19 +1062,19 @@ export default function QuatationSO() {
 
       setValue("CashPaid", lastValidValuesRef.current.CashPaid);
       setValue("TransferSum", lastValidValuesRef.current.TransferSum);
-      const updatedOCCPayList = oCCPayList.map((item, i) => ({
-        ...item,
-        CreditSum:
-          i === 0 ? lastValidValuesRef.current.CreditSum : item.CreditSum,
-      }));
-      setBankData(updatedOCCPayList);
+      // const updatedOCCPayList = oCCPayList.map((item, i) => ({
+      //   ...item,
+      //   CreditSum:
+      //     i === 0 ? lastValidValuesRef.current.CreditSum : item.CreditSum,
+      // }));
+      // setBankData(updatedOCCPayList);
 
       return;
     }
     lastValidValuesRef.current = {
       CashPaid: cashPaid,
       TransferSum: transferSum,
-      CreditSum: creditSumTotal,
+      CreditSum: lastValidValuesRef.current.CreditSum,
     };
     const totalDocumentValue = Number(watch("TotalDocAmt")) || 0;
     const advanceAmt = Number(totalPaid) || 0;
@@ -1291,6 +1291,10 @@ export default function QuatationSO() {
     PaymentsCalculations();
     setRadioKey((k) => k + 1);
     setValue("CreditCard", "");
+    lastValidValuesRef.current = {
+      ...lastValidValuesRef.current,
+      CreditSum: 0,
+    };
     setValue("CreditCardNumber", "");
     setValue("VoucherNum", "");
     setValue("CreditSum", "");
@@ -1333,6 +1337,7 @@ export default function QuatationSO() {
         return;
       }
       lastValidValuesRef.current = {
+        ...lastValidValuesRef.current,
         CreditSum: creditSum,
       };
     }
@@ -1982,6 +1987,18 @@ export default function QuatationSO() {
   };
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
+    setValue("CreditCardNumber", "");
+    setValue("CreditSum", 0);
+    setValue("VoucherNum", "");
+    setValue("CreditCard", "");
+    lastValidValuesRef.current = {
+      ...lastValidValuesRef.current,
+      CreditSum: 0,
+    };
+  };
+
+  const handleItemSearchTabChange = (event, newValue) => {
+    setTabValue(newValue);
   };
 
   const handleClickOpen = () => {
@@ -2201,7 +2218,7 @@ export default function QuatationSO() {
       headerAlign: "center",
       renderCell: (params) => {
         const index = (getValues("oLines") || []).findIndex(
-          (r) => r.LineNum === params.row.LineNum,
+          (r) => r.ItemCode === params.row.ItemCode,
         );
         return (
           <SmallInputFields
@@ -2623,12 +2640,17 @@ export default function QuatationSO() {
                 <Controller
                   name="PhoneNumber1"
                   control={controlMdl1}
+                  // rules={{
+                  //   required: "Contact No is required",
+                  //   validate: (value) =>
+                  //     value && value.trim() !== ""
+                  //       ? true
+                  //       : "Contact No is required",
+                  // }}
                   rules={{
-                    required: "Contact No is required",
                     validate: (value) =>
-                      value && value.trim() !== ""
-                        ? true
-                        : "Contact No is required",
+                      value.replace(/\D/g, "").length > 3 ||
+                      "Contact No is required",
                   }}
                   render={({ field, fieldState: { error } }) => (
                     <PhoneNumber
@@ -3844,7 +3866,7 @@ export default function QuatationSO() {
                             <Grid item lg={6} xs={12} md={6} sm={6}>
                               <TableContainer
                                 component={Paper}
-                                sx={{ overflow: "auto",maxHeight: 200, }}
+                                sx={{ overflow: "auto", maxHeight: 200 }}
                               >
                                 <Table
                                   stickyHeader
@@ -4407,7 +4429,7 @@ export default function QuatationSO() {
                             >
                               <Paper style={{ padding: 0 }}>
                                 <TabList
-                                  onChange={handleTabChange}
+                                  onChange={handleItemSearchTabChange}
                                   aria-label="lab API tabs example"
                                   variant="scrollable"
                                   scrollButtons="auto"
