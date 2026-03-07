@@ -76,6 +76,7 @@ import SearchModel from "../Components/SearchModel";
 import usePermissions from "../Components/usePermissions";
 import apiClient from "../../services/apiClient";
 import { Loader } from "../Components/Loader";
+import PrintMenu from "../Components/PrintMenu";
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
@@ -164,6 +165,7 @@ export default function QuatationSO() {
     SpecialDisc: 0,
     AdvanceReceiptNo: "",
     ReceiptDate: dayjs(new Date()),
+    time: dayjs(new Date()),
     ReferenceNo: "",
     Type: "ITEM",
     Shipping: false,
@@ -378,6 +380,35 @@ export default function QuatationSO() {
     }
     handleClose();
   };
+
+  const [PrintData, setPrintData] = useState([]);
+
+  useEffect(() => {
+    const fetchPrintData = async () => {
+      try {
+        const { data: dataPrint } = await apiClient.get(
+          `/ReportLayout/GetByTransId/22`,
+        );
+        // const { data: dataPrint } = await axios.get(
+        //   `http://20.203.85.32:8071/api/ReportLayout/GetByTransId/23`,
+        // );
+        if (dataPrint.success) {
+          const OlinesDataPrint = dataPrint.values.oLines;
+          setPrintData(OlinesDataPrint);
+        } else {
+          Swal.fire({
+            text: dataPrint.message,
+            icon: "question",
+            confirmButtonText: "YES",
+          });
+        }
+      } catch (err) {
+        console.log(err);
+      }
+    };
+
+    fetchPrintData(); // runs once
+  }, []);
 
   const fetchGetListData = async (pageNum, searchTerm = "") => {
     try {
@@ -2338,8 +2369,15 @@ export default function QuatationSO() {
     const shipping = Number(getValues("ShippingAmt") || 0);
     const finalTotal = totalParts + totalFitting + shipping;
 
+    const allFormData = getValues();
+    const finNetPartsValue =
+      finalTotal -
+      Number(allFormData.DesiredDiscAmt) -
+      Number(allFormData.SpecialDiscAmt);
+
     setValue("oLines", updatedRows);
     setValue("TotalPartsValue", totalParts.toFixed(3));
+    setValue("NetPartsValue", finNetPartsValue.toFixed(3));
     setValue("ServiceAndInstallation", totalFitting.toFixed(3));
     setValue("TotalDocAmt", finalTotal.toFixed(3));
     setValue("DueAmount", finalTotal.toFixed(3));
@@ -2533,7 +2571,7 @@ export default function QuatationSO() {
       <Loader open={loading} />
       <Dialog
         open={open}
-        onClose={handleClose}
+        // onClose={handleClose}
         scroll="paper"
         maxWidth="sm"
         sx={{
@@ -4045,9 +4083,14 @@ export default function QuatationSO() {
               >
                 {SaveUpdateName}
               </Button>
-              <Button variant="contained" color="primary">
-                PRINT
-              </Button>
+              <Grid item>
+                <PrintMenu
+                  disabled={SaveUpdateName === "SAVE"}
+                  type={watch("OrderNo") ? "SO" : "SQ"}
+                  DocEntry={watch("DocEntry")}
+                  PrintData={PrintData}
+                />
+              </Grid>
             </Grid>
           </Grid>
         </Grid>

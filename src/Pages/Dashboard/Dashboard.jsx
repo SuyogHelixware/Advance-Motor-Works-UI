@@ -20,7 +20,7 @@ import {
   Person as PersonIcon,
   Phone as PhoneIcon,
 } from "@mui/icons-material";
-// import AssuredWorkloadIcon from "@mui/icons-material/AssuredWorkload";
+import AssuredWorkloadIcon from "@mui/icons-material/AssuredWorkload";
 import HandymanOutlinedIcon from "@mui/icons-material/HandymanOutlined";
 import InventoryIcon from "@mui/icons-material/Inventory";
 import MoreIcon from "@mui/icons-material/MoreVert";
@@ -1272,7 +1272,7 @@ export default function Dashboard({ logout }) {
               ) : (
                 ""
               )}
-              {/* {allowedParentIds.includes(5) ? (
+              {allowedParentIds.includes(5) ? (
                 <List>
                   <Link
                     to="banking"
@@ -1309,7 +1309,7 @@ export default function Dashboard({ logout }) {
                 </List>
               ) : (
                 ""
-              )} */}
+              )}
               {allowedParentIds.includes(6) ? (
                 <List>
                   <Link

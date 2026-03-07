@@ -10,13 +10,14 @@ import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import GridOnIcon from "@mui/icons-material/GridOn";
 import Swal from "sweetalert2";
 import apiClient from "../../services/apiClient";
-export default function PrintMenu({ disabled,type, DocEntry, PrintData }) {
+import axios from "axios";
+export default function PrintMenu({ disabled, type, DocEntry, PrintData }) {
   const previewCache = useRef({});
   const [anchorEl, setAnchorEl] = useState(null);
   useEffect(() => {
     previewCache.current = {};
     console.log("Print cache cleared due to new data");
-  }, [PrintData,type, DocEntry]);
+  }, [PrintData, type, DocEntry]);
 
   const handleOpen = (event) => setAnchorEl(event.currentTarget);
   const handleClose = useCallback(() => setAnchorEl(null), []);
@@ -32,42 +33,58 @@ export default function PrintMenu({ disabled,type, DocEntry, PrintData }) {
       // Find report info
       const reportRow = PrintData.find((row) => row.DocType === type);
       if (!reportRow) {
-        Swal.fire({ text: `Report not found for ${DoctypeP}`, icon: "warning" });
+        Swal.fire({
+          text: `Report not found for ${DoctypeP}`,
+          icon: "warning",
+        });
         return;
       }
       const ReportId = reportRow.LineNum;
       // Fetch report as blob
-        Swal.fire({
-         title: "Preparing Download",
-       text: "We are generating your report. This may take a few seconds.",
-          allowOutsideClick: false,
-          didOpen: () => {
-            Swal.showLoading();
-          },
-        });
-      
+      Swal.fire({
+        title: "Preparing Download",
+        text: "We are generating your report. This may take a few seconds.",
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        },
+      });
+
       const { request } = await apiClient.get(
         `/ReportLayout/GetReport?ReportId=${ReportId}&TransDocEntry=${DocEntry}&ReportFormat=${DoctypeP}`,
-        { responseType: "blob" }
+        { responseType: "blob" },
       );
+      // const { request } = await axios.get(
+      //   `http://20.203.85.32:8071/api/ReportLayout/GetReport?ReportId=${ReportId}&TransDocEntry=${DocEntry}&ReportFormat=${DoctypeP}`,
+      //   { responseType: "blob" },
+      // );
       // Create blob URL and cache it
       const blobURL = URL.createObjectURL(request.response);
       previewCache.current[cacheKey] = blobURL;
       // Open in new tab
       // req.responseURL
       window.open(blobURL, "_blank");
-       Swal.close();
+      Swal.close();
     } catch (error) {
       console.error(error);
-      Swal.fire({ text: "Something went wrong", icon: "error",    confirmButtonText: "YES", });
+      Swal.fire({
+        text: "Something went wrong",
+        icon: "error",
+        confirmButtonText: "YES",
+      });
     }
-     
+
     handleClose();
   };
 
   return (
     <>
-      <Button variant="contained" color="info" disabled={disabled} onClick={handleOpen}>
+      <Button
+        variant="contained"
+        color="info"
+        disabled={disabled}
+        onClick={handleOpen}
+      >
         PRINT
       </Button>
 
@@ -80,12 +97,16 @@ export default function PrintMenu({ disabled,type, DocEntry, PrintData }) {
         PaperProps={{ sx: { mt: "2px", borderRadius: "8px" } }}
       >
         <MenuItem onClick={() => handlePreview("PDF")}>
-          <ListItemIcon><PictureAsPdfIcon sx={{ color: "red" }} /></ListItemIcon>
+          <ListItemIcon>
+            <PictureAsPdfIcon sx={{ color: "red" }} />
+          </ListItemIcon>
           <ListItemText primary="PDF" />
         </MenuItem>
 
         <MenuItem onClick={() => handlePreview("EXCEL")}>
-          <ListItemIcon><GridOnIcon sx={{ color: "green" }} /></ListItemIcon>
+          <ListItemIcon>
+            <GridOnIcon sx={{ color: "green" }} />
+          </ListItemIcon>
           <ListItemText primary="Excel" />
         </MenuItem>
       </Menu>
