@@ -459,7 +459,7 @@ function reducer(state, action) {
 }
 function PurchaseCreditNote() {
   const theme = useTheme();
-  const { user, companyData, warehouseData } = useAuth();
+  const { user, companyData, warehouseData, fetchWarehouse } = useAuth();
   const [state, dispatch] = useReducer(reducer, initialState);
   const perms = usePermissions(138);
   const [tabvalue, settabvalue] = useState(0);
@@ -6403,7 +6403,7 @@ function PurchaseCreditNote() {
 
   //#endregion
   // ------------------------------------------------------------------------------------------------------------------------
-  const ClearForm = () => {
+  const ClearForm = async () => {
     reset(initialFormData);
     setSaveUpdateName("SAVE");
     setType("I");
@@ -6427,6 +6427,7 @@ function PurchaseCreditNote() {
     } else if (cancelledListquery?.trim()) {
       handleCancelListClear();
     }
+    await fetchWarehouse();
     setValue("Series", DocSeries[0]?.SeriesId ?? "");
     setValue("DocNum", DocSeries[0]?.DocNum ?? "");
     setValue("FinncPriod", DocSeries[0]?.FinncPriod ?? "");
