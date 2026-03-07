@@ -40,6 +40,7 @@ import {
   InputTextField,
   InputTextSearchButton,
   RadioButtonsField,
+  SmallInputFields,
   SmallInputSearchSelectTextField,
   SmallInputTextField,
 } from "../Components/formComponents";
@@ -1961,7 +1962,16 @@ export default function CashInvoice() {
                             <>
                               <Grid container padding={2}>
                                 <Grid item sm={5} md={6} lg={4} xs={12}>
-                                  <Controller
+                                  <SmallInputFields
+                                    name="CashPaid"
+                                    control={control}
+                                    label="CASH PAID"
+                                    width={140}
+                                    onChange={PaymentCalc}
+                                    type="Number"
+                                    inputProps={{ min: 0 }}
+                                  />
+                                  {/* <Controller
                                     name="CashPaid"
                                     control={control}
                                     render={({ field }) => (
@@ -1975,7 +1985,7 @@ export default function CashInvoice() {
                                         type="Number"
                                       />
                                     )}
-                                  />
+                                  /> */}
                                 </Grid>
                                 <Grid item sm={5} md={6} lg={4} xs={12}>
                                   <Controller
@@ -2041,18 +2051,32 @@ export default function CashInvoice() {
                                         <InputTextField
                                           label="CREDIT CARD NO"
                                           type="Number"
+                                          {...field}
                                           onChange={(e) => {
                                             field.onChange(e);
                                             handleOnChangeCreditValue(e);
+                                            if (e.target.value.length === 4) {
+                                              document
+                                                .querySelector(
+                                                  'input[name="CreditSum"]',
+                                                )
+                                                ?.focus();
+                                            }
                                           }}
-                                          {...field}
                                         />
                                       )}
                                     />
                                   </Grid>
 
                                   <Grid item sm={12} md={6} lg={6} xs={12}>
-                                    <Controller
+                                    <SmallInputFields
+                                      name="CreditSum"
+                                      control={control}
+                                      label="CREDIT SUM"
+                                      onChange={handleOnChangeCreditValue}
+                                      type="Number"
+                                    />
+                                    {/* <Controller
                                       name="CreditSum"
                                       control={control}
                                       render={({ field }) => (
@@ -2066,7 +2090,7 @@ export default function CashInvoice() {
                                           type="Number"
                                         />
                                       )}
-                                    />
+                                    /> */}
                                   </Grid>
 
                                   <Grid item sm={12} md={6} lg={6} xs={12}>
@@ -2162,7 +2186,15 @@ export default function CashInvoice() {
                             <>
                               <Grid container padding={2}>
                                 <Grid sm={12} md={6} lg={3} xs={12}>
-                                  <Controller
+                                  <SmallInputFields
+                                    name="TransferSum"
+                                    control={control}
+                                    label="TRANSFER SUM"
+                                    width={140}
+                                    onChange={PaymentCalc}
+                                    type="Number"
+                                  />
+                                  {/* <Controller
                                     name="TransferSum"
                                     control={control}
                                     render={({ field }) => (
@@ -2176,7 +2208,7 @@ export default function CashInvoice() {
                                         type="Number"
                                       />
                                     )}
-                                  />
+                                  /> */}
                                 </Grid>
                                 <Grid sm={12} md={6} lg={3} xs={12}>
                                   <Controller

@@ -91,6 +91,7 @@ export default function QuatationSO() {
   const [bankData, setBankData] = useState([]);
   const [selectedRow, setSelectedRow] = useState(null);
   const [images, setImages] = useState([]);
+  const [radioKey, setRadioKey] = useState(0);
 
   const [GRN, setGrn] = useState([]);
   const [GRNPage, setGRNPage] = useState(1);
@@ -224,6 +225,8 @@ export default function QuatationSO() {
     SAPDocNum: "",
     DiscApproStatus: "",
     IsDupliQuot: false,
+    VoucherNum: "",
+    CreditCardNumber: "",
   };
 
   const initialItemSearch = {
@@ -288,7 +291,7 @@ export default function QuatationSO() {
     { Name: "TALY", AccountCode: "1201041" },
   ];
 
-  const selectedCard = useWatch({ control, name: "CreditCard" });
+  // const selectedCard = useWatch({ control, name: "CreditCard" });
 
   const getIssueStatus = (Qty, IssueQty) => {
     if (Qty > IssueQty && IssueQty > 0) return "P-ISSUED";
@@ -1255,6 +1258,7 @@ export default function QuatationSO() {
     setValue("oCCPay", updatedList);
 
     PaymentsCalculations();
+    setRadioKey((k) => k + 1);
     setValue("CreditCard", "");
     setValue("CreditCardNumber", "");
     setValue("VoucherNum", "");
@@ -1302,10 +1306,10 @@ export default function QuatationSO() {
       };
     }
 
-    if (name === "CreditCardNumber" && value.length === 4) {
-      const nextInput = document.querySelector('input[name="CreditSum"]');
-      nextInput?.focus();
-    }
+    // if (name === "CreditCardNumber" && value.length === 4) {
+    //   const nextInput = document.querySelector('input[name="CreditSum"]');
+    //   nextInput?.focus();
+    // }
   };
 
   const handleSave = () => {
@@ -3677,7 +3681,8 @@ export default function QuatationSO() {
                                 width={140}
                                 onChange={PaymentsCalculations}
                                 type="Number"
-                              />{" "}
+                                inputProps={{ min: 0 }}
+                              />
                             </Grid>
                             <Grid item sm={5} md={6} lg={4} xs={12}>
                               <Controller
@@ -3719,12 +3724,13 @@ export default function QuatationSO() {
                             <Grid container item lg={6} xs={12} md={6} sm={6}>
                               <RadioButtonsField
                                 control={control}
+                                key={radioKey}
                                 name="CreditCard"
                                 data={CreditCardList.map((card) => ({
                                   value: card.Name,
                                   label: card.Name,
                                 }))}
-                                value={selectedCard}
+                                // value={selectedCard}
                               />
 
                               <Grid item sm={12} md={6} lg={6} xs={12}>
@@ -3735,11 +3741,18 @@ export default function QuatationSO() {
                                     <InputTextField
                                       label="CREDIT CARD NO"
                                       type="Number"
+                                      {...field}
                                       onChange={(e) => {
                                         field.onChange(e);
                                         handleOnChangeCreditValue(e);
+                                        if (e.target.value.length === 4) {
+                                          document
+                                            .querySelector(
+                                              'input[name="CreditSum"]',
+                                            )
+                                            ?.focus();
+                                        }
                                       }}
-                                      {...field}
                                     />
                                   )}
                                 />
@@ -3792,8 +3805,8 @@ export default function QuatationSO() {
                             </Grid>
                             <Grid item lg={6} xs={12} md={6} sm={6}>
                               <TableContainer
-                                // component={Paper}
-                                sx={{ overflow: "auto" }}
+                                component={Paper}
+                                sx={{ overflow: "auto",maxHeight: 200, }}
                               >
                                 <Table
                                   stickyHeader
@@ -3806,7 +3819,7 @@ export default function QuatationSO() {
                                       <TableCell>CARD NAME</TableCell>
                                       <TableCell>CARD NO</TableCell>
                                       <TableCell>AMOUNT</TableCell>
-                                      <TableCell></TableCell>
+                                      <TableCell>ACTION</TableCell>
                                     </TableRow>
                                   </TableHead>
                                   <TableBody>
@@ -3851,7 +3864,7 @@ export default function QuatationSO() {
                                 width={140}
                                 onChange={PaymentsCalculations}
                                 type="Number"
-                              />{" "}
+                              />
                             </Grid>
                             <Grid sm={12} md={6} lg={3} xs={12}>
                               <Controller

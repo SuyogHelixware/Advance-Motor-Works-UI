@@ -331,8 +331,15 @@ export const SmallInputFields = ({
           size="small"
           InputProps={{ readOnly }}
           onWheel={(e) => e.target.blur()}
+          onKeyDown={(e) => {
+            if (e.key === "-" || e.key === "e" || e.key === "E") {
+              e.preventDefault();
+            }
+          }}
           InputLabelProps={{ shrink: true }}
           onChange={(e) => {
+            const value = Math.max(0, parseFloat(e.target.value) || 0);
+            e.target.value = value;
             field.onChange(e);
             if (onChange) {
               onChange(e);
@@ -976,6 +983,7 @@ export const InputTextField = forwardRef(
       readOnly,
       disabled,
       inputProps,
+      onChange,
       sx,
       ...props
     },
@@ -996,6 +1004,11 @@ export const InputTextField = forwardRef(
         }}
         InputLabelProps={{
           shrink: props.value !== undefined && props.value !== "",
+        }}
+        onChange={(e) => {
+          if (onChange) {
+            onChange(e);
+          }
         }}
         {...props}
         sx={{
