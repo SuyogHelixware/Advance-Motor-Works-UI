@@ -222,6 +222,7 @@ const initialState = {
   CharOfAccOpen: false,
   TaxFrieghtOpen: false,
   modal3: false,
+  ReportLayoutOpen: false,
 };
 function reducer(state, action) {
   switch (action.type) {
@@ -242,7 +243,7 @@ function reducer(state, action) {
 }
 function PurchaseInvoice() {
   const theme = useTheme();
-  const { user, companyData, warehouseData } = useAuth();
+  const { user, companyData, warehouseData, fetchWarehouse } = useAuth();
   const [state, dispatch] = useReducer(reducer, initialState);
   const perms = usePermissions(137);
   const [tabvalue, settabvalue] = useState(0);
@@ -9248,7 +9249,7 @@ function PurchaseInvoice() {
   );
 
   // ------------------------------------------------------------------------------------------------------------------------
-  const ClearForm = () => {
+  const ClearForm = async () => {
     reset(initialFormData);
     setSaveUpdateName("SAVE");
     setType("I");
@@ -9279,6 +9280,7 @@ function PurchaseInvoice() {
     setSelectData([]);
     setoExpLines([]);
     companyAddresss();
+    await fetchWarehouse();
     setValue("Series", DocSeries[0]?.SeriesId ?? "");
     setValue("DocNum", DocSeries[0]?.DocNum ?? "");
     setValue("FinncPriod", DocSeries[0]?.FinncPriod ?? "");

@@ -4,6 +4,7 @@ import AttachFileIcon from "@mui/icons-material/AttachFile";
 import CloseIcon from "@mui/icons-material/Close";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DeleteIcon from "@mui/icons-material/Delete";
+import DescriptionIcon from "@mui/icons-material/Description";
 import DoNotDisturbAltSharpIcon from "@mui/icons-material/DoNotDisturbAltSharp";
 import AssessmentIcon from "@mui/icons-material/Gavel";
 import HighlightOffIcon from "@mui/icons-material/HighlightOff";
@@ -60,6 +61,7 @@ import { BeatLoader } from "react-spinners";
 import Swal from "sweetalert2";
 import { useCopyFromList } from "../../Hooks/useCopyFromList.js";
 import { useItemServiceList } from "../../Hooks/useItemServiceList";
+import useReportLayouts from "../../Hooks/useReportLayouts.js";
 import DynamicLoader from "../../Loaders/DynamicLoader";
 import useAuth from "../../Routing/AuthContext";
 import apiClient from "../../services/apiClient";
@@ -104,6 +106,7 @@ import { TwoFormatter, ValueFormatter } from "../Components/ValueFormatter";
 import { Base64FileinNewTab } from "../FileUpload/EditFilePreview";
 import { openFileinNewTab } from "../FileUpload/filePreview";
 import { useFileUpload } from "../FileUpload/useFileUpload";
+import ReportLayoutModal from "../ReportLayout/ReportLayoutModal.jsx";
 const ServiceCol = [
   {
     id: 1,
@@ -297,6 +300,7 @@ const initialState = {
   SystemRateOpen: false,
   PrintModelOpen: false,
   TaxFrieghtOpen: false,
+  ReportLayoutOpen: false,
 };
 function reducer(state, action) {
   switch (action.type) {
@@ -318,7 +322,7 @@ function reducer(state, action) {
 function PurchaseOrder() {
   const theme = useTheme();
   const [state, dispatch] = useReducer(reducer, initialState);
-  const { user, companyData, warehouseData } = useAuth();
+  const { user, companyData, warehouseData, fetchWarehouse } = useAuth();
   const perms = usePermissions(133);
   const dispatchRedux = useDispatch();
   const { data, loading } = useSelector((state) => state.exchange);
@@ -430,31 +434,8 @@ function PurchaseOrder() {
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [clearCache, setClearCache] = useState(false);
   // const [opentPrint, setPrintOpen] = useState(false);
-  const [PrintData, setPrintData] = useState([]);
   const apiRef = useGridApiRef();
-  useEffect(() => {
-    const fetchPrintData = async () => {
-      try {
-        const { data: dataPrint } = await apiClient.get(
-          `/ReportLayout/GetByTransId/22`,
-        );
-        if (dataPrint.success) {
-          const OlinesDataPrint = dataPrint.values.oLines;
-          setPrintData(OlinesDataPrint);
-        } else {
-          Swal.fire({
-            text: dataPrint.message,
-            icon: "question",
-            confirmButtonText: "YES",
-          });
-        }
-      } catch (err) {
-        console.log(err);
-      }
-    };
 
-    fetchPrintData(); // runs once
-  }, []);
   const gridSx = useMemo(() => dataGridSx(theme), [theme]);
 
   //   const handleOpenPrint = async() => {
@@ -505,6 +486,16 @@ function PurchaseOrder() {
     handleRemove,
     clearFiles,
   } = useFileUpload();
+
+  const { apiRowsReport, Reportloading, fetchReportLayouts } = useReportLayouts(
+    type === "I" ? "POR2" : "POR1",
+  );
+
+  useEffect(() => {
+    if (state.ReportLayoutOpen) {
+      fetchReportLayouts();
+    }
+  }, [state.ReportLayoutOpen, fetchReportLayouts]);
   const Openmenu = Boolean(anchorEl);
   const handleClickCancelClosed = (event) => {
     setAnchorEl(event.currentTarget);
@@ -554,7 +545,7 @@ function PurchaseOrder() {
     SlpCode: "0",
     SlpName: "",
     Comments: "",
-    Discount: "0.00",
+    Discount: 0.0,
     ShipMode: "",
     PORevise: "",
     SAPSync: "",
@@ -656,7 +647,6 @@ function PurchaseOrder() {
   const currency = watch("Currency");
   const docDate = watch("DocDate");
   const SysRate = watch("SysRate");
-  const GroupNum = watch("GroupNum");
   useEffect(() => {
     dispatchRedux(fetchExchangeRateStore(docDate))
       .unwrap()
@@ -748,7 +738,6 @@ function PurchaseOrder() {
               missingRates.map((item) => [item.Currency, item]),
             ).values(),
           ];
-
           setAllDataCopyRateLine(uniqueCurrencies);
           dispatch({ type: "OPEN", modal: "exchaneRateLineCpyform" });
           Swal.fire({
@@ -1069,7 +1058,7 @@ function PurchaseOrder() {
     settab(newvalue1);
   };
 
-  const ClearForm = () => {
+  const ClearForm = async () => {
     reset(initialFormData);
     setSaveUpdateName("SAVE");
     setType("I");
@@ -1097,6 +1086,7 @@ function PurchaseOrder() {
     } else if (cancelledListquery?.trim()) {
       handleCancelListClear();
     }
+    await fetchWarehouse();
 
     setValue("Series", DocSeries[0]?.SeriesId ?? "");
     setValue("DocNum", DocSeries[0]?.DocNum ?? "");
@@ -1586,9 +1576,7 @@ function PurchaseOrder() {
   };
 
   //#endregion Searching Vendor List
-
   //#region Get Api for Copy From Button
-
   // const fetchCopyFromData = async (pageNum = 0, searchTerm = "") => {
   //   const CardCode = getValues("CardCode") || "";
   //   const baseType = watch("baseType") || "1470000113";
@@ -4190,6 +4178,7 @@ function PurchaseOrder() {
     setSelectedRows(selectedRow);
   };
 
+  console.log("sdfsdfsdf", selectedRows);
   const handleFrightCellClick = (id) => {
     const selectedIDs = new Set(id);
     const selectedRow = frieghtdata
@@ -7776,6 +7765,14 @@ function PurchaseOrder() {
         selectedRowIndex={getValues("selectedRowIndex")}
         oLines={getValues("oExpLines")}
       />
+
+      <ReportLayoutModal
+        open={state.ReportLayoutOpen}
+        onClose={() => dispatch({ type: "CLOSE", modal: "ReportLayoutOpen" })}
+        apiRows={apiRowsReport}
+        loading={Reportloading}
+        fetchReportLayouts={fetchReportLayouts}
+      />
       <TableGridFrieght
         open={frieghtopen}
         apiRef={apiRef}
@@ -8178,7 +8175,21 @@ function PurchaseOrder() {
               </Typography>
             </MenuItem>
           </Menu>
-          {/* </div> */}
+          <IconButton
+            edge="start"
+            color="inherit"
+            aria-label="menu"
+            onClick={() => {
+              dispatch({ type: "OPEN", modal: "ReportLayoutOpen" });
+            }}
+            sx={{
+              display: {}, // Show only on smaller screens
+              position: "absolute",
+              right: "70px",
+            }}
+          >
+            <DescriptionIcon />
+          </IconButton>
           <IconButton
             edge="start"
             color="inherit"
@@ -9930,9 +9941,11 @@ function PurchaseOrder() {
               <Grid item>
                 <PrintMenu
                   disabled={SaveUpdateName === "SAVE"}
-                  type={type}
+                  DfLayout={
+                    apiRowsReport?.DfLayout || apiRowsReport?.DfSequence
+                  }
                   DocEntry={DocEntry}
-                  PrintData={PrintData}
+                  PrintData={apiRowsReport}
                 />
               </Grid>
             </Grid>
