@@ -1040,7 +1040,7 @@ export default function QuatationSO() {
     const oCCPayList = getValues("oCCPay") || [];
     const creditSumTotal = oCCPayList.reduce((sum, item) => {
       return sum + parseFloat(item.CreditSum || 0);
-    }, 0);
+    }, 0); 
 
     const cashPaid = parseFloat(watch("CashPaid")) || 0;
     const transferSum = parseFloat(watch("TransferSum")) || 0;
