@@ -57,6 +57,7 @@ import InfiniteScroll from "react-infinite-scroll-component";
 import { BeatLoader } from "react-spinners";
 import { InfiniteLoader } from "react-virtualized";
 import Swal from "sweetalert2";
+import apiClient from "../../services/apiClient";
 import { dataGridSx } from "../../Styles/dataGridStyles";
 import CardComponent from "../Components/CardComponent";
 import {
@@ -70,13 +71,12 @@ import {
   SmallInputFields,
   SmallInputTextField,
 } from "../Components/formComponents";
+import { Loader } from "../Components/Loader";
 import { PhoneNumber } from "../Components/PhoneNumber";
+import PrintMenu from "../Components/PrintMenu";
 import SearchInputField from "../Components/SearchInputField";
 import SearchModel from "../Components/SearchModel";
 import usePermissions from "../Components/usePermissions";
-import apiClient from "../../services/apiClient";
-import { Loader } from "../Components/Loader";
-import PrintMenu from "../Components/PrintMenu";
 
 const Transition = React.forwardRef(function Transition(props, ref) {
   return <Slide direction="up" ref={ref} {...props} />;
@@ -110,8 +110,8 @@ export default function QuatationSO() {
   const [loadingOpenSO, setLoadingOpenSO] = useState(false);
 
   const [filteredList, setFilteredList] = useState([]);
-
   const [Suppliers, setSuppliers] = useState([]);
+  const [PrintData, setPrintData] = useState([]);
 
   const [getListData, setGetListData] = useState([]);
   const [getListquery, setGetListQuery] = useState("");
@@ -138,6 +138,7 @@ export default function QuatationSO() {
 
   const theme = useTheme();
   const checkedRowsRef = useRef([]);
+  const gridSx = useMemo(() => dataGridSx(theme), [theme]);
 
   const initial = {
     DocNum: null,
@@ -384,8 +385,6 @@ export default function QuatationSO() {
     handleClose();
   };
 
-  const [PrintData, setPrintData] = useState([]);
-
   useEffect(() => {
     const fetchPrintData = async () => {
       try {
@@ -416,28 +415,23 @@ export default function QuatationSO() {
   const fetchGetListData = async (pageNum, searchTerm = "") => {
     try {
       const url = searchTerm
-        ? `/BPV2?Status=1&CardType=C&Limit=${pageNum}&SearchText=${searchTerm}`
-        : `/BPV2/V2/Pages/1/${pageNum}/20`;
+        ? `/BPV2/V2/ByCardType/Search/${searchTerm}/C/1/${pageNum}/20`
+        : `/BPV2/V2/ByCardType/Pages/C/1/${pageNum}/20`;
 
       const response = await apiClient.get(url);
 
       if (response.data.success) {
         const newData = response.data.values;
 
-        setHasMoreGetList(newData.length === 20);
-
         setGetListData((prev) =>
           pageNum === 0 ? newData : [...prev, ...newData],
         );
+        setHasMoreGetList(newData.length === 20);
       } else if (response.data.success === false) {
-        Swal.fire({
-          text: response.data.message,
-          icon: "question",
-          confirmButtonText: "YES",
-          showConfirmButton: true,
-        });
+        setHasMoreGetList(false);
       }
     } catch (error) {
+      setHasMoreGetList(false);
       console.error(error);
     }
   };
@@ -462,20 +456,20 @@ export default function QuatationSO() {
         setOpenListPage(pageNum);
       } else {
         setHasMoreOpen(false);
-        Swal.fire({
-          text: response.data.message,
-          icon: "question",
-          confirmButtonText: "YES",
-        });
+        // Swal.fire({
+        //   text: response.data.message,
+        //   icon: "question",
+        //   confirmButtonText: "YES",
+        // });
       }
     } catch (error) {
       console.error("Error fetching data:", error);
       setHasMoreOpen(false);
-      Swal.fire({
-        text: error.message || error,
-        icon: "question",
-        confirmButtonText: "YES",
-      });
+      // Swal.fire({
+      //   text: error.message || error,
+      //   icon: "question",
+      //   confirmButtonText: "YES",
+      // });
     }
   };
 
@@ -483,11 +477,8 @@ export default function QuatationSO() {
     setLoading(true);
     try {
       const res = await apiClient.get(`/QuotationSo/${DocEntry}`);
-
       const data = res.data?.values;
-
-      reset(data);
-
+      // reset(data);
       reset({
         ...data,
         CNC: data.JobWorkAt === "CNC",
@@ -520,6 +511,7 @@ export default function QuatationSO() {
           Amount: parseFloat(line.Amount),
           Price: parseFloat(line.Price),
           LineFittingCharge: line.LineFittingCharge || 0,
+          FTSQty: parseFloat(line.FTSQty).toFixed(3),
           FittingCharge:
             parseFloat(line.LineFittingCharge) / parseFloat(line.Quantity),
           IssueStatus: getIssueStatus(
@@ -552,8 +544,9 @@ export default function QuatationSO() {
         icon: "error",
         confirmButtonText: "OK",
       });
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const fetchMoreGetListData = () => {
@@ -569,10 +562,12 @@ export default function QuatationSO() {
 
   const OpenDailog = () => {
     setSearchmodelOpen(true);
+    setGetListQuery("");
   };
 
   const SearchModelClose = () => {
     setSearchmodelOpen(false);
+    setGetListQuery("");
   };
 
   const handleGetListSearch = (res) => {
@@ -640,20 +635,20 @@ export default function QuatationSO() {
         );
       } else {
         setHasMoreClosed(false);
-        Swal.fire({
-          text: response.data.message,
-          icon: "question",
-          confirmButtonText: "YES",
-        });
+        // Swal.fire({
+        //   text: response.data.message,
+        //   icon: "question",
+        //   confirmButtonText: "YES",
+        // });
       }
     } catch (error) {
       console.error("Error fetching data:", error);
       setHasMoreClosed(false);
-      Swal.fire({
-        text: error.message || error,
-        icon: "question",
-        confirmButtonText: "YES",
-      });
+      // Swal.fire({
+      //   text: error.message || error,
+      //   icon: "question",
+      //   confirmButtonText: "YES",
+      // });
     }
   };
 
@@ -1417,6 +1412,7 @@ export default function QuatationSO() {
       console.error(" handleSave error:", err);
     }
   };
+
   const getbyidBPV2 = async (DocEntry) => {
     try {
       const res = await apiClient.get(`/BPV2?DocEntry=${DocEntry}`);
@@ -1551,11 +1547,14 @@ export default function QuatationSO() {
       oBPBankAccLines: [],
     };
 
+    setLoading(true);
+
     try {
       const response = await apiClient.post(`/BPV2/V2`, obj);
       if (response.data && response.data.success) {
         const data = response.data.ID;
         getbyidBPV2(data);
+        setLoading(false);
 
         Swal.fire({
           text: "Customer Created Successfully",
@@ -1565,6 +1564,7 @@ export default function QuatationSO() {
           timer: 1500,
         });
       } else {
+        setLoading(false);
         const errorMessage =
           response.data?.message || "Failed to create customer";
         Swal.fire({
@@ -1574,6 +1574,7 @@ export default function QuatationSO() {
         });
       }
     } catch (error) {
+      setLoading(false);
       console.error("Error saving customer:", error);
       Swal.fire({
         text: error?.message || "Failed to create customer",
@@ -1647,7 +1648,7 @@ export default function QuatationSO() {
         timerProgressBar: true,
       });
       return;
-    }
+    } 
     // else if (
     //   watch("DirectInvoice") === true &&
     //   allFormData.AdvancePayment > 0 &&
@@ -1897,10 +1898,10 @@ export default function QuatationSO() {
               title: "Success!",
               icon: "success",
               text:
-                allFormData.AdvancePayment < 50
-                  ? `Quotation Save Successfully`
-                  : `Order Update Successfully`,
-              confirmButtonText: "Ok",
+                SaveUpdateName === "SAVE"
+                  ? `Quotation Saved Successfully`
+                  : `Order Updated Successfully`,
+              showConfirmButton: false,
               timer: 1500,
             });
           } else {
@@ -1915,18 +1916,18 @@ export default function QuatationSO() {
         } catch (error) {
           setLoading(false);
           Swal.fire({
-            title: "Error!123",
+            title: "Error!",
             text: error,
             icon: "warning",
             confirmButtonText: "Ok",
           });
         }
       } else {
+        setLoading(false);
         Swal.fire({
           title: "Info!",
           text: "Document Not Saved",
           icon: "info",
-          // toast: true,
           confirmButtonText: "Ok",
           timer: 1500,
         });
@@ -1971,8 +1972,6 @@ export default function QuatationSO() {
     setSidebarOpen(!sidebarOpen);
   };
 
-  const gridSx = useMemo(() => dataGridSx(theme), [theme]);
-
   const handleClickModel = () => {
     setOpenModal(true);
     setSelectedRow(null);
@@ -1985,6 +1984,7 @@ export default function QuatationSO() {
     setSelectedRow(null);
     resetMdl(initialItemSearch);
   };
+
   const handleTabChange = (event, newValue) => {
     setTabValue(newValue);
     setValue("CreditCardNumber", "");
@@ -2592,7 +2592,6 @@ export default function QuatationSO() {
       <Loader open={loading} />
       <Dialog
         open={open}
-        // onClose={handleClose}
         scroll="paper"
         maxWidth="sm"
         sx={{
@@ -2897,6 +2896,7 @@ export default function QuatationSO() {
                             </IconButton>
                           </Grid>
                         </Grid>
+
                         <SearchModel
                           open={searchmodelOpen}
                           onClose={SearchModelClose}
@@ -3002,6 +3002,7 @@ export default function QuatationSO() {
                           )}
                         />
                       </Grid>
+
                       <Grid item textAlign="center">
                         <Controller
                           name="OrderNo"
@@ -3519,8 +3520,8 @@ export default function QuatationSO() {
                           control={control}
                           label="SERVICE & INSTALL"
                           width={140}
-                          readOnly
-                        />{" "}
+                          readOnly={true}
+                        />
                       </Grid>
                     </Grid>
                   </Grid>
@@ -3541,6 +3542,7 @@ export default function QuatationSO() {
                           label="DISC (%)"
                           width={140}
                           onChange={calculateData}
+                          readOnly={true}
                         />
                       </Grid>
                       <Grid
@@ -3557,6 +3559,7 @@ export default function QuatationSO() {
                           label="ROUNDING OFF"
                           width={140}
                           onChange={calculateData}
+                          readOnly={true}
                         />
                       </Grid>
                     </Grid>

@@ -45,11 +45,10 @@ import {
   SmallInputTextField,
 } from "../Components/formComponents";
 import { Loader } from "../Components/Loader";
+import PrintMenu from "../Components/PrintMenu";
 import SearchInputField from "../Components/SearchInputField";
 import SearchModel from "../Components/SearchModel";
 import usePermissions from "../Components/usePermissions";
-import PrintMenu from "../Components/PrintMenu";
-import axios from "axios";
 
 const initialFormData = {
   DocEntry: "",
@@ -127,37 +126,31 @@ export default function CashInvoice() {
   const [tabvalue, settabvalue] = useState(0);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [tab, settab] = useState("1");
-  const [isDialogOpen, setisDialogOpen] = useState(false);
   const theme = useTheme();
   const perms = usePermissions(359);
 
-  // Model API Bind
-  const [searchTextGetListForCreate, setsearchTextGetListForCreate] =
-    useState("");
+  const [searchmodelOpen, setSearchmodelOpen] = useState(false);
+  const [hasMoreGetList, setHasMoreGetList] = useState(true);
+  const [getListquery, setGetListQuery] = useState("");
+  const [getListSearching, setGetListSearching] = useState(false);
+
+  const [openListData, setOpenListData] = useState([]);
+  const [openListPage, setOpenListPage] = useState(0);
+  const [openListquery, setOpenListQuery] = useState("");
+  const [openListSearching, setOpenListSearching] = useState(false);
+
+  const [closedListData, setClosedListData] = useState([]);
+  const [closedListPage, setClosedListPage] = useState(0);
+  const [hasMoreClosed, setHasMoreClosed] = useState(true);
+  const [closedListquery, setClosedListQuery] = useState("");
+  const [closedListSearching, setClosedListSearching] = useState(false);
+
+  const timeoutRef = useRef(null);
+  const abortControllerRef = useRef(null);
   const [getListData, setGetListData] = useState([]);
   const [getListPage, setGetListPage] = useState(0);
-
-  const [getListSearchData, setGetListSearchData] = useState([]);
-  const [hasMoreGetListForCreate, setHasMoreGetListForCreate] = useState(true);
-  // ==================================================================================
-
-  //  Open List Api Bind
-  const [openPosts, setOpenPosts] = useState([]);
   const [hasMoreOpen, setHasMoreOpen] = useState(true);
-  const [searchTextOpen, setSearchTextOpen] = useState("");
-  const [openPage, setOpenPage] = useState(0);
-  const [openSearchPosts, setOpenSearchPosts] = useState([]);
-
-  // ============================================
-
-  // Close Api Bind
-  const [closePosts, setClosedPosts] = useState([]);
-  const [hasMoreClose, setHasMoreClose] = useState(true);
-  const [closeSearchPosts, setCloseSearchPosts] = useState([]);
-  const [closePage, setClosePage] = useState(0);
-  const [searchTextClose, setSearchTextClose] = useState("");
   const [DocEntry, setDocEntry] = useState("");
-
   const [bankData, setBankData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [processinv, setprocessinv] = useState(false);
@@ -166,44 +159,64 @@ export default function CashInvoice() {
     {
       field: "ItemCode",
       headerName: "Item Code",
-      width: 150,
+      width: 180,
       editable: false,
     },
     {
       field: "ItemName",
-      headerName: "\tDescription",
-      width: 430,
+      headerName: "Description",
+      width: 450,
       editable: true,
+      renderCell: (params) => (
+        <Tooltip title={params.row.ItemName} arrow>
+          <span
+            style={{
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              width: "100%",
+              display: "block",
+            }}
+          >
+            {params.value}
+          </span>
+        </Tooltip>
+      ),
     },
     {
       field: "Quantity",
       headerName: "Qty",
-      width: 150,
-      editable: true,
+      width: 140,
+      headerAlign: "right",
+      align: "right",
     },
     {
       field: "Price",
       headerName: "Price",
-      width: 150,
-      editable: true,
+      width: 140,
+      headerAlign: "right",
+      align: "right",
     },
     {
       field: "DesiredDisc",
       headerName: "Disc(%)",
-      width: 150,
-      editable: true,
+      width: 140,
+      headerAlign: "right",
+      align: "right",
     },
     {
       field: "Amount",
       headerName: "Amount",
-      width: 150,
-      editable: true,
+      width: 140,
+      headerAlign: "right",
+      align: "right",
     },
     {
       field: "Fitting",
       headerName: "Fitting",
-      width: 150,
-      editable: true,
+      width: 140,
+      headerAlign: "right",
+      align: "right",
     },
   ];
 
@@ -219,111 +232,6 @@ export default function CashInvoice() {
     defaultValues: initialFormData,
   });
 
-  useEffect(() => {
-    getAllOpenList();
-    getAllCloseList();
-  }, []);
-
-  const getAllOpenList = () => {
-    apiClient
-      .request({
-        method: "get",
-        url: `/ARInvoice?Page=0&Status=1`,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-      .then((response) => {
-        setOpenPosts(response.data.values);
-
-        if (response.data.values.length < 20) {
-          setHasMoreOpen(false);
-        }
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  };
-
-  const fetchMoreOpenListData = async () => {
-    try {
-      const page = openPage + 1;
-      const trimmedSearch = searchTextOpen?.trim() || "";
-      const cleanSearch = trimmedSearch
-        .replace(/[^a-zA-Z0-9 ]/g, "")
-        .replace(/\s+/g, " ");
-
-      let response;
-
-      if (cleanSearch === "") {
-        response = await apiClient.get(`/ARInvoice?Page=${page}&Status=1`);
-
-        setOpenPosts((prev) => [...prev, ...response.data.values]);
-      } else {
-        response = await apiClient.get(
-          `/ARInvoice?SearchText=${cleanSearch}&Status=1&Page=${page}`,
-        );
-
-        setOpenSearchPosts((prev) => [...prev, ...response.data.values]);
-      }
-
-      setOpenPage(page);
-
-      if (response.data.values.length === 0) {
-        setHasMoreOpen(false);
-      }
-    } catch (error) {
-      console.error("Fetch Open List Error:", error);
-    }
-  };
-
-  const onHandleSearchOpen = async (event) => {
-    try {
-      const rawValue = event.target.value || "";
-      const cleanSearch = rawValue
-        .trim()
-        .replace(/[^a-zA-Z0-9 ]/g, "")
-        .replace(/\s+/g, " ");
-      setOpenSearchPosts([]);
-      setSearchTextOpen(cleanSearch);
-      setOpenPage(0);
-
-      if (!cleanSearch) return;
-
-      const response = await apiClient.get(
-        `/ARInvoice?SearchText=${cleanSearch}&Status=1&Page=0`,
-      );
-
-      setOpenSearchPosts(response.data.values);
-
-      if (response.data.values.length < 20) {
-        setHasMoreOpen(false);
-      } else {
-        setHasMoreOpen(true);
-      }
-    } catch (error) {
-      console.error("Search Open Error:", error);
-    }
-  };
-
-  const onClickClearOpenSearch = () => {
-    setSearchTextOpen("");
-    setOpenSearchPosts([]);
-    setOpenPosts([]);
-    setOpenPage(0);
-    setHasMoreOpen(true);
-    setTimeout(() => {
-      getAllOpenList();
-    }, 100);
-  };
-
-  const triggeronClickClearOpenSearchTwice = () => {
-    onClickClearOpenSearch();
-    setTimeout(() => {
-      onClickClearOpenSearch();
-    }, 10);
-  };
-
   const SetoldData = async (DocEntry) => {
     setLoading(true);
 
@@ -336,6 +244,7 @@ export default function CashInvoice() {
           icon: "warning",
           text: "Record Not Found",
         });
+        setLoading(false);
         return;
       }
 
@@ -380,254 +289,13 @@ export default function CashInvoice() {
         setprocessinv(false);
       }
     } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Oops...",
-        text: error.message || "Something went wrong",
-      });
+      console.error("Error :", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const getAllCloseList = () => {
-    apiClient
-      .request({
-        method: "get",
-        url: `/ARInvoice?Page=0&Status=0`,
-        headers: {
-          "Content-Type": "application/json",
-        },
-      })
-      .then((response) => {
-        setClosedPosts(response.data.values);
-        if (response.data.values.length < 20) {
-          setHasMoreClose(false);
-        }
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  };
-
-  const fetchMoreCloseListData = () => {
-    if (searchTextClose === "") {
-      const page = closePage + 1;
-      apiClient
-        .request({
-          method: "get",
-          url: `/ARInvoice?Page=/${page}&Status=0`,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        })
-        .then((response) => {
-          setClosedPosts((prevPosts) => [
-            ...prevPosts,
-            ...response.data.values,
-          ]);
-          setClosePage(page);
-          if (response.data.values.length === 0) {
-            setHasMoreClose(false);
-          }
-        })
-        .catch((error) => {
-          console.log(error);
-        });
-    } else {
-      const page = closePage + 1;
-      apiClient
-        .request({
-          method: "get",
-          url: `/ARInvoice?SearchText=${searchTextClose}&Status=0&Page=${page}`,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        })
-        .then((response) => {
-          setCloseSearchPosts((prevPosts) => [
-            ...prevPosts,
-            ...response.data.values,
-          ]);
-          setClosePage(page);
-          if (response.data.values.length === 0) {
-            setHasMoreClose(false);
-          }
-        })
-        .catch((error) => {
-          console.log(error);
-        });
-    }
-  };
-
-  const getCloseSearchList = (event) => {
-    const searchText = event.target.value;
-    setCloseSearchPosts([]);
-    setSearchTextClose(searchText);
-    setClosePage(0);
-    if (searchText !== "") {
-      apiClient
-        .request({
-          method: "get",
-          url: `/ARInvoice?SearchText=${searchText}&Status=0&Page=0`,
-          headers: {
-            "Content-Type": "application/json",
-          },
-        })
-        .then((response) => {
-          setCloseSearchPosts(response.data.values);
-
-          if (response.data.values.length < 20) {
-            setHasMoreClose(false);
-          }
-        })
-        .catch((error) => {
-          console.log(error);
-        });
-    }
-  };
-
-  const onClickClearCloseSearch = () => {
-    setSearchTextClose("");
-    setCloseSearchPosts([]);
-    setClosedPosts([]);
-    setClosePage(0);
-    setHasMoreClose(true);
-    setTimeout(() => {
-      getAllCloseList();
-    }, 100);
-  };
-
-  const triggeronClickClearCloseSearchTwice = () => {
-    onClickClearCloseSearch();
-    setTimeout(() => {
-      onClickClearCloseSearch();
-    }, 10);
-  };
-
-  const setOldDataclose = async (DocEntry) => {
-    setLoading(true);
-
-    try {
-      const res = await apiClient.get(`/ARInvoice/${DocEntry}`);
-      const data = res.data.values;
-
-      if (!data) {
-        Swal.fire({
-          icon: "warning",
-          text: "Record Not Found",
-        });
-        return;
-      }
-
-      if (res.data.success) {
-        const transformed = {
-          ...data,
-          BalanceDueAmount: data.DueAmount,
-          TotalDueAmount: data.DueAmount,
-          InvoiceDate: data.DocDate,
-          SpecialDisc: parseFloat(data.SpecialDisc).toFixed(3),
-          SpecialDiscAmt: parseFloat(data.SpecialDiscAmt).toFixed(3),
-          DesiredDiscAmt: parseFloat(data.DesiredDiscAmt).toFixed(3),
-
-          PaidAmount: parseFloat(0).toFixed(3),
-          BankPay: [],
-          oCCPay: [],
-          oCashPay: [],
-          oLines: data.oLines.map((invdata) => ({
-            ItemCode: invdata.ItemCode,
-            ItemName: invdata.ItemName,
-            Quantity: invdata.Quantity,
-            Price: invdata.Price,
-            WHSCode: invdata.WHSCode,
-            DesiredDisc: invdata.DesiredDisc,
-            Amount: invdata.LineTotalAmount,
-            Fitting: invdata.LineFittingCharge,
-            TaxCode: invdata.TaxCode,
-            TaxPer: invdata.TaxPer,
-            TaxAmt: invdata.TaxAmt,
-          })),
-        };
-
-        reset(transformed);
-        setDocEntry(DocEntry);
-        setValue("Job_SO_DocEntry", data.OrderNo);
-        setValue("VehInwardDate", data.VehInwardDate);
-        setValue(
-          "VehInwardTime",
-          data.VehInwardTime ? dayjs(data.VehInwardTime, "HH:mm") : dayjs(),
-        );
-        setValue("SparesNetAmt", data.SparesNetAmt);
-        setprocessinv(false);
-      }
-    } catch (error) {
-      Swal.fire({
-        icon: "error",
-        title: "Oops...",
-        text: error.message || "Something went wrong",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const getListForCreate = () => {
-    fetchDataGetListForCreate(`/ARInvoice/CopyFrom?Page=0`, setGetListData);
-  };
-
-  const fetchDataGetListForCreate = (url, setData, append = false) => {
-    apiClient
-      .get(url, { headers: { "Content-Type": "application/json" } })
-      .then((response) => {
-        const values = response.data.values;
-        setData((prevData) => (append ? [...prevData, ...values] : values));
-        if (values.length === 0 || values.length < 20)
-          setHasMoreGetListForCreate(false);
-      })
-      .catch((error) => console.log(error));
-  };
-
-  const fetchMoreGetListForCreate = () => {
-    const page = getListPage + 1;
-    const url = searchTextGetListForCreate
-      ? `/ARInvoice/CopyFrom?Search/${searchTextGetListForCreate}/${page}`
-      : `/ARInvoice/CopyFrom?${page}`;
-    fetchDataGetListForCreate(
-      url,
-      searchTextGetListForCreate ? setGetListSearchData : setGetListData,
-      true,
-    );
-    setGetListPage(page);
-  };
-
-  const onHandleSearchGetListForCreate = (event) => {
-    const searchText = event.target.value;
-    setGetListSearchData([]);
-    setsearchTextGetListForCreate(searchText);
-    setGetListPage(0);
-    if (searchText) {
-      fetchDataGetListForCreate(
-        `/ARInvoice/GetListForCreate/search/${searchText}/0`,
-        setGetListSearchData,
-      );
-    }
-  };
   const gridSx = useMemo(() => dataGridSx(theme), [theme]);
-
-  const onClickClearGetListCreateSearch = () => {
-    setsearchTextGetListForCreate("");
-    setGetListSearchData([]);
-    setGetListData([]);
-    setGetListPage(0);
-    getListForCreate();
-  };
-
-  const triggerClearSearchTwice = () => {
-    onClickClearGetListCreateSearch();
-    setTimeout(() => {
-      onClickClearGetListCreateSearch();
-    }, 10);
-  };
 
   const [PrintData, setPrintData] = useState([]);
 
@@ -660,6 +328,7 @@ export default function CashInvoice() {
 
   const onSelectRequest = async (selectedItem) => {
     try {
+      setLoading(true);
       const filledValues = {
         ...selectedItem,
         PaidAmount: "0",
@@ -677,9 +346,11 @@ export default function CashInvoice() {
 
       reset(filledValues);
       setprocessinv(true);
-      ModelClose();
+      SearchModelClose();
     } catch (error) {
       console.error("Error fetching ARInvoice:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -869,8 +540,9 @@ export default function CashInvoice() {
           timer: 1500,
         });
         ClearFormData();
-        getAllOpenList();
-        getAllCloseList();
+        setOpenListData([]);
+        fetchOpenListData(0);
+        handleGetListClear();
       } else {
         setLoading(false);
         Swal.fire({
@@ -892,19 +564,240 @@ export default function CashInvoice() {
   };
 
   const OpenDailog = () => {
-    setisDialogOpen(true);
+    setSearchmodelOpen(true);
+    setGetListQuery("");
   };
+  const SearchModelClose = () => {
+    setSearchmodelOpen(false);
+    setGetListQuery("");
+  };
+
+  const fetchOpenListData = async (pageNum, searchTerm = "") => {
+    try {
+      const url = searchTerm
+        ? `/ARInvoice?SearchText=${searchTerm}&Status=1&Page=${pageNum}`
+        : `/ARInvoice?Status=1&Page=${pageNum}`;
+
+      const { data } = await apiClient.get(url);
+
+      if (data?.success) {
+        const newData = data.values ?? [];
+
+        setOpenListData((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+
+        const pageSize = 20;
+        setHasMoreOpen(newData.length === pageSize);
+        setOpenListPage(pageNum);
+      } else {
+        setHasMoreOpen(false);
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      setHasMoreOpen(false);
+    }
+  };
+
+  const fetchMoreOpenListData = () => {
+    fetchOpenListData(openListPage + 1, openListSearching ? openListquery : "");
+    setOpenListPage((prev) => prev + 1);
+  };
+
+  // Initial fetch
+  useEffect(() => {
+    fetchOpenListData(0);
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+    };
+  }, []);
+
+  const fetchGetListData = async (pageNum = 0, searchTerm = "") => {
+    try {
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+
+      const encodedSearch = encodeURIComponent(searchTerm.trim());
+
+      const url = encodedSearch
+        ? `/ARInvoice/CopyFrom?SearchText=${encodedSearch}&Page=${pageNum}`
+        : `/ARInvoice/CopyFrom?Page=${pageNum}`;
+
+      const { data } = await apiClient.get(url, {
+        signal: controller.signal,
+      });
+
+      if (data?.success) {
+        const newData = data?.values || [];
+        setHasMoreGetList(newData.length === 20);
+        setGetListData((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+      } else {
+        setHasMoreGetList(false);
+        setGetListData([]);
+      }
+    } catch (error) {
+      if (error.name === "CanceledError" || error.code === "ERR_CANCELED") {
+        return;
+      }
+
+      setHasMoreGetList(false);
+    }
+  };
+
+  const fetchMoreGetListData = () => {
+    fetchGetListData(getListPage + 1, getListSearching ? getListquery : "");
+    setGetListPage((prev) => prev + 1);
+  };
+
+  const handleOpenListSearch = (res) => {
+    setOpenListQuery(res);
+    setOpenListSearching(true);
+    setOpenListPage(0);
+    setOpenListData([]);
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+    timeoutRef.current = setTimeout(() => {
+      fetchOpenListData(0, res);
+    }, 600);
+  };
+
+  // Clear search
+  const handleOpenListClear = () => {
+    setOpenListQuery(""); // Clear searFullAddressch input
+    setOpenListSearching(false); // Reset search state
+    setOpenListPage(0); // Reset page count
+    setOpenListData([]); // Clear data
+    fetchOpenListData(0); // Fetch first page without search
+  };
+
+  useEffect(() => {
+    if (searchmodelOpen === true) {
+      fetchGetListData(0);
+    }
+  }, [searchmodelOpen]);
+
+  const handleGetListSearch = (res) => {
+    setGetListQuery(res);
+    setGetListSearching(true);
+    setGetListPage(0);
+    setGetListData([]);
+
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      fetchGetListData(0, res);
+    }, 600);
+  };
+
+  const handleGetListClear = () => {
+    setGetListQuery("");
+    setGetListSearching(true);
+    setGetListPage(0);
+    setGetListData([]);
+    fetchGetListData(0);
+  };
+
+  const fetchClosedListData = async (pageNum, searchTerm = "") => {
+    try {
+      const url = searchTerm
+        ? `/ARInvoice?SearchText=${searchTerm}&Status=0&Page=${pageNum}`
+        : `/ARInvoice?Status=0&Page=${pageNum}`;
+
+      const { data } = await apiClient.get(url);
+
+      if (data?.success) {
+        const newData = data.values ?? [];
+
+        setHasMoreClosed(newData.length === 20);
+
+        setClosedListData((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+      } else {
+        setHasMoreClosed(false);
+        Swal.fire({
+          text: data?.message || "Something went wrong",
+          icon: "question",
+          confirmButtonText: "YES",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      setHasMoreClosed(false);
+
+      Swal.fire({
+        text: error.message,
+        icon: "question",
+        confirmButtonText: "YES",
+      });
+    }
+  };
+
+  const handleClosedListSearch = (res) => {
+    setClosedListQuery(res);
+    setClosedListSearching(true);
+    setClosedListPage(0);
+    setClosedListData([]);
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
+
+    timeoutRef.current = setTimeout(() => {
+      fetchClosedListData(0, res);
+    }, 600);
+  };
+
+  // Clear search
+  const handleClosedListClear = () => {
+    setClosedListQuery(""); // Clear search input
+    setClosedListSearching(false); // Reset search state
+    setClosedListPage(0); // Reset page count
+    setClosedListData([]); // Clear data
+    fetchClosedListData(0); // Fetch first page without search
+  };
+
+  const fetchMoreClosedListData = () => {
+    fetchClosedListData(
+      closedListPage + 1,
+      closedListSearching ? closedListquery : "",
+    );
+    setClosedListPage((prev) => prev + 1);
+  };
+
+  // Initial fetch
+  useEffect(() => {
+    fetchClosedListData(0);
+  }, []);
 
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
-  const ModelClose = () => {
-    setisDialogOpen(false);
-  };
-
   const handleTabChange = (event, newValue) => {
     settabvalue(newValue);
+    setValue("CreditCardNumber", "");
+    setValue("CreditSum", 0);
+    setValue("VoucherNum", "");
+    setValue("CreditCard", "");
+    lastValidValuesRef.current = {
+      ...lastValidValuesRef.current,
+      CreditSum: 0,
+    };
   };
 
   const handleTabChangeRight = (e, newvalue1) => {
@@ -928,8 +821,6 @@ export default function CashInvoice() {
   ];
 
   const oLines = useWatch({ control, name: "oLines" });
-
-  // const selectedCard = useWatch({ control, name: "CreditCard" });
 
   const PaymentCalc = () => {
     const allFormData = getValues();
@@ -960,12 +851,12 @@ export default function CashInvoice() {
       setValue("CashPaid", lastValidValuesRef.current.CashPaid);
       setValue("TransferSum", lastValidValuesRef.current.TransferSum);
 
-      const updatedOCCPayList = oCCPayList.map((item, i) => ({
-        ...item,
-        CreditSum:
-          i === 0 ? lastValidValuesRef.current.CreditSum : item.CreditSum,
-      }));
-      setBankData(updatedOCCPayList);
+      // const updatedOCCPayList = oCCPayList.map((item, i) => ({
+      //   ...item,
+      //   CreditSum:
+      //     i === 0 ? lastValidValuesRef.current.CreditSum : item.CreditSum,
+      // }));
+      // setBankData(updatedOCCPayList);
 
       return;
     }
@@ -974,7 +865,7 @@ export default function CashInvoice() {
     lastValidValuesRef.current = {
       CashPaid: cashPaid,
       TransferSum: transferSum,
-      CreditSum: creditSumTotal,
+      CreditSum: lastValidValuesRef.current.CreditSum,
     };
 
     setValue("TotalDueAmount", (dueAmt - totalPaid).toFixed(3));
@@ -1015,6 +906,7 @@ export default function CashInvoice() {
 
     if (name === "CreditSum") {
       const newCredit = parseFloat(value || 0);
+      const creditSum = parseFloat(value);
 
       if (totalPaid + newCredit > balanceDue) {
         Swal.fire({
@@ -1031,12 +923,16 @@ export default function CashInvoice() {
         setValue("CreditSum", trimmedValue); // keep input editable but controlled
         return;
       }
+       lastValidValuesRef.current = {
+        ...lastValidValuesRef.current,
+        CreditSum: creditSum,
+      };
     }
 
-    if (name === "CreditCardNumber" && value.length === 4) {
-      const nextInput = document.querySelector('input[name="CreditSum"]');
-      nextInput?.focus();
-    }
+    // if (name === "CreditCardNumber" && value.length === 4) {
+    //   const nextInput = document.querySelector('input[name="CreditSum"]');
+    //   nextInput?.focus();
+    // }
   };
   const [radioKey, setRadioKey] = useState(0);
 
@@ -1109,6 +1005,10 @@ export default function CashInvoice() {
     PaymentCalc();
     setRadioKey((k) => k + 1);
     setValue("CreditCard", "");
+    lastValidValuesRef.current = {
+      ...lastValidValuesRef.current,
+      CreditSum: 0,
+    };
     setValue("CreditCardNumber", "");
     setValue("VoucherNum", "");
     setValue("CreditSum", "");
@@ -1121,6 +1021,29 @@ export default function CashInvoice() {
     setValue("oCCPay", currentList);
     PaymentCalc();
   };
+
+  const tabData = [
+    {
+      value: "0",
+      label: "Open",
+      data: openListData,
+      query: openListquery,
+      hasMore: hasMoreOpen,
+      fetchMore: fetchMoreOpenListData,
+      handleSearch: handleOpenListSearch,
+      handleClear: handleOpenListClear,
+    },
+    {
+      value: "1",
+      label: "Closed",
+      data: closedListData,
+      query: closedListquery,
+      hasMore: hasMoreClosed,
+      fetchMore: fetchMoreClosedListData,
+      handleSearch: handleClosedListSearch,
+      handleClear: handleClosedListClear,
+    },
+  ];
 
   const sidebarContent = (
     <>
@@ -1199,125 +1122,86 @@ export default function CashInvoice() {
                 indicatorColor="primary"
                 textColor="inherit"
               >
-                <Tab value="1" label="Open" />
-                <Tab value="0" label="Closed" />
+                {tabData.map(({ value, label }) => (
+                  <Tab key={value} value={value} label={label} />
+                ))}
               </Tabs>
-              <TabPanel
-                value={"1"}
-                style={{
-                  overflow: "auto",
-                  maxHeight: `calc(100% - ${15}px)`,
-                  paddingLeft: 5,
-                  paddingRight: 5,
-                }}
-                id="ListScroll"
-              >
-                <Grid
-                  item
-                  padding={1}
-                  md={12}
-                  sm={12}
-                  width={"100%"}
-                  sx={{
-                    position: "sticky",
-                    top: "0",
-                    backgroundColor: "#F5F6FA",
-                  }}
-                >
-                  <SearchInputField
-                    onChange={onHandleSearchOpen}
-                    value={searchTextOpen}
-                    onClickClear={triggeronClickClearOpenSearchTwice}
-                  />
-                </Grid>
-                <InfiniteScroll
-                  style={{ textAlign: "center" }}
-                  dataLength={
-                    searchTextOpen === ""
-                      ? openPosts.length
-                      : openSearchPosts.length
-                  }
-                  next={fetchMoreOpenListData}
-                  hasMore={hasMoreOpen}
-                  loader={<BeatLoader />}
-                  scrollableTarget="ListScroll"
-                  endMessage={<Typography>No More Records</Typography>}
-                >
-                  {(openSearchPosts.length === 0
-                    ? openPosts
-                    : openSearchPosts
-                  ).map((item) => (
-                    <CardComponent
-                      key={item.DocNum}
-                      title={item.CardName}
-                      subtitle={item.DocNum}
-                      description={item.PhoneNumber1}
-                      onClick={() => SetoldData(item.DocEntry)}
-                    />
-                  ))}
-                </InfiniteScroll>
-              </TabPanel>
-              <TabPanel
-                value={"0"}
-                style={{
-                  overflow: "auto",
-                  maxHeight: `calc(100% - ${15}px)`,
-                  paddingLeft: 5,
-                  paddingRight: 5,
-                }}
-                id="ListScrollClosed"
-              >
-                <Grid
-                  item
-                  padding={1}
-                  md={12}
-                  sm={12}
-                  width={"100%"}
-                  sx={{
-                    position: "sticky",
-                    top: "0",
-                    backgroundColor: "#F5F6FA",
-                  }}
-                >
-                  <SearchInputField
-                    onChange={getCloseSearchList}
-                    value={searchTextClose}
-                    onClickClear={triggeronClickClearCloseSearchTwice}
-                  />
-                </Grid>
-                <InfiniteScroll
-                  style={{ textAlign: "center" }}
-                  dataLength={
-                    searchTextClose === ""
-                      ? closePosts.length
-                      : closeSearchPosts.length
-                  }
-                  next={fetchMoreCloseListData}
-                  hasMore={hasMoreClose}
-                  loader={<BeatLoader />}
-                  scrollableTarget="ListScrollClosed"
-                  endMessage={<Typography>No More Records</Typography>}
-                >
-                  {(closeSearchPosts.length === 0
-                    ? closePosts
-                    : closeSearchPosts
-                  ).map((itemclose) => (
-                    <CardComponent
-                      key={itemclose.DocNum}
-                      title={itemclose.CardName}
-                      subtitle={itemclose.DocNum}
-                      description={itemclose.PhoneNumber1}
-                      onClick={() => setOldDataclose(itemclose.DocEntry)}
-                    />
-                  ))}
-                </InfiniteScroll>
-              </TabPanel>
+
+              {tabData.map(
+                ({
+                  value,
+                  data,
+                  query,
+                  hasMore,
+                  fetchMore,
+                  handleSearch,
+                  handleClear,
+                }) => (
+                  <TabPanel
+                    key={value}
+                    value={value}
+                    style={{
+                      overflow: "auto",
+                      maxHeight: `calc(100% - 15px)`,
+                      paddingLeft: 5,
+                      paddingRight: 5,
+                    }}
+                    id={`ListScroll${value}`}
+                  >
+                    <Grid
+                      item
+                      padding={1}
+                      md={12}
+                      sm={12}
+                      width={"100%"}
+                      sx={{
+                        position: "sticky",
+                        top: "0",
+                        backgroundColor: "#F5F6FA",
+                      }}
+                    >
+                      <SearchInputField
+                        onChange={(e) => handleSearch(e.target.value)}
+                        value={query}
+                        onClickClear={handleClear}
+                      />
+                    </Grid>
+                    <InfiniteScroll
+                      style={{ textAlign: "center", justifyContent: "center" }}
+                      dataLength={data.length}
+                      hasMore={hasMore}
+                      next={fetchMore}
+                      loader={
+                        <BeatLoader
+                          color={
+                            theme.palette.mode === "light" ? "black" : "white"
+                          }
+                        />
+                      }
+                      scrollableTarget={`ListScroll${value}`}
+                      endMessage={<Typography>No More Records</Typography>}
+                    >
+                      {data.map((item, i) => (
+                        <CardComponent
+                          key={i}
+                          title={item.CardName}
+                          subtitle={item.DocNum}
+                          description={item.PhoneNumber1}
+                          searchResult={query}
+                          onClick={() => SetoldData(item.DocEntry)}
+                        />
+                      ))}
+                    </InfiniteScroll>
+                  </TabPanel>
+                ),
+              )}
             </TabContext>
           </Box>
         </Grid>
       </Grid>
     </>
   );
+
   return (
     <>
       <Loader open={loading} />
@@ -1329,8 +1213,6 @@ export default function CashInvoice() {
         component={"form"}
         onSubmit={handleSubmit(onSubmit)}
       >
-        {/* Sidebar for larger screens */}
-
         <Grid
           container
           item
@@ -1351,8 +1233,6 @@ export default function CashInvoice() {
           {sidebarContent}
         </Grid>
 
-        {/* User Creation Form Grid */}
-
         <Grid
           container
           item
@@ -1361,11 +1241,8 @@ export default function CashInvoice() {
           sm={12}
           md={12}
           lg={9}
-          // component="form"
           position="relative"
         >
-          {/* Hamburger Menu for smaller screens */}
-
           <IconButton
             edge="start"
             color="inherit"
@@ -1374,10 +1251,8 @@ export default function CashInvoice() {
             sx={{
               display: {
                 lg: "none",
-              }, // Show only on smaller screens
-
+              },
               position: "absolute",
-
               left: "10px",
             }}
           >
@@ -1454,7 +1329,6 @@ export default function CashInvoice() {
                               label="JOB CARD/SO NO"
                               onClick={() => {
                                 OpenDailog();
-                                getListForCreate();
                               }}
                               readOnly={true}
                               disabled={!!DocEntry}
@@ -1464,24 +1338,20 @@ export default function CashInvoice() {
                           )}
                         />
                         <SearchModel
-                          open={isDialogOpen}
-                          onClose={ModelClose}
-                          onCancel={ModelClose}
+                          open={searchmodelOpen}
+                          onClose={SearchModelClose}
+                          onCancel={SearchModelClose}
                           title="Select Job Card / SO NO"
-                          onChange={onHandleSearchGetListForCreate}
-                          value={searchTextGetListForCreate}
-                          onClickClear={triggerClearSearchTwice}
+                          onChange={(e) => handleGetListSearch(e.target.value)}
+                          value={getListquery}
+                          onClickClear={handleGetListClear}
                           cardData={
                             <>
                               <InfiniteScroll
                                 style={{ textAlign: "center" }}
-                                dataLength={
-                                  getListData.length === 0
-                                    ? getListSearchData.length
-                                    : getListData.length
-                                }
-                                next={fetchMoreGetListForCreate}
-                                hasMore={hasMoreGetListForCreate}
+                                dataLength={getListData.length}
+                                next={fetchMoreGetListData}
+                                hasMore={hasMoreGetList}
                                 loader={
                                   <BeatLoader
                                     color={
@@ -1498,10 +1368,7 @@ export default function CashInvoice() {
                                   </Typography>
                                 }
                               >
-                                {(getListSearchData.length === 0
-                                  ? getListData
-                                  : getListSearchData
-                                ).map((item, index) => (
+                                {getListData.map((item, index) => (
                                   <CardComponent
                                     key={index}
                                     title={item.Job_SO_DocEntry}
@@ -1730,6 +1597,8 @@ export default function CashInvoice() {
                       px: 2,
                       overflow: "auto",
                       width: "100%",
+                      maxHeight: 400,
+                      minHeight: 150,
                     }}
                   >
                     <DataGrid
@@ -1743,10 +1612,10 @@ export default function CashInvoice() {
                       rowHeight={40}
                       hideFooter
                       sx={{
-                        height: 250,
                         width: "100%",
                         ...gridSx,
                       }}
+                      autoHeight="false"
                       editMode={false}
                     />
                   </Grid>
@@ -2403,7 +2272,7 @@ export default function CashInvoice() {
 
               <Grid item>
                 <PrintMenu
-                  disabled={!watch("DocEntry")}
+                  disabled={!watch("DocEntry") || processinv === true}
                   type={"IN"}
                   DocEntry={watch("DocEntry")}
                   PrintData={PrintData}

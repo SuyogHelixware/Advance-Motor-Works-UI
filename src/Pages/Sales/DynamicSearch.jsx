@@ -170,30 +170,26 @@ export default function DynamicSearch() {
     },
   ];
 
-  const getAllBPFormData = async (page = 0, searchQuery = "") => {
+  const getAllSupplierData = async () => {
     try {
       setModalLoading(true);
 
-      const res = await apiClient.get(
-        `/BPV2?CardType=S&GroupCode=0&Status=1&Page=0&Limit=200`,
-      );
-
+      const res = await apiClient.get(`/DynamicSearch/Supplier`);
       const data = res?.data;
 
       if (!data?.success || !Array.isArray(data.values)) {
         throw new Error(data?.message || "Invalid Supplier response");
       }
 
-      const supplierLists = data.values.filter(
-        (item) => String(item?.Status) === "1",
-      );
+      const supplierLists = data.values.map((item) => ({
+        ...item,
+        CardName: item.CardName.trim(),
+      }));
 
       setSuppliers(supplierLists);
 
       if (supplierLists.length > 0) {
-        const defaultDocEntry = supplierLists[0].CardName;
-        setValue("CardName", defaultDocEntry);
-        setValue("SAPDocNum", supplierLists[0].SAPDocNum);
+        setValue("CardName", supplierLists[0].DocEntry);
       }
     } catch (error) {
       console.error("Error fetching Supplier:", error);
@@ -201,11 +197,8 @@ export default function DynamicSearch() {
       Swal.fire({
         icon: "error",
         title: "Error!",
-        text:
-          error.response?.data?.message ||
-          error.message ||
-          "Failed to fetch Supplier data.",
-        confirmButtonColor: "#d33",
+        text: "Failed to fetch Supplier data.",
+        showConfirmButton: true,
       });
     } finally {
       setModalLoading(false);
@@ -392,6 +385,7 @@ export default function DynamicSearch() {
     setOpenSO([]);
     setImages([]);
     reset(initial);
+    fetchFormData(initial);
   };
 
   const fetchFormData = async (payload = {}) => {
@@ -399,7 +393,7 @@ export default function DynamicSearch() {
 
     try {
       const body = {
-        Supplier: payload.SAPDocNum || "",
+        Supplier: payload.CardCode || "",
         ItemName: payload.ItemName || "",
         ItemCode: payload.ItemCode || "",
         IsActive: payload.IsActive === true ? 0 : 1,
@@ -423,7 +417,7 @@ export default function DynamicSearch() {
   };
 
   useEffect(() => {
-    getAllBPFormData();
+    getAllSupplierData();
     fetchFormData(initial);
   }, []);
 
@@ -492,15 +486,11 @@ export default function DynamicSearch() {
         width: 70,
         align: "left",
       },
-      { header: "D-FTS", field: "D_FTS", width: 10, align: "right" },
-      { header: "INTRANS", field: "UAE_TO_KWT", width: 10, align: "right" },
-      { header: "OH-KWT", field: "OH_KWT", width: 10, align: "right" },
-      { header: "RSVD-KWT", field: "RSVD_KWT", width: 10, align: "right" },
-      { header: "FTS-KWT", field: "FTS_KWT", width: 10, align: "right" },
+      { header: "ON HAND", field: "OH_KWT", width: 10, align: "right" },
+      { header: "RESERVED", field: "RSVD_KWT", width: 10, align: "right" },
+      { header: "FREE TO SALE", field: "FTS_KWT", width: 10, align: "right" },
       { header: "PRICE", field: "Price", width: 10, align: "right" },
-      { header: "FITING", field: "FittingCharge", width: 10, align: "right" },
-      { header: "GIT", field: "InTransit", width: 10, align: "right" },
-      { header: "ORDRD", field: "OrderQty", width: 10, align: "right" },
+      { header: "ORDERED", field: "OrderQty", width: 10, align: "right" },
     ];
 
     const workbook = new ExcelJS.Workbook();
@@ -637,21 +627,20 @@ export default function DynamicSearch() {
                                 label="SUPPLIER"
                                 {...field}
                                 data={Suppliers.map((item) => ({
-                                  key: item.DocEntry,
-                                  value: item.CardName,
+                                  key: item.CardName,
+                                  value: item.CardName.trim(),
                                 }))}
                                 onChange={(e) => {
-                                  field.onChange(e);
+                                  const value = e.target.value;
+                                  field.onChange(value);
 
                                   const selectedSupplier = Suppliers.find(
-                                    (item) =>
-                                      String(item.DocEntry) ===
-                                      String(e.target.value),
+                                    (item) => item.CardName.trim() === value,
                                   );
 
                                   setValue(
-                                    "SAPDocNum",
-                                    selectedSupplier?.SAPDocNum || "",
+                                    "CardCode",
+                                    selectedSupplier?.CardCode || "",
                                   );
                                 }}
                                 sx={{
@@ -953,7 +942,10 @@ export default function DynamicSearch() {
                                             <Tooltip title="GRN DATE">
                                               <TableCell
                                                 className="wrapTableCell"
-                                                style={{ width: "15%" }}
+                                                style={{
+                                                  width: "15%",
+                                                  fontSize: "13px",
+                                                }}
                                               >
                                                 GRN DATE
                                               </TableCell>
@@ -962,7 +954,10 @@ export default function DynamicSearch() {
                                             <Tooltip title="GRN NO">
                                               <TableCell
                                                 className="wrapTableCell"
-                                                style={{ width: "10%" }}
+                                                style={{
+                                                  width: "10%",
+                                                  fontSize: "13px",
+                                                }}
                                               >
                                                 GRN NO
                                               </TableCell>
@@ -971,7 +966,10 @@ export default function DynamicSearch() {
                                             <Tooltip title="SUPPLIER NAME">
                                               <TableCell
                                                 className="wrapTableCell"
-                                                style={{ width: "20%" }}
+                                                style={{
+                                                  width: "20%",
+                                                  fontSize: "13px",
+                                                }}
                                               >
                                                 SUPPLIER NAME
                                               </TableCell>
@@ -982,6 +980,7 @@ export default function DynamicSearch() {
                                                 className="wrapTableCell"
                                                 style={{
                                                   width: "4%",
+                                                  fontSize: "13px",
                                                   textAlign: "start",
                                                 }}
                                               >
@@ -1004,7 +1003,7 @@ export default function DynamicSearch() {
                                                   fontFamily:
                                                     "Roboto,Helvetica,Arial,sans-serif",
                                                   color: "black",
-                                                  fontSize: "11px",
+                                                  fontSize: "13px",
                                                   maxWidth: "20px",
                                                 }}
                                               >
@@ -1018,7 +1017,7 @@ export default function DynamicSearch() {
                                                   fontFamily:
                                                     "Roboto,Helvetica,Arial,sans-serif",
                                                   color: "black",
-                                                  fontSize: "11px",
+                                                  fontSize: "13px",
                                                 }}
                                               >
                                                 {row.DocNum}
@@ -1031,7 +1030,7 @@ export default function DynamicSearch() {
                                                     fontFamily:
                                                       "Roboto,Helvetica,Arial,sans-serif",
                                                     color: "black",
-                                                    fontSize: "11px",
+                                                    fontSize: "13px",
                                                   }}
                                                 >
                                                   {row.CardName}
@@ -1044,7 +1043,7 @@ export default function DynamicSearch() {
                                                   fontFamily:
                                                     "Roboto,Helvetica,Arial,sans-serif",
                                                   color: "black",
-                                                  fontSize: "11px",
+                                                  fontSize: "13px",
                                                   textAlign: "right",
                                                   paddingRight: 30,
                                                 }}
@@ -1098,7 +1097,7 @@ export default function DynamicSearch() {
                                                 className="wrapTableCell"
                                                 style={{
                                                   width: "100px",
-                                                  fontSize: "11px",
+                                                  fontSize: "13px",
                                                 }}
                                               >
                                                 INV DATE
@@ -1109,7 +1108,7 @@ export default function DynamicSearch() {
                                               <TableCell
                                                 className="wrapTableCell"
                                                 style={{
-                                                  fontSize: "11px",
+                                                  fontSize: "13px",
                                                 }}
                                               >
                                                 INV NO
@@ -1120,7 +1119,7 @@ export default function DynamicSearch() {
                                               <TableCell
                                                 className="wrapTableCell"
                                                 style={{
-                                                  fontSize: "11px",
+                                                  fontSize: "13px",
                                                 }}
                                               >
                                                 CUST NAME
@@ -1131,7 +1130,8 @@ export default function DynamicSearch() {
                                               <TableCell
                                                 className="wrapTableCell"
                                                 style={{
-                                                  fontSize: "11px",
+                                                  fontSize: "13px",
+                                                  textAlign: "center",
                                                 }}
                                               >
                                                 QTY
@@ -1142,7 +1142,7 @@ export default function DynamicSearch() {
                                               <TableCell
                                                 className="wrapTableCell"
                                                 style={{
-                                                  fontSize: "11px",
+                                                  fontSize: "13px",
                                                 }}
                                               >
                                                 MOBILE
@@ -1154,7 +1154,7 @@ export default function DynamicSearch() {
                                                 className="wrapTableCell"
                                                 style={{
                                                   textAlign: "right",
-                                                  fontSize: "11px",
+                                                  fontSize: "13px",
                                                 }}
                                               >
                                                 BEFORE DISC
@@ -1166,7 +1166,7 @@ export default function DynamicSearch() {
                                                 className="wrapTableCell"
                                                 style={{
                                                   textAlign: "right",
-                                                  fontSize: "11px",
+                                                  fontSize: "13px",
                                                 }}
                                               >
                                                 DISC(%)
@@ -1178,7 +1178,7 @@ export default function DynamicSearch() {
                                                 className="wrapTableCell"
                                                 style={{
                                                   textAlign: "right",
-                                                  fontSize: "11px",
+                                                  fontSize: "13px",
                                                 }}
                                               >
                                                 AFTER DISC
@@ -1206,7 +1206,7 @@ export default function DynamicSearch() {
                                                     fontFamily:
                                                       "Roboto,Helvetica,Arial,sans-serif",
                                                     color: "black",
-                                                    fontSize: "11px",
+                                                    fontSize: "13px",
                                                   }}
                                                 >
                                                   {dayjs(
@@ -1221,7 +1221,7 @@ export default function DynamicSearch() {
                                                   fontFamily:
                                                     "Roboto,Helvetica,Arial,sans-serif",
                                                   color: "black",
-                                                  fontSize: "11px",
+                                                  fontSize: "13px",
                                                 }}
                                               >
                                                 {row.InvoiceNo}
@@ -1234,7 +1234,7 @@ export default function DynamicSearch() {
                                                     fontFamily:
                                                       "Roboto,Helvetica,Arial,sans-serif",
                                                     color: "black",
-                                                    fontSize: "11px",
+                                                    fontSize: "13px",
                                                   }}
                                                 >
                                                   {row.CardName}
@@ -1247,7 +1247,7 @@ export default function DynamicSearch() {
                                                   fontFamily:
                                                     "Roboto,Helvetica,Arial,sans-serif",
                                                   color: "black",
-                                                  fontSize: "11px",
+                                                  fontSize: "13px",
                                                   textAlign: "center",
                                                 }}
                                               >
@@ -1261,7 +1261,7 @@ export default function DynamicSearch() {
                                                   fontFamily:
                                                     "Roboto,Helvetica,Arial,sans-serif",
                                                   color: "black",
-                                                  fontSize: "11px",
+                                                  fontSize: "13px",
                                                 }}
                                               >
                                                 {row.PhoneNumber1}
@@ -1272,7 +1272,7 @@ export default function DynamicSearch() {
                                                   fontFamily:
                                                     "Roboto,Helvetica,Arial,sans-serif",
                                                   color: "black",
-                                                  fontSize: "11px",
+                                                  fontSize: "13px",
                                                   textAlign: "right",
                                                 }}
                                               >
@@ -1284,7 +1284,7 @@ export default function DynamicSearch() {
                                                   fontFamily:
                                                     "Roboto,Helvetica,Arial,sans-serif",
                                                   color: "black",
-                                                  fontSize: "11px",
+                                                  fontSize: "13px",
                                                   textAlign: "right",
                                                 }}
                                               >
@@ -1298,7 +1298,7 @@ export default function DynamicSearch() {
                                                   fontFamily:
                                                     "Roboto,Helvetica,Arial,sans-serif",
                                                   color: "black",
-                                                  fontSize: "11px",
+                                                  fontSize: "13px",
                                                   textAlign: "right",
                                                 }}
                                               >
@@ -1351,7 +1351,7 @@ export default function DynamicSearch() {
                                             <Tooltip title="SO NO">
                                               <TableCell
                                                 style={{
-                                                  fontSize: "11px",
+                                                  fontSize: "13px",
                                                 }}
                                                 className="wrapTableCell"
                                               >
@@ -1361,7 +1361,7 @@ export default function DynamicSearch() {
                                             <Tooltip title="SO DATE">
                                               <TableCell
                                                 style={{
-                                                  fontSize: "11px",
+                                                  fontSize: "13px",
                                                 }}
                                                 className="wrapTableCell"
                                               >
@@ -1372,7 +1372,7 @@ export default function DynamicSearch() {
                                             <Tooltip title="CUSTOMER CODE">
                                               <TableCell
                                                 style={{
-                                                  fontSize: "11px",
+                                                  fontSize: "13px",
                                                 }}
                                                 className="wrapTableCell"
                                               >
@@ -1383,7 +1383,7 @@ export default function DynamicSearch() {
                                             <Tooltip title="CUSTOMER NAME">
                                               <TableCell
                                                 style={{
-                                                  fontSize: "11px",
+                                                  fontSize: "13px",
                                                 }}
                                                 className="wrapTableCell"
                                               >
@@ -1394,7 +1394,7 @@ export default function DynamicSearch() {
                                             <Tooltip title="MOBILE">
                                               <TableCell
                                                 style={{
-                                                  fontSize: "11px",
+                                                  fontSize: "13px",
                                                 }}
                                                 className="wrapTableCell"
                                               >
@@ -1407,7 +1407,7 @@ export default function DynamicSearch() {
                                                 className="wrapTableCell"
                                                 style={{
                                                   textAlign: "right",
-                                                  fontSize: "11px",
+                                                  fontSize: "13px",
                                                 }}
                                               >
                                                 ORDER QTY
@@ -1419,7 +1419,7 @@ export default function DynamicSearch() {
                                                 className="wrapTableCell"
                                                 style={{
                                                   textAlign: "right",
-                                                  fontSize: "11px",
+                                                  fontSize: "13px",
                                                 }}
                                               >
                                                 VALUE
@@ -1441,7 +1441,7 @@ export default function DynamicSearch() {
                                                   fontFamily:
                                                     "Roboto,Helvetica,Arial,sans-serif",
                                                   color: "black",
-                                                  fontSize: "11px",
+                                                  fontSize: "13px",
                                                 }}
                                               >
                                                 {row.OrderNo}
@@ -1458,7 +1458,7 @@ export default function DynamicSearch() {
                                                     fontFamily:
                                                       "Roboto,Helvetica,Arial,sans-serif",
                                                     color: "black",
-                                                    fontSize: "11px",
+                                                    fontSize: "13px",
                                                   }}
                                                 >
                                                   {dayjs(row.DocDate).format(
@@ -1473,7 +1473,7 @@ export default function DynamicSearch() {
                                                   fontFamily:
                                                     "Roboto,Helvetica,Arial,sans-serif",
                                                   color: "black",
-                                                  fontSize: "11px",
+                                                  fontSize: "13px",
                                                 }}
                                               >
                                                 {row.CardCode}
@@ -1486,7 +1486,7 @@ export default function DynamicSearch() {
                                                     fontFamily:
                                                       "Roboto,Helvetica,Arial,sans-serif",
                                                     color: "black",
-                                                    fontSize: "11px",
+                                                    fontSize: "13px",
                                                   }}
                                                 >
                                                   {row.CardName}
@@ -1499,7 +1499,7 @@ export default function DynamicSearch() {
                                                   fontFamily:
                                                     "Roboto,Helvetica,Arial,sans-serif",
                                                   color: "black",
-                                                  fontSize: "11px",
+                                                  fontSize: "13px",
                                                 }}
                                               >
                                                 {row.PhoneNumber1}
@@ -1510,7 +1510,7 @@ export default function DynamicSearch() {
                                                   fontFamily:
                                                     "Roboto,Helvetica,Arial,sans-serif",
                                                   color: "black",
-                                                  fontSize: "11px",
+                                                  fontSize: "13px",
                                                   textAlign: "right",
                                                 }}
                                               >
@@ -1522,7 +1522,7 @@ export default function DynamicSearch() {
                                                   fontFamily:
                                                     "Roboto,Helvetica,Arial,sans-serif",
                                                   color: "black",
-                                                  fontSize: "11px",
+                                                  fontSize: "13px",
                                                   textAlign: "right",
                                                 }}
                                               >
