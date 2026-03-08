@@ -390,7 +390,7 @@ export default function QuatationSO() {
     const fetchPrintData = async () => {
       try {
         const { data: dataPrint } = await apiClient.get(
-          `/ReportLayout/GetByTransId/22`,
+          `/ReportLayout/GetByTransId/23`,
         );
         // const { data: dataPrint } = await axios.get(
         //   `http://20.203.85.32:8071/api/ReportLayout/GetByTransId/23`,

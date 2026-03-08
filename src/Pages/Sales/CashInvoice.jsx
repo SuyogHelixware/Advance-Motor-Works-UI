@@ -49,7 +49,6 @@ import SearchInputField from "../Components/SearchInputField";
 import SearchModel from "../Components/SearchModel";
 import usePermissions from "../Components/usePermissions";
 import PrintMenu from "../Components/PrintMenu";
-import axios from "axios";
 
 const initialFormData = {
   DocEntry: "",
@@ -2681,7 +2680,9 @@ export default function CashInvoice() {
                 variant="contained"
                 color="success"
                 type="submit"
-                disabled={watch("DueAmount") <= 0}
+                disabled={
+                  !perms.IsAdd || !perms.IsEdit || watch("DueAmount") <= 0
+                }
               >
                 {SaveUpdateName}
               </Button>
