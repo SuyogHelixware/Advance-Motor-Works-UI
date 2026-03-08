@@ -161,7 +161,7 @@ export default function CashInvoice() {
   const [bankData, setBankData] = useState([]);
   const [loading, setLoading] = useState(false);
   const [processinv, setprocessinv] = useState(false);
-
+  const [SaveUpdateName, setSaveUpdateName] = useState("PROCESS INVOICE");
   const columns = [
     {
       field: "ItemCode",
@@ -338,7 +338,7 @@ export default function CashInvoice() {
         });
         return;
       }
-
+      setSaveUpdateName("UPDATE INVOICE");
       if (res.data.success) {
         const transformed = {
           ...data,
@@ -519,7 +519,7 @@ export default function CashInvoice() {
         });
         return;
       }
-
+      setSaveUpdateName("UPDATE INVOICE");
       if (res.data.success) {
         const transformed = {
           ...data,
@@ -659,6 +659,7 @@ export default function CashInvoice() {
   }, []);
 
   const onSelectRequest = async (selectedItem) => {
+    setSaveUpdateName("PROCESS INVOICE");
     try {
       const filledValues = {
         ...selectedItem,
@@ -691,13 +692,307 @@ export default function CashInvoice() {
     lastValidValuesRef.current = { CashPaid: 0, TransferSum: 0, CreditSum: 0 };
   };
 
+  // const onSubmit = async (data) => {
+  //   const UserId = localStorage.getItem("UserId");
+  //   const CreatedBy = localStorage.getItem("UserName");
+
+  //   const obj = {
+  //     UserId: UserId,
+  //     CreatedBy: CreatedBy,
+  //     SOUserId: UserId,
+  //     SOCreatedBy: CreatedBy,
+  //     DocDate: dayjs(),
+  //     OrderNo: data.Job_SO_DocEntry,
+  //     OrderDocEntry: data.OrderDocEntry,
+  //     ApprovalStatus: data.ApprovalStatus,
+  //     DeliveryPartner: "",
+  //     CardCode: data.CardCode,
+  //     CardName: data.CardName,
+  //     Status: "1",
+  //     JobRemarks: data.JobRemarks,
+  //     JobWorkAt: data.JobWorkAt,
+  //     SparesAmount: data.TotalPartsValue,
+  //     DesiredDisc: data.DesiredDisc,
+  //     DesiredDiscAmt: data.DesiredDiscAmt,
+  //     SpecialDisc: data.SpecialDisc,
+  //     SpecialDiscAmt: data.SpecialDiscAmt,
+  //     FittingCharge: String(data.FittingCharge),
+  //     TotalDocAmt: data.TotalDocAmt,
+  //     PaidAmount: data.PaidAmount,
+  //     DueAmount: data.TotalDueAmount,
+  //     SparesNetAmt: String(data.SparesNetAmt),
+  //     PhoneNumber1: data.PhoneNumber1,
+  //     RegistrationNo: data.RegistrationNo,
+  //     VehInwardNo: data.VehInwardNo,
+  //     VehInwardDate: data.VehInwardDate,
+  //     VehInwardTime: data.VehInwardTime,
+  //     Email: data.Email,
+  //     TotalPartsValue: data.TotalPartsValue,
+  //     RoundingAmt: data.RoundingAmt,
+  //     ServiceAndInstallation: data.ServiceAndInstallation,
+  //     Shipping: data.Shipping,
+  //     ShippingAmt: data.ShippingAmt,
+  //     OrderType: data.OrderType,
+  //     OrderSubType: data.OrderSubType,
+  //     AdvanceAmount: data.AdvanceAmount,
+  //     SAPDocNum: "",
+  //     SAPDocEntry: "",
+  //     TaxAmt: String(data.TaxAmt),
+  //     TaxCode: String(data.TaxCode),
+  //     CustomsDutyPer: String(data.CustomsDutyPer),
+  //     CustomsDutyAmt: String(data.CustomsDutyAmt),
+  //     CurrAmt: String(data.CurrAmt),
+  //     CurrencyRate: String(data.CurrencyRate),
+  //     Currency: String(data.Currency),
+  //     oLines: data.oLines.map((invData) => ({
+  //       UserId: UserId,
+  //       CreatedBy: CreatedBy,
+  //       ItemCode: invData.ItemCode,
+  //       Quantity: invData.Quantity,
+  //       Price: invData.Price,
+  //       DesiredDisc: invData.DesiredDisc,
+  //       LineFittingCharge: invData.Fitting,
+  //       LineTotalAmount: invData.Amount,
+  //       ItemName: invData.ItemName,
+  //       Currency: "KWD",
+  //       TaxCode: "",
+  //       TaxPer: "0",
+  //       TaxAmt: "0",
+  //     })),
+  //     oCashPay:
+  //       data.CashPaid > 0
+  //         ? [
+  //             {
+  //               UserId: UserId,
+  //               CreatedBy: CreatedBy,
+  //               CashSum: String(data.CashPaid),
+  //               CashAccount: "1201011",
+  //               TaxDate: dayjs(new Date()).format("YYYY-MMM-DD"),
+  //             },
+  //           ]
+  //         : [],
+  //     oCCPay: (bankData || []).map((creditCard) => ({
+  //       UserId: UserId,
+  //       CreatedBy: CreatedBy,
+  //       CreditCard: String(creditCard.CreditCard),
+  //       CreditAcct: String(creditCard.CashAccount),
+  //       CreditCardNumber: String(creditCard.CreditCardNumber),
+  //       PaymentMethodCode: "",
+  //       VoucherNum: String(creditCard.VoucherNum),
+  //       CreditSum: String(creditCard.CreditSum),
+  //     })),
+  //     BankPay:
+  //       data.TransferSum > 0
+  //         ? [
+  //             {
+  //               UserId: UserId,
+  //               CreatedBy: CreatedBy,
+  //               ModifiedBy: CreatedBy,
+  //               TransferAccount: "1201022",
+  //               TransferAccountName: "Bank NBK 2008134452",
+  //               TransferReference: String(data.TransferReference),
+  //               TransferDate: dayjs(data.TransferDate).format("YYYY-MMM-DD"),
+  //               TransferSum: String(data.TransferSum),
+  //             },
+  //           ]
+  //         : [],
+  //   };
+
+  //   const obj1 = {
+  //     INVDocEntry: getValues("DocEntry"),
+  //     oCashPay:
+  //       data.CashPaid > 0
+  //         ? [
+  //             {
+  //               UserId: UserId,
+  //               CreatedBy: CreatedBy,
+  //               CashSum: String(data.CashPaid),
+  //               CashAccount: "1201011",
+  //               TaxDate: dayjs(new Date()).format("YYYY-MMM-DD"),
+  //             },
+  //           ]
+  //         : [],
+  //     oCCPay: (bankData || []).map((creditCard) => ({
+  //       UserId: UserId,
+  //       CreatedBy: CreatedBy,
+  //       CreditCard: String(creditCard.CreditCard),
+  //       CreditAcct: String(creditCard.CashAccount),
+  //       CreditCardNumber: String(creditCard.CreditCardNumber),
+  //       PaymentMethodCode: "",
+  //       VoucherNum: String(creditCard.VoucherNum),
+  //       CreditSum: String(creditCard.CreditSum),
+  //     })),
+  //     BankPay:
+  //       data.TransferSum > 0
+  //         ? [
+  //             {
+  //               UserId: UserId,
+  //               CreatedBy: CreatedBy,
+  //               ModifiedBy: CreatedBy,
+  //               TransferAccount: "1201022",
+  //               TransferAccountName: "Bank NBK 2008134452",
+  //               TransferReference: String(data.TransferReference),
+  //               TransferDate: dayjs(data.TransferDate).format("YYYY-MMM-DD"),
+  //               TransferSum: String(data.TransferSum),
+  //             },
+  //           ]
+  //         : [],
+  //   };
+
+  //   if (data.TransferSum > 0 && !data.TransferReference) {
+  //     Swal.fire({
+  //       text: "Transfer Reference No is required",
+  //       icon: "warning",
+  //       toast: true,
+  //       showConfirmButton: false,
+  //       timer: 2000,
+  //       timerProgressBar: true,
+  //     });
+  //     return;
+  //   }
+
+  //   const dueAmount = parseFloat(data.DueAmount);
+  //   const paidAmount = parseFloat(data.PaidAmount);
+  //   const approvalStatus = parseInt(data.ApprovalStatus);
+
+  //   if (dueAmount > 0 && paidAmount === 0 && approvalStatus === 1) {
+  //     const result = await Swal.fire({
+  //       title: "Paid Amount is less than Due Amount!",
+  //       text: "Do you want to proceed with a Credit Invoice?",
+  //       icon: "warning",
+  //       showDenyButton: true,
+  //       showCancelButton: true,
+  //       confirmButtonText: "Yes",
+  //       denyButtonText: "No",
+  //     });
+
+  //     if (result.isDenied) {
+  //       await Swal.fire({
+  //         text: "Invoice Details Are Not Saved...",
+  //         icon: "warning",
+  //         toast: true,
+  //         showConfirmButton: false,
+  //         timer: 1000,
+  //       });
+  //       return;
+  //     }
+
+  //     if (result.isDismissed) {
+  //       return;
+  //     }
+  //   } else if (
+  //     dueAmount >= 0 &&
+  //     paidAmount !== dueAmount &&
+  //     approvalStatus === 0
+  //   ) {
+  //     await Swal.fire({
+  //       text: "Paid Amount is less than Due amount",
+  //       icon: "warning",
+  //       toast: true,
+  //       showConfirmButton: false,
+  //       timer: 1000,
+  //     });
+  //     return;
+  //   }
+
+  //   setLoading(true);
+  //   try {
+  //     let res;
+
+  //     if (getValues("DueAmount") > 0 && getValues("ApprovalStatus") === 1) {
+  //       res = await apiClient.post(`/ARInvoice/Payment`, obj1);
+  //     } else {
+  //       res = await apiClient.post(`/ARInvoice`, obj);
+  //     }
+
+  //     if (res?.data?.success) {
+  //       setLoading(false);
+
+  //       Swal.fire({
+  //         toast: true,
+  //         position: "center",
+  //         icon: "success",
+  //         title: "Cash Invoice Added",
+  //         showConfirmButton: false,
+  //         timer: 1500,
+  //       });
+
+  //       ClearFormData();
+  //       getAllOpenList();
+  //       getAllCloseList();
+  //     } else {
+  //       setLoading(false);
+
+  //       Swal.fire({
+  //         title: "Error!",
+  //         text: res?.data?.message,
+  //         icon: "warning",
+  //         confirmButtonText: "Ok",
+  //       });
+  //     }
+  //   } catch (error) {
+  //     // try {
+  //     //   let res;
+  //     //   if (getValues("DueAmount") > 0 && getValues("ApprovalStatus") === 1) {
+  //     //     const res = await apiClient.post(`/ARInvoice`, obj1);
+  //     //   } else {
+  //     //     const res = await apiClient.post(`/ARInvoice`, obj);
+  //     //   }
+  //     //   if (res.data.success) {
+  //     //     setLoading(false);
+  //     //     Swal.fire({
+  //     //       toast: true,
+  //     //       position: "center",
+  //     //       icon: "success",
+  //     //       title: "Cash Invoice Added",
+  //     //       showConfirmButton: false,
+  //     //       timer: 1500,
+  //     //     });
+  //     //     ClearFormData();
+  //     //     getAllOpenList();
+  //     //     getAllCloseList();
+  //     //   } else {
+  //     //     setLoading(false);
+  //     //     Swal.fire({
+  //     //       title: "Error!",
+  //     //       text: res.data.message,
+  //     //       icon: "warning",
+  //     //       confirmButtonText: "Ok",
+  //     //     });
+  //     //   }
+  //     // }
+  //     setLoading(false);
+  //     Swal.fire({
+  //       title: "Error!",
+  //       text: error,
+  //       icon: "warning",
+  //       confirmButtonText: "Ok",
+  //     });
+  //   }
+  // };
+
   const onSubmit = async (data) => {
     const UserId = localStorage.getItem("UserId");
     const CreatedBy = localStorage.getItem("UserName");
 
+    const dueAmount = parseFloat(data.DueAmount || 0);
+    const paidAmount = parseFloat(data.PaidAmount || 0);
+    const approvalStatus = parseInt(data.ApprovalStatus || 0);
+
+    if (data.TransferSum > 0 && !data.TransferReference) {
+      Swal.fire({
+        text: "Transfer Reference No is required",
+        icon: "warning",
+        toast: true,
+        showConfirmButton: false,
+        timer: 2000,
+      });
+      return;
+    }
+
     const obj = {
-      UserId: UserId,
-      CreatedBy: CreatedBy,
+      UserId,
+      CreatedBy,
       SOUserId: UserId,
       SOCreatedBy: CreatedBy,
       DocDate: dayjs(),
@@ -743,9 +1038,10 @@ export default function CashInvoice() {
       CurrAmt: String(data.CurrAmt),
       CurrencyRate: String(data.CurrencyRate),
       Currency: String(data.Currency),
-      oLines: data.oLines.map((invData) => ({
-        UserId: UserId,
-        CreatedBy: CreatedBy,
+
+      oLines: (data.oLines || []).map((invData) => ({
+        UserId,
+        CreatedBy,
         ItemCode: invData.ItemCode,
         Quantity: invData.Quantity,
         Price: invData.Price,
@@ -758,21 +1054,23 @@ export default function CashInvoice() {
         TaxPer: "0",
         TaxAmt: "0",
       })),
+
       oCashPay:
         data.CashPaid > 0
           ? [
               {
-                UserId: UserId,
-                CreatedBy: CreatedBy,
+                UserId,
+                CreatedBy,
                 CashSum: String(data.CashPaid),
                 CashAccount: "1201011",
-                TaxDate: dayjs(new Date()).format("YYYY-MMM-DD"),
+                TaxDate: dayjs().format("YYYY-MMM-DD"),
               },
             ]
           : [],
+
       oCCPay: (bankData || []).map((creditCard) => ({
-        UserId: UserId,
-        CreatedBy: CreatedBy,
+        UserId,
+        CreatedBy,
         CreditCard: String(creditCard.CreditCard),
         CreditAcct: String(creditCard.CashAccount),
         CreditCardNumber: String(creditCard.CreditCardNumber),
@@ -780,12 +1078,13 @@ export default function CashInvoice() {
         VoucherNum: String(creditCard.VoucherNum),
         CreditSum: String(creditCard.CreditSum),
       })),
+
       BankPay:
         data.TransferSum > 0
           ? [
               {
-                UserId: UserId,
-                CreatedBy: CreatedBy,
+                UserId,
+                CreatedBy,
                 ModifiedBy: CreatedBy,
                 TransferAccount: "1201022",
                 TransferAccountName: "Bank NBK 2008134452",
@@ -797,21 +1096,13 @@ export default function CashInvoice() {
           : [],
     };
 
-    if (data.TransferSum > 0 && !data.TransferReference) {
-      Swal.fire({
-        text: "Transfer Reference No is required",
-        icon: "warning",
-        toast: true,
-        showConfirmButton: false,
-        timer: 2000,
-        timerProgressBar: true,
-      });
-      return;
-    }
+    const obj1 = {
+      INVDocEntry: getValues("DocEntry"),
 
-    const dueAmount = parseFloat(data.DueAmount);
-    const paidAmount = parseFloat(data.PaidAmount);
-    const approvalStatus = parseInt(data.ApprovalStatus);
+      oCashPay: obj.oCashPay,
+      oCCPay: obj.oCCPay,
+      BankPay: obj.BankPay,
+    };
 
     if (dueAmount > 0 && paidAmount === 0 && approvalStatus === 1) {
       const result = await Swal.fire({
@@ -825,7 +1116,7 @@ export default function CashInvoice() {
       });
 
       if (result.isDenied) {
-        await Swal.fire({
+        Swal.fire({
           text: "Invoice Details Are Not Saved...",
           icon: "warning",
           toast: true,
@@ -835,15 +1126,11 @@ export default function CashInvoice() {
         return;
       }
 
-      if (result.isDismissed) {
-        return;
-      }
-    } else if (
-      dueAmount >= 0 &&
-      paidAmount !== dueAmount &&
-      approvalStatus === 0
-    ) {
-      await Swal.fire({
+      if (result.isDismissed) return;
+    }
+
+    if (dueAmount >= 0 && paidAmount !== dueAmount && approvalStatus === 0) {
+      Swal.fire({
         text: "Paid Amount is less than Due amount",
         icon: "warning",
         toast: true,
@@ -856,10 +1143,23 @@ export default function CashInvoice() {
     setLoading(true);
 
     try {
-      const res = await apiClient.post(`/ARInvoice`, obj);
+      const endpoint =
+        dueAmount > 0 &&
+        approvalStatus === 1 &&
+        SaveUpdateName === "UPDATE INVOICE"
+          ? `/ARInvoice/Payment`
+          : `/ARInvoice`;
 
-      if (res.data.success) {
-        setLoading(false);
+      const payload =
+        dueAmount > 0 &&
+        approvalStatus === 1 &&
+        SaveUpdateName === "UPDATE INVOICE"
+          ? obj1
+          : obj;
+
+      const res = await apiClient.post(endpoint, payload);
+
+      if (res?.data?.success) {
         Swal.fire({
           toast: true,
           position: "center",
@@ -868,29 +1168,27 @@ export default function CashInvoice() {
           showConfirmButton: false,
           timer: 1500,
         });
+
         ClearFormData();
         getAllOpenList();
         getAllCloseList();
       } else {
-        setLoading(false);
         Swal.fire({
           title: "Error!",
-          text: res.data.message,
+          text: res?.data?.message,
           icon: "warning",
-          confirmButtonText: "Ok",
         });
       }
     } catch (error) {
-      setLoading(false);
       Swal.fire({
         title: "Error!",
-        text: error,
+        text: error?.message || "Something went wrong",
         icon: "warning",
-        confirmButtonText: "Ok",
       });
+    } finally {
+      setLoading(false);
     }
   };
-
   const OpenDailog = () => {
     setisDialogOpen(true);
   };
@@ -1972,37 +2270,35 @@ export default function CashInvoice() {
                     </Grid>
                   </Grid>
 
-                  {Number(getValues("DueAmount")) > 0 &&
-                    getValues("Status") !== "0" &&
-                    getValues("Status") !== "1" && (
-                      <Grid container item>
-                        <Grid item width="100%" mt={3} border="1px solid grey">
-                          <Tabs
-                            value={tabvalue}
-                            onChange={handleTabChange}
-                            aria-label="disabled tabs example"
-                            variant="scrollable"
-                            scrollButtons="auto"
-                          >
-                            <Tab value={0} label="Cash" />
-                            <Tab value={1} label="Credit card" />
-                            <Tab value={2} label="Bank Transfer" />
-                          </Tabs>
-                          <Divider />
-                          {tabvalue === 0 && (
-                            <>
-                              <Grid container padding={2}>
-                                <Grid item sm={5} md={6} lg={4} xs={12}>
-                                  <SmallInputFields
-                                    name="CashPaid"
-                                    control={control}
-                                    label="CASH PAID"
-                                    width={140}
-                                    onChange={PaymentCalc}
-                                    type="Number"
-                                    inputProps={{ min: 0 }}
-                                  />
-                                  {/* <Controller
+                  {Number(getValues("DueAmount")) > 0 && (
+                    <Grid container item>
+                      <Grid item width="100%" mt={3} border="1px solid grey">
+                        <Tabs
+                          value={tabvalue}
+                          onChange={handleTabChange}
+                          aria-label="disabled tabs example"
+                          variant="scrollable"
+                          scrollButtons="auto"
+                        >
+                          <Tab value={0} label="Cash" />
+                          <Tab value={1} label="Credit card" />
+                          <Tab value={2} label="Bank Transfer" />
+                        </Tabs>
+                        <Divider />
+                        {tabvalue === 0 && (
+                          <>
+                            <Grid container padding={2}>
+                              <Grid item sm={5} md={6} lg={4} xs={12}>
+                                <SmallInputFields
+                                  name="CashPaid"
+                                  control={control}
+                                  label="CASH PAID"
+                                  width={140}
+                                  onChange={PaymentCalc}
+                                  type="Number"
+                                  inputProps={{ min: 0 }}
+                                />
+                                {/* <Controller
                                     name="CashPaid"
                                     control={control}
                                     render={({ field }) => (
@@ -2017,97 +2313,90 @@ export default function CashInvoice() {
                                       />
                                     )}
                                   /> */}
-                                </Grid>
-                                <Grid item sm={5} md={6} lg={4} xs={12}>
-                                  <Controller
-                                    name="CashAccount"
-                                    control={control}
-                                    defaultValue={"1201011"}
-                                    render={({ field }) => (
-                                      <InputSearchSelectTextField
-                                        {...field}
-                                        label="ACCOUNT CODE"
-                                        data={[
-                                          { key: "1201011", value: "Cash A/C" },
-                                        ]}
-                                        readOnly={true}
-                                      />
-                                    )}
-                                  />
-                                </Grid>
-                                <Grid item sm={5} md={6} lg={4} xs={12}>
-                                  <Controller
-                                    name="ReceiptDate"
-                                    control={control}
-                                    render={({ field }) => (
-                                      <InputDatePickerField
-                                        label="RECEIPT DATE"
-                                        name={field.name}
-                                        value={dayjs(undefined)}
-                                        readOnly={true}
-                                      />
-                                    )}
-                                  />
-                                </Grid>
                               </Grid>
-                            </>
-                          )}
-                          {tabvalue === 1 && (
-                            <>
-                              <Grid container padding={2}>
-                                <Grid
-                                  container
-                                  item
-                                  lg={6}
-                                  xs={12}
-                                  md={6}
-                                  sm={6}
-                                >
-                                  <RadioButtonsField
+                              <Grid item sm={5} md={6} lg={4} xs={12}>
+                                <Controller
+                                  name="CashAccount"
+                                  control={control}
+                                  defaultValue={"1201011"}
+                                  render={({ field }) => (
+                                    <InputSearchSelectTextField
+                                      {...field}
+                                      label="ACCOUNT CODE"
+                                      data={[
+                                        { key: "1201011", value: "Cash A/C" },
+                                      ]}
+                                      readOnly={true}
+                                    />
+                                  )}
+                                />
+                              </Grid>
+                              <Grid item sm={5} md={6} lg={4} xs={12}>
+                                <Controller
+                                  name="ReceiptDate"
+                                  control={control}
+                                  render={({ field }) => (
+                                    <InputDatePickerField
+                                      label="RECEIPT DATE"
+                                      name={field.name}
+                                      value={dayjs(undefined)}
+                                      readOnly={true}
+                                    />
+                                  )}
+                                />
+                              </Grid>
+                            </Grid>
+                          </>
+                        )}
+                        {tabvalue === 1 && (
+                          <>
+                            <Grid container padding={2}>
+                              <Grid container item lg={6} xs={12} md={6} sm={6}>
+                                <RadioButtonsField
+                                  control={control}
+                                  key={radioKey}
+                                  name="CreditCard"
+                                  data={CreditCardList.map((card) => ({
+                                    value: card.Name,
+                                    label: card.Name,
+                                  }))}
+                                  // value={selectedCard}
+                                />
+
+                                <Grid item sm={12} md={6} lg={6} xs={12}>
+                                  <Controller
+                                    name="CreditCardNumber"
                                     control={control}
-                                    key={radioKey}
-                                    name="CreditCard"
-                                    data={CreditCardList.map((card) => ({
-                                      value: card.Name,
-                                      label: card.Name,
-                                    }))}
-                                    // value={selectedCard}
+                                    render={({ field }) => (
+                                      <InputTextField
+                                        label="CREDIT CARD NO"
+                                        type="Number"
+                                        {...field}
+                                        onChange={(e) => {
+                                          field.onChange(e);
+                                          handleOnChangeCreditValue(e);
+                                          if (e.target.value.length === 4) {
+                                            document
+                                              .querySelector(
+                                                'input[name="CreditSum"]',
+                                              )
+                                              ?.focus();
+                                          }
+                                        }}
+                                      />
+                                    )}
                                   />
+                                </Grid>
 
-                                  <Grid item sm={12} md={6} lg={6} xs={12}>
-                                    <Controller
-                                      name="CreditCardNumber"
-                                      control={control}
-                                      render={({ field }) => (
-                                        <InputTextField
-                                          label="CREDIT CARD NO"
-                                          type="Number"
-                                          {...field}
-                                          onChange={(e) => {
-                                            field.onChange(e);
-                                            handleOnChangeCreditValue(e);
-                                            if (e.target.value.length === 4) {
-                                              document
-                                                .querySelector(
-                                                  'input[name="CreditSum"]',
-                                                )
-                                                ?.focus();
-                                            }
-                                          }}
-                                        />
-                                      )}
-                                    />
-                                  </Grid>
-
-                                  <Grid item sm={12} md={6} lg={6} xs={12}>
-                                    <SmallInputFields
-                                      name="CreditSum"
-                                      control={control}
-                                      label="CREDIT SUM"
-                                      onChange={handleOnChangeCreditValue}
-                                      type="Number"
-                                    />
-                                    {/* <Controller
+                                <Grid item sm={12} md={6} lg={6} xs={12}>
+                                  <SmallInputFields
+                                    name="CreditSum"
+                                    control={control}
+                                    label="CREDIT SUM"
+                                    onChange={handleOnChangeCreditValue}
+                                    type="Number"
+                                  />
+                                  {/* <Controller
                                       name="CreditSum"
                                       control={control}
                                       render={({ field }) => (
@@ -2122,110 +2411,110 @@ export default function CashInvoice() {
                                         />
                                       )}
                                     /> */}
-                                  </Grid>
-
-                                  <Grid item sm={12} md={6} lg={6} xs={12}>
-                                    <Controller
-                                      name="VoucherNum"
-                                      control={control}
-                                      render={({ field }) => (
-                                        <InputTextField
-                                          label="AUTHORIZATION CODE"
-                                          type="text"
-                                          {...field}
-                                          onChange={(e) => {
-                                            field.onChange(e);
-                                            handleOnChangeCreditValue(e);
-                                          }}
-                                        />
-                                      )}
-                                    />
-                                  </Grid>
-
-                                  <Grid item sm={12} md={6} lg={6} xs={12}>
-                                    <Button
-                                      variant="contained"
-                                      color="success"
-                                      style={{
-                                        padding: 5,
-                                        marginLeft: 8,
-                                        marginTop: 5,
-                                        paddingLeft: 30,
-                                        paddingRight: 30,
-                                      }}
-                                      onClick={handleOnCreditCardAdd}
-                                    >
-                                      ADD
-                                    </Button>
-                                  </Grid>
                                 </Grid>
-                                <Grid item lg={6} xs={12} md={6} sm={6}>
-                                  <TableContainer
-                                    component={Paper}
-                                    sx={{ overflow: "auto", height: 200 }}
+
+                                <Grid item sm={12} md={6} lg={6} xs={12}>
+                                  <Controller
+                                    name="VoucherNum"
+                                    control={control}
+                                    render={({ field }) => (
+                                      <InputTextField
+                                        label="AUTHORIZATION CODE"
+                                        type="text"
+                                        {...field}
+                                        onChange={(e) => {
+                                          field.onChange(e);
+                                          handleOnChangeCreditValue(e);
+                                        }}
+                                      />
+                                    )}
+                                  />
+                                </Grid>
+
+                                <Grid item sm={12} md={6} lg={6} xs={12}>
+                                  <Button
+                                    variant="contained"
+                                    color="success"
+                                    style={{
+                                      padding: 5,
+                                      marginLeft: 8,
+                                      marginTop: 5,
+                                      paddingLeft: 30,
+                                      paddingRight: 30,
+                                    }}
+                                    onClick={handleOnCreditCardAdd}
                                   >
-                                    <Table
-                                      stickyHeader
-                                      size="small"
-                                      className="infiniteScroll table-style-scroll"
-                                    >
-                                      <TableHead>
-                                        <TableRow>
-                                          <TableCell>A/C CODE</TableCell>
-                                          <TableCell>CARD NAME</TableCell>
-                                          <TableCell>CARD NO</TableCell>
-                                          <TableCell>AMOUNT</TableCell>
-                                          <TableCell></TableCell>
-                                        </TableRow>
-                                      </TableHead>
-                                      <TableBody>
-                                        {bankData.map((data, index) => (
-                                          <TableRow key={index}>
-                                            <TableCell>
-                                              {data.CashAccount}
-                                            </TableCell>
-                                            <TableCell>
-                                              {data.CreditCard}
-                                            </TableCell>
-                                            <TableCell>
-                                              {data.CreditCardNumber}
-                                            </TableCell>
-                                            <TableCell>
-                                              {data.CreditSum}
-                                            </TableCell>
-                                            <TableCell>
-                                              <IconButton
-                                                onClick={() => {
-                                                  handleRowDelete(index);
-                                                }}
-                                              >
-                                                <RemoveCircleIcon
-                                                  sx={{ color: "red" }}
-                                                />
-                                              </IconButton>
-                                            </TableCell>
-                                          </TableRow>
-                                        ))}
-                                      </TableBody>
-                                    </Table>
-                                  </TableContainer>
+                                    ADD
+                                  </Button>
                                 </Grid>
                               </Grid>
-                            </>
-                          )}
-                          {tabvalue === 2 && (
-                            <>
-                              <Grid container padding={2}>
-                                <Grid sm={12} md={6} lg={3} xs={12}>
-                                  <SmallInputFields
-                                    name="TransferSum"
-                                    control={control}
-                                    label="TRANSFER SUM"
-                                    width={140}
-                                    onChange={PaymentCalc}
-                                    type="Number"
-                                  />
-                                  {/* <Controller
+                              <Grid item lg={6} xs={12} md={6} sm={6}>
+                                <TableContainer
+                                  component={Paper}
+                                  sx={{ overflow: "auto", height: 200 }}
+                                >
+                                  <Table
+                                    stickyHeader
+                                    size="small"
+                                    className="infiniteScroll table-style-scroll"
+                                  >
+                                    <TableHead>
+                                      <TableRow>
+                                        <TableCell>A/C CODE</TableCell>
+                                        <TableCell>CARD NAME</TableCell>
+                                        <TableCell>CARD NO</TableCell>
+                                        <TableCell>AMOUNT</TableCell>
+                                        <TableCell></TableCell>
+                                      </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                      {bankData.map((data, index) => (
+                                        <TableRow key={index}>
+                                          <TableCell>
+                                            {data.CashAccount}
+                                          </TableCell>
+                                          <TableCell>
+                                            {data.CreditCard}
+                                          </TableCell>
+                                          <TableCell>
+                                            {data.CreditCardNumber}
+                                          </TableCell>
+                                          <TableCell>
+                                            {data.CreditSum}
+                                          </TableCell>
+                                          <TableCell>
+                                            <IconButton
+                                              onClick={() => {
+                                                handleRowDelete(index);
+                                              }}
+                                            >
+                                              <RemoveCircleIcon
+                                                sx={{ color: "red" }}
+                                              />
+                                            </IconButton>
+                                          </TableCell>
+                                        </TableRow>
+                                      ))}
+                                    </TableBody>
+                                  </Table>
+                                </TableContainer>
+                              </Grid>
+                            </Grid>
+                          </>
+                        )}
+                        {tabvalue === 2 && (
+                          <>
+                            <Grid container padding={2}>
+                              <Grid sm={12} md={6} lg={3} xs={12}>
+                                <SmallInputFields
+                                  name="TransferSum"
+                                  control={control}
+                                  label="TRANSFER SUM"
+                                  width={140}
+                                  onChange={PaymentCalc}
+                                  type="Number"
+                                />
+                                {/* <Controller
                                     name="TransferSum"
                                     control={control}
                                     render={({ field }) => (
@@ -2240,64 +2529,64 @@ export default function CashInvoice() {
                                       />
                                     )}
                                   /> */}
-                                </Grid>
-                                <Grid sm={12} md={6} lg={3} xs={12}>
-                                  <Controller
-                                    name="TransferReference"
-                                    control={control}
-                                    render={({ field }) => (
-                                      <InputTextField
-                                        label="TRANSFER REF NO"
-                                        type="text"
-                                        {...field}
-                                        onChange={(e) => {
-                                          field.onChange(e);
-                                          handleOnChangeCreditValue(e);
-                                        }}
-                                      />
-                                    )}
-                                  />
-                                </Grid>
-                                <Grid item xs={12} md={6} sm={6} lg={3}>
-                                  <Controller
-                                    name="TransferAccount"
-                                    control={control}
-                                    defaultValue={"1201022"}
-                                    render={({ field }) => (
-                                      <InputSearchSelectTextField
-                                        {...field}
-                                        label="TRANSFER ACCOUNT"
-                                        data={[
-                                          {
-                                            key: "1201022",
-                                            value: "Bank NBK 2008134452",
-                                          },
-                                        ]}
-                                        readOnly={true}
-                                      />
-                                    )}
-                                  />
-                                </Grid>
-                                <Grid item sm={5} md={6} lg={3} xs={12}>
-                                  <Controller
-                                    name="TransferDate"
-                                    control={control}
-                                    render={({ field }) => (
-                                      <InputDatePickerField
-                                        label="TRANSFER DATE"
-                                        name={field.name}
-                                        value={dayjs(undefined)}
-                                        readOnly={true}
-                                      />
-                                    )}
-                                  />
-                                </Grid>
                               </Grid>
-                            </>
-                          )}
-                        </Grid>
+                              <Grid sm={12} md={6} lg={3} xs={12}>
+                                <Controller
+                                  name="TransferReference"
+                                  control={control}
+                                  render={({ field }) => (
+                                    <InputTextField
+                                      label="TRANSFER REF NO"
+                                      type="text"
+                                      {...field}
+                                      onChange={(e) => {
+                                        field.onChange(e);
+                                        handleOnChangeCreditValue(e);
+                                      }}
+                                    />
+                                  )}
+                                />
+                              </Grid>
+                              <Grid item xs={12} md={6} sm={6} lg={3}>
+                                <Controller
+                                  name="TransferAccount"
+                                  control={control}
+                                  defaultValue={"1201022"}
+                                  render={({ field }) => (
+                                    <InputSearchSelectTextField
+                                      {...field}
+                                      label="TRANSFER ACCOUNT"
+                                      data={[
+                                        {
+                                          key: "1201022",
+                                          value: "Bank NBK 2008134452",
+                                        },
+                                      ]}
+                                      readOnly={true}
+                                    />
+                                  )}
+                                />
+                              </Grid>
+                              <Grid item sm={5} md={6} lg={3} xs={12}>
+                                <Controller
+                                  name="TransferDate"
+                                  control={control}
+                                  render={({ field }) => (
+                                    <InputDatePickerField
+                                      label="TRANSFER DATE"
+                                      name={field.name}
+                                      value={dayjs(undefined)}
+                                      readOnly={true}
+                                    />
+                                  )}
+                                />
+                              </Grid>
+                            </Grid>
+                          </>
+                        )}
                       </Grid>
-                    )}
+                    </Grid>
+                  )}
 
                   <Grid container item>
                     <Grid sm={6} md={6} lg={2.3} xs={6} textAlign={"center"}>
@@ -2392,13 +2681,9 @@ export default function CashInvoice() {
                 variant="contained"
                 color="success"
                 type="submit"
-                disabled={
-                  (processinv && !perms.IsAdd) ||
-                  processinv === false ||
-                  watch("Job_SO_DocEntry") === ""
-                }
+                disabled={watch("DueAmount") <= 0}
               >
-                PROCESS INVOICE
+                {SaveUpdateName}
               </Button>
 
               <Grid item>

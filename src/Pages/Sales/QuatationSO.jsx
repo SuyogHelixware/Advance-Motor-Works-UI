@@ -1027,8 +1027,11 @@ export default function QuatationSO() {
 
     const allTotal = grandTotal + fittingTotal;
 
+    const PAmt = getValues("PaidAmount");
+    const PaidAmt = allTotal - PAmt;
+
     setValue("TotalDocAmt", allTotal.toFixed(3));
-    setValue("DueAmount", allTotal.toFixed(3));
+    setValue("DueAmount", PaidAmt.toFixed(3));
     setValue("NetPartsValue", grandTotal.toFixed(3));
     setValue("TotalPartsValue", grandTotal.toFixed(3));
     setValue("ServiceAndInstallation", fittingTotal);
