@@ -459,7 +459,6 @@ export default function GoodsReceipt() {
     dispatchRedux(fetchExchangeRateStore(docDate))
       .unwrap()
       .then((data) => {
-        debugger;
         // if (SaveUpdateName !== "UPDATE"){
         const values = data.values || [];
         const sysCurr = companyData.SysCurrncy;

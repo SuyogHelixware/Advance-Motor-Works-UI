@@ -1103,7 +1103,12 @@ export default function CashInvoice() {
       BankPay: obj.BankPay,
     };
 
-    if (dueAmount > 0 && paidAmount === 0 && approvalStatus === 1) {
+    if (
+      dueAmount > 0 &&
+      paidAmount === 0 &&
+      approvalStatus === 1 &&
+      SaveUpdateName === "PROCESS INVOICE"
+    ) {
       const result = await Swal.fire({
         title: "Paid Amount is less than Due Amount!",
         text: "Do you want to proceed with a Credit Invoice?",
@@ -1131,6 +1136,16 @@ export default function CashInvoice() {
     if (dueAmount >= 0 && paidAmount !== dueAmount && approvalStatus === 0) {
       Swal.fire({
         text: "Paid Amount is less than Due amount",
+        icon: "warning",
+        toast: true,
+        showConfirmButton: false,
+        timer: 1000,
+      });
+      return;
+    }
+    if (paidAmount === 0) {
+      Swal.fire({
+        text: "Total paid amount must be greater than 0",
         icon: "warning",
         toast: true,
         showConfirmButton: false,
@@ -2684,7 +2699,7 @@ export default function CashInvoice() {
                   !perms.IsAdd || !perms.IsEdit || watch("DueAmount") <= 0
                 }
               >
-                {SaveUpdateName}
+                PROCESS INVOICE
               </Button>
 
               <Grid item>

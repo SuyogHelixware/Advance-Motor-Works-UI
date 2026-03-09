@@ -417,7 +417,7 @@ export default function QuatationSO() {
     try {
       const url = searchTerm
         ? `/BPV2?Status=1&CardType=C&Limit=${pageNum}&SearchText=${searchTerm}`
-        : `/BPV2/V2/Pages/1/${pageNum}/20`;
+        : `/BPV2?Status=1&CardType=C&Limit=20`;
 
       const response = await apiClient.get(url);
 
