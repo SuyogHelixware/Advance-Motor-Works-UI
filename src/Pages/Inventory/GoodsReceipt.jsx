@@ -4,7 +4,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import MenuIcon from "@mui/icons-material/Menu";
 import ViewListIcon from "@mui/icons-material/ViewList";
-
+import DescriptionIcon from "@mui/icons-material/Description";
 import {
   Box,
   Button,
@@ -52,11 +52,14 @@ import CardComponent from "../Components/CardComponent.jsx";
 import DataGridModal from "../Components/DataGridModal.jsx";
 
 import { useGridApiRef } from "@mui/x-data-grid";
+import { useDispatch, useSelector } from "react-redux";
+import { useNavigate } from "react-router-dom";
+import { fetchExchangeRateStore } from "../../slices/exchangeRateSlice.js";
 import { dataGridSx } from "../../Styles/dataGridStyles.js";
 import BatchIntake from "../Components/Batch.jsx";
 import BinLocation from "../Components/BinLocation.jsx";
 import CalCulation from "../Components/CalCulation.jsx";
-import ExchangeRate from "../Components/ExchangeRate.jsx";
+import ExchangeLineRateCopyform from "../Components/ExchangeLineRateCopyform.jsx";
 import { fetchExchangeRateGeneric } from "../Components/fetchExchangeRateGeneric.js";
 import { fetchPriceListData } from "../Components/fetchPriceListData.js";
 import {
@@ -73,7 +76,6 @@ import { recalcHeaderTotals } from "../Components/recalcHeaderTotals.js";
 import { recalculateLines } from "../Components/recalculateLines.js";
 import SearchModel from "../Components/SearchModel.jsx";
 import SerialIntake from "../Components/SerialIntake.jsx";
-import { useSysRateCurrency } from "../Components/SyRateCurrency.jsx";
 import { TimeDelay } from "../Components/TimeDelay";
 import usePermissions from "../Components/usePermissions.jsx";
 import { useRecalculateLinesOnChange } from "../Components/useRecalculateLinesOnChange.js";
@@ -82,6 +84,8 @@ import { TwoFormatter, ValueFormatter } from "../Components/ValueFormatter.jsx";
 import { Base64FileinNewTab } from "../FileUpload/EditFilePreview";
 import { openFileinNewTab } from "../FileUpload/filePreview";
 import { useFileUpload } from "../FileUpload/useFileUpload";
+import useReportLayouts from "../../Hooks/useReportLayouts.js";
+import ReportLayoutModal from "../ReportLayout/ReportLayoutModal.jsx";
 const modelColumns = [
   {
     id: 1,
@@ -126,10 +130,10 @@ const modelColumns = [
   },
 ];
 const initialState = {
-  exchaneRateOpen: false,
   DocRateOpen: false,
   BinLocationOpen: false,
-  modal2: false,
+  exchaneRateLineCpyform: false,
+  ReportLayoutOpen: false,
   modal3: false,
 };
 function reducer(state, action) {
@@ -173,7 +177,6 @@ export default function GoodsReceipt() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [tabvalue, settabvalue] = useState(0);
-
   const [SaveUpdateName, setSaveUpdateName] = useState("SAVE");
   const [open, setOpen] = useState(false);
   const [selectedRows, setSelectedRows] = useState([]);
@@ -181,7 +184,6 @@ export default function GoodsReceipt() {
   const [BinlocListData, setBinLocData] = useState([]);
   const [httpRequestToken, setCancelToken] = useState();
   const [clearCache, setClearCache] = useState(false);
-
   let [ok, setok] = useState("OK");
   const [itemList, setItemList] = useState([]);
   const [itemCache, setItemCache] = useState({});
@@ -198,7 +200,6 @@ export default function GoodsReceipt() {
   const [OpenListSearching, setOpenListSearching] = useState(false);
   const timeoutRef = useRef(null);
   const [selectedData, setSelectedData] = useState([]);
-
   const toggleDrawer = () => setDrawerOpen(!drawerOpen);
   const handleTabChange = (event, newValue) => settabvalue(newValue);
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
@@ -208,9 +209,14 @@ export default function GoodsReceipt() {
   const handleCloseSerial = () => setopenserial(false);
   const handleCloseBatch = () => setopenBatch(false);
   const apiRef = useGridApiRef();
-
+  const [AllDataCopyRateLine, setAllDataCopyRateLine] = useState([]);
+  const dispatchRedux = useDispatch();
+  const navigate = useNavigate();
   const [selectedItem, setSelectedItem] = useState(null);
-  //=========================================get List State End================================================================
+  const { data, loading } = useSelector((state) => state.exchange);
+  const handleClickOpen = () => {
+    setOpen(true);
+  };
   const {
     fileData,
     setFilesFromApi,
@@ -218,6 +224,15 @@ export default function GoodsReceipt() {
     handleRemove,
     clearFiles,
   } = useFileUpload();
+  const { apiRowsReport, Reportloading, fetchReportLayouts } =
+    useReportLayouts("IGN1");
+
+  useEffect(() => {
+    if (state.ReportLayoutOpen) {
+      fetchReportLayouts();
+    }
+  }, [state.ReportLayoutOpen, fetchReportLayouts]);
+
   const initial = {
     DocEntry: "",
     UserId: "",
@@ -266,7 +281,7 @@ export default function GoodsReceipt() {
     DocTotal: "",
     InvntSttus: "",
     DocCur: "",
-    DocRate: "",
+    DocRate: "1",
     DocTotalFC: "",
     SysRate: "",
     CurSource: "",
@@ -293,8 +308,9 @@ export default function GoodsReceipt() {
   const { isDirty } = useFormState({ control });
   const allFormData = getValues();
   const GroupNum = watch("GroupNum");
-  const docDate = watch("DocDate");
-  const DocRateLine = watch("DocRateLine");
+  const rawDate = watch("DocDate");
+  const docDate = rawDate ? dayjs(rawDate).format("YYYY-MM-DD") : null;
+  const SysRate = watch("SysRate");
 
   useEffect(() => {
     const fetchPrintData = async () => {
@@ -438,17 +454,95 @@ export default function GoodsReceipt() {
     setValue,
     dependencies: [getValues("DocDate"), getValues("DocRateLine")],
   });
-  const onSubmitCurrency = (data) => {
-    setValue("DocRateLine", data ?? 0);
-    setValue("DocEntryCur", data?.DocEntryCur ?? 0);
-    const updateedOline = recalculateLines({
-      oLines: getValues("oLines"),
-      DocRateLine: data ?? 0,
-      SysRate: SysRateApi || 1,
+
+  useEffect(() => {
+    dispatchRedux(fetchExchangeRateStore(docDate))
+      .unwrap()
+      .then((data) => {
+        debugger;
+        // if (SaveUpdateName !== "UPDATE"){
+        const values = data.values || [];
+        const sysCurr = companyData.SysCurrncy;
+        const mainCurr = companyData.MainCurncy;
+        let missingRates = [];
+        if (!values.length) {
+          Swal.fire({
+            title: "Exchange Rates Missing",
+            text: "Please define exchange rates before continuing.",
+            icon: "warning",
+          }).then(() => {
+            navigate("/dashboard/Finance/ExchangeRatesAndIndexes", {
+              replace: true,
+            });
+          });
+          return;
+        }
+
+        const sysRateObj = values.find((x) => x.Currency === sysCurr);
+        const sysRate =
+          sysCurr === mainCurr ? 1 : parseFloat(sysRateObj?.Rate || 0);
+        const DateWiseSysRate = sysRate;
+        setValue("SysRate", DateWiseSysRate);
+        if (DateWiseSysRate <= 0) {
+          dispatch({ type: "OPEN", modal: "exchaneRateLineCpyform" });
+          missingRates.push({
+            Type: "SystemRate",
+            Currency: sysCurr,
+            Rate: sysRate,
+            DocEntry: sysRateObj?.DocEntry ?? "0",
+            RateDate: docDate,
+          });
+        }
+        setAllDataCopyRateLine(missingRates);
+        if (!values.length) {
+          navigate("/dashboard/Finance/ExchangeRatesAndIndexes", {
+            replace: true,
+          });
+        }
+        // }
+      })
+      .catch(() => {
+        Swal.fire({
+          title: "Error",
+          text: "Please define the exchange rates.",
+          icon: "error",
+        }).then(() => {
+          navigate("/dashboard/Finance/ExchangeRatesAndIndexes", {
+            replace: true,
+          });
+        });
+      });
+  }, [open, docDate, dispatch]);
+
+  const findRate = (data, curr) =>
+    companyData?.MainCurncy === curr
+      ? 1
+      : parseFloat(data?.find((ex) => ex.Currency === curr)?.Rate) || 0;
+
+  const onSubmitLineCurrency = (data) => {
+    dispatchRedux(fetchExchangeRateStore(docDate));
+    const allFormData = getValues();
+
+    // ===============================
+    // 🔹 SYSTEM RATE
+    // ===============================
+    const SysRateObj = data.find(
+      (ex) => ex.Currency === companyData.SysCurrncy,
+    );
+    const SystemRate =
+      companyData.SysCurrncy === companyData.MainCurncy
+        ? 1
+        : parseFloat(SysRateObj?.Rate) || 0;
+    const UpdatedLines = (allFormData.oLines || []).map((item) => ({
+      ...item,
+      Rate: findRate(data, item.Currency),
+    }));
+    recalculateLines({
+      oLines: UpdatedLines,
+      SysRate: SystemRate,
       setValue,
     });
-    console.log("updateedOline", updateedOline);
-    dispatch({ type: "CLOSE", modal: "DocRateOpen" });
+    setValue("SysRate", SystemRate);
   };
   //==================================================================================================
   // const handleChange = (e, row) => {
@@ -522,6 +616,7 @@ export default function GoodsReceipt() {
   //   });
   //   reset({ ...getValues(), oLines: updatedLines });
   // };
+
   const handleCellKeyDown = (params, event) => {
     const api = apiRef.current;
     if (!api) return;
@@ -634,12 +729,12 @@ export default function GoodsReceipt() {
       }
     }
     if (newRow.PriceBefDi !== undefined && newRow._priceEdited) {
+      updatedData.Rate = "1";
+      updatedData.Currency = companyData.MainCurncy;
       updatedData.PriceBefDi = Math.max(newRow.PriceBefDi, 0);
-      // Clean up the flag
       delete updatedData._priceEdited;
     }
-    updatedData.Rate =
-      companyData.MainCurncy === updatedData.Currency ? "1" : updatedData.Rate;
+
     const CalcLines = CalCulation(
       updatedData.Quantity,
       updatedData.PriceBefDi,
@@ -651,30 +746,33 @@ export default function GoodsReceipt() {
     updatedData.InvQty = invQty;
     updatedData.OpenInvQty = invQty;
     updatedData.LineTotal = CalcLines.LineTotal;
-    updatedData.TotalSumSy = updatedData.LineTotal / SysRateApi;
+    updatedData.TotalSumSy = updatedData.LineTotal / SysRate;
     updatedData.StockSum = CalcLines.LineTotal;
-    updatedData.StockSumSc = CalcLines.LineTotal / SysRateApi;
+    updatedData.StockSumSc = CalcLines.LineTotal / SysRate;
     const updatedLines = getValues("oLines").map((d, i) =>
       i === oldRow.id ? updatedData : d,
     );
     reset({ ...allFormData, oLines: updatedLines });
-
     return updatedData;
   };
+
   if (SaveUpdateName === "SAVE") {
     recalcHeaderTotals(getValues("oLines"), setValue);
   }
 
   const handleDeleteRow = (id) => {
-    const updatedRows = allFormData.oLines.filter((_, index) => index !== id);
-    const updatedData = {
-      ...allFormData,
-      oLines: updatedRows,
-    };
-    reset(updatedData);
+    try {
+      const updatedRows = allFormData.oLines.filter((_, index) => index !== id);
+      const updatedData = {
+        ...allFormData,
+        oLines: updatedRows,
+      };
+      reset(updatedData);
+    } catch (error) {
+      console.log(error);
+    }
   };
 
-  console.log("dfdsall data", allFormData.oLines);
   // const columns = [
   //   { field: "ItemCode", headerName: "ITEM NO", width: 150 },
   //   {
@@ -1074,6 +1172,7 @@ export default function GoodsReceipt() {
   //     ),
   //   },
   // ];
+
   const columns = [
     {
       id: 1,
@@ -1515,7 +1614,6 @@ export default function GoodsReceipt() {
           disabled = true;
         }
 
-        /* ---------- Click handler ---------- */
         const handleClick = () => {
           if (!UoMCode || !WHSCode) {
             Swal.fire({
@@ -1858,12 +1956,12 @@ export default function GoodsReceipt() {
       WeightUnit: data.WeightUnit || "0",
       InvntSttus: data.InvntSttus || "0",
       DocCur: data.DocCur || "0",
-      DocRate: data.DocRate || "0",
+      DocRate: data.DocRate || "1",
       DocTotal: String(data.DocTotal || ""),
       DocTotalFC: data.DocTotalFC || "0",
-      SysRate: String(SysRateApi || "0"),
+      SysRate: String(SysRate || "0"),
       CurSource: data.CurSource || "L",
-      DocTotalSy: String(data.DocTotal / SysRateApi || "0"),
+      DocTotalSy: String(data.DocTotal / SysRate || "0"),
       Volume: data.Volume || "0",
       VolUnit: data.VolUnit || "0",
       Weight: data.Weight || "0",
@@ -1888,7 +1986,7 @@ export default function GoodsReceipt() {
           TotalSumSy: String(item.TotalSumSy),
           AcctCode: String(item.AcctCode),
           Price: String(item.PriceBefDi),
-          Rate: String(DocRateLine),
+          Rate: String(item.Rate),
           Currency: data.DocCur,
           StockSum: String(item.StockSum || "0"),
           StockSumSc: String(item.StockSumSc || "0"),
@@ -2108,7 +2206,6 @@ export default function GoodsReceipt() {
     }
   };
 
-  const handleClickOpen = () => setOpen(true);
   const closeModel = () => {
     setOpen(false);
     setSearchText("");
@@ -2204,7 +2301,6 @@ export default function GoodsReceipt() {
   //   reset({ ...formValues, oLines: updatedLines });
   // };
 
-  const { SysRateApi, ExchangeRateModal } = useSysRateCurrency(docDate);
   // const refreshSysRate = useCallback(() => {
   //   if (SysRateApi > 0 && SysRateApi !== undefined && SysRateApi !== null) {
   //     setValue("SysRate", SysRateApi);
@@ -2227,7 +2323,6 @@ export default function GoodsReceipt() {
         const PriceBefDi = parseFloat(PriceTerm?.Price ?? "0");
         const Currency = PriceTerm?.Currency ?? "0";
         setValue("CurrencyLine", Currency);
-        // const sysRate = parseFloat(SysRate) || 0;
         return {
           ItemCode: data.ItemCode,
           ItemName: data.ItemName,
@@ -2238,7 +2333,7 @@ export default function GoodsReceipt() {
           Currency,
           Bin: 1,
           LineTotal: PriceBefDi,
-          TotalSumSy: SysRateApi > 0 ? PriceBefDi / SysRateApi : 0,
+          TotalSumSy: SysRate > 0 ? PriceBefDi / SysRate : 0,
           TotalFrgn: "0",
           CodeBars: data.CodeBars,
           WHSCode: data.DefaultWhs,
@@ -2267,12 +2362,32 @@ export default function GoodsReceipt() {
           INUoMEntry: data.INUoMEntry,
         };
       });
+    // const locationWise = selectedRows.map((item) => {
+    //   const matchingLoc = warehouseData.find(
+    //     (row) => row.WHSCode === item.WHSCode,
+    //   );
+    //   return {
+    //     ...item,
+    //     LocCode: matchingLoc?.Location ?? "",
+    //     LocationName: matchingLoc?.LocationName ?? "",
+    //     BinCode: matchingLoc?.BinCode ?? "",
+    //     DftBinAbs: matchingLoc?.DftBinAbs,
+    //     BinActivat: matchingLoc?.BinActivat,
+    //   };
+    // });
+    // setSelectedRows((prev) => {
+    //   const existingItemCodes = new Set(prev.map((p) => p.ItemCode));
+    //   const newUniqueRows = locationWise.filter(
+    //     (row) => !existingItemCodes.has(row.ItemCode),
+    //   );
+    //   return [...prev, ...newUniqueRows];
+    // });
 
-    // Step 2: Enrich with location-wise data
     const locationWise = selectedRows.map((item) => {
       const matchingLoc = warehouseData.find(
         (row) => row.WHSCode === item.WHSCode,
       );
+
       return {
         ...item,
         LocCode: matchingLoc?.Location ?? "",
@@ -2283,55 +2398,27 @@ export default function GoodsReceipt() {
       };
     });
 
-    // Step 3: Prevent duplicates when merging
-    setSelectedRows((prev) => {
-      const existingItemCodes = new Set(prev.map((p) => p.ItemCode));
-      const newUniqueRows = locationWise.filter(
-        (row) => !existingItemCodes.has(row.ItemCode),
-      );
-      return [...prev, ...newUniqueRows];
-    });
+    // 🔥 Replace rows based on current checked rows
+    setSelectedRows(locationWise);
   };
-  // const onSubmit = async () => {
-  //   try {
-  //     const currentData = getValues();
-  //     const updatedLines = [
-  //       ...(currentData.oLines || []),
-  //       ...(selectedRows || []),
-  //     ];
-  //     const Currency = updatedLines?.[0]?.Currency;
-  //     if (!Currency) {
-  //       console.warn("No Currency found in line items.");
-  //       return;
-  //     }
-  //     handleFetchRate();
-  //     console.log(DocRateLine);
-  //     if (!DocRateLine) {
-  //       console.warn("Invalid DocRateLine or DocRate.");
-  //       return;
-  //     }
-  //     const updateedOline = recalculateLines({
-  //       oLines: updatedLines,
-  //       DocRateLine: DocRateLine ?? 0,
-  //       SysRate: SysRateApi,
-  //       setValue,
-  //     });
-  //     console.log("updateedOline", updateedOline);
-  //     console.log("oLines", updateedOline);
-  //     dispatch({ type: "CLOSE", modal: "DocRateOpen" });
-  //   } catch (error) {
-  //     console.log(error);
-  //   }
-  //   closeModel();
-  // };
+
   const onSubmit = async () => {
-    // refreshSysRate();
     try {
       const currentData = getValues();
       const updatedLines = [
         ...(currentData.oLines || []),
         ...(selectedRows || []),
       ];
+
+      if (selectedRows.length === 0) {
+        Swal.fire({
+          title: "ITEM",
+          text: `Please Select Items.`,
+          icon: "warning",
+          confirmButtonText: "Ok",
+        });
+        return;
+      }
       const Currency = updatedLines?.[0]?.Currency;
       if (!Currency || Currency === "0") {
         console.warn("No Currency found in line items.");
@@ -2343,24 +2430,68 @@ export default function GoodsReceipt() {
         });
         return;
       }
+      const records = data[docDate] || [];
+      let recordRateWise = records.find((item) => item.Currency === Currency);
+      const sysCurr = companyData.SysCurrncy;
+      const mainCurr = companyData.MainCurncy;
+      let missingRates = [];
+      const sysRateObj = records.find((x) => x.Currency === sysCurr);
+      const sysRate =
+        sysCurr === mainCurr ? 1 : parseFloat(sysRateObj?.Rate || 0);
+      setValue("SysRate", sysRate);
+      if (sysRate <= 0) {
+        missingRates.push({
+          Type: "SystemRate",
+          Currency: sysCurr,
+          Rate: sysRate,
+          DocEntry: sysRateObj?.DocEntry ?? "0",
+          RateDate: docDate,
+        });
+      }
 
-      console.log(DocRateLine);
-      // if (!DocRateLine) {
-      //   console.warn("Invalid DocRateLine or DocRate.");
-      //   return;
-      // }
-      const updateedOline = recalculateLines({
-        oLines: updatedLines,
-        // DocRateLine: DocRateLine ?? 0,
-        DocRateLine:
-          Currency === companyData.MainCurncy ? "1" : (DocRateLine ?? 0),
-
-        SysRate: getValues("SysRate") || 1,
+      let DocRateLine =
+        companyData.MainCurncy === Currency
+          ? "1"
+          : (recordRateWise?.Rate ?? "0");
+      if (DocRateLine <= 0) {
+        missingRates.push({
+          Type: "LineRate",
+          DocEntry: recordRateWise?.DocEntry ?? "0",
+          RateDate: docDate,
+          Currency: Currency,
+          Rate: DocRateLine,
+        });
+        setTimeout(() => {
+          dispatch({ type: "OPEN", modal: "exchaneRateLineCpyform" });
+        }, 0);
+        Swal.fire({
+          title: "Rate Not Found",
+          text: "No exchange rate available for the selected currency/date.",
+          icon: "warning",
+          confirmButtonText: "Ok",
+        });
+      }
+      if (missingRates.length > 0) {
+        setAllDataCopyRateLine(missingRates);
+        dispatch({ type: "OPEN", modal: "exchaneRateLineCpyform" });
+        Swal.fire({
+          title: "Missing Rates",
+          text: "Some currency exchange rates are missing.",
+          icon: "warning",
+        });
+        return; // Stop further calculations
+      } else {
+        dispatch({ type: "CLOSE", modal: "exchaneRateLineCpyform" });
+      }
+      const UpdatedLines = updatedLines.map((item) => ({
+        ...item,
+        Rate: findRate(records, item.Currency),
+      }));
+      recalculateLines({
+        oLines: UpdatedLines,
+        SysRate: sysRate,
         setValue,
       });
-      console.log("updateedOline", updateedOline);
-      console.log("oLines", updateedOline);
-      dispatch({ type: "CLOSE", modal: "DocRateOpen" });
     } catch (error) {
       console.log(error);
     }
@@ -2465,46 +2596,147 @@ export default function GoodsReceipt() {
 
     dispatch({ type: "CLOSE", modal: "BinLocationOpen" });
   };
+  // const handleChangePrice = async (e) => {
+  //   const PriceValue = e.target.value;
+  //   const oLines = getValues("oLines") || [];
+  //   if (oLines.length === 0) return;
+  //   const itemCodes = oLines.map((item) => item.ItemCode);
+  //   let priceData = [];
+  //   priceData = await fetchPriceListData(apiClient, itemCodes, PriceValue);
+  //   const companyData = getValues("companyData") || {};
+  //   setValue("CurrencyLine", priceData.Currency ?? companyData.MainCurncy);
+  //   const updatedLines = await Promise.all(
+  //     oLines.map(async (item) => {
+  //       const apiPrice = priceData.find((p) => p.ItemCode === item.ItemCode);
+  //       const newPrice = apiPrice?.Price ?? item.PriceBefDi;
+  //       const currency = apiPrice?.Currency ?? item.Currency;
+  //       const Rate = await fetchExchangeRateGeneric({
+  //         apiClient,
+  //         Currency: currency,
+  //         DocDate: getValues("DocDate"),
+  //         companyData: companyData,
+  //         setValue,
+  //         dispatch,
+  //       });
+  //       const LineTotal = (item.Quantity || 0) * newPrice * Rate;
+  //       const TotalSumSy = ValueFormatter(LineTotal / SysRate);
+  //       return {
+  //         ...item,
+  //         PriceBefDi: newPrice,
+  //         Currency: currency,
+  //         LineTotal,
+  //         TotalSumSy,
+  //         StockPrice: item.PriceBefDi,
+  //         Rate: Rate,
+  //         StockSum: LineTotal,
+  //         StockSumSc: TotalSumSy,
+  //       };
+  //     }),
+  //   );
+  //   setValue("oLines", updatedLines);
+  // };
+
   const handleChangePrice = async (e) => {
     const PriceValue = e.target.value;
     const oLines = getValues("oLines") || [];
-    if (oLines.length === 0) return;
+    if (!oLines.length) return;
     const itemCodes = oLines.map((item) => item.ItemCode);
-    let priceData = [];
-    priceData = await fetchPriceListData(apiClient, itemCodes, PriceValue);
-    const companyData = getValues("companyData") || {};
-    setValue("CurrencyLine", priceData.Currency ?? companyData.MainCurncy);
-    const updatedLines = await Promise.all(
-      oLines.map(async (item) => {
-        const apiPrice = priceData.find((p) => p.ItemCode === item.ItemCode);
-        const newPrice = apiPrice?.Price ?? item.PriceBefDi;
-        const currency = apiPrice?.Currency ?? item.Currency;
-        const Rate = await fetchExchangeRateGeneric({
-          apiClient,
-          Currency: currency,
-          DocDate: getValues("DocDate"),
-          companyData: companyData,
-          setValue,
-          dispatch,
-        });
-        const LineTotal = (item.Quantity || 0) * newPrice * Rate;
-        const TotalSumSy = ValueFormatter(LineTotal / SysRateApi);
+    try {
+      const priceData = await fetchPriceListData(
+        apiClient,
+        itemCodes,
+        PriceValue,
+      );
+      const updatedLines = oLines.map((item) => {
+        const apiPrice = priceData?.find((p) => p.ItemCode === item.ItemCode);
         return {
           ...item,
-          PriceBefDi: newPrice,
-          Currency: currency,
-          LineTotal,
-          TotalSumSy,
-          StockPrice: item.PriceBefDi,
-          Rate: Rate,
-          StockSum: LineTotal,
-          StockSumSc: TotalSumSy,
+          PriceBefDi: apiPrice?.Price,
+          Currency: apiPrice?.Currency,
         };
-      }),
-    );
-    setValue("oLines", updatedLines);
-  };
+      });
+      const Currency = updatedLines?.[0]?.Currency;
+      if (!Currency || Currency === "0") {
+        await Swal.fire({
+          title: "Currency Not Found",
+          text: `No Currency ${Currency} found in line items.`,
+          icon: "warning",
+          confirmButtonText: "Ok",
+        });
+        return;
+      }
+      const records = data[docDate] || [];
+      const recordRateWise = records.find((item) => item.Currency === Currency);
+      const sysCurr = companyData.SysCurrncy;
+      const mainCurr = companyData.MainCurncy;
+      let missingRates = [];
+      const sysRateObj = records.find((x) => x.Currency === sysCurr);
+      const sysRate =
+        sysCurr === mainCurr ? 1 : parseFloat(sysRateObj?.Rate || 0);
+      setValue("SysRate", sysRate);
+      if (sysRate <= 0) {
+        missingRates.push({
+          Type: "SystemRate",
+          Currency: sysCurr,
+          Rate: sysRate,
+          DocEntry: sysRateObj?.DocEntry ?? "0",
+          RateDate: docDate,
+        });
+      }
 
+      let DocRateLine =
+        companyData.MainCurncy === Currency
+          ? "1"
+          : (recordRateWise?.Rate ?? "0");
+      if (DocRateLine <= 0) {
+        missingRates.push({
+          Type: "LineRate",
+          DocEntry: recordRateWise?.DocEntry ?? "0",
+          RateDate: docDate,
+          Currency: Currency,
+          Rate: DocRateLine,
+        });
+        setTimeout(() => {
+          dispatch({ type: "OPEN", modal: "exchaneRateLineCpyform" });
+        }, 0);
+        Swal.fire({
+          title: "Rate Not Found",
+          text: "No exchange rate available for the selected currency/date.",
+          icon: "warning",
+          confirmButtonText: "Ok",
+        });
+      }
+      if (missingRates.length > 0) {
+        setAllDataCopyRateLine(missingRates);
+        dispatch({ type: "OPEN", modal: "exchaneRateLineCpyform" });
+        Swal.fire({
+          title: "Missing Rates",
+          text: "Some currency exchange rates are missing.",
+          icon: "warning",
+        });
+        return; // Stop further calculations
+      } else {
+        dispatch({ type: "CLOSE", modal: "exchaneRateLineCpyform" });
+      }
+
+      const UpdatedLines = updatedLines.map((item) => ({
+        ...item,
+        Rate: findRate(records, item.Currency),
+      }));
+      const newPriceListData = recalculateLines({
+        oLines: UpdatedLines,
+        SysRate: getValues("SysRate"),
+        setValue,
+      });
+      reset({
+        ...getValues(),
+        oLines: newPriceListData,
+      });
+      console.log("newPriceListData", newPriceListData);
+    } catch (error) {
+      console.error("Error fetching price list:", error);
+    }
+  };
   const sidebarContent = (
     <>
       <Grid
@@ -2623,10 +2855,6 @@ export default function GoodsReceipt() {
       </Grid>
     </>
   );
-  // +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-
-  // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
   const OpenDailog3 = () => setSearchmodelOpen3(true);
   const SearchModelClose3 = () => setSearchmodelOpen3(false);
@@ -2670,7 +2898,6 @@ export default function GoodsReceipt() {
 
     SearchModelClose3();
   };
-  // ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
   const OpenDailog1 = () => setsearchmodelOpenWarehouse(true);
   const SearchModelCloseWarehouse = () => setsearchmodelOpenWarehouse(false);
   const SelectWarehouse = async (
@@ -2930,21 +3157,16 @@ export default function GoodsReceipt() {
         }
       /> */}
 
-      <ExchangeRate
-        open={state.DocRateOpen}
-        closeModel={() => dispatch({ type: "CLOSE", modal: "DocRateOpen" })}
-        onSubmit={onSubmitCurrency}
-        data={{
-          DocEntryCur: getValues("DocEntryCur"),
-          DocDate: getValues("DocDate"),
-          Currency: getValues("CurrencyLine"),
-          DocRate: getValues("DocRateLine"),
-        }}
+      <ExchangeLineRateCopyform
+        open={state.exchaneRateLineCpyform}
+        closeModel={() =>
+          dispatch({ type: "CLOSE", modal: "exchaneRateLineCpyform" })
+        }
+        onSubmit={onSubmitLineCurrency}
+        data={AllDataCopyRateLine}
         isLoading={isLoading}
         title="Exchange Rate"
       />
-      {ExchangeRateModal}
-
       <BinLocation
         open={state.BinLocationOpen}
         closeModel={() => dispatch({ type: "CLOSE", modal: "BinLocationOpen" })}
@@ -2993,6 +3215,13 @@ export default function GoodsReceipt() {
         oBatchLines={selectedItem?.oBatchLines ?? []}
         Ids={selectedItem?.id}
       />
+      <ReportLayoutModal
+        open={state.ReportLayoutOpen}
+        onClose={() => dispatch({ type: "CLOSE", modal: "ReportLayoutOpen" })}
+        apiRows={apiRowsReport}
+        loading={Reportloading}
+        fetchReportLayouts={fetchReportLayouts}
+      />
       <Dialog
         open={searchmodelOpen3}
         onClose={() => SearchModelClose3(false)}
@@ -3039,8 +3268,7 @@ export default function GoodsReceipt() {
           ))}
         </DialogContent>
       </Dialog>
-      {/* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */}
-      {/* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */}
+
       <SearchModel
         open={searchmodelOpenAccount}
         onClose={SearchModelCloseAccount}
@@ -3080,8 +3308,6 @@ export default function GoodsReceipt() {
           </>
         }
       />
-      {/* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */}
-      {/* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */}
 
       <SearchModel
         open={searchmodelOpenWarehouse}
@@ -3132,10 +3358,6 @@ export default function GoodsReceipt() {
           </>
         }
       />
-      {/* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */}
-
-      {/* +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ */}
-
       <DataGridModal
         open={open}
         closeModel={closeModel}
@@ -3204,6 +3426,21 @@ export default function GoodsReceipt() {
             }}
           >
             <MenuIcon />
+          </IconButton>
+          <IconButton
+            edge="start"
+            color="inherit"
+            aria-label="menu"
+            onClick={() => {
+              dispatch({ type: "OPEN", modal: "ReportLayoutOpen" });
+            }}
+            sx={{
+              display: {}, // Show only on smaller screens
+              position: "absolute",
+              right: "70px",
+            }}
+          >
+            <DescriptionIcon />
           </IconButton>
           <IconButton
             edge="start"
@@ -3755,9 +3992,9 @@ export default function GoodsReceipt() {
               </Button>
               <PrintMenu
                 disabled={SaveUpdateName === "SAVE"}
-                type={"I"}
+                DfLayout={apiRowsReport?.DfLayout || apiRowsReport?.DfSequence}
                 DocEntry={allFormData.DocEntry}
-                PrintData={PrintData}
+                PrintData={apiRowsReport}
               />
             </Grid>
           </Grid>

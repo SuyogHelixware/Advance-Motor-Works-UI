@@ -1507,7 +1507,7 @@ export default function UserCreation() {
                     />
                   </Grid>
 
-                  <Grid
+                  {/* <Grid
                     item
                     md={6}
                     xs={12}
@@ -1515,8 +1515,8 @@ export default function UserCreation() {
                     justifyContent="center"
                     alignItems="center"
                     gap={1}
-                  >
-                    <Controller
+                  > */}
+                  {/* <Controller
                       name="Department"
                       control={control}
                       // rules={{ required: "Department is required" }}
@@ -1533,7 +1533,7 @@ export default function UserCreation() {
                             }))}
                           />
                           {/* OUTSIDE ICON */}
-                          <IconButton
+                  {/* <IconButton
                             onClick={HandlePDepartmentOpen}
                             size="small"
                             sx={{
@@ -1547,11 +1547,11 @@ export default function UserCreation() {
                             }}
                           >
                             <AddIcon />
-                          </IconButton>
-                        </>
-                      )}
-                    />
-                  </Grid>
+                          </IconButton> */}
+                  {/* </> */}
+
+                  {/* />  */}
+                  {/* </Grid> */}
                   <Grid item md={6} xs={12} textAlign={"center"}>
                     <Box
                       display="flex"

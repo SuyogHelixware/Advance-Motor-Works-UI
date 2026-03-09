@@ -32,6 +32,7 @@ import { Loader } from "../Components/Loader";
 import SearchInputField from "../Components/SearchInputField";
 import SearchModel from "../Components/SearchModel";
 import usePermissions from "../Components/usePermissions";
+import PrintMenu from "../Components/PrintMenu";
 
 export default function InwardVehicle() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -655,6 +656,34 @@ export default function InwardVehicle() {
     setValue("Vehicle", "");
     clearSignature();
   };
+
+  const [PrintData, setPrintData] = useState([]);
+  useEffect(() => {
+    const fetchPrintData = async () => {
+      try {
+        const { data: dataPrint } = await apiClient.get(
+          `/ReportLayout/GetByTransId/603`,
+        );
+        // const { data: dataPrint } = await axios.get(
+        //   `http://20.203.85.32:8071/api/ReportLayout/GetByTransId/23`,
+        // );
+        if (dataPrint.success) {
+          const OlinesDataPrint = dataPrint.values.oLines;
+          setPrintData(OlinesDataPrint);
+        } else {
+          Swal.fire({
+            text: dataPrint.message,
+            icon: "question",
+            confirmButtonText: "YES",
+          });
+        }
+      } catch (err) {
+        console.log(err);
+      }
+    };
+
+    fetchPrintData(); // runs once
+  }, []);
 
   const handleSubmitForm = async (data) => {
     if (!sigCanvas.current || sigCanvas.current.isEmpty()) {
@@ -1352,7 +1381,7 @@ export default function InwardVehicle() {
                 {SaveUpdateName}
               </Button>
 
-              <Button
+              {/* <Button
                 disabled={SaveUpdateName === "SAVE"}
                 DocEntry={DocEntry}
                 PrintData={""}
@@ -1360,7 +1389,15 @@ export default function InwardVehicle() {
                 color="primary"
               >
                 PRINT
-              </Button>
+              </Button> */}
+              <Grid item>
+                <PrintMenu
+                  disabled={SaveUpdateName === "SAVE"}
+                  type={"VI"}
+                  DocEntry={watch("DocEntry")}
+                  PrintData={PrintData}
+                />
+              </Grid>
             </Grid>
           </Grid>
         </Grid>

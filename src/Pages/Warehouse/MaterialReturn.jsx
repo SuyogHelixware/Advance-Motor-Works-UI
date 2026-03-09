@@ -43,6 +43,7 @@ import { Loader } from "../Components/Loader";
 import SearchInputField from "../Components/SearchInputField";
 import SearchModel from "../Components/SearchModel";
 import usePermissions from "../Components/usePermissions";
+import PrintMenu from "../Components/PrintMenu";
 
 export default function IssueMaterial() {
   const initialFormData = {
@@ -474,7 +475,7 @@ export default function IssueMaterial() {
           })) || [];
 
         reset(transformed);
-        setSaveUpdateName("SAVE");
+        setSaveUpdateName("UPDATE");
         setValue("DocNum", data.DocNum);
         setoLines(mappedOLines);
         getHW_WMSStaffList(transformed.HW_WMSStaff);
@@ -1191,10 +1192,34 @@ export default function IssueMaterial() {
     </>
   );
 
-  //print hardcoded
-  const handlePrint = () => {
-    window.print();
-  };
+  const [PrintData, setPrintData] = useState([]);
+
+  useEffect(() => {
+    const fetchPrintData = async () => {
+      try {
+        const { data: dataPrint } = await apiClient.get(
+          `/ReportLayout/GetByTransId/606`,
+        );
+        // const { data: dataPrint } = await axios.get(
+        //   `http://20.203.85.32:8071/api/ReportLayout/GetByTransId/23`,
+        // );
+        if (dataPrint.success) {
+          const OlinesDataPrint = dataPrint.values.oLines;
+          setPrintData(OlinesDataPrint);
+        } else {
+          Swal.fire({
+            text: dataPrint.message,
+            icon: "question",
+            confirmButtonText: "YES",
+          });
+        }
+      } catch (err) {
+        console.log(err);
+      }
+    };
+
+    fetchPrintData(); // runs once
+  }, []);
 
   return (
     <>
@@ -1635,9 +1660,14 @@ export default function IssueMaterial() {
               >
                 {SaveUpdateName}
               </Button>
-              <Button onClick={handlePrint} variant="contained" color="primary">
-                PRINT
-              </Button>
+              <Grid item>
+                <PrintMenu
+                  disabled={SaveUpdateName === "SAVE"}
+                  type={"RT"}
+                  DocEntry={watch("DocEntry")}
+                  PrintData={PrintData}
+                />
+              </Grid>
             </Grid>
           </Grid>
         </Grid>
