@@ -56,7 +56,7 @@ import React, {
 import { Controller, useForm, useFormState } from "react-hook-form";
 import InfiniteScroll from "react-infinite-scroll-component";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { BeatLoader } from "react-spinners";
 import Swal from "sweetalert2";
 import { useCopyFromList } from "../../Hooks/useCopyFromList.js";
@@ -545,7 +545,7 @@ function PurchaseOrder() {
     SlpCode: "0",
     SlpName: "",
     Comments: "",
-    Discount: 0.0,
+    Discount: "0.00",
     ShipMode: "",
     PORevise: "",
     SAPSync: "",
@@ -639,7 +639,13 @@ function PurchaseOrder() {
   } = useForm({
     defaultValues: initialFormData,
   });
-
+  const location = useLocation();
+  const docEntryFromBP = location.state?.DocEntry;
+  useEffect(() => {
+    if (docEntryFromBP) {
+      onSelectBusinessPartner(docEntryFromBP);
+    }
+  }, [docEntryFromBP]);
   const currentData = getValues();
   const allFormData = getValues();
   const curSource = watch("CurSource");
@@ -6043,7 +6049,7 @@ function PurchaseOrder() {
         VatSumFrgn:
           getValues("Currency") === companyData.MainCurncy
             ? "0"
-            : String(item.VatSumFrgn || ""),
+            : String(item.VatSumFrgn || "0"),
         ETA: dayjs(undefined).format("YYYY-MM-DD "),
         GTotal: "0" || "",
         Address: "0" || "",
@@ -8097,7 +8103,7 @@ function PurchaseOrder() {
             sx={{
               display: {}, // Show only on smaller screens
               position: "absolute",
-              right: "50px",
+              right: "40px",
               // color: "black",
               // mt: -1,
             }}

@@ -5,7 +5,7 @@ import { useTheme } from "@mui/material/styles";
 import { Box, Typography } from "@mui/material";
 
 const PhoneNumberInput = ({
-  defaultCountry = "us",
+  defaultCountry = "KW",
   onChange,
   value,
   onBlur,
@@ -62,10 +62,10 @@ const PhoneNumberInput = ({
           color: error
             ? theme.palette.error.main
             : focused
-            ? theme.palette.primary.main
-            : isDarkMode
-            ? "#ccc"
-            : "#555",
+              ? theme.palette.primary.main
+              : isDarkMode
+                ? "#ccc"
+                : "#555",
           backgroundColor: backgroundColor,
           px: "4px",
           transition: "all 0.2s",
@@ -81,8 +81,8 @@ const PhoneNumberInput = ({
             error
               ? theme.palette.error.main
               : focused
-              ? theme.palette.primary.main
-              : borderColor
+                ? theme.palette.primary.main
+                : borderColor
           }`,
           borderRadius: "4px",
           backgroundColor: backgroundColor,

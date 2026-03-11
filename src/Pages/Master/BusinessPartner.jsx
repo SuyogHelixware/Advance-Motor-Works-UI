@@ -4453,7 +4453,7 @@ export default function BusinessPartner() {
                     defaultValue=""
                     render={({ field, fieldState: { error } }) => (
                       <PhoneNumberInput
-                        defaultCountry="in"
+                        defaultCountry="kw"
                         label="TELEPHONE 1"
                         value={field.value}
                         onBlur={field.onBlur}
@@ -4473,7 +4473,7 @@ export default function BusinessPartner() {
                     defaultValue=""
                     render={({ field }) => (
                       <PhoneNumberInput
-                        defaultCountry="in"
+                        defaultCountry="kw"
                         label="TELEPHONE 2"
                         value={field.value}
                         inputProps={{ maxLength: 16 }}
@@ -4491,7 +4491,7 @@ export default function BusinessPartner() {
                     // rules={{ required: "Mobile Phone is required" }}
                     render={({ field, fieldState: { error } }) => (
                       <PhoneNumberInput
-                        defaultCountry="in"
+                        defaultCountry="kw"
                         label="MOBILE PHONE"
                         value={field.value || ""}
                         onChange={(phone) => field.onChange(phone)}
@@ -5580,7 +5580,7 @@ export default function BusinessPartner() {
                                         onChange={field.onChange}
                                         error={!!error}
                                         helperText={error?.message}
-                                        defaultCountry="in"
+                                        defaultCountry="kw"
                                       />
                                     )}
                                   />
@@ -5610,7 +5610,7 @@ export default function BusinessPartner() {
                                     }) => (
                                       <PhoneNumberInput
                                         resetFlag={DocEntry} // ⚡ Add this for remount on data load
-                                        defaultCountry="in"
+                                        defaultCountry="kw"
                                         label="TEL 2"
                                         value={field.value || ""} // Explicitly pass with fallback
                                         onChange={field.onChange} // Use field's onChange directly (no wrapper needed)
@@ -5648,7 +5648,7 @@ export default function BusinessPartner() {
                                     }) => (
                                       <PhoneNumberInput
                                         resetFlag={DocEntry} // ⚡ Add this for remount on data load
-                                        defaultCountry="in"
+                                        defaultCountry="kw"
                                         label="MOBILE PHONE"
                                         value={field.value || ""} // Explicitly pass with fallback (was already close)
                                         onChange={field.onChange} // Use field's onChange directly

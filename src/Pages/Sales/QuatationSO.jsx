@@ -356,6 +356,9 @@ export default function QuatationSO() {
   }, []);
 
   const onSelectBusinessPartner = async (selectedItem) => {
+    reset(initial);
+    setSelectionModel([]);
+
     try {
       const currentValues = getValues();
 

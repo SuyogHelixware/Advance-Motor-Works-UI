@@ -347,7 +347,6 @@ export default function CashInvoice() {
           SpecialDisc: parseFloat(data.SpecialDisc).toFixed(3),
           SpecialDiscAmt: parseFloat(data.SpecialDiscAmt).toFixed(3),
           DesiredDiscAmt: parseFloat(data.DesiredDiscAmt).toFixed(3),
-
           PaidAmount: parseFloat(0).toFixed(3),
           BankPay: [],
           oCCPay: [],
@@ -1136,16 +1135,6 @@ export default function CashInvoice() {
     if (dueAmount >= 0 && paidAmount !== dueAmount && approvalStatus === 0) {
       Swal.fire({
         text: "Paid Amount is less than Due amount",
-        icon: "warning",
-        toast: true,
-        showConfirmButton: false,
-        timer: 1000,
-      });
-      return;
-    }
-    if (paidAmount === 0) {
-      Swal.fire({
-        text: "Total paid amount must be greater than 0",
         icon: "warning",
         toast: true,
         showConfirmButton: false,
@@ -2696,7 +2685,10 @@ export default function CashInvoice() {
                 color="success"
                 type="submit"
                 disabled={
-                  !perms.IsAdd || !perms.IsEdit || watch("DueAmount") <= 0
+                  !perms.IsAdd ||
+                  !perms.IsEdit ||
+                  (watch("DueAmount") <= 0 &&
+                    SaveUpdateName === "UPDATE INVOICE")
                 }
               >
                 PROCESS INVOICE
