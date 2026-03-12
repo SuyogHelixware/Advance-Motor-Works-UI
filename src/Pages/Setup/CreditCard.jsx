@@ -1168,7 +1168,7 @@ export default function CreditCard() {
                         render={({ field, fieldState: { error } }) => (
                           <PhoneNumberInput
                             // defaultCountry="kw"
-                            defaultCountry="in"
+                            defaultCountry="kw"
                             label="TELEPHONE"
                             value={field.value}
                             readOnly={allformdata.Phone === true}

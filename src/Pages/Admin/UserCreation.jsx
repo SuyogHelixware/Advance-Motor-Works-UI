@@ -14,6 +14,7 @@ import {
   FormHelperText,
   Grid,
   IconButton,
+  InputAdornment,
   InputLabel,
   MenuItem,
   OutlinedInput,
@@ -46,6 +47,7 @@ import usePermissions from "../Components/usePermissions";
 import { DataGrid } from "@mui/x-data-grid";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
+import { Visibility, VisibilityOff } from "@mui/icons-material";
 const initial = {
   DocEntry: "",
   UserName: "",
@@ -110,6 +112,13 @@ export default function UserCreation() {
   const [openDepartment, setopenDepartment] = useState(false);
   const [selectedDepartmentRowId, setSelectedDepartmentRowId] = useState(null);
   const [DepartmentList, setDepartmentList] = useState([]);
+
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleClickShowPassword = () => {
+    setShowPassword((prev) => !prev);
+  };
+
   const handleTabChange = (event, newValue) => {
     settab(newValue); // Ensure this updates the state controlling the active tab
   };
@@ -1384,13 +1393,59 @@ export default function UserCreation() {
                         <>
                           <InputTextField
                             label="PASSWORD"
+                            type={showPassword ? "text" : "password"}
+                            {...field}
+                            error={!!error}
+                            helperText={error ? error.message : null}
+                            InputProps={{
+                              endAdornment: (
+                                <InputAdornment position="end">
+                                  <IconButton
+                                    onClick={handleClickShowPassword}
+                                    edge="end"
+                                  >
+                                    {showPassword ? (
+                                      <VisibilityOff />
+                                    ) : (
+                                      <Visibility />
+                                    )}
+                                  </IconButton>
+                                </InputAdornment>
+                              ),
+                            }}
+                          />
+
+                          {DocEntry && (
+                            <Typography
+                              variant="body2"
+                              color="textSecondary"
+                              style={{ color: "red" }}
+                            >
+                              Note: Leave blank to keep the current password.
+                            </Typography>
+                          )}
+                        </>
+                      )}
+                    />
+                  </Grid>
+                  {/* <Grid item md={6} xs={12} textAlign={"center"}>
+                    <Controller
+                      name="Password"
+                      control={control}
+                      rules={{
+                        required: !DocEntry ? "Password is required" : false,
+                      }}
+                      render={({ field, fieldState: { error } }) => (
+                        <>
+                          <InputTextField
+                            label="PASSWORD"
                             type="password" // Use 'password' type for password fields for better security
                             {...field}
                             error={!!error} // Pass error state to the FormComponent if needed
                             helperText={error ? error.message : null} // Show the validation message
                           />
                           {/* Add a note below the password field */}
-                          {DocEntry && (
+                  {/* {DocEntry && (
                             <Typography
                               variant="body2"
                               color="textSecondary"
@@ -1402,7 +1457,7 @@ export default function UserCreation() {
                         </>
                       )}
                     />
-                  </Grid>
+                  </Grid> */}
 
                   <Grid item md={6} xs={12} textAlign={"center"}>
                     <Controller
@@ -1567,7 +1622,7 @@ export default function UserCreation() {
                         render={({ field, fieldState: { error } }) => (
                           <PhoneNumberInput
                             name="PhoneNumber"
-                            defaultCountry="in"
+                            defaultCountry="kw"
                             label="PHONE NUMBER"
                             value={field.value}
                             onChange={(phone) => field.onChange(phone)}

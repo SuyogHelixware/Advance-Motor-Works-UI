@@ -312,47 +312,46 @@ export default function EmployeeMaster() {
   const SearchModelClose = () => {
     setSearchmodelOpen(false);
   };
- const fetchGetListData = async (pageNum, searchTerm = "") => {
-  try {
-    setLoading(true);
+  const fetchGetListData = async (pageNum, searchTerm = "") => {
+    try {
+      setLoading(true);
 
-    const url = searchTerm
-      ? `/Employee?Status=1&Page=${pageNum}&Limit=20&SearchText=${searchTerm}`
-      : `/Employee?Status=1&Page=${pageNum}&Limit=20`;
+      const url = searchTerm
+        ? `/Employee?Status=1&Page=${pageNum}&Limit=20&SearchText=${searchTerm}`
+        : `/Employee?Status=1&Page=${pageNum}&Limit=20`;
 
-    const response = await apiClient.get(url);
+      const response = await apiClient.get(url);
 
-    if (response?.data?.success) {
-      const newData = response.data.values || [];
+      if (response?.data?.success) {
+        const newData = response.data.values || [];
 
-      setHasMoreGetList(newData.length === 20);
+        setHasMoreGetList(newData.length === 20);
 
-      setGetListData((prev) =>
-        pageNum === 0 ? newData : [...prev, ...newData]
-      );
-    } else {
+        setGetListData((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+      } else {
+        Swal.fire({
+          icon: "warning",
+          title: "Warning!",
+          text: response?.data?.message || "No records found",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching employee list:", error);
+
       Swal.fire({
-        icon: "warning",
-        title: "Warning!",
-        text: response?.data?.message || "No records found",
+        icon: "error",
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to fetch employee data. Please try again later.",
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching employee list:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to fetch employee data. Please try again later.",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   const handleGetListSearch = (res) => {
     setGetListQuery(res);
@@ -399,87 +398,85 @@ export default function EmployeeMaster() {
     fetchGetListData(0); // Load first page on mount
   }, []);
 
-const getRoleDataList = async () => {
-  try {
-    setLoading(true);
+  const getRoleDataList = async () => {
+    try {
+      setLoading(true);
 
-    const response = await apiClient.get(`/RoleMapping/All`, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+      const response = await apiClient.get(`/RoleMapping/All`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-    if (response?.data?.success) {
-      const { values = [] } = response.data;
+      if (response?.data?.success) {
+        const { values = [] } = response.data;
 
-      const formattedData = values.map((item) => ({
-        key: item.RoleId,
-        value: item.RoleName,
-      }));
+        const formattedData = values.map((item) => ({
+          key: item.RoleId,
+          value: item.RoleName,
+        }));
 
-      setRoleData(formattedData);
-    } else {
+        setRoleData(formattedData);
+      } else {
+        Swal.fire({
+          title: "Warning!",
+          text: response?.data?.message || "No role data found",
+          icon: "warning",
+          confirmButtonText: "OK",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching role data:", error);
+
       Swal.fire({
-        title: "Warning!",
-        text: response?.data?.message || "No role data found",
-        icon: "warning",
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Unable to fetch the Role data. Please try again later.",
+        icon: "error",
         confirmButtonText: "OK",
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching role data:", error);
+  };
 
-    Swal.fire({
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Unable to fetch the Role data. Please try again later.",
-      icon: "error",
-      confirmButtonText: "OK",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  const getBankCodeDataList = async () => {
+    try {
+      setLoading(true);
 
-
- const getBankCodeDataList = async () => {
-  try {
-    setLoading(true);
-
-    const response = await apiClient.get(`/BankSetup/All`, {
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (response?.data?.success) {
-      const { values = [] } = response.data;
-      setBankCode(values);
-    } else {
-      Swal.fire({
-        icon: "warning",
-        title: "Warning!",
-        text: response?.data?.message || "No bank data found",
+      const response = await apiClient.get(`/BankSetup/All`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
+
+      if (response?.data?.success) {
+        const { values = [] } = response.data;
+        setBankCode(values);
+      } else {
+        Swal.fire({
+          icon: "warning",
+          title: "Warning!",
+          text: response?.data?.message || "No bank data found",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching bank data:", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to fetch bank data. Please try again.",
+      });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching bank data:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to fetch bank data. Please try again.",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   //==========================================Add, Update, Delete Department =======================
   const handleDepartmentDelete = async (data) => {
@@ -536,45 +533,45 @@ const getRoleDataList = async () => {
       }
     });
   };
- const handleEdit = async (row) => {
-  if (!row?.DocEntry) return;
+  const handleEdit = async (row) => {
+    if (!row?.DocEntry) return;
 
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const res = await apiClient.get(`/Department/${row.DocEntry}`);
-    const response = res?.data;
+      const res = await apiClient.get(`/Department/${row.DocEntry}`);
+      const response = res?.data;
 
-    if (response?.success) {
-      const { DocEntry, Name } = response.values || {};
+      if (response?.success) {
+        const { DocEntry, Name } = response.values || {};
 
-      // Set value into the form field
-      setValueIndic("Name", Name || "");
+        // Set value into the form field
+        setValueIndic("Name", Name || "");
 
-      // Store DocEntry for later update
-      setSelectedDepartmentRowId(DocEntry);
-    } else {
+        // Store DocEntry for later update
+        setSelectedDepartmentRowId(DocEntry);
+      } else {
+        Swal.fire({
+          title: "Warning!",
+          text: response?.message || "Department data not found",
+          icon: "warning",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching department data:", error);
+
       Swal.fire({
-        title: "Warning!",
-        text: response?.message || "Department data not found",
-        icon: "warning",
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to fetch department data.",
+        icon: "error",
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching department data:", error);
-
-    Swal.fire({
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to fetch department data.",
-      icon: "error",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const columns = [
     { field: "id", headerName: "ID", width: 100 },
@@ -641,71 +638,100 @@ const getRoleDataList = async () => {
   const HandlePDepartmentOpen = () => setopenDepartment(true);
   const handleClose = () => setopenDepartment(false);
   const fetchData = async () => {
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const res = await apiClient.get(`/Department/All`);
-    const response = res?.data;
+      const res = await apiClient.get(`/Department/All`);
+      const response = res?.data;
 
-    if (response?.success) {
-      setDepartmentList(response.values || []);
-    } else {
+      if (response?.success) {
+        setDepartmentList(response.values || []);
+      } else {
+        Swal.fire({
+          title: "Warning!",
+          text: response?.message || "No department data found",
+          icon: "warning",
+          confirmButtonText: "Ok",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching department data:", error);
+
       Swal.fire({
-        title: "Warning!",
-        text: response?.message || "No department data found",
-        icon: "warning",
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to fetch department data. Please try again.",
+        icon: "error",
         confirmButtonText: "Ok",
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching department data:", error);
-
-    Swal.fire({
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to fetch department data. Please try again.",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
-  const handleAddOrUpdate = async (data) => {
-  const obj = {
-    DocEntry: data.DocEntry || "",
-    UserId: user?.UserId,
-    CreatedBy: user?.UserName,
-    CreatedDate: dayjs().format("YYYY-MM-DD"),
-    ModifiedBy: user?.UserName,
-    ModifiedDate: selectedDepartmentRowId
-      ? dayjs().format("YYYY-MM-DD")
-      : "",
-    Status: "1",
-    Code: data.Code || "0",
-    Name: data.Name || "",
-    Remarks: data.Remarks || "",
   };
 
-  try {
-    setLoading(true);
+  const handleAddOrUpdate = async (data) => {
+    const obj = {
+      DocEntry: data.DocEntry || "",
+      UserId: user?.UserId,
+      CreatedBy: user?.UserName,
+      CreatedDate: dayjs().format("YYYY-MM-DD"),
+      ModifiedBy: user?.UserName,
+      ModifiedDate: selectedDepartmentRowId ? dayjs().format("YYYY-MM-DD") : "",
+      Status: "1",
+      Code: data.Code || "0",
+      Name: data.Name || "",
+      Remarks: data.Remarks || "",
+    };
 
-    // -----------------------------
-    // ADD MODE
-    // -----------------------------
-    if (!selectedDepartmentRowId) {
-      const response = await apiClient.post("/Department", obj);
+    try {
+      setLoading(true);
+
+      // -----------------------------
+      // ADD MODE
+      // -----------------------------
+      if (!selectedDepartmentRowId) {
+        const response = await apiClient.post("/Department", obj);
+
+        if (response?.data?.success) {
+          await fetchData();
+          resetDepartment(initialDepartmentData);
+
+          Swal.fire({
+            title: "Success!",
+            text: "Department added successfully!",
+            icon: "success",
+            timer: 1500,
+            showConfirmButton: false,
+          });
+        } else {
+          Swal.fire({
+            title: "Error!",
+            text: response?.data?.message || "Failed to add department",
+            icon: "warning",
+          });
+        }
+
+        return;
+      }
+
+      // -----------------------------
+      // UPDATE MODE
+      // -----------------------------
+      const response = await apiClient.put(
+        `/Department/${selectedDepartmentRowId}`,
+        obj,
+      );
 
       if (response?.data?.success) {
         await fetchData();
         resetDepartment(initialDepartmentData);
+        setSelectedDepartmentRowId(null);
 
         Swal.fire({
           title: "Success!",
-          text: "Department added successfully!",
+          text: "Department updated successfully!",
           icon: "success",
           timer: 1500,
           showConfirmButton: false,
@@ -713,157 +739,125 @@ const getRoleDataList = async () => {
       } else {
         Swal.fire({
           title: "Error!",
-          text: response?.data?.message || "Failed to add department",
+          text: response?.data?.message || "Update failed",
           icon: "warning",
         });
       }
+    } catch (error) {
+      console.error("Department save/update error:", error);
 
+      Swal.fire({
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong. Please try again.",
+        icon: "error",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  //================================Add, Update, Delete Branch ========================================
+  const handleBranchDelete = async (data) => {
+    const result = await Swal.fire({
+      text: `Do You Want to Delete "${data.Name}" ?`,
+      icon: "question",
+      confirmButtonText: "YES",
+      cancelButtonText: "No",
+      showConfirmButton: true,
+      showDenyButton: true,
+    });
+
+    if (!result.isConfirmed) {
+      Swal.fire({
+        text: "Branch Not Deleted",
+        icon: "info",
+        toast: true,
+        showConfirmButton: false,
+        timer: 1500,
+      });
       return;
     }
 
-    // -----------------------------
-    // UPDATE MODE
-    // -----------------------------
-    const response = await apiClient.put(
-      `/Department/${selectedDepartmentRowId}`,
-      obj
-    );
+    try {
+      setLoading(true);
 
-    if (response?.data?.success) {
-      await fetchData();
-      resetDepartment(initialDepartmentData);
-      setSelectedDepartmentRowId(null);
+      const response = await apiClient.delete(`/Branch/${data.DocEntry}`);
 
-      Swal.fire({
-        title: "Success!",
-        text: "Department updated successfully!",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      });
-    } else {
+      if (response?.data?.success) {
+        resetBranch(initialBranchData);
+        await fetchBranchData();
+
+        Swal.fire({
+          title: "Success!",
+          text: "Branch Deleted",
+          icon: "success",
+          timer: 1500,
+          showConfirmButton: false,
+        });
+      } else {
+        Swal.fire({
+          title: "Error!",
+          text: response?.data?.message || "Branch not deleted",
+          icon: "warning",
+        });
+      }
+    } catch (error) {
+      console.error("Branch delete error:", error);
+
       Swal.fire({
         title: "Error!",
-        text: response?.data?.message || "Update failed",
-        icon: "warning",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong",
+        icon: "error",
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Department save/update error:", error);
+  };
 
-    Swal.fire({
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong. Please try again.",
-      icon: "error",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  const handleEditBranch = async (row) => {
+    if (!row?.DocEntry) return;
 
+    try {
+      setLoading(true);
 
-  //================================Add, Update, Delete Branch ========================================
- const handleBranchDelete = async (data) => {
-  const result = await Swal.fire({
-    text: `Do You Want to Delete "${data.Name}" ?`,
-    icon: "question",
-    confirmButtonText: "YES",
-    cancelButtonText: "No",
-    showConfirmButton: true,
-    showDenyButton: true,
-  });
+      const response = await apiClient.get(`/Branch/${row.DocEntry}`);
 
-  if (!result.isConfirmed) {
-    Swal.fire({
-      text: "Branch Not Deleted",
-      icon: "info",
-      toast: true,
-      showConfirmButton: false,
-      timer: 1500,
-    });
-    return;
-  }
+      if (response?.data?.success) {
+        const { DocEntry, Name } = response.data.values;
 
-  try {
-    setLoading(true);
+        // Populate form fields
+        setValueBranch("Name", Name);
 
-    const response = await apiClient.delete(`/Branch/${data.DocEntry}`);
+        // Store DocEntry for update mode
+        setSelectedBranchRowId(DocEntry);
+      } else {
+        Swal.fire({
+          title: "Error!",
+          text: response?.data?.message || "Failed to fetch branch details",
+          icon: "warning",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching branch:", error);
 
-    if (response?.data?.success) {
-      resetBranch(initialBranchData);
-      await fetchBranchData();
-
-      Swal.fire({
-        title: "Success!",
-        text: "Branch Deleted",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false,
-      });
-    } else {
       Swal.fire({
         title: "Error!",
-        text: response?.data?.message || "Branch not deleted",
-        icon: "warning",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong",
+        icon: "error",
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Branch delete error:", error);
-
-    Swal.fire({
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong",
-      icon: "error",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
-const handleEditBranch = async (row) => {
-  if (!row?.DocEntry) return;
-
-  try {
-    setLoading(true);
-
-    const response = await apiClient.get(`/Branch/${row.DocEntry}`);
-
-    if (response?.data?.success) {
-      const { DocEntry, Name } = response.data.values;
-
-      // Populate form fields
-      setValueBranch("Name", Name);
-
-      // Store DocEntry for update mode
-      setSelectedBranchRowId(DocEntry);
-    } else {
-      Swal.fire({
-        title: "Error!",
-        text: response?.data?.message || "Failed to fetch branch details",
-        icon: "warning",
-      });
-    }
-  } catch (error) {
-    console.error("Error fetching branch:", error);
-
-    Swal.fire({
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong",
-      icon: "error",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const Branchcolumns = [
     { field: "id", headerName: "ID", width: 100 },
@@ -940,193 +934,193 @@ const handleEditBranch = async (row) => {
   const HandleBranchOpen = () => setopenBranch(true);
   const handleBranchClose = () => setopenBranch(false);
   const handleUserClose = () => setOpenCreateUserDialog(false);
-const fetchBranchData = async () => {
-  try {
-    setLoading(true);
+  const fetchBranchData = async () => {
+    try {
+      setLoading(true);
 
-    const response = await apiClient.get(`/Branch/All`);
+      const response = await apiClient.get(`/Branch/All`);
 
-    if (response?.data?.success) {
-      setBranchList(response.data.values || []);
-    } else {
+      if (response?.data?.success) {
+        setBranchList(response.data.values || []);
+      } else {
+        Swal.fire({
+          title: "Error!",
+          text: response?.data?.message || "Failed to fetch branch data",
+          icon: "warning",
+          confirmButtonText: "Ok",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching branch data:", error);
+
       Swal.fire({
         title: "Error!",
-        text: response?.data?.message || "Failed to fetch branch data",
-        icon: "warning",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong while fetching branch data",
+        icon: "error",
         confirmButtonText: "Ok",
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching branch data:", error);
-
-    Swal.fire({
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong while fetching branch data",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
- const handleAddOrUpdateBranch = async (data) => {
-  const obj = {
-    DocEntry: data.DocEntry || "",
-    UserId: user.UserId,
-    CreatedBy: user.UserName,
-    CreatedDate: dayjs().format("YYYY-MM-DD"),
-    ModifiedBy: user.UserName,
-    ModifiedDate: selectedBranchRowId ? dayjs().format("YYYY-MM-DD") : "",
-    Status: "1",
-    Code: data.Code || "0",
-    Name: data.Name || "",
-    Remarks: data.Remarks || "",
   };
 
-  const isUpdate = Boolean(selectedBranchRowId);
-  const apiUrl = isUpdate ? `/Branch/${selectedBranchRowId}` : `/Branch`;
-  const method = isUpdate ? "put" : "post";
+  const handleAddOrUpdateBranch = async (data) => {
+    const obj = {
+      DocEntry: data.DocEntry || "",
+      UserId: user.UserId,
+      CreatedBy: user.UserName,
+      CreatedDate: dayjs().format("YYYY-MM-DD"),
+      ModifiedBy: user.UserName,
+      ModifiedDate: selectedBranchRowId ? dayjs().format("YYYY-MM-DD") : "",
+      Status: "1",
+      Code: data.Code || "0",
+      Name: data.Name || "",
+      Remarks: data.Remarks || "",
+    };
 
-  try {
-    // 🔹 Confirm only for UPDATE
-    if (isUpdate) {
-      const result = await Swal.fire({
-        text: `Do you want to update "${data.Name}"?`,
-        icon: "question",
-        confirmButtonText: "YES",
-        cancelButtonText: "No",
-        showConfirmButton: true,
-        showDenyButton: true,
-      });
+    const isUpdate = Boolean(selectedBranchRowId);
+    const apiUrl = isUpdate ? `/Branch/${selectedBranchRowId}` : `/Branch`;
+    const method = isUpdate ? "put" : "post";
 
-      if (!result.isConfirmed) {
+    try {
+      // 🔹 Confirm only for UPDATE
+      if (isUpdate) {
+        const result = await Swal.fire({
+          text: `Do you want to update "${data.Name}"?`,
+          icon: "question",
+          confirmButtonText: "YES",
+          cancelButtonText: "No",
+          showConfirmButton: true,
+          showDenyButton: true,
+        });
+
+        if (!result.isConfirmed) {
+          Swal.fire({
+            text: "Branch not updated",
+            icon: "info",
+            toast: true,
+            showConfirmButton: false,
+            timer: 1500,
+          });
+          return;
+        }
+      }
+
+      setLoading(true);
+
+      const response = await apiClient[method](apiUrl, obj);
+
+      if (response?.data?.success) {
+        await fetchBranchData();
+        resetBranch(initialBranchData);
+        setSelectedBranchRowId(null);
+
         Swal.fire({
-          text: "Branch not updated",
-          icon: "info",
-          toast: true,
-          showConfirmButton: false,
+          title: "Success!",
+          text: `Branch ${isUpdate ? "updated" : "added"} successfully!`,
+          icon: "success",
+          confirmButtonText: "Ok",
           timer: 1500,
         });
-        return;
+      } else {
+        Swal.fire(
+          "Error!",
+          response?.data?.message || "Operation failed",
+          "error",
+        );
       }
-    }
-
-    setLoading(true);
-
-    const response = await apiClient[method](apiUrl, obj);
-
-    if (response?.data?.success) {
-      await fetchBranchData();
-      resetBranch(initialBranchData);
-      setSelectedBranchRowId(null);
+    } catch (error) {
+      console.error("Error submitting branch:", error);
 
       Swal.fire({
-        title: "Success!",
-        text: `Branch ${isUpdate ? "updated" : "added"} successfully!`,
-        icon: "success",
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong",
+        icon: "error",
         confirmButtonText: "Ok",
-        timer: 1500,
       });
-    } else {
-      Swal.fire(
-        "Error!",
-        response?.data?.message || "Operation failed",
-        "error"
-      );
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error submitting branch:", error);
-
-    Swal.fire({
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
- const handleAddUser = async (data) => {
-  const obj = {
-    DocEntry: "",
-    DocNum: null,
-    DocDate: dayjs().format("YYYY-MM-DD"),
-    UserId: sessionStorage.getItem("UserId") || "1",
-    CreatedBy: user.UserName || "",
-    CreatedDate: dayjs().format("YYYY/MM/DD"),
-    ModifiedBy: user.UserName || "",
-    ModifiedDate: dayjs().format("YYYY/MM/DD"),
-    Status: "1",
-    UserName: String(data.UserName),
-    Password: String(data.Password),
-    RoleId: String(data.RoleId),
-    FirstName: String(data.FirstName),
-    LastName: String(data.LastName),
-    PhoneNumber: String(data.PhoneNumber),
-    Email: String(data.Email),
-    SlpCode: String(data.SlpCode || "0"),
-    Flag: "0",
-    OtherUserFlag: "0",
-    SuperUser: "N",
-    MobileUser: "N",
-    UserCode: data.UserCode || null,
-    PortNum: data.PortNum || null,
-    Branch: "1",
-    Department: "1",
-    GroupName: data.GroupName || null,
-    PwdNeverEx: data.PwdNeverEx || null,
-    OneLogPwd: data.OneLogPwd || null,
-    Locked: data.Locked || "N",
   };
 
-  try {
-    setLoading(true);
+  const handleAddUser = async (data) => {
+    const obj = {
+      DocEntry: "",
+      DocNum: null,
+      DocDate: dayjs().format("YYYY-MM-DD"),
+      UserId: sessionStorage.getItem("UserId") || "1",
+      CreatedBy: user.UserName || "",
+      CreatedDate: dayjs().format("YYYY/MM/DD"),
+      ModifiedBy: user.UserName || "",
+      ModifiedDate: dayjs().format("YYYY/MM/DD"),
+      Status: "1",
+      UserName: String(data.UserName),
+      Password: String(data.Password),
+      RoleId: String(data.RoleId),
+      FirstName: String(data.FirstName),
+      LastName: String(data.LastName),
+      PhoneNumber: String(data.PhoneNumber),
+      Email: String(data.Email),
+      SlpCode: String(data.SlpCode || "0"),
+      Flag: "0",
+      OtherUserFlag: "0",
+      SuperUser: "N",
+      MobileUser: "N",
+      UserCode: data.UserCode || null,
+      PortNum: data.PortNum || null,
+      Branch: "1",
+      Department: "1",
+      GroupName: data.GroupName || null,
+      PwdNeverEx: data.PwdNeverEx || null,
+      OneLogPwd: data.OneLogPwd || null,
+      Locked: data.Locked || "N",
+    };
 
-    const response = await apiClient.post("/Users", obj);
+    try {
+      setLoading(true);
 
-    if (response?.data?.success) {
-      resetUser(initialUserData);
-      setOpenCreateUserDialog(false);
+      const response = await apiClient.post("/Users", obj);
+
+      if (response?.data?.success) {
+        resetUser(initialUserData);
+        setOpenCreateUserDialog(false);
+
+        Swal.fire({
+          title: "Success!",
+          text: "User added successfully!",
+          icon: "success",
+          confirmButtonText: "Ok",
+          timer: 1500,
+        });
+      } else {
+        Swal.fire(
+          "Error!",
+          response?.data?.message || "Failed to add user",
+          "error",
+        );
+      }
+    } catch (error) {
+      console.error("Error adding user:", error);
 
       Swal.fire({
-        title: "Success!",
-        text: "User added successfully!",
-        icon: "success",
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong",
+        icon: "error",
         confirmButtonText: "Ok",
-        timer: 1500,
       });
-    } else {
-      Swal.fire(
-        "Error!",
-        response?.data?.message || "Failed to add user",
-        "error"
-      );
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error adding user:", error);
-
-    Swal.fire({
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong",
-      icon: "error",
-      confirmButtonText: "Ok",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   const absenceColumns = [
     { field: "Duration", headerName: "Duration", flex: 1 },
@@ -1165,13 +1159,13 @@ const fetchBranchData = async () => {
                   if (key === "Type") {
                     // Convert type value back to key
                     const typeObj = AbsenceTypes.find(
-                      (t) => t.value === row.Type
+                      (t) => t.value === row.Type,
                     );
                     setValue("Type", typeObj?.key || null);
                   } else if (key === "Duration") {
                     // Convert type value back to key
                     const typeObj = Duration.find(
-                      (t) => t.value === row.Duration
+                      (t) => t.value === row.Duration,
                     );
                     setValue("Duration", typeObj?.key || null);
                   } else if (
@@ -1596,137 +1590,135 @@ const fetchBranchData = async () => {
     return Duration.find((x) => x.value === label)?.key || 0;
   };
 
-const handleApproveLeave = async (row) => {
-  try {
-    setLoading(true);
+  const handleApproveLeave = async (row) => {
+    try {
+      setLoading(true);
 
-    const url = `/Employee/${row.DocEntry}/AbsInfo/${row.LineNum}`;
+      const url = `/Employee/${row.DocEntry}/AbsInfo/${row.LineNum}`;
 
-    const payload = {
-      LineNum: row.LineNum,
-      DocEntry: row.DocEntry,
-      UserId: user.UserId,
-      CreatedBy: user.UserName || "",
-      CreatedDate: row.CreatedDate
-        ? dayjs(row.CreatedDate).format("YYYY-MM-DD")
-        : dayjs().format("YYYY-MM-DD"),
-      ModifiedBy: user.UserName || "",
-      ModifiedDate: dayjs().format("YYYY-MM-DD"),
-      Status: 0, // Approved
-      FromDate: dayjs(row.FromDate, "DD/MM/YYYY").format("YYYY-MM-DD"),
-      ToDate: row.ToDate
-        ? dayjs(row.ToDate, "DD/MM/YYYY").format("YYYY-MM-DD")
-        : dayjs(row.FromDate, "DD/MM/YYYY").format("YYYY-MM-DD"),
-      Reason: row.Reason || "",
-      ApprovedBy: `${watch("FirstName")} ${watch("LastName")}`,
-      CnfrmrNum: Number(selectedData || 0),
-      Type: getAbsenceKeyFromLabel(row.Type),
-      Duration: getDurationKeyFromLabel(row.Duration),
-    };
+      const payload = {
+        LineNum: row.LineNum,
+        DocEntry: row.DocEntry,
+        UserId: user.UserId,
+        CreatedBy: user.UserName || "",
+        CreatedDate: row.CreatedDate
+          ? dayjs(row.CreatedDate).format("YYYY-MM-DD")
+          : dayjs().format("YYYY-MM-DD"),
+        ModifiedBy: user.UserName || "",
+        ModifiedDate: dayjs().format("YYYY-MM-DD"),
+        Status: 0, // Approved
+        FromDate: dayjs(row.FromDate, "DD/MM/YYYY").format("YYYY-MM-DD"),
+        ToDate: row.ToDate
+          ? dayjs(row.ToDate, "DD/MM/YYYY").format("YYYY-MM-DD")
+          : dayjs(row.FromDate, "DD/MM/YYYY").format("YYYY-MM-DD"),
+        Reason: row.Reason || "",
+        ApprovedBy: `${watch("FirstName")} ${watch("LastName")}`,
+        CnfrmrNum: Number(selectedData || 0),
+        Type: getAbsenceKeyFromLabel(row.Type),
+        Duration: getDurationKeyFromLabel(row.Duration),
+      };
 
-    const response = await apiClient.put(url, payload);
-    const { success, message } = response.data || {};
+      const response = await apiClient.put(url, payload);
+      const { success, message } = response.data || {};
 
-    if (success) {
-      Swal.fire({
-        icon: "success",
-        title: "Approved!",
-        text: "Leave approved successfully.",
-        timer: 1000,
-        showConfirmButton: false,
-      });
+      if (success) {
+        Swal.fire({
+          icon: "success",
+          title: "Approved!",
+          text: "Leave approved successfully.",
+          timer: 1000,
+          showConfirmButton: false,
+        });
 
-      // Refresh list
-      setEmployeeMasterDataList(selectedData);
-    } else {
-      Swal.fire({
-        icon: "error",
-        title: "Approval Failed",
-        text: message || "Something went wrong.",
-      });
-    }
-  } catch (error) {
-    console.error("Approve Leave Error:", error);
+        // Refresh list
+        setEmployeeMasterDataList(selectedData);
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Approval Failed",
+          text: message || "Something went wrong.",
+        });
+      }
+    } catch (error) {
+      console.error("Approve Leave Error:", error);
 
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to approve leave.",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
-
- const handleRejectLeave = async (row) => {
-  try {
-    setLoading(true);
-
-    const url = `/Employee/${row.DocEntry}/AbsInfo/${row.LineNum}`;
-
-    const payload = {
-      LineNum: row.LineNum,
-      DocEntry: row.DocEntry,
-      UserId: user.UserId,
-      CreatedBy: user.UserName || "",
-      CreatedDate: row.CreatedDate
-        ? dayjs(row.CreatedDate).format("YYYY-MM-DD")
-        : dayjs().format("YYYY-MM-DD"),
-      ModifiedBy: user.UserName || "",
-      ModifiedDate: dayjs().format("YYYY-MM-DD"),
-      Status: 3, // Rejected
-      FromDate: dayjs(row.FromDate, "DD/MM/YYYY").format("YYYY-MM-DD"),
-      ToDate: row.ToDate
-        ? dayjs(row.ToDate, "DD/MM/YYYY").format("YYYY-MM-DD")
-        : dayjs(row.FromDate, "DD/MM/YYYY").format("YYYY-MM-DD"),
-      Reason: row.Reason || "",
-      ApprovedBy: `${watch("FirstName")} ${watch("LastName")}`,
-      CnfrmrNum: Number(selectedData || 0),
-      Type: getAbsenceKeyFromLabel(row.Type),
-      Duration: getDurationKeyFromLabel(row.Duration),
-    };
-
-    const response = await apiClient.put(url, payload);
-    const { success, message } = response.data || {};
-
-    if (success) {
-      Swal.fire({
-        icon: "success",
-        title: "Rejected!",
-        text: "Leave rejected successfully.",
-        timer: 1000,
-        showConfirmButton: false,
-      });
-
-      // Refresh leave list
-      setEmployeeMasterDataList(selectedData);
-    } else {
       Swal.fire({
         icon: "error",
-        title: "Rejection Failed",
-        text: message || "Something went wrong.",
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to approve leave.",
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Reject Leave Error:", error);
+  };
 
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to reject leave.",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  const handleRejectLeave = async (row) => {
+    try {
+      setLoading(true);
 
+      const url = `/Employee/${row.DocEntry}/AbsInfo/${row.LineNum}`;
+
+      const payload = {
+        LineNum: row.LineNum,
+        DocEntry: row.DocEntry,
+        UserId: user.UserId,
+        CreatedBy: user.UserName || "",
+        CreatedDate: row.CreatedDate
+          ? dayjs(row.CreatedDate).format("YYYY-MM-DD")
+          : dayjs().format("YYYY-MM-DD"),
+        ModifiedBy: user.UserName || "",
+        ModifiedDate: dayjs().format("YYYY-MM-DD"),
+        Status: 3, // Rejected
+        FromDate: dayjs(row.FromDate, "DD/MM/YYYY").format("YYYY-MM-DD"),
+        ToDate: row.ToDate
+          ? dayjs(row.ToDate, "DD/MM/YYYY").format("YYYY-MM-DD")
+          : dayjs(row.FromDate, "DD/MM/YYYY").format("YYYY-MM-DD"),
+        Reason: row.Reason || "",
+        ApprovedBy: `${watch("FirstName")} ${watch("LastName")}`,
+        CnfrmrNum: Number(selectedData || 0),
+        Type: getAbsenceKeyFromLabel(row.Type),
+        Duration: getDurationKeyFromLabel(row.Duration),
+      };
+
+      const response = await apiClient.put(url, payload);
+      const { success, message } = response.data || {};
+
+      if (success) {
+        Swal.fire({
+          icon: "success",
+          title: "Rejected!",
+          text: "Leave rejected successfully.",
+          timer: 1000,
+          showConfirmButton: false,
+        });
+
+        // Refresh leave list
+        setEmployeeMasterDataList(selectedData);
+      } else {
+        Swal.fire({
+          icon: "error",
+          title: "Rejection Failed",
+          text: message || "Something went wrong.",
+        });
+      }
+    } catch (error) {
+      console.error("Reject Leave Error:", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to reject leave.",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const leaveColumns = [
     { field: "LeaveYear", headerName: "Year", width: 150 },
@@ -1756,7 +1748,7 @@ const handleApproveLeave = async (row) => {
                 Object.keys(params.row).forEach((key) => {
                   if (key === "AbsenceType") {
                     const typeObj = AbsenceTypes.find(
-                      (t) => t.value === params.row.AbsenceType
+                      (t) => t.value === params.row.AbsenceType,
                     );
                     setValue("AbsenceType", typeObj?.key || null);
                   } else if (key === "LastUpdated" && params.row[key]) {
@@ -1873,69 +1865,69 @@ const handleApproveLeave = async (row) => {
   // };
 
   const ListofCountry = async () => {
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const response = await apiClient.get(`/Country/all`);
-    const { success, values, message } = response.data || {};
+      const response = await apiClient.get(`/Country/all`);
+      const { success, values, message } = response.data || {};
 
-    if (success) {
-      setListofCountry(values || []);
-    } else {
+      if (success) {
+        setListofCountry(values || []);
+      } else {
+        Swal.fire({
+          icon: "warning",
+          title: "Warning",
+          text: message || "Unable to fetch country list.",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching countries:", error);
+
       Swal.fire({
-        icon: "warning",
-        title: "Warning",
-        text: message || "Unable to fetch country list.",
+        icon: "error",
+        title: "Error!",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to fetch country list. Please try again.",
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching countries:", error);
+  };
 
-    Swal.fire({
-      icon: "error",
-      title: "Error!",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to fetch country list. Please try again.",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  const CurrencyData = async () => {
+    try {
+      setLoading(true);
 
- const CurrencyData = async () => {
-  try {
-    setLoading(true);
+      const response = await apiClient.get(`/Currency/all`);
+      const { success, values, message } = response.data || {};
 
-    const response = await apiClient.get(`/Currency/all`);
-    const { success, values, message } = response.data || {};
+      if (success) {
+        setCurrencydata(values || []);
+      } else {
+        Swal.fire({
+          icon: "warning",
+          title: "Warning",
+          text: message || "Unable to fetch currency data.",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching currency data:", error);
 
-    if (success) {
-      setCurrencydata(values || []);
-    } else {
       Swal.fire({
-        icon: "warning",
-        title: "Warning",
-        text: message || "Unable to fetch currency data.",
+        icon: "error",
+        title: "Failed to fetch Currency Data!",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Something went wrong.",
+        confirmButtonColor: "#3085d6",
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching currency data:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Failed to fetch Currency Data!",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Something went wrong.",
-      confirmButtonColor: "#3085d6",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   // ===============Main list handle search====================================
   const allValues = watch(); // watch everything
@@ -1959,43 +1951,43 @@ const handleApproveLeave = async (row) => {
       OuterListofState(selectedCountryCode);
     }
   }, [selectedCountryCode]);
- const OuterListofState = async (CountryCode) => {
-  if (!CountryCode) return;
+  const OuterListofState = async (CountryCode) => {
+    if (!CountryCode) return;
 
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const response = await apiClient.get(
-      `/ListofStates/GetByCountryCode/${CountryCode}`
-    );
+      const response = await apiClient.get(
+        `/ListofStates/GetByCountryCode/${CountryCode}`,
+      );
 
-    const { success, values, message } = response.data || {};
+      const { success, values, message } = response.data || {};
 
-    if (success) {
-      setOuterListofState(values || []);
-    } else {
+      if (success) {
+        setOuterListofState(values || []);
+      } else {
+        Swal.fire({
+          icon: "warning",
+          title: "Warning",
+          text: message || "No states found for the selected country.",
+        });
+        setOuterListofState([]);
+      }
+    } catch (error) {
+      console.error("Error fetching states:", error);
+
       Swal.fire({
-        icon: "warning",
-        title: "Warning",
-        text: message || "No states found for the selected country.",
+        icon: "error",
+        title: "Error",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to fetch state list. Please try again.",
       });
-      setOuterListofState([]);
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching states:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to fetch state list. Please try again.",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   // ===============Get initial list data====================================
 
@@ -2009,14 +2001,14 @@ const handleApproveLeave = async (row) => {
       getBankCodeDataList();
       getRoleDataList();
     }, // eslint-disable-next-line react-hooks/exhaustive-deps
-    []
+    [],
   );
 
   useEffect(
     () => {
       console.log("absence rows", absenceRows);
     }, // eslint-disable-next-line react-hooks/exhaustive-deps
-    [absenceRows]
+    [absenceRows],
   );
   // ===============API for Setting specific Cards data====================================
   const setOldOpenData = async (DocEntry, CardCode, CntctCode) => {
@@ -2053,206 +2045,202 @@ const handleApproveLeave = async (row) => {
       });
     }
   };
-const setEmployeeMasterDataList = async (DocEntry) => {
-  if (!DocEntry) return;
+  const setEmployeeMasterDataList = async (DocEntry) => {
+    if (!DocEntry) return;
 
-  const formatDate = (date) =>
-    date ? dayjs(date).format("DD/MM/YYYY") : "";
+    const formatDate = (date) => (date ? dayjs(date).format("DD/MM/YYYY") : "");
 
-  const getAbsenceLabel = (key) =>
-    AbsenceTypes.find((x) => x.key === Number(key))?.value || key;
+    const getAbsenceLabel = (key) =>
+      AbsenceTypes.find((x) => x.key === Number(key))?.value || key;
 
-  const getDurationLabel = (key) =>
-    Duration.find((d) => d.key === Number(key))?.value || key;
+    const getDurationLabel = (key) =>
+      Duration.find((d) => d.key === Number(key))?.value || key;
 
-  try {
-    setLoading(true);
+    try {
+      setLoading(true);
 
-    const response = await apiClient.get(`/Employee?DocEntry=${DocEntry}`);
-    const { success, values, message } = response.data || {};
+      const response = await apiClient.get(`/Employee?DocEntry=${DocEntry}`);
+      const { success, values, message } = response.data || {};
 
-    if (!success || !values) {
-      Swal.fire({
-        icon: "warning",
-        title: "Warning",
-        text: message || "Employee data not found.",
-      });
-      return;
-    }
-
-    const d = values;
-
-    // ==========================
-    // 🔥 MAIN DATA MAPPING
-    // ==========================
-    const mapped = {
-      ...d,
-
-      FirstName: d.FirstName || "",
-      LastName: d.LastName || "",
-      MiddleName: d.MiddleName || "",
-      Sex: d.Sex || "",
-      JobTitle: d.JobTitle || "",
-      Department: d.Department || "",
-      Branch: d.Branch || "",
-      Street: d.Street || "",
-      Block: d.Block || "",
-      Zip: d.Zip || "",
-      City: d.City || "",
-      Country: d.Country || "",
-      State: d.State || "",
-      Manager: d.Manager || "",
-      OfficeTel: d.OfficeTel || "",
-      Mobile: d.Mobile || "",
-      Email: d.Email || "",
-
-      StartDate: dayjs(d.StartDate).isValid()
-        ? dayjs(d.StartDate).format("YYYY-MM-DD")
-        : null,
-
-      TermDate: dayjs(d.TermDate).isValid()
-        ? dayjs(d.TermDate).format("YYYY-MM-DD")
-        : null,
-
-      Salary: d.Salary || "",
-      SalaryUnit: d.SalaryUnit || "",
-      TermReason: d.TermReason || "",
-      BankCode: d.BankCode || "",
-      BankBranch: d.BankBranch || "",
-      BankAcount: d.BankAcount || "",
-      BirthDate: d.BirthDate ? dayjs(d.BirthDate) : null,
-      PassportNo: d.PassportNo || "",
-      Remark: d.Remark || "",
-      SalaryCurr: d.SalaryCurr || "",
-      AtcEntry: d.AtcEntry || "",
-      EmpID: d.EmpID || "",
-      Status: d.Status === 1 ? "1" : "0",
-
-      // ==========================
-      // 🔹 ABSENCE LINES
-      // ==========================
-      oEmpAbsInfoLines:
-        d.oEmpAbsInfoLines?.map((x) => ({
-          ...x,
-          FromDate: formatDate(x.FromDate),
-          ToDate: formatDate(x.ToDate),
-          Type: getAbsenceLabel(x.Type),
-          Duration: getDurationLabel(x.Duration),
-          RowStatus:
-            Number(x.Status) === 1
-              ? "Pending"
-              : Number(x.Status) === 0
-              ? "Approved"
-              : Number(x.Status) === 3
-              ? "Rejected"
-              : x.Status,
-        })) || [],
-
-      // ==========================
-      // 🔹 REVIEW LINES
-      // ==========================
-      oEmpReviewInfoLines:
-        d.oEmpReviewInfoLines?.map((x) => ({
-          ...x,
-          Date: formatDate(x.Date),
-          ReviewManagerDocEntry: x.Manager,
-          Manager: x.ManagerName,
-        })) || [],
-
-      // ==========================
-      // 🔹 LEAVE BALANCE
-      // ==========================
-      oEmpLeaveInfoLines:
-        d.oEmpLeaveInfoLines?.map((x) => ({
-          ...x,
-          AbsenceType: getAbsenceLabel(x.AbsenceType),
-          LastUpdated: formatDate(x.LastUpdated),
-        })) || [],
-
-      // ==========================
-      // 🔹 LEAVE APPROVAL
-      // ==========================
-      oEmpLeaveApprovalInfoLines:
-        d.oEmpLeaveApprovalInfoLines?.map((x) => ({
-          ...x,
-          FromDate: formatDate(x.FromDate),
-          ToDate: formatDate(x.ToDate),
-          Duration: getDurationLabel(x.Duration),
-          Type: getAbsenceLabel(x.Type),
-          Status:
-            Number(x.Status) === 1
-              ? "Pending"
-              : Number(x.Status) === 0
-              ? "Approved"
-              : Number(x.Status) === 3
-              ? "Rejected"
-              : x.Status,
-        })) || [],
-    };
-
-    // ==========================
-    // 🔹 PHOTO HANDLING
-    // ==========================
-    if (d.Picture) {
-      setPhotoData([
-        {
-          base64: `data:image/png;base64,${d.Picture}`,
-          name: "Photo",
-          type: "image/png",
-        },
-      ]);
-    } else {
-      setPhotoData([]);
-    }
-
-    setUserPhoto(d.Picture || "");
-
-    // ==========================
-    // 🔹 MANAGER NAME FETCH
-    // ==========================
-    if (d.Manager) {
-      try {
-        const mgrRes = await apiClient.get(
-          `/Employee?DocEntry=${d.Manager}`
-        );
-        const mgr = mgrRes.data?.values;
-
-        mapped.Manager = `${mgr?.FirstName || ""} ${
-          mgr?.LastName || ""
-        }`.trim();
-      } catch (err) {
-        console.error("Manager fetch failed:", err);
-        mapped.Manager = "";
+      if (!success || !values) {
+        Swal.fire({
+          icon: "warning",
+          title: "Warning",
+          text: message || "Employee data not found.",
+        });
+        return;
       }
+
+      const d = values;
+
+      // ==========================
+      // 🔥 MAIN DATA MAPPING
+      // ==========================
+      const mapped = {
+        ...d,
+
+        FirstName: d.FirstName || "",
+        LastName: d.LastName || "",
+        MiddleName: d.MiddleName || "",
+        Sex: d.Sex || "",
+        JobTitle: d.JobTitle || "",
+        Department: d.Department || "",
+        Branch: d.Branch || "",
+        Street: d.Street || "",
+        Block: d.Block || "",
+        Zip: d.Zip || "",
+        City: d.City || "",
+        Country: d.Country || "",
+        State: d.State || "",
+        Manager: d.Manager || "",
+        OfficeTel: d.OfficeTel || "",
+        Mobile: d.Mobile || "",
+        Email: d.Email || "",
+
+        StartDate: dayjs(d.StartDate).isValid()
+          ? dayjs(d.StartDate).format("YYYY-MM-DD")
+          : null,
+
+        TermDate: dayjs(d.TermDate).isValid()
+          ? dayjs(d.TermDate).format("YYYY-MM-DD")
+          : null,
+
+        Salary: d.Salary || "",
+        SalaryUnit: d.SalaryUnit || "",
+        TermReason: d.TermReason || "",
+        BankCode: d.BankCode || "",
+        BankBranch: d.BankBranch || "",
+        BankAcount: d.BankAcount || "",
+        BirthDate: d.BirthDate ? dayjs(d.BirthDate) : null,
+        PassportNo: d.PassportNo || "",
+        Remark: d.Remark || "",
+        SalaryCurr: d.SalaryCurr || "",
+        AtcEntry: d.AtcEntry || "",
+        EmpID: d.EmpID || "",
+        Status: d.Status === 1 ? "1" : "0",
+
+        // ==========================
+        // 🔹 ABSENCE LINES
+        // ==========================
+        oEmpAbsInfoLines:
+          d.oEmpAbsInfoLines?.map((x) => ({
+            ...x,
+            FromDate: formatDate(x.FromDate),
+            ToDate: formatDate(x.ToDate),
+            Type: getAbsenceLabel(x.Type),
+            Duration: getDurationLabel(x.Duration),
+            RowStatus:
+              Number(x.Status) === 1
+                ? "Pending"
+                : Number(x.Status) === 0
+                  ? "Approved"
+                  : Number(x.Status) === 3
+                    ? "Rejected"
+                    : x.Status,
+          })) || [],
+
+        // ==========================
+        // 🔹 REVIEW LINES
+        // ==========================
+        oEmpReviewInfoLines:
+          d.oEmpReviewInfoLines?.map((x) => ({
+            ...x,
+            Date: formatDate(x.Date),
+            ReviewManagerDocEntry: x.Manager,
+            Manager: x.ManagerName,
+          })) || [],
+
+        // ==========================
+        // 🔹 LEAVE BALANCE
+        // ==========================
+        oEmpLeaveInfoLines:
+          d.oEmpLeaveInfoLines?.map((x) => ({
+            ...x,
+            AbsenceType: getAbsenceLabel(x.AbsenceType),
+            LastUpdated: formatDate(x.LastUpdated),
+          })) || [],
+
+        // ==========================
+        // 🔹 LEAVE APPROVAL
+        // ==========================
+        oEmpLeaveApprovalInfoLines:
+          d.oEmpLeaveApprovalInfoLines?.map((x) => ({
+            ...x,
+            FromDate: formatDate(x.FromDate),
+            ToDate: formatDate(x.ToDate),
+            Duration: getDurationLabel(x.Duration),
+            Type: getAbsenceLabel(x.Type),
+            Status:
+              Number(x.Status) === 1
+                ? "Pending"
+                : Number(x.Status) === 0
+                  ? "Approved"
+                  : Number(x.Status) === 3
+                    ? "Rejected"
+                    : x.Status,
+          })) || [],
+      };
+
+      // ==========================
+      // 🔹 PHOTO HANDLING
+      // ==========================
+      if (d.Picture) {
+        setPhotoData([
+          {
+            base64: `data:image/png;base64,${d.Picture}`,
+            name: "Photo",
+            type: "image/png",
+          },
+        ]);
+      } else {
+        setPhotoData([]);
+      }
+
+      setUserPhoto(d.Picture || "");
+
+      // ==========================
+      // 🔹 MANAGER NAME FETCH
+      // ==========================
+      if (d.Manager) {
+        try {
+          const mgrRes = await apiClient.get(`/Employee?DocEntry=${d.Manager}`);
+          const mgr = mgrRes.data?.values;
+
+          mapped.Manager = `${mgr?.FirstName || ""} ${
+            mgr?.LastName || ""
+          }`.trim();
+        } catch (err) {
+          console.error("Manager fetch failed:", err);
+          mapped.Manager = "";
+        }
+      }
+
+      // ==========================
+      // 🔹 FINAL SETUP
+      // ==========================
+      toggleDrawer();
+      reset(mapped);
+      setValue("ManagerDocEntry", d.Manager);
+      setFilesFromApi(d.AtcEntry);
+
+      setSaveUpdateName("UPDATE");
+      setDocEntry(DocEntry);
+      setSelectedData(DocEntry);
+    } catch (error) {
+      console.error("Error fetching employee data:", error);
+
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text:
+          error?.response?.data?.message ||
+          error?.message ||
+          "Failed to fetch employee data.",
+      });
+    } finally {
+      setLoading(false);
     }
-
-    // ==========================
-    // 🔹 FINAL SETUP
-    // ==========================
-    toggleDrawer();
-    reset(mapped);
-    setValue("ManagerDocEntry", d.Manager);
-    setFilesFromApi(d.AtcEntry);
-
-    setSaveUpdateName("UPDATE");
-    setDocEntry(DocEntry);
-    setSelectedData(DocEntry);
-  } catch (error) {
-    console.error("Error fetching employee data:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text:
-        error?.response?.data?.message ||
-        error?.message ||
-        "Failed to fetch employee data.",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   // ===============API for Pagination ==================================
   const handleOpenListSearch = (res) => {
@@ -2283,36 +2271,36 @@ const setEmployeeMasterDataList = async (DocEntry) => {
     fetchOpenListData(openListPage + 1, openListSearching ? openListquery : "");
     setOpenListPage((prev) => prev + 1);
   };
- const fetchOpenListData = async (pageNum, searchTerm = "") => {
-  try {
-    setLoading(true); // 🔥 START LOADER
+  const fetchOpenListData = async (pageNum, searchTerm = "") => {
+    try {
+      setLoading(true); // 🔥 START LOADER
 
-    const url = searchTerm
-      ? `/Employee?Status=1&Page=${pageNum}&SearchText=${searchTerm}&Limit=20`
-      : `/Employee?Status=1&Page=${pageNum}&Limit=20`;
+      const url = searchTerm
+        ? `/Employee?Status=1&Page=${pageNum}&SearchText=${searchTerm}&Limit=20`
+        : `/Employee?Status=1&Page=${pageNum}&Limit=20`;
 
-    const response = await apiClient.get(url);
+      const response = await apiClient.get(url);
 
-    if (response.data?.success) {
-      const newData = response.data.values || [];
+      if (response.data?.success) {
+        const newData = response.data.values || [];
 
-      setHasMoreOpen(newData.length === 20);
+        setHasMoreOpen(newData.length === 20);
 
-      setOpenListData((prev) =>
-        pageNum === 0 ? newData : [...prev, ...newData]
-      );
+        setOpenListData((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      Swal.fire({
+        icon: "error",
+        title: "Error",
+        text: "Failed to fetch employee list.",
+      });
+    } finally {
+      setLoading(false); // 🔥 STOP LOADER (always)
     }
-  } catch (error) {
-    console.error("Error fetching data:", error);
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text: "Failed to fetch employee list.",
-    });
-  } finally {
-    setLoading(false); // 🔥 STOP LOADER (always)
-  }
-};
+  };
 
   useEffect(() => {
     fetchOpenListData(0); // Load first page on mount
@@ -2338,29 +2326,29 @@ const setEmployeeMasterDataList = async (DocEntry) => {
       fileData.forEach((row, index) => {
         formData.append(
           `AttachmentLines[${index}].LineNum`,
-          row.LineNum === "0" ? "" : row.LineNum
+          row.LineNum === "0" ? "" : row.LineNum,
         );
         formData.append(
           `AttachmentLines[${index}].DocEntry`,
-          row.DocEntry || ""
+          row.DocEntry || "",
         );
         formData.append(`AttachmentLines[${index}].UserId`, user.UserId);
         formData.append(`AttachmentLines[${index}].CreatedBy`, user.UserName);
         formData.append(`AttachmentLines[${index}].ModifiedBy`, user.UserName);
         formData.append(
           `AttachmentLines[${index}].CreatedDate`,
-          dayjs().format("YYYY-MM-DD")
+          dayjs().format("YYYY-MM-DD"),
         );
         formData.append(
           `AttachmentLines[${index}].ModifiedDate`,
-          dayjs().format("YYYY-MM-DD")
+          dayjs().format("YYYY-MM-DD"),
         );
         formData.append(`AttachmentLines[${index}].Status`, "1");
 
         formData.append(
           `AttachmentLines[${index}].FileName`,
           row.FileName.substring(0, row.FileName.lastIndexOf(".")) ||
-            row.FileName
+            row.FileName,
         );
 
         formData.append(`AttachmentLines[${index}].FileExt`, row.FileExt);
@@ -2534,7 +2522,7 @@ const setEmployeeMasterDataList = async (DocEntry) => {
             Days: X.Days || 0,
             Status: getStatusNumber(x.Status),
             Manager: x.Manager,
-          })
+          }),
         ),
       };
 
@@ -2630,7 +2618,7 @@ const setEmployeeMasterDataList = async (DocEntry) => {
 
           const response = await apiClient.put(
             `/Employee/${data.DocEntry}`,
-            obj
+            obj,
           );
           if (response.data.success) {
             clearFormData();
@@ -2677,109 +2665,108 @@ const setEmployeeMasterDataList = async (DocEntry) => {
     }
   };
   // ===============Delete API ===================================
-const handleOnDelete = async (row) => {
-  try {
-    const result = await Swal.fire({
-      text: "Do you want to delete?",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonText: "YES",
-      cancelButtonText: "No",
-    });
-
-    if (!result.isConfirmed) {
-      Swal.fire({
-        title: "Cancelled",
-        text: "Employee Master is not deleted",
-        icon: "warning",
-        timer: 1000,
+  const handleOnDelete = async (row) => {
+    try {
+      const result = await Swal.fire({
+        text: "Do you want to delete?",
+        icon: "question",
+        showCancelButton: true,
+        confirmButtonText: "YES",
+        cancelButtonText: "No",
       });
-      return;
+
+      if (!result.isConfirmed) {
+        Swal.fire({
+          title: "Cancelled",
+          text: "Employee Master is not deleted",
+          icon: "warning",
+          timer: 1000,
+        });
+        return;
+      }
+
+      setLoading(true);
+
+      const docEntry = row?.DocEntry || DocEntry;
+
+      const response = await apiClient.delete(`/Employee/${docEntry}`);
+      const { success, message } = response.data;
+
+      if (success) {
+        clearFormData();
+        setOpenListPage(0);
+        setOpenListData([]);
+
+        await fetchOpenListData(0); // ⬅ wait
+
+        Swal.fire({
+          title: "Success!",
+          text: "Employee Master Deleted",
+          icon: "success",
+          timer: 1000,
+          showConfirmButton: false,
+        });
+      } else {
+        Swal.fire({
+          title: "Error",
+          text: message || "Delete failed",
+          icon: "info",
+        });
+      }
+    } catch (error) {
+      console.error("Error deleting employee:", error);
+      Swal.fire({
+        title: "Error!",
+        text: "An error occurred while deleting the Employee Master.",
+        icon: "error",
+      });
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(true);
-
-    const docEntry = row?.DocEntry || DocEntry;
-
-    const response = await apiClient.delete(`/Employee/${docEntry}`);
-    const { success, message } = response.data;
-
-    if (success) {
-      clearFormData();
-      setOpenListPage(0);
-      setOpenListData([]);
-
-      await fetchOpenListData(0); // ⬅ wait
-
-      Swal.fire({
-        title: "Success!",
-        text: "Employee Master Deleted",
-        icon: "success",
-        timer: 1000,
-        showConfirmButton: false,
-      });
-    } else {
-      Swal.fire({
-        title: "Error",
-        text: message || "Delete failed",
-        icon: "info",
-      });
-    }
-  } catch (error) {
-    console.error("Error deleting employee:", error);
-    Swal.fire({
-      title: "Error!",
-      text: "An error occurred while deleting the Employee Master.",
-      icon: "error",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
   // ============================================Closed List Start ==================================================================
- const fetchClosedListData = async (pageNum, searchTerm = "") => {
-  try {
-    setLoading(true);
+  const fetchClosedListData = async (pageNum, searchTerm = "") => {
+    try {
+      setLoading(true);
 
-    const url = searchTerm
-      ? `/Employee?Status=0&Page=${pageNum}&SearchText=${searchTerm}&Limit=20`
-      : `/Employee?Status=0&Page=${pageNum}&Limit=20`;
+      const url = searchTerm
+        ? `/Employee?Status=0&Page=${pageNum}&SearchText=${searchTerm}&Limit=20`
+        : `/Employee?Status=0&Page=${pageNum}&Limit=20`;
 
-    const response = await apiClient.get(url);
+      const response = await apiClient.get(url);
 
-    if (response?.data?.success) {
-      const newData = response.data.values || [];
+      if (response?.data?.success) {
+        const newData = response.data.values || [];
 
-      setHasMoreClosed(newData.length === 20);
+        setHasMoreClosed(newData.length === 20);
 
-      setClosedListData((prev) =>
-        pageNum === 0 ? newData : [...prev, ...newData]
-      );
-    } else {
-      // Backend returned success = false
+        setClosedListData((prev) =>
+          pageNum === 0 ? newData : [...prev, ...newData],
+        );
+      } else {
+        // Backend returned success = false
+        Swal.fire({
+          icon: "warning",
+          title: "Warning",
+          text: response?.data?.message || "Failed to fetch closed employees.",
+        });
+      }
+    } catch (error) {
+      console.error("Error fetching closed employees:", error);
+
       Swal.fire({
-        icon: "warning",
-        title: "Warning",
-        text: response?.data?.message || "Failed to fetch closed employees.",
+        icon: "error",
+        title: "Error",
+        text:
+          error.response?.data?.message ||
+          error.message ||
+          "Something went wrong while fetching closed employees.",
       });
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error("Error fetching closed employees:", error);
-
-    Swal.fire({
-      icon: "error",
-      title: "Error",
-      text:
-        error.response?.data?.message ||
-        error.message ||
-        "Something went wrong while fetching closed employees.",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   // Handle search input
   const handleClosedListSearch = (res) => {
@@ -2809,7 +2796,7 @@ const handleOnDelete = async (row) => {
   const fetchMoreClosedListData = () => {
     fetchClosedListData(
       closedListPage + 1,
-      closedListSearching ? closedListquery : ""
+      closedListSearching ? closedListquery : "",
     );
     setClosedListPage((prev) => prev + 1);
   };
@@ -3012,7 +2999,7 @@ const handleOnDelete = async (row) => {
   );
   return (
     <>
-          {loading && <Loader open={loading} />}
+      {loading && <Loader open={loading} />}
 
       <SearchModel
         open={searchmodelOpen}
@@ -4028,7 +4015,7 @@ const handleOnDelete = async (row) => {
                                     }
                                     onChange={(date) => {
                                       field.onChange(
-                                        date ? date.toISOString : undefined
+                                        date ? date.toISOString : undefined,
                                       );
                                       setValue("BirthDate", date);
                                     }}
@@ -4094,7 +4081,7 @@ const handleOnDelete = async (row) => {
                                   defaultValue=""
                                   render={({ field }) => (
                                     <PhoneNumberInput
-                                      defaultCountry="in"
+                                      defaultCountry="kw"
                                       label="Office Phone"
                                       value={field.value}
                                       onChange={(phone) =>
@@ -4114,7 +4101,7 @@ const handleOnDelete = async (row) => {
                                   defaultValue=""
                                   render={({ field }) => (
                                     <PhoneNumberInput
-                                      defaultCountry="in"
+                                      defaultCountry="kw"
                                       label="Mobile Phone"
                                       value={field.value}
                                       onChange={(phone) =>
@@ -4684,7 +4671,7 @@ const handleOnDelete = async (row) => {
                                     onChange={(date) => {
                                       const localISO = date
                                         ? dayjs(date).format(
-                                            "YYYY-MM-DDT00:00:00"
+                                            "YYYY-MM-DDT00:00:00",
                                           )
                                         : undefined;
                                       field.onChange(localISO);
@@ -4725,7 +4712,7 @@ const handleOnDelete = async (row) => {
                                       onChange={(date) => {
                                         const localISO = date
                                           ? dayjs(date).format(
-                                              "YYYY-MM-DDT00:00:00"
+                                              "YYYY-MM-DDT00:00:00",
                                             )
                                           : undefined;
                                         field.onChange(localISO);
@@ -4845,7 +4832,7 @@ const handleOnDelete = async (row) => {
                         (row, index) => ({
                           ...row,
                           id: index + 1,
-                        })
+                        }),
                       )}
                       columns={absenceColumns}
                       sx={{
@@ -4930,7 +4917,7 @@ const handleOnDelete = async (row) => {
                                     }
                                     onChange={(date) => {
                                       field.onChange(
-                                        date ? date.toISOString : undefined
+                                        date ? date.toISOString : undefined,
                                       );
                                       setValue("FromDate", date);
                                     }}
@@ -4963,7 +4950,7 @@ const handleOnDelete = async (row) => {
                                       }
                                       onChange={(date) => {
                                         field.onChange(
-                                          date ? date.toISOString : undefined
+                                          date ? date.toISOString : undefined,
                                         );
                                         setValue("ToDate", date);
                                       }}
@@ -5095,7 +5082,7 @@ const handleOnDelete = async (row) => {
                         (row, index) => ({
                           ...row,
                           id: index + 1,
-                        })
+                        }),
                       )}
                       columns={reviewColumns}
                       sx={{
@@ -5177,7 +5164,7 @@ const handleOnDelete = async (row) => {
                                     }
                                     onChange={(date) => {
                                       field.onChange(
-                                        date ? date.toISOString : undefined
+                                        date ? date.toISOString : undefined,
                                       );
                                       setValue("Date", date);
                                     }}
@@ -5298,7 +5285,7 @@ const handleOnDelete = async (row) => {
                         (row, index) => ({
                           ...row,
                           id: index + 1,
-                        })
+                        }),
                       )}
                       columns={leaveColumns}
                       sx={{
@@ -5393,13 +5380,13 @@ const handleOnDelete = async (row) => {
                                       field.onChange(
                                         date
                                           ? dayjs(date).toISOString()
-                                          : undefined
+                                          : undefined,
                                       );
                                       setValue(
                                         "LeaveYear",
                                         date
                                           ? dayjs(date).year().toString()
-                                          : "" // Save only the year as a string
+                                          : "", // Save only the year as a string
                                       );
                                     }}
                                     error={!!error}
@@ -5424,13 +5411,13 @@ const handleOnDelete = async (row) => {
                                     .filter(
                                       (r, i) =>
                                         r.LeaveYear === LeaveYear &&
-                                        i !== editingLeaveIndex
+                                        i !== editingLeaveIndex,
                                     )
                                     .map(
                                       (r) =>
                                         AbsenceTypes.find(
-                                          (t) => t.value === r.AbsenceType
-                                        )?.key
+                                          (t) => t.value === r.AbsenceType,
+                                        )?.key,
                                     )
                                     .filter(Boolean);
 
@@ -5505,7 +5492,7 @@ const handleOnDelete = async (row) => {
                                     }
                                     onChange={(date) => {
                                       field.onChange(
-                                        date ? date.toISOString : undefined
+                                        date ? date.toISOString : undefined,
                                       );
                                       setValue("LastUpdated", date);
                                     }}
@@ -5580,7 +5567,7 @@ const handleOnDelete = async (row) => {
                         (row, index) => ({
                           ...row,
                           id: index + 1,
-                        })
+                        }),
                       )}
                       columns={LeaveApprovalColumn}
                       sx={{
@@ -5670,7 +5657,7 @@ const handleOnDelete = async (row) => {
                                               data.DocEntry,
                                               data.LineNum,
                                               data.FileExt,
-                                              data.Description
+                                              data.Description,
                                             ) // Base64 case
                                     }
                                   >

@@ -58,9 +58,9 @@ export default function Country() {
     CountryName: "",
     Code: "",
     Name: "",
-    ISO2Code: "IN",
-    ISO3Code: "IND",
-    ISONumeric: "356",
+    ISO2Code: "KW",
+    ISO3Code: "KWT",
+    ISONumeric: "414",
   };
 
   const toggleDrawer = () => {
@@ -679,10 +679,10 @@ export default function Country() {
                     <Controller
                       name="ISONumeric"
                       control={control}
-                      defaultValue="356"
+                      defaultValue="414"
                       render={({ field }) => (
                         <CountryCodeSelector
-                          defaultValue="356"
+                          defaultValue="414"
                           label="ISO NUMERIC"
                           value={field.value}
                           onChange={(currency) => field.onChange(currency)}
@@ -712,7 +712,7 @@ export default function Country() {
                       // }}
                       render={({ field, fieldState: { error } }) => (
                         <Alpha2CodeSelector
-                          defaultValue="IN"
+                          defaultValue="kw"
                           value={watch("ISO2Code")}
                           onChange={(val) => setValue("ISO2Code", val)}
                         />
@@ -726,7 +726,7 @@ export default function Country() {
                       control={control}
                       render={({ field, fieldState: { error } }) => (
                         <Alpha3CodeSelector
-                          defaultValue="IND"
+                          defaultValue="kw"
                           value={watch("ISO3Code")}
                           onChange={(val) => setValue("ISO3Code", val)}
                           label="ISO Alpha-3 Code"

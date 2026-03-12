@@ -53,12 +53,12 @@ export default function Master() {
       Count: 10,
       ReDirect: "bin-location-master",
     },
-    // {
-    //   id: "65",
-    //   Name: "Warehouse Master",
-    //   Count: 10,
-    //   ReDirect: "werehouse-master",
-    // },
+    {
+      id: "65",
+      Name: "Warehouse Master",
+      Count: 10,
+      ReDirect: "werehouse-master",
+    },
   ];
 
   const allowedMenuIds = user.SubMenus.flatMap((menu) => menu.MenuId);

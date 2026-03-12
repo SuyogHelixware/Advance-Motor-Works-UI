@@ -5,7 +5,7 @@ import { useTheme } from "@mui/material/styles";
 import { Box, Typography } from "@mui/material";
 
 const PhoneNumberInput = ({
-  defaultCountry = "KW",
+  defaultCountry = "kw",
   onChange,
   value,
   onBlur,

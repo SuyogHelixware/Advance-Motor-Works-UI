@@ -2217,7 +2217,7 @@ export default function QuatationSO() {
 
     {
       field: "LineFittingCharge",
-      headerName: "FITTING",
+      headerName: "INSTALLATION",
       width: 110,
 
       align: "right",
@@ -4183,13 +4183,13 @@ export default function QuatationSO() {
             </Typography>
             <Button
               autoFocus
-              color="inherit"
               sx={{ color: "white" }}
               onClick={() => {
                 handleSubmitMdl(onSubmitDynamicSearch)();
                 handleSave();
                 // setItemSearchOpen(false);
                 // setFilteredList([]);
+
                 handleCloseModel();
               }}
             >
